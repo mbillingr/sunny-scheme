@@ -1,14 +1,19 @@
 use std::rc::Rc;
 
 #[derive(Clone)]
-enum Scm {
+pub enum Scm {
     Nil,
     Int(i64),
+    Symbol(Rc<String>),
     Pair(Rc<(Scm, Scm)>),
     Func(Rc<dyn Fn(&[Scm]) -> Scm>),
 }
 
 impl Scm {
+    pub fn symbol(s: &str) -> Self {
+        Scm::Symbol(Rc::new(s.to_owned()))
+    }
+
     pub fn pair(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
         Scm::Pair(Rc::new((car.into(), cdr.into())))
     }
@@ -49,6 +54,7 @@ impl PartialEq for Scm {
         match (self, other) {
             (Nil, Nil) => true,
             (Int(a), Int(b)) => a == b,
+            (Symbol(a), Symbol(b)) => a == b,
             (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
             _ => false,
         }
@@ -59,6 +65,7 @@ impl std::fmt::Debug for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Scm::Nil => write!(f, "'()"),
+            Scm::Symbol(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{:?}", x),
             Scm::Pair(p) => write!(f, "({:?} . {:?})", p.0, p.1),
             Scm::Func(x) => write!(f, "<procedure {:p}>", &**x),
@@ -66,6 +73,7 @@ impl std::fmt::Debug for Scm {
     }
 }
 
+#[macro_export]
 macro_rules! scm {
     ((lambda ($($param:ident),*) $($body:tt)+)) => {
         Scm::func(|args: &[Scm]| match args {
@@ -85,6 +93,10 @@ macro_rules! scm {
         Scm::Nil
     };
 
+    ((quote $name:ident)) => {
+        Scm::symbol(stringify!($name))
+    };
+
     ((quote $x:expr)) => {
         scm![$x]
     };
@@ -98,21 +110,21 @@ macro_rules! scm {
     ($x:expr) => {Scm::from($x)};
 }
 
-fn cons(args: &[Scm]) -> Scm {
+pub fn cons(args: &[Scm]) -> Scm {
     match args {
         [car, cdr] => Scm::pair(car.clone(), cdr.clone()),
         _ => panic!("Incorrect arity: cons {:?}", args),
     }
 }
 
-fn add(args: &[Scm]) -> Scm {
+pub fn add(args: &[Scm]) -> Scm {
     match args {
         [Scm::Int(x), Scm::Int(y)] => Scm::Int(x + y),
         _ => panic!("Cannot add {:?}", args),
     }
 }
 
-fn square(args: &[Scm]) -> Scm {
+pub fn square(args: &[Scm]) -> Scm {
     match args {
         [Scm::Int(x)] => Scm::Int(x * x),
         _ => panic!("Cannot square {:?} ", args),
@@ -176,5 +188,10 @@ mod tests {
     #[test]
     fn quote() {
         assert_eq!(scm![(quote (1 2))], Scm::pair(1, Scm::pair(2, Scm::Nil)));
+    }
+
+    #[test]
+    fn symbol() {
+        assert_eq!(scm![(quote foo)], Scm::symbol("foo"));
     }
 }
