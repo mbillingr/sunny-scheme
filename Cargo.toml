@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
-    "sunny-core"
+    "sunny-core",
+    "sunny-macro"
 ]
 
