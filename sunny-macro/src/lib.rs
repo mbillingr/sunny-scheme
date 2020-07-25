@@ -1,5 +1,13 @@
 #[macro_export]
 macro_rules! scm {
+    ((define $($args:tt)*)) => {
+        scm_definition![$($args)+]
+    };
+
+    ((set! $name:ident $value:tt)) => {
+        $name = scm![$value];
+    };
+
     ((lambda $($args_and_body:tt)+)) => {
         scm_abstraction![$($args_and_body)+]
     };
@@ -40,6 +48,19 @@ macro_rules! scm_quote {
 
     ($x:expr) => {
         scm![$x]
+    };
+}
+
+#[macro_export]
+macro_rules! scm_definition {
+    (($name:ident $($param:ident)*) $($body:tt)+) => {
+        #[allow(unused_mut)]
+        let mut $name = scm_abstraction![($($param)*) $($body)+];
+    };
+
+    ($name:ident $value:tt) => {
+        #[allow(unused_mut)]
+        let mut $name = scm![$value];
     };
 }
 
@@ -166,5 +187,46 @@ mod tests {
     #[test]
     fn sequence() {
         assert_eq!(scm![(begin 1 2 3)], Scm::Int(3));
+    }
+
+    #[test]
+    fn top_level_define() {
+        scm![(define x 42)];
+        assert_eq!(x, Scm::Int(42));
+    }
+
+    #[test]
+    fn top_level_define_expression() {
+        scm![(define x (add 1 2))];
+        assert_eq!(x, Scm::Int(3));
+    }
+
+    #[test]
+    fn define_in_sequence() {
+        assert_eq!(
+            scm![(begin (define x 42)
+                        x)],
+            Scm::Int(42)
+        );
+    }
+
+    #[test]
+    fn define_function() {
+        assert_eq!(
+            scm![(begin (define (foo) 42)
+                        (foo))],
+            Scm::Int(42)
+        );
+    }
+
+    #[test]
+    #[allow(unused)]
+    fn mutate_definition() {
+        assert_eq!(
+            scm![(begin (define x 1)
+                        (set! x 2)
+                        x)],
+            Scm::Int(2)
+        );
     }
 }
