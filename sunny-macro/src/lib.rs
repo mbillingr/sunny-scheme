@@ -2,24 +2,13 @@
 macro_rules! scm {
     ((lambda ($($param:ident)*) $($body:tt)+)) => {
         Scm::func(|args: &[Scm]| match args {
-            [$($param),*] => { $(scm![$body]);+ }
+            [$($param),*] => scm_sequence![$($body)+],
             _ => panic!("Incorrect arity")
         })
     };
 
-    ((quote ($first:tt $($rest:tt)*))) => {
-        Scm::pair(
-            scm![(quote $first)],
-            scm![(quote ($($rest)*))]
-        )
-    };
-
-    ((quote ())) => {
-        Scm::Nil
-    };
-
-    ((quote $name:ident)) => {
-        Scm::symbol(stringify!($name))
+    ((begin $($body:tt)+)) => {
+        scm_sequence![$($body)+]
     };
 
     ((quote $x:expr)) => {
@@ -121,5 +110,10 @@ mod tests {
     #[test]
     fn apply_abstraction_four_args() {
         assert_eq!(scm![((lambda (a b c d) (add (add a b) (add c d))) 1 2 3 4)], Scm::Int(10));
+    }
+
+    #[test]
+    fn sequence() {
+        assert_eq!(scm![(begin 1 2 3)], Scm::Int(3));
     }
 }
