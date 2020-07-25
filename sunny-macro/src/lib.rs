@@ -62,9 +62,15 @@ macro_rules! scm_abstraction {
 
 #[macro_export]
 macro_rules! scm_application {
+    ((lambda ($($param:ident)*) $($body:tt)+) $($arg:tt)*) => {
+        // optimize the special case of a lambda form being directly
+        // applied (no need to wrap it in an Scm instance)
+        (|$($param),*| scm_sequence![$($body)+])($(&scm![$arg]),*)
+    };
+
     ($func:tt $($arg:tt)*) => {
         scm![$func].invoke(&[$(scm![$arg]),*])
-     };
+    };
 }
 
 #[cfg(test)]
