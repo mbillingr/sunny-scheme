@@ -1,22 +1,19 @@
 #[macro_export]
 macro_rules! scm {
-    ((lambda ($($param:ident)*) $($body:tt)+)) => {
-        Scm::func(|args: &[Scm]| match args {
-            [$($param),*] => scm_sequence![$($body)+],
-            _ => panic!("Incorrect arity")
-        })
+    ((lambda $($args_and_body:tt)+)) => {
+        scm_abstraction![$($args_and_body)+]
     };
 
     ((begin $($body:tt)+)) => {
         scm_sequence![$($body)+]
     };
 
-    ((quote $x:expr)) => {
-        scm![$x]
+    ((quote $arg:tt)) => {
+        scm_quote![$arg]
     };
 
-    (($func:tt $($arg:tt)*)) => {
-        scm![$func].invoke(&[$(scm![$arg]),*])
+    (($($func_and_args:tt)+)) => {
+        scm_application![$($func_and_args)+]
      };
 
     //($x:ident) => {($x).clone()};
@@ -24,6 +21,51 @@ macro_rules! scm {
     ($x:expr) => {Scm::from($x)};
 }
 
+#[macro_export]
+macro_rules! scm_quote {
+    (($first:tt $($rest:tt)*)) => {
+        Scm::pair(
+            scm_quote![$first],
+            scm_quote![($($rest)*)]
+        )
+    };
+
+    (()) => {
+        Scm::Nil
+    };
+
+    ($name:ident) => {
+        Scm::symbol(stringify!($name))
+    };
+
+    ($x:expr) => {
+        scm![$x]
+    };
+}
+
+#[macro_export]
+macro_rules! scm_sequence {
+    ($($body:tt)+) => {
+        { $(scm![$body]);+ }
+    };
+}
+
+#[macro_export]
+macro_rules! scm_abstraction {
+    (($($param:ident)*) $($body:tt)+) => {
+        Scm::func(|args: &[Scm]| match args {
+            [$($param),*] => scm_sequence![$($body)+],
+            _ => panic!("Incorrect arity")
+        })
+    };
+}
+
+#[macro_export]
+macro_rules! scm_application {
+    ($func:tt $($arg:tt)*) => {
+        scm![$func].invoke(&[$(scm![$arg]),*])
+     };
+}
 
 #[cfg(test)]
 mod tests {
@@ -109,7 +151,10 @@ mod tests {
 
     #[test]
     fn apply_abstraction_four_args() {
-        assert_eq!(scm![((lambda (a b c d) (add (add a b) (add c d))) 1 2 3 4)], Scm::Int(10));
+        assert_eq!(
+            scm![((lambda (a b c d) (add (add a b) (add c d))) 1 2 3 4)],
+            Scm::Int(10)
+        );
     }
 
     #[test]
