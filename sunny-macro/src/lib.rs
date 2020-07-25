@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! scm {
-    ((lambda ($($param:ident),*) $($body:tt)+)) => {
+    ((lambda ($($param:ident)*) $($body:tt)+)) => {
         Scm::func(|args: &[Scm]| match args {
             [$($param),*] => { $(scm![$body]);+ }
             _ => panic!("Incorrect arity")
@@ -101,5 +101,25 @@ mod tests {
     #[test]
     fn symbol() {
         assert_eq!(scm![(quote foo)], Scm::symbol("foo"));
+    }
+
+    #[test]
+    fn first_order_abstractions() {
+        assert_eq!(scm![((lambda (f) (f)) (lambda () 1))], Scm::Int(1));
+    }
+
+    #[test]
+    fn first_order_primitives() {
+        assert_eq!(scm![((lambda (f) (f 3)) square)], Scm::Int(9));
+    }
+
+    #[test]
+    fn apply_abstraction_two_args() {
+        assert_eq!(scm![((lambda (a b) (add a b)) 1 2)], Scm::Int(3));
+    }
+
+    #[test]
+    fn apply_abstraction_four_args() {
+        assert_eq!(scm![((lambda (a b c d) (add (add a b) (add c d))) 1 2 3 4)], Scm::Int(10));
     }
 }
