@@ -5,7 +5,7 @@ macro_rules! scm {
     };
 
     ((set! $name:ident $value:tt)) => {
-        $name = scm![$value];
+        $name.set(scm![$value]);
     };
 
     ((lambda $($args_and_body:tt)+)) => {
@@ -24,7 +24,7 @@ macro_rules! scm {
         scm_application![$($func_and_args)+]
      };
 
-    ($x:ident) => {Scm::from(($x).clone())};
+    ($x:ident) => {Scm::from(&$x)};
 
     ($x:expr) => {Scm::from($x)};
 }
@@ -54,13 +54,12 @@ macro_rules! scm_quote {
 #[macro_export]
 macro_rules! scm_definition {
     (($name:ident $($param:ident)*) $($body:tt)+) => {
-        #[allow(unused_mut)]
-        let mut $name = scm_abstraction![($($param)*) $($body)+];
+        scm_definition![$name (lambda ($($param)*) $($body)+)]
     };
 
     ($name:ident $value:tt) => {
         #[allow(unused_mut)]
-        let mut $name = scm![$value];
+        let mut $name = scm![$value].into_boxed();
     };
 }
 
@@ -76,7 +75,8 @@ macro_rules! scm_abstraction {
     (($($param:ident)*) $($body:tt)+) => {
         Scm::func(move |args: &[Scm]| match args {
             [$($param),*] => {
-                $(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
+                //$(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
+                $(let $param: BoxedScm = $param.clone().into_boxed();)*
                 scm_sequence![$($body)+]
             }
             _ => panic!("Incorrect arity")
@@ -90,7 +90,8 @@ macro_rules! scm_application {
         // optimize the special case of a lambda form being directly
         // applied (no need to wrap it in an Scm instance)
         (|$($param: &Scm),*| {
-            $(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
+            //$(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
+            $(let $param: BoxedScm = $param.clone().into_boxed();)*
             scm_sequence![$($body)+]
         })($(&scm![$arg]),*)
     };
@@ -104,8 +105,8 @@ macro_rules! scm_application {
 mod tests {
     use super::*;
 
-    use sunny_core::Scm;
     use sunny_core::{add, cons, square};
+    use sunny_core::{BoxedScm, Scm};
 
     #[test]
     fn integer_constant() {
@@ -198,13 +199,13 @@ mod tests {
     #[test]
     fn top_level_define() {
         scm![(define x 42)];
-        assert_eq!(x, Scm::Int(42));
+        assert_eq!(x.get(), Scm::Int(42));
     }
 
     #[test]
     fn top_level_define_expression() {
         scm![(define x (add 1 2))];
-        assert_eq!(x, Scm::Int(3));
+        assert_eq!(x.get(), Scm::Int(3));
     }
 
     #[test]
@@ -265,5 +266,14 @@ mod tests {
         scm![(define access (close 5))];
         assert_eq!(scm![(access)], Scm::Int(5));
         assert_eq!(scm![(access)], Scm::Int(5));
+    }
+
+    #[test]
+    fn mutable_closure() {
+        scm![(define (close x) (lambda () (set! x (add x 1)) x))];
+        scm![(define access (close 0))];
+        assert_eq!(scm![(access)], Scm::Int(1));
+        assert_eq!(scm![(access)], Scm::Int(2));
+        assert_eq!(scm![(access)], Scm::Int(3));
     }
 }

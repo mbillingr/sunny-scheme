@@ -2,6 +2,8 @@ mod memory_model;
 
 use memory_model::prelude::*;
 
+pub type BoxedScm = Ref<Mut<Scm>>;
+
 #[derive(Clone)]
 #[cfg_attr(feature = "scm_copy", derive(Copy))]
 pub enum Scm {
@@ -13,6 +15,10 @@ pub enum Scm {
 }
 
 impl Scm {
+    pub fn into_boxed(self) -> BoxedScm {
+        make_ref!(Mut::new(self))
+    }
+
     pub fn symbol(s: &str) -> Self {
         Scm::Symbol(make_ref!(s.to_owned()))
     }
@@ -42,6 +48,18 @@ impl From<i64> for Scm {
 impl From<&Scm> for Scm {
     fn from(x: &Scm) -> Self {
         x.clone()
+    }
+}
+
+impl From<BoxedScm> for Scm {
+    fn from(x: BoxedScm) -> Self {
+        x.get()
+    }
+}
+
+impl From<&BoxedScm> for Scm {
+    fn from(x: &BoxedScm) -> Self {
+        x.get()
     }
 }
 
