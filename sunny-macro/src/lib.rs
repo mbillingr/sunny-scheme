@@ -8,6 +8,10 @@ macro_rules! scm {
         $name.set(scm![$value]);
     };
 
+    ((if $($args:tt)*)) => {
+        scm_alternative![$($args)+]
+    };
+
     ((lambda $($args_and_body:tt)+)) => {
         scm_abstraction![$($args_and_body)+]
     };
@@ -26,6 +30,10 @@ macro_rules! scm {
 
     (nil) => { Scm::Nil };
     (()) => { Scm::Nil };
+    (#t) => { Scm::True };
+    (true) => { Scm::True };
+    (#f) => { Scm::False };
+    (false) => { Scm::False };
 
     ($x:ident) => {Scm::from(&$x)};
 
@@ -63,6 +71,17 @@ macro_rules! scm_definition {
     ($name:ident $value:tt) => {
         #[allow(unused_mut)]
         let mut $name = scm![$value].into_boxed();
+    };
+}
+
+#[macro_export]
+macro_rules! scm_alternative {
+    ($cond:tt $cons:tt $alt:tt) => {
+        if scm![$cond].is_true() {
+            scm![$cons]
+        } else {
+            scm![$alt]
+        }
     };
 }
 
@@ -284,5 +303,19 @@ mod tests {
     fn nil_value() {
         assert_eq!(scm![nil], Scm::Nil);
         assert_eq!(scm![()], Scm::Nil);
+    }
+
+    #[test]
+    fn bool_values() {
+        assert_eq!(scm![#t], Scm::True);
+        assert_eq!(scm![#f], Scm::False);
+    }
+
+    #[test]
+    fn alternative() {
+        assert_eq!(scm![(if true 1 2)], Scm::Int(1));
+        assert_eq!(scm![(if false 1 2)], Scm::Int(2));
+        assert_eq!(scm![(if 0 1 2)], Scm::Int(1));
+        assert_eq!(scm![(if nil 1 2)], Scm::Int(2));
     }
 }

@@ -8,6 +8,8 @@ pub type BoxedScm = Ref<Mut<Scm>>;
 #[cfg_attr(feature = "scm_copy", derive(Copy))]
 pub enum Scm {
     Nil,
+    False,
+    True,
     Int(i64),
     Symbol(Ref<String>),
     Pair(Ref<(Mut<Scm>, Mut<Scm>)>),
@@ -29,6 +31,13 @@ impl Scm {
 
     pub fn func(f: impl Fn(&[Scm]) -> Scm + 'static) -> Self {
         Scm::Func(make_ref!(f))
+    }
+
+    pub fn is_true(&self) -> bool {
+        match self {
+            Scm::Nil | Scm::False => false,
+            _ => true,
+        }
     }
 
     pub fn invoke(&self, args: &[Scm]) -> Scm {
@@ -74,6 +83,8 @@ impl PartialEq for Scm {
         use Scm::*;
         match (self, other) {
             (Nil, Nil) => true,
+            (True, True) => true,
+            (False, False) => true,
             (Int(a), Int(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
             (Pair(a), Pair(b)) => a.0.get() == b.0.get() && a.1.get() == b.1.get(),
@@ -86,6 +97,8 @@ impl std::fmt::Debug for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Scm::Nil => write!(f, "'()"),
+            Scm::True => write!(f, "#t"),
+            Scm::False => write!(f, "#f"),
             Scm::Symbol(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{:?}", x),
             Scm::Pair(p) => write!(f, "({:?} . {:?})", p.0, p.1),
