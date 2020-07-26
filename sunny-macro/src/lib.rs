@@ -74,7 +74,7 @@ macro_rules! scm_sequence {
 #[macro_export]
 macro_rules! scm_abstraction {
     (($($param:ident)*) $($body:tt)+) => {
-        Scm::func(|args: &[Scm]| match args {
+        Scm::func(move |args: &[Scm]| match args {
             [$($param),*] => {
                 $(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
                 scm_sequence![$($body)+]
@@ -247,5 +247,23 @@ mod tests {
     #[allow(unused)]
     fn mutate_local_fixlet() {
         assert_eq!(scm![((lambda (x) (set! x 0) x) 1)], Scm::Int(0));
+    }
+
+    #[test]
+    fn closure() {
+        scm![(define (close x) (lambda () x))];
+        scm![(define access (close 5))];
+        assert_eq!(scm![(access)], Scm::Int(5));
+        assert_eq!(scm![(access)], Scm::Int(5));
+    }
+
+    // does not work with non-Copy Scm
+    #[test]
+    #[cfg(feature = "scm_copy")]
+    fn shared_var_in_two_closures() {
+        scm![(define (close x) (lambda () x) (lambda () x))];
+        scm![(define access (close 5))];
+        assert_eq!(scm![(access)], Scm::Int(5));
+        assert_eq!(scm![(access)], Scm::Int(5));
     }
 }

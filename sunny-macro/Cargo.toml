@@ -6,5 +6,11 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+
+leaking = ["sunny-core/leaking", "scm_copy"]
+scm_copy = ["sunny-core/scm_copy"]
+
 [dependencies]
 sunny-core = {path="../sunny-core"}
