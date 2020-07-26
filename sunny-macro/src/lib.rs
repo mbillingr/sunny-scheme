@@ -24,7 +24,7 @@ macro_rules! scm {
         scm_application![$($func_and_args)+]
      };
 
-    //($x:ident) => {($x).clone()};
+    ($x:ident) => {Scm::from(($x).clone())};
 
     ($x:expr) => {Scm::from($x)};
 }
@@ -75,7 +75,10 @@ macro_rules! scm_sequence {
 macro_rules! scm_abstraction {
     (($($param:ident)*) $($body:tt)+) => {
         Scm::func(|args: &[Scm]| match args {
-            [$($param),*] => scm_sequence![$($body)+],
+            [$($param),*] => {
+                $(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
+                scm_sequence![$($body)+]
+            }
             _ => panic!("Incorrect arity")
         })
     };
@@ -86,7 +89,10 @@ macro_rules! scm_application {
     ((lambda ($($param:ident)*) $($body:tt)+) $($arg:tt)*) => {
         // optimize the special case of a lambda form being directly
         // applied (no need to wrap it in an Scm instance)
-        (|$($param),*| scm_sequence![$($body)+])($(&scm![$arg]),*)
+        (|$($param: &Scm),*| {
+            $(#[allow(unused_mut)] let mut $param: Scm = $param.clone();)*
+            scm_sequence![$($body)+]
+        })($(&scm![$arg]),*)
     };
 
     ($func:tt $($arg:tt)*) => {
@@ -228,5 +234,18 @@ mod tests {
                         x)],
             Scm::Int(2)
         );
+    }
+
+    #[test]
+    #[allow(unused)]
+    fn mutate_local() {
+        scm![(define (foo x) (set! x 0) x)];
+        assert_eq!(scm![(foo 1)], Scm::Int(0));
+    }
+
+    #[test]
+    #[allow(unused)]
+    fn mutate_local_fixlet() {
+        assert_eq!(scm![((lambda (x) (set! x 0) x) 1)], Scm::Int(0));
     }
 }
