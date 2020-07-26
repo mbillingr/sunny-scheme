@@ -1,25 +1,28 @@
-use std::rc::Rc;
+mod memory_model;
+
+use memory_model::prelude::*;
 
 #[derive(Clone)]
+#[cfg_attr(feature = "scm_copy", derive(Copy))]
 pub enum Scm {
     Nil,
     Int(i64),
-    Symbol(Rc<String>),
-    Pair(Rc<(Scm, Scm)>),
-    Func(Rc<dyn Fn(&[Scm]) -> Scm>),
+    Symbol(Ref<String>),
+    Pair(Ref<(Mut<Scm>, Mut<Scm>)>),
+    Func(Ref<dyn Fn(&[Scm]) -> Scm>),
 }
 
 impl Scm {
     pub fn symbol(s: &str) -> Self {
-        Scm::Symbol(Rc::new(s.to_owned()))
+        Scm::Symbol(make_ref!(s.to_owned()))
     }
 
     pub fn pair(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
-        Scm::Pair(Rc::new((car.into(), cdr.into())))
+        Scm::Pair(make_ref!((Mut::new(car.into()), Mut::new(cdr.into()))))
     }
 
     pub fn func(f: impl Fn(&[Scm]) -> Scm + 'static) -> Self {
-        Scm::Func(Rc::new(f))
+        Scm::Func(make_ref!(f))
     }
 
     pub fn invoke(&self, args: &[Scm]) -> Scm {
@@ -55,7 +58,7 @@ impl PartialEq for Scm {
             (Nil, Nil) => true,
             (Int(a), Int(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
-            (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
+            (Pair(a), Pair(b)) => a.0.get() == b.0.get() && a.1.get() == b.1.get(),
             _ => false,
         }
     }
