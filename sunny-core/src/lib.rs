@@ -21,6 +21,16 @@ impl Scm {
         make_ref!(Mut::new(self))
     }
 
+    #[cfg(feature = "scm_copy")]
+    pub fn duplicate(&self) -> Self {
+        *self
+    }
+
+    #[cfg(not(feature = "scm_copy"))]
+    pub fn duplicate(&self) -> Self {
+        self.clone()
+    }
+
     pub fn symbol(s: &str) -> Self {
         Scm::Symbol(make_ref!(s.to_owned()))
     }
@@ -56,7 +66,7 @@ impl From<i64> for Scm {
 
 impl From<&Scm> for Scm {
     fn from(x: &Scm) -> Self {
-        x.clone()
+        x.duplicate()
     }
 }
 
@@ -109,7 +119,7 @@ impl std::fmt::Debug for Scm {
 
 pub fn cons(args: &[Scm]) -> Scm {
     match args {
-        [car, cdr] => Scm::pair(car.clone(), cdr.clone()),
+        [car, cdr] => Scm::pair(car.duplicate(), cdr.duplicate()),
         _ => panic!("Incorrect arity: cons {:?}", args),
     }
 }
