@@ -22,7 +22,10 @@ macro_rules! scm {
 
     (($($func_and_args:tt)+)) => {
         scm_application![$($func_and_args)+]
-     };
+    };
+
+    (nil) => { Scm::Nil };
+    (()) => { Scm::Nil };
 
     ($x:ident) => {Scm::from(&$x)};
 
@@ -275,5 +278,11 @@ mod tests {
         assert_eq!(scm![(access)], Scm::Int(1));
         assert_eq!(scm![(access)], Scm::Int(2));
         assert_eq!(scm![(access)], Scm::Int(3));
+    }
+
+    #[test]
+    fn nil_value() {
+        assert_eq!(scm![nil], Scm::Nil);
+        assert_eq!(scm![()], Scm::Nil);
     }
 }
