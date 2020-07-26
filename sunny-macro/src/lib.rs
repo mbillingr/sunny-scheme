@@ -69,8 +69,8 @@ macro_rules! scm_definition {
     };
 
     ($name:ident $value:tt) => {
-        #[allow(unused_mut)]
-        let mut $name = scm![$value].into_boxed();
+        let $name = Scm::Nil.into_boxed();
+        $name.set(scm![$value]);
     };
 }
 
@@ -127,7 +127,7 @@ macro_rules! scm_application {
 mod tests {
     use super::*;
 
-    use sunny_core::{add, cons, square};
+    use sunny_core::{add, cons, less, square, sub};
     use sunny_core::{BoxedScm, Scm};
 
     #[test]
@@ -280,7 +280,6 @@ mod tests {
         assert_eq!(scm![(access)], Scm::Int(5));
     }
 
-    // does not work with non-Copy Scm
     #[test]
     #[cfg(feature = "scm_copy")]
     fn shared_var_in_two_closures() {
@@ -317,5 +316,16 @@ mod tests {
         assert_eq!(scm![(if false 1 2)], Scm::Int(2));
         assert_eq!(scm![(if 0 1 2)], Scm::Int(1));
         assert_eq!(scm![(if nil 1 2)], Scm::Int(2));
+    }
+
+    #[test]
+    #[cfg(feature = "scm_copy")]
+    fn fibonacci() {
+        scm![(define (fib n)
+                 (if (less n 2)
+                     1
+                     (add (fib (sub n 1))
+                          (fib (sub n 2)))))];
+        assert_eq!(scm![(fib 5)], Scm::Int(8));
     }
 }

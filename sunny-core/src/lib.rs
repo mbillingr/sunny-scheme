@@ -121,6 +121,26 @@ pub fn add(args: &[Scm]) -> Scm {
     }
 }
 
+pub fn sub(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Int(x), Scm::Int(y)] => Scm::Int(x - y),
+        _ => panic!("Cannot sub {:?}", args),
+    }
+}
+
+pub fn less(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Int(x), Scm::Int(y)] => {
+            if x < y {
+                Scm::True
+            } else {
+                Scm::False
+            }
+        }
+        _ => panic!("Cannot compare < {:?}", args),
+    }
+}
+
 pub fn square(args: &[Scm]) -> Scm {
     match args {
         [Scm::Int(x)] => Scm::Int(x * x),
