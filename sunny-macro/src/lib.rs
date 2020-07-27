@@ -1,32 +1,13 @@
 #[macro_export]
 macro_rules! scm {
-    ((define $($args:tt)*)) => {
-        scm_definition![$($args)+]
-    };
-
-    ((set! $name:ident $value:tt)) => {
-        $name.set(scm![$value]);
-    };
-
-    ((if $($args:tt)*)) => {
-        scm_alternative![$($args)+]
-    };
-
-    ((lambda $($args_and_body:tt)+)) => {
-        scm_abstraction![$($args_and_body)+]
-    };
-
-    ((begin $($body:tt)+)) => {
-        scm_sequence![$($body)+]
-    };
-
-    ((quote $arg:tt)) => {
-        scm_quote![$arg]
-    };
-
-    (($($func_and_args:tt)+)) => {
-        scm_application![$($func_and_args)+]
-    };
+    ((cond $($clauses:tt)+)) => { scm_cond![$($clauses)+] };
+    ((define $($args:tt)*)) => { scm_definition![$($args)+] };
+    ((set! $name:ident $value:tt)) => { $name.set(scm![$value]); };
+    ((if $($args:tt)*)) => { scm_alternative![$($args)+] };
+    ((lambda $($args_and_body:tt)+)) => { scm_abstraction![$($args_and_body)+] };
+    ((begin $($body:tt)+)) => { scm_sequence![$($body)+] };
+    ((quote $arg:tt)) => { scm_quote![$arg] };
+    (($($func_and_args:tt)+)) => { scm_application![$($func_and_args)+] };
 
     (nil) => { Scm::Nil };
     (()) => { Scm::Nil };
@@ -38,6 +19,17 @@ macro_rules! scm {
     ($x:ident) => {Scm::from(&$x)};
 
     ($x:expr) => {Scm::from($x)};
+}
+
+#[macro_export]
+macro_rules! scm_cond {
+    ((else $($body:tt)+)) => {
+        scm_sequence![$($body)+]
+    };
+
+    (($test:tt $($body:tt)+) $($rest:tt)+) =>  {
+        scm_alternative![$test (begin $($body)+) (cond $($rest)+)]
+    };
 }
 
 #[macro_export]
@@ -327,5 +319,34 @@ mod tests {
                      (add (fib (sub n 1))
                           (fib (sub n 2)))))];
         assert_eq!(scm![(fib 5)], Scm::Int(8));
+    }
+
+    #[test]
+    fn cond_only_else() {
+        assert_eq!(scm![(cond (else 42))], Scm::Int(42));
+    }
+
+    #[test]
+    fn cond_true_or_else() {
+        assert_eq!(scm![(cond (true 1) (else 2))], Scm::Int(1));
+    }
+
+    #[test]
+    fn cond_false_or_else() {
+        assert_eq!(scm![(cond (false 1) (else 2))], Scm::Int(2));
+    }
+
+    #[test]
+    fn cond_multiple() {
+        scm![(define (count n)
+                (cond ((less n 0) (quote negative))
+                      ((less n 1) (quote zero))
+                      ((less n 5) (quote few))
+                      ((less n 10) (quote some))
+                      (else (quote many))))];
+        assert_eq!(scm![(count 0)], Scm::symbol("zero"));
+        assert_eq!(scm![(count 3)], Scm::symbol("few"));
+        assert_eq!(scm![(count 7)], Scm::symbol("some"));
+        assert_eq!(scm![(count 11)], Scm::symbol("many"));
     }
 }
