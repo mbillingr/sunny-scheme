@@ -7,9 +7,9 @@ Sunny Scheme shines a lispy sun on friendly crabs
 The core runtime of Sunny Scheme.
 
 ## `sunny-macro`
-Scheme implemented as a rust macro.
+Scheme implementation in a Rust macro.
 
-Example:
+Example usage:
 
 ```rust
 #[test]
@@ -24,8 +24,15 @@ fn fibonacci() {
 }
 ``` 
 
+This is mostly a proof-of-concept; I'm actually amazed that a nearly complete subset
+of Scheme can be implemented in Rust macros at all.
+
+The limitations (listed below) curb the practical usefulness of this macro.
+And why would anybody want to write inline Scheme in Rust anyway?
+
 ### Limitations
-- Not yet fully implemented.
+- Only the most basic forms implemented.
+- Most of the standard library is missing.
 - No (guaranteed) tail call optimization.
 - Rust macros can only work with valid Rust token streams. Thus, it's not possible to 
 write, for example `'symbol` because that constitutes an invalid character literal. The 

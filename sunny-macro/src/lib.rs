@@ -1,3 +1,4 @@
+/// Evaluate a single Scheme expression.
 #[macro_export]
 macro_rules! scm {
     ((cond $($clauses:tt)+)) => { scm_cond![$($clauses)+] };
