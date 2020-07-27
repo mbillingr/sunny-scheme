@@ -3,6 +3,7 @@ macro_rules! scm {
     ((cond $($clauses:tt)+)) => { scm_cond![$($clauses)+] };
     ((define $($args:tt)*)) => { scm_definition![$($args)+] };
     ((set! $name:ident $value:tt)) => { $name.set(scm![$value]); };
+    ((let $defs:tt $($body:tt)+)) => { scm_let![$defs $($body)+] };
     ((if $($args:tt)*)) => { scm_alternative![$($args)+] };
     ((lambda $($args_and_body:tt)+)) => { scm_abstraction![$($args_and_body)+] };
     ((begin $($body:tt)+)) => { scm_sequence![$($body)+] };
@@ -17,7 +18,6 @@ macro_rules! scm {
     (false) => { Scm::False };
 
     ($x:ident) => {Scm::from(&$x)};
-
     ($x:expr) => {Scm::from($x)};
 }
 
@@ -29,6 +29,13 @@ macro_rules! scm_cond {
 
     (($test:tt $($body:tt)+) $($rest:tt)+) =>  {
         scm_alternative![$test (begin $($body)+) (cond $($rest)+)]
+    };
+}
+
+#[macro_export]
+macro_rules! scm_let {
+    (($(($var:ident $val:tt))*) $($body:tt)+) => {
+        scm_application![(lambda ($($var)*) $($body)+) $($val)*]
     };
 }
 
@@ -348,5 +355,22 @@ mod tests {
         assert_eq!(scm![(count 3)], Scm::symbol("few"));
         assert_eq!(scm![(count 7)], Scm::symbol("some"));
         assert_eq!(scm![(count 11)], Scm::symbol("many"));
+    }
+
+    #[test]
+    fn let_no_vars() {
+        assert_eq!(scm![(let () 0)], Scm::Int(0))
+    }
+
+    #[test]
+    fn let_one_var() {
+        assert_eq!(scm![(let ((x 1)) x)], Scm::Int(1))
+    }
+
+    #[test]
+    fn let_two_vars_do_not_interfere() {
+        scm![(define x 1)];
+        scm![(define y 2)];
+        assert_eq!(scm![(let ((x y) (y x)) (cons x y))], Scm::pair(2, 1))
     }
 }
