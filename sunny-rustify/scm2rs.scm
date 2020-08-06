@@ -3,6 +3,11 @@
         (scheme read)
         (scheme write))
 
+(define (program->ast exp*)
+  (define global-env (make-global-env))
+  (define ast (sexpr->sequence exp* global-env #f))
+  (make-program (cdr global-env) ast))
+
 (define (sexpr->ast exp env tail?)
   (if (atom? exp)
       (if (symbol? exp)
@@ -17,12 +22,12 @@
   (make-constant exp))
 
 (define (sexpr->reference name env)
-  (let ((var (lookup name env)))
+  (let ((var (ensure-var name env)))
     (make-reference name var)))
 
 (define (sexpr->assignment name exp env)
   (let ((val (sexpr->ast exp env #f))
-        (var (lookup name env)))
+        (var (ensure-var name env)))
     (variable-set-mutable! var)
     (make-assignment name var val)))
 
@@ -60,10 +65,15 @@
     `(CONSTANT ,val))
   (define (transform func)
     (func self (lambda () self)))
+  (define (gen-rust)
+    (display "Scm::from(")
+    (write val)
+    (display ")"))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'CONSTANT)
+          ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message CONSTANT" msg))))
   self)
 
@@ -72,10 +82,13 @@
     (list (variable-getter var) name))
   (define (transform func)
     (func self (lambda () self)))
+  (define (gen-rust)
+    (display name))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'REFERENCE)
+          ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message REFERENCE" msg))))
   self)
 
@@ -103,10 +116,21 @@
                       (func 'transform fnc)
                       (transform-list args fnc)
                       tail?))))
+  (define (gen-rust)
+    (define (gen-args a*)
+      (if (pair? a*)
+          (begin ((car a*) 'gen-rust)
+                 (display ", ")
+                 (gen-args (cdr a*)))))
+    (func 'gen-rust)
+    (display "(")
+    (gen-args args)
+    (display ")"))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'APPLICATION)
+          ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message APPLICATION" msg))))
   self)
 
@@ -118,10 +142,21 @@
     (func self
           (lambda ()
             (make-sequence (transform-list nodes func)))))
+  (define (gen-rust)
+    (define (gen-seq n*)
+      (if (pair? n*)
+          (begin ((car n*) 'gen-rust)
+                 (if (pair? (cdr n*))
+                     (display ";"))
+                 (gen-seq (cdr n*)))))
+    (display "{")
+    (gen-seq nodes)
+    (display "}"))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'SEQUENCE)
+          ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message SEQUENCE" msg))))
   self)
 
@@ -134,11 +169,58 @@
     (func self
           (lambda ()
             (make-abstraction params (body 'transform func)))))
+  (define (gen-rust)
+    (define (gen-params p*)
+      (if (pair? p*)
+          (begin (display (car p*))
+                 (display ", ")
+                 (gen-params (cdr p*)))))
+    (display "(|")
+    (gen-params params)
+    (display "|{")
+    (body 'gen-rust)
+    (display "})"))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'ABSTRACTION)
+          ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message ABSTRACTION" msg))))
+  self)
+
+(define (make-program globals body)
+  (define (print)
+    (cons 'PROGRAM
+          (cons globals
+                (body 'print))))
+  (define (transform func)
+    (func self
+          (lambda ()
+            (make-program globals (body 'transform func)))))
+  (define (gen-global-defs g)
+    (if (null? g)
+        (newline)
+        (if (not (global-imported? (cdar g)))
+            (begin (display "thread_local!{pub static ")
+                   (display (rustify-identifier (caar g)))
+                   (display ": Cell<Scm> = Cell::new(Scm::Nil)}")
+                   (newline)
+                   (gen-global-defs (cdr g))))))
+  (define (gen-rust)
+    (gen-global-defs globals)
+    (display "fn main() {")
+    (newline)
+    (body 'gen-rust)
+    (display ";")
+    (newline)
+    (display "}")
+    (newline))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'PROGRAM)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message PROGRAM" msg))))
   self)
 
 (define (print-list seq)
@@ -154,16 +236,53 @@
       '()))
 
 
+(define (rustify-identifier name)
+  (define (char-map ch)
+    (cond ((eq? ch #\_) "__")
+          ((eq? ch #\?) "_p")
+          ((eq? ch #\!) "_i")
+          ((eq? ch #\<) "_l_")
+          ((eq? ch #\>) "_g_")
+          ((eq? ch #\=) "_e_")
+          ((eq? ch #\-) "_minus_")
+          ((eq? ch #\+) "_plus_")
+          ((eq? ch #\*) "_star_")
+          ((eq? ch #\/) "_slash_")
+          (else (list->string (list ch)))))
+  (define (append-all strs)
+    (if (null? strs)
+        ""
+        (string-append (car strs) (append-all (cdr strs)))))
+  (append-all (map char-map (string->list (symbol->string name)))))
+
+(define (make-global-env)
+  (list 'GLOBAL-MARKER
+        (new-import 'display)))
+
+(define (ensure-var name env)
+  (let ((var (lookup name env)))
+    (if var
+        var
+        (adjoin-global name env))))
+
 (define (lookup name env)
   (cond ((null? env)
-         (adjoin-global name))
+         #f)
+        ((eq? 'GLOBAL-MARKER (car env))
+         (lookup name (cdr env)))
         ((eq? name (caar env))
          (cdar env))
         (else (lookup name (cdr env)))))
 
-(define (adjoin-global name)
-  (let ((var (new-global name)))
-    (set! global-env (cons var global-env))
+(define (find-globals env)
+  (if (eq? 'GLOBAL-MARKER (car env))
+      env
+      (find-globals (cdr env))))
+
+(define (adjoin-global name env)
+  (let ((genv (find-globals env))
+        (var (new-global name)))
+    (set-cdr! genv (cons var (cdr genv)))
     (cdr var)))
 
 (define (adjoin-local name env)
@@ -175,6 +294,9 @@
                                          (adjoin-local (car name*) env)))
         (else (adjoin-local name* env))))
 
+
+(define (new-import name)
+  (cons name (variable 'GLOBAL-REF 'IMPORT-SET #f)))
 
 (define (new-global name)
   (cons name (variable 'GLOBAL-REF 'GLOBAL-SET #f)))
@@ -197,6 +319,10 @@
 (define (variable-set-mutable! var)
   (set-car! (cddr var) #t))
 
+(define (global-imported? var)
+  (eq? 'IMPORT-SET
+       (cadr var)))
+
 
 (define (atom? x)
   (not (pair? x)))
@@ -208,15 +334,15 @@
   (display "]"))
 
 
-(define program (read))
+(define (load-sexpr)
+  (let ((expr (read)))
+    (if (eof-object? expr)
+        '()
+        (cons expr (load-sexpr)))))
 
-(define global-env (list (new-global 'x) (new-global '+)))
+(define program (load-sexpr))
 
-(define ast (sexpr->ast program global-env #t))
-
-
-(display global-env)
-(newline)
+(define ast (program->ast program))
 
 (newline)
 (display (ast 'print))
@@ -229,11 +355,13 @@
   (if (eq? 'CONSTANT (ast 'kind))
       (make-constant '<zero>)
       (ignore)))
-(set! ast (ast 'transform zero-out))
+(define ast2 (ast 'transform zero-out))
 
 (newline)
-(display (ast 'print))
+(display (ast2 'print))
 (newline)
 
 (display "=====================")
 (newline)
+
+(ast 'gen-rust)
