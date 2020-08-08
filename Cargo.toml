@@ -2,6 +2,7 @@
 
 members = [
     "sunny-core",
-    "sunny-macro"
+    "sunny-macro",
+    "sunny-rustify",
 ]
 

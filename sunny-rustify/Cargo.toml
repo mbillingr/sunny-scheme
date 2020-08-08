@@ -1,0 +1,17 @@
+[package]
+name = "sunny-rustify"
+version = "0.1.0"
+authors = ["Martin Billinger <mbillingr@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["leaking"]
+
+leaking = ["sunny-core/leaking", "scm_copy"]
+scm_copy = ["sunny-core/scm_copy"]
+
+[dependencies]
+sunny-core = {path="../sunny-core"}
+rustfmt = "0.10"

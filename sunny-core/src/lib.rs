@@ -112,7 +112,7 @@ impl std::fmt::Debug for Scm {
             Scm::Symbol(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{:?}", x),
             Scm::Pair(p) => write!(f, "({:?} . {:?})", p.0, p.1),
-            Scm::Func(x) => write!(f, "<procedure {:p}>", &**x),
+            Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
         }
     }
 }
