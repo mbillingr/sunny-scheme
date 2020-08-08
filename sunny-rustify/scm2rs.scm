@@ -16,7 +16,7 @@
       (cond ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env))
             ((eq? 'lambda (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env))
             ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp) env tail?))
-            (else (sexpr->application (car exp) (cdr exp) env tail?)))))
+            (else (sexpr->application exp (car exp) (cdr exp) env tail?)))))
 
 (define (sexpr->constant exp env)
   (make-constant exp))
@@ -31,10 +31,10 @@
     (variable-set-mutable! var)
     (make-assignment name var val)))
 
-(define (sexpr->application func arg* env tail?)
+(define (sexpr->application expr func arg* env tail?)
   (let ((func (sexpr->ast func env #f))
         (args (sexpr->args arg* env)))
-    (make-application func args tail?)))
+    (make-application expr func args tail?)))
 
 (define (sexpr->args arg* env)
   (if (null? arg*)
@@ -111,7 +111,7 @@
           (else (error "Unknown message SET" msg))))
   self)
 
-(define (make-application func args tail?)
+(define (make-application expr func args tail?)
   (define (print)
     (cons (if tail? 'APPLY-TC 'APPLY)
           (cons (func 'print)
@@ -128,6 +128,10 @@
           (begin ((car a*) 'gen-rust)
                  (display ", ")
                  (gen-args (cdr a*)))))
+    (newline)
+    (display "//")
+    (write expr)
+    (newline)
     (func 'gen-rust)
     (display ".invoke(&[")
     (gen-args args)
@@ -334,12 +338,6 @@
 
 (define (atom? x)
   (not (pair? x)))
-
-
-(define (CONSTANT value)
-  (display "scm![")
-  (write value)
-  (display "]"))
 
 
 (define (load-sexpr)
