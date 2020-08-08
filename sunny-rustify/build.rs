@@ -30,12 +30,7 @@ fn main() {
 
     fs::write(&dest_path, output.stdout).unwrap();
 
-    let rustfmt = Command::new("rustfmt")
+    let _ = Command::new("rustfmt")
         .arg(&dest_path)
-        .output()
-        .unwrap();
-
-    if !rustfmt.status.success() {
-        panic!("{}", String::from_utf8(rustfmt.stderr).unwrap());
-    }
+        .output();
 }
