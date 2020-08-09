@@ -1,5 +1,5 @@
-use sunny_core::Scm;
 use std::cell::Cell;
+use sunny_core::Scm;
 
 include!(concat!(env!("OUT_DIR"), "/hello.rs"));
 

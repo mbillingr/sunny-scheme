@@ -16,10 +16,12 @@ fn main() {
     cmd.stdin
         .as_mut()
         .unwrap()
-        .write_all(b"
+        .write_all(
+            b"
 (define foo 40)
 (define (println x) (display x) (newline))
-(println ((lambda (x) (+ x 2)) foo))")
+(println ((lambda (x) (+ x 2)) foo))",
+        )
         .unwrap();
 
     let output = cmd.wait_with_output().unwrap();
@@ -33,7 +35,5 @@ fn main() {
         panic!("{}", String::from_utf8(output.stderr).unwrap());
     }
 
-    let _ = Command::new("rustfmt")
-        .arg(&dest_path)
-        .output();
+    let _ = Command::new("rustfmt").arg(&dest_path).output();
 }

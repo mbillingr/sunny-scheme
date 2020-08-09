@@ -50,9 +50,21 @@
       (make-assignment exp name var val))))
 
 (define (sexpr->application expr func arg* env tail?)
+  (if (and (pair? func)
+           (eq? (car func) 'lambda))
+      (sexpr->fixlet expr (cadr func) (cddr func) arg* env tail?)
+      (sexpr->regular-application expr func arg* env tail?)))
+
+(define (sexpr->regular-application expr func arg* env tail?)
   (let ((func (sexpr->ast func env #f))
         (args (sexpr->args arg* env)))
     (make-application expr func args tail?)))
+
+(define (sexpr->fixlet expr param* body arg* env tail?)
+  (let ((local-env (adjoin-local-env param* env)))
+    (let ((args (sexpr->args arg* env))
+          (func-body (sexpr->sequence body local-env tail?)))
+      (make-fixlet expr param* func-body args))))
 
 (define (sexpr->args arg* env)
   (if (null? arg*)
@@ -62,7 +74,6 @@
 
 (define (sexpr->abstraction param* body env)
   (let ((local-env (adjoin-local-env param* env)))
-    ;(list 'LAMBDA name* (meaning-sequence body local-env #t))))
     (make-abstraction param* (sexpr->sequence body local-env #t))))
 
 (define (sexpr->sequence expr* env tail?)
@@ -174,6 +185,49 @@
           ((eq? 'kind msg) 'APPLICATION)
           ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message APPLICATION" msg))))
+  self)
+
+(define (make-fixlet expr params body args)
+  (define (print)
+    (cons params
+          (cons (print-list args)
+                (body 'print))))
+  (define (transform fnc)
+    (fnc self
+         (lambda () (make-fixlet
+                      expr params
+                      (body 'transform fnc)
+                      (transform-list args fnc)))))
+  (define (gen-rust)
+    (define (gen-args a*)
+      (if (pair? a*)
+          (begin ((car a*) 'gen-rust)
+                 (display ", ")
+                 (gen-args (cdr a*)))))
+    (define (gen-params p*)
+      (if (pair? p*)
+          (begin (display (rustify-identifier (car p*)))
+                 (display ", ")
+                 (gen-params (cdr p*)))))
+    (newline)
+    (display "//")
+    (write expr)
+    (newline)
+
+    (display "(|")
+    (gen-params params)
+    (display "| {")
+    (body 'gen-rust)
+    (display "})")
+    (display "(")
+    (gen-args args)
+    (display ")"))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'FIXLET)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message FIXLET" msg))))
   self)
 
 (define (make-sequence nodes)
