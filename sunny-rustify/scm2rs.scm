@@ -56,9 +56,9 @@
       (sexpr->regular-application expr func arg* env tail?)))
 
 (define (sexpr->regular-application expr func arg* env tail?)
-  (let ((func (sexpr->ast func env #f))
-        (args (sexpr->args arg* env)))
-    (make-application expr func args tail?)))
+  (let ((func (sexpr->ast func env #f)))
+    (let ((args (sexpr->args arg* env)))
+      (make-application expr func args tail?))))
 
 (define (sexpr->fixlet expr param* body arg* env tail?)
   (let ((local-env (adjoin-local-env param* env)))
