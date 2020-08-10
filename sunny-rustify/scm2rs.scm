@@ -17,6 +17,7 @@
             ((eq? 'define (car exp)) (sexpr->definition exp env))
             ((eq? 'lambda (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env))
             ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp) env tail?))
+            ((eq? 'let* (car exp)) (sexpr->let* (cadr exp) (cddr exp) env tail?))
             (else (sexpr->application exp (car exp) (cdr exp) env tail?)))))
 
 (define (sexpr->constant exp env)
@@ -71,6 +72,16 @@
       '()
       (cons (sexpr->ast (car arg*) env #f)
             (sexpr->args (cdr arg*) env))))
+
+(define (sexpr->let* bindings body env tail?)
+  (if (pair? bindings)
+      (let ((var (caar bindings))
+            (val (cadar bindings)))
+        (let ((local-env (adjoin-local-env `(,var) env)))
+          (make-simplelet var
+                          (sexpr->ast val env #f)
+                          (sexpr->let* (cdr bindings) body local-env tail?))))
+      (sexpr->sequence body env tail?)))
 
 (define (sexpr->abstraction param* body env)
   (let ((local-env (adjoin-local-env param* env)))
@@ -222,6 +233,33 @@
     (display "(")
     (gen-args args)
     (display ")"))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'FIXLET)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message FIXLET" msg))))
+  self)
+
+(define (make-simplelet var val body)
+  (define (print)
+    (cons 'SIMPLELET
+          (cons (list var (val 'print))
+                (body 'print))))
+  (define (transform fnc)
+    (fnc self
+         (lambda () (make-simplelet
+                      var
+                      (val 'transform fnc)
+                      (body 'transform fnc)))))
+  (define (gen-rust)
+    (display "{ let ")
+    (display var)
+    (display " = ")
+    (val 'gen-rust)
+    (display "; ")
+    (body 'gen-rust)
+    (display "}"))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))

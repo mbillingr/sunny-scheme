@@ -20,7 +20,9 @@ fn main() {
             b"
 (define foo 40)
 (define (println x) (display x) (newline))
-(println ((lambda (x) (+ x 2)) foo))",
+(println ((lambda (x) (+ x 2)) foo))
+(let* ((x 1) (y 2))
+  (println (+ x y)))",
         )
         .unwrap();
 
