@@ -11,7 +11,6 @@ mod scheme {
 
         thread_local! {pub static display: Cell<Scm> = Cell::new(Scm::func(_display))}
         thread_local! {pub static newline: Cell<Scm> = Cell::new(Scm::func(_newline))}
-        thread_local! {pub static _plus_: Cell<Scm> = Cell::new(Scm::func(sunny_core::add))}
 
         fn _display(args: &[Scm]) -> Scm {
             print!("{:?}", args[0]);
@@ -22,5 +21,14 @@ mod scheme {
             println!();
             Scm::Nil
         }
+    }
+
+    pub mod sunny_helpers {
+        use std::cell::Cell;
+        use sunny_core::{self, Scm};
+
+        thread_local! {pub static _e_: Cell<Scm> = Cell::new(Scm::func(sunny_core::is_numeq))}
+        thread_local! {pub static _minus_: Cell<Scm> = Cell::new(Scm::func(sunny_core::sub))}
+        thread_local! {pub static _plus_: Cell<Scm> = Cell::new(Scm::func(sunny_core::add))}
     }
 }

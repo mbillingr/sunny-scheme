@@ -20,6 +20,7 @@
             ((eq? 'let (car exp)) (sexpr->scope-let exp (cadr exp) (cddr exp) env tail?))
             ((eq? 'let* (car exp)) (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))
             ((eq? 'letrec (car exp)) (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))
+            ((eq? 'if (car exp)) (sexpr-alternative (cadr exp) (caddr exp) (cadddr exp) env tail?))
             (else (sexpr->application exp (car exp) (cdr exp) env tail?)))))
 
 (define (sexpr->constant exp env)
@@ -51,6 +52,11 @@
     (let ((val (sexpr->ast value env #f))
           (var (ensure-var name env)))
       (make-assignment exp name var val))))
+
+(define (sexpr-alternative condition consequent alternative env tail?)
+  (make-alternative (sexpr->ast condition env #f)
+                    (sexpr->ast consequent env tail?)
+                    (sexpr->ast alternative env tail?)))
 
 (define (sexpr->application expr func arg* env tail?)
   (if (and (pair? func)
@@ -93,7 +99,7 @@
 
 (define (sexpr->scope-rec bindings body env tail?)
   (let* ((body-env
-           (adjoin-local-env
+           (adjoin-boxed-env
              (map (lambda (b) (car b)) bindings)
              env))
          (transformed-bindings
@@ -133,7 +139,9 @@
     (func self (lambda () self)))
   (define (gen-rust)
     (display "Scm::from(")
-    (write val)
+    (cond ((eq? val #t) (display "true"))
+          ((eq? val #f) (display "false"))
+          (else (write val)))
     (display ")"))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
@@ -153,6 +161,9 @@
       (cond ((eq? 'GLOBAL-REF getter)
              (display (rustify-identifier name))
              (display ".with(|value| value.get())"))
+            ((eq? 'BOXED-REF getter)
+             (display (rustify-identifier name))
+             (display ".get()"))
             (else (display (rustify-identifier name))))))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
@@ -189,6 +200,30 @@
           ((eq? 'kind msg) 'ASSIGNMENT)
           ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message ASSIGNMENT" msg))))
+  self)
+
+(define (make-alternative condition consequent alternative)
+  (define (print)
+    (list 'IF (condition 'print) (consequent 'print) (alternative 'print)))
+  (define (transform func)
+    (func self (lambda ()
+                 (make-alternative (condition 'transform func)
+                                   (consequent 'transform func)
+                                   (alternative 'transform func)))))
+  (define (gen-rust)
+    (display "if (")
+    (condition 'gen-rust)
+    (display ").is_true() {")
+    (consequent 'gen-rust)
+    (display "} else {")
+    (alternative 'gen-rust)
+    (display "}"))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'ALTERNATIVE)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message ALTERNATIVE" msg))))
   self)
 
 (define (make-application expr func args tail?)
@@ -289,7 +324,7 @@
                       (body 'transform fnc)))))
   (define (gen-bindings-seq bindings)
     (for-each (lambda (b) (display "let ")
-                          (display (car b))
+                          (display (rustify-identifier (car b)))
                           (display " = ")
                           ((cdr b) 'gen-rust)
                           (display ";")
@@ -297,14 +332,14 @@
               bindings))
   (define (gen-bindings-rec bindings)
     (for-each (lambda (b) (display "let ")
-                          (display (car b))
-                          (display ";")
+                          (display (rustify-identifier (car b)))
+                          (display " = Scm::uninitialized().into_boxed();")
                           (newline))
               bindings)
-    (for-each (lambda (b) (display (car b))
-                          (display " = ")
+    (for-each (lambda (b) (display (rustify-identifier (car b)))
+                          (display ".set(")
                           ((cdr b) 'gen-rust)
-                          (display ";")
+                          (display ");")
                           (newline))
               bindings))
   (define (gen-rust)
@@ -364,7 +399,7 @@
           (begin (display (rustify-identifier (car p*)))
                  (display ", ")
                  (gen-params (cdr p*)))))
-    (display "Scm::func(|args: &[Scm]| match args {&[")
+    (display "Scm::func(move |args: &[Scm]| match args {&[")
     (gen-params params)
     (display "] => {")
     (body 'gen-rust)
@@ -397,6 +432,7 @@
                    (gen-global-defs (cdr g))))))
   (define (gen-rust)
     (display "use scheme::write::*;")
+    (display "use scheme::sunny_helpers::*;")
     (gen-global-defs globals)
     (display "fn main() {")
     (newline)
@@ -449,7 +485,9 @@
   (list 'GLOBAL-MARKER
         (new-import 'display)
         (new-import 'newline)
-        (new-import '+)))
+        (new-import '=)
+        (new-import '+)
+        (new-import '-)))
 
 (define (ensure-var name env)
   (let ((var (lookup name env)))
@@ -486,6 +524,15 @@
                                          (adjoin-local (car name*) env)))
         (else (adjoin-local name* env))))
 
+(define (adjoin-boxed name env)
+  (cons (new-boxed name) env))
+
+(define (adjoin-boxed-env name* env)
+  (cond ((null? name*) env)
+        ((pair? name*) (adjoin-boxed-env (cdr name*)
+                                         (adjoin-boxed (car name*) env)))
+        (else (adjoin-boxed name* env))))
+
 
 (define (new-import name)
   (cons name (variable 'GLOBAL-REF 'IMPORT-SET #f)))
@@ -495,6 +542,9 @@
 
 (define (new-local name)
   (cons name (variable 'LOCAL-REF 'LOCAL-SET #f)))
+
+(define (new-boxed name)
+  (cons name (variable 'BOXED-REF 'BOXED-SET #f)))
 
 (define (variable getter setter mut?)
   (list getter setter mut?))

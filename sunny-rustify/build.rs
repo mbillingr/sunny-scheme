@@ -19,10 +19,29 @@ fn main() {
         .write_all(
             b"
 (define foo 40)
+
 (define (println x) (display x) (newline))
+
 (println ((lambda (x) (+ x 2)) foo))
-(let* ((x 1) (y 2))
-  (println (+ x y)))",
+
+(let ((x 1) (y 2))
+  (println (+ x y)))
+
+(letrec ((even? (lambda (x)
+                  (if (= x 0)
+                      #t
+                      (if (= x 1)
+                          #f
+                          (odd? (- x 1))))))
+         (odd? (lambda (x)
+                 (if (= x 0)
+                     #f
+                     (if (= x 1)
+                         #t
+                         (even? (- x 1)))))))
+   (println (odd? 42)))
+
+",
         )
         .unwrap();
 

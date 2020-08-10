@@ -17,6 +17,10 @@ pub enum Scm {
 }
 
 impl Scm {
+    pub fn uninitialized() -> Self {
+        Scm::symbol("*UNINITIALIZED*")
+    }
+
     pub fn into_boxed(self) -> BoxedScm {
         make_ref!(Mut::new(self))
     }
@@ -29,6 +33,13 @@ impl Scm {
     #[cfg(not(feature = "scm_copy"))]
     pub fn duplicate(&self) -> Self {
         self.clone()
+    }
+
+    pub fn bool(b: bool) -> Self {
+        match b {
+            true => Self::True,
+            false => Self::False,
+        }
     }
 
     pub fn symbol(s: &str) -> Self {
@@ -55,6 +66,12 @@ impl Scm {
             Scm::Func(func) => func(args),
             _ => panic!("Attempt to call {:?}", self),
         }
+    }
+}
+
+impl From<bool> for Scm {
+    fn from(b: bool) -> Self {
+        Scm::bool(b)
     }
 }
 
@@ -121,6 +138,13 @@ pub fn cons(args: &[Scm]) -> Scm {
     match args {
         [car, cdr] => Scm::pair(car.duplicate(), cdr.duplicate()),
         _ => panic!("Incorrect arity: cons {:?}", args),
+    }
+}
+
+pub fn is_numeq(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Int(x), Scm::Int(y)] => Scm::from(x == y),
+        _ => panic!("Cannot add {:?}", args),
     }
 }
 
