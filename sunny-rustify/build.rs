@@ -11,7 +11,7 @@ fn main() {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .unwrap();
+        .expect("Could not call Scheme interpreter");
 
     cmd.stdin
         .as_mut()
@@ -29,7 +29,7 @@ fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("hello.rs");
 
-    fs::write(&dest_path, output.stdout).unwrap();
+    fs::write(&dest_path, output.stdout).expect("Error writing destination file");
 
     if !output.status.success() {
         panic!("{}", String::from_utf8(output.stderr).unwrap());
