@@ -1,6 +1,7 @@
 mod memory_model;
 
 use memory_model::prelude::*;
+pub use memory_model::prelude::Mut;
 
 pub type BoxedScm = Ref<Mut<Scm>>;
 

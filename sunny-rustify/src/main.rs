@@ -1,5 +1,5 @@
 use std::cell::Cell;
-use sunny_core::Scm;
+use sunny_core::{Scm, Mut};
 
 include!(concat!(env!("OUT_DIR"), "/hello.rs"));
 
@@ -7,10 +7,10 @@ include!(concat!(env!("OUT_DIR"), "/hello.rs"));
 mod scheme {
     pub mod write {
         use std::cell::Cell;
-        use sunny_core::{self, Scm};
+        use sunny_core::{self, Scm, Mut};
 
-        thread_local! {pub static display: Cell<Scm> = Cell::new(Scm::func(_display))}
-        thread_local! {pub static newline: Cell<Scm> = Cell::new(Scm::func(_newline))}
+        thread_local! {pub static display: Mut<Scm> = Mut::new(Scm::func(_display))}
+        thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
 
         fn _display(args: &[Scm]) -> Scm {
             print!("{:?}", args[0]);
@@ -25,10 +25,10 @@ mod scheme {
 
     pub mod sunny_helpers {
         use std::cell::Cell;
-        use sunny_core::{self, Scm};
+        use sunny_core::{self, Scm, Mut};
 
-        thread_local! {pub static _e_: Cell<Scm> = Cell::new(Scm::func(sunny_core::is_numeq))}
-        thread_local! {pub static _minus_: Cell<Scm> = Cell::new(Scm::func(sunny_core::sub))}
-        thread_local! {pub static _plus_: Cell<Scm> = Cell::new(Scm::func(sunny_core::add))}
+        thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
+        thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
+        thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
     }
 }
