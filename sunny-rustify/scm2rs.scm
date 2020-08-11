@@ -13,15 +13,38 @@
       (if (symbol? exp)
           (sexpr->reference exp env)
           (sexpr->constant exp env))
-      (cond ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env))
-            ((eq? 'define (car exp)) (sexpr->definition exp env))
-            ((eq? 'lambda (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env))
-            ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp) env tail?))
-            ((eq? 'let (car exp)) (sexpr->scope-let exp (cadr exp) (cddr exp) env tail?))
-            ((eq? 'let* (car exp)) (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))
-            ((eq? 'letrec (car exp)) (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))
-            ((eq? 'if (car exp)) (sexpr-alternative (cadr exp) (caddr exp) (cadddr exp) env tail?))
-            (else (sexpr->application exp (car exp) (cdr exp) env tail?)))))
+      (cond ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp)
+                                                      (caddr exp)
+                                                      env))
+            ((eq? 'define (car exp)) (wrap-sexpr exp
+                                       (sexpr->definition exp env)))
+            ((eq? 'lambda (car exp)) (sexpr->abstraction (cadr exp)
+                                                         (cddr exp)
+                                                         env))
+            ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp)
+                                                     env tail?))
+            ((eq? 'let (car exp)) (wrap-sexpr exp
+                                    (sexpr->scope-let (cadr exp)
+                                                      (cddr exp)
+                                                      env tail?)))
+            ((eq? 'let* (car exp)) (wrap-sexpr exp
+                                     (sexpr->scope-seq (cadr exp)
+                                                       (cddr exp)
+                                                       env tail?)))
+            ((eq? 'letrec (car exp)) (wrap-sexpr exp
+                                       (sexpr->scope-rec (cadr exp)
+                                                         (cddr exp)
+                                                         env tail?)))
+            ((eq? 'if (car exp)) (sexpr-alternative (cadr exp)
+                                                    (caddr exp)
+                                                    (cadddr exp)
+                                                    env tail?))
+            (else (wrap-sexpr exp (sexpr->application (car exp)
+                                                      (cdr exp)
+                                                      env tail?))))))
+
+(define (wrap-sexpr exp node)
+  (make-comment exp node))
 
 (define (sexpr->constant exp env)
   (make-constant exp))
@@ -38,7 +61,7 @@
     (if (not var)
         (error "Undefined variable" name))
     (variable-set-mutable! var)
-    (make-assignment #f name var val)))
+    (make-assignment name var val)))
 
 (define (sexpr->definition exp env)
   (let ((name (if (symbol? (cadr exp))
@@ -51,29 +74,29 @@
                                (cddr exp))))))
     (let ((val (sexpr->ast value env #f))
           (var (ensure-var name env)))
-      (make-assignment exp name var val))))
+      (make-assignment name var val))))
 
 (define (sexpr-alternative condition consequent alternative env tail?)
   (make-alternative (sexpr->ast condition env #f)
                     (sexpr->ast consequent env tail?)
                     (sexpr->ast alternative env tail?)))
 
-(define (sexpr->application expr func arg* env tail?)
+(define (sexpr->application func arg* env tail?)
   (if (and (pair? func)
            (eq? (car func) 'lambda))
-      (sexpr->fixlet expr (cadr func) (cddr func) arg* env tail?)
-      (sexpr->regular-application expr func arg* env tail?)))
+      (sexpr->fixlet (cadr func) (cddr func) arg* env tail?)
+      (sexpr->regular-application func arg* env tail?)))
 
-(define (sexpr->regular-application expr func arg* env tail?)
+(define (sexpr->regular-application func arg* env tail?)
   (let ((func (sexpr->ast func env #f)))
     (let ((args (sexpr->args arg* env)))
-      (make-application expr func args tail?))))
+      (make-application func args tail?))))
 
-(define (sexpr->fixlet expr param* body arg* env tail?)
+(define (sexpr->fixlet param* body arg* env tail?)
   (let ((local-env (adjoin-local-env param* env)))
     (let ((args (sexpr->args arg* env))
           (func-body (sexpr->sequence body local-env tail?)))
-      (make-fixlet expr param* func-body args))))
+      (make-fixlet param* func-body args))))
 
 (define (sexpr->args arg* env)
   (if (null? arg*)
@@ -110,10 +133,10 @@
     (make-scope 'rec transformed-bindings
                 (sexpr->sequence body body-env tail?))))
 
-(define (sexpr->scope-let expr bindings body env tail?)
+(define (sexpr->scope-let bindings body env tail?)
   (let* ((param* (map (lambda (b) (car b)) bindings))
          (arg* (map (lambda (b) (cadr b)) bindings)))
-    (sexpr->fixlet expr param* body arg* env tail?)))
+    (sexpr->fixlet param* body arg* env tail?)))
 
 (define (sexpr->abstraction param* body env)
   (let ((local-env (adjoin-local-env param* env)))
@@ -131,6 +154,30 @@
       (sexpr->ast (car expr*) env tail?)
       (make-sequence (convert-all expr*))))
 
+
+(define (make-comment comment node)
+  (define (print)
+    (newline)
+    (display "; ")
+    (write comment)
+    (newline)
+    (node 'print))
+  (define (transform func)
+    (func self (lambda () (make-comment comment
+                                        (node 'transform func)))))
+  (define (gen-rust)
+    (newline)
+    (display "// ")
+    (write comment)
+    (newline)
+    (node 'gen-rust))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'COMMENT)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message COMMENT" msg))))
+  self)
 
 (define (make-constant val)
   (define (print)
@@ -173,20 +220,15 @@
           (else (error "Unknown message REFERENCE" msg))))
   self)
 
-(define (make-assignment expr name var val)
+(define (make-assignment name var val)
   (define (print)
     (list (variable-setter var) name (val 'print)))
   (define (transform func)
     (func self
-          (lambda () (make-assignment (rustify-identifier name)
+          (lambda () (make-assignment name
                                       var
                                       (val 'transform func)))))
   (define (gen-rust)
-    (if expr
-        (begin (newline)
-               (display "//")
-               (write expr)
-               (newline)))
     (let ((setter (variable-setter var)))
       (cond ((eq? 'GLOBAL-SET setter)
              (display (rustify-identifier name))
@@ -226,7 +268,7 @@
           (else (error "Unknown message ALTERNATIVE" msg))))
   self)
 
-(define (make-application expr func args tail?)
+(define (make-application func args tail?)
   (define (print)
     (cons (if tail? 'APPLY-TC 'APPLY)
           (cons (func 'print)
@@ -243,10 +285,6 @@
           (begin ((car a*) 'gen-rust)
                  (display ", ")
                  (gen-args (cdr a*)))))
-    (newline)
-    (display "//")
-    (write expr)
-    (newline)
     (func 'gen-rust)
     (display ".invoke(&[")
     (gen-args args)
@@ -259,7 +297,7 @@
           (else (error "Unknown message APPLICATION" msg))))
   self)
 
-(define (make-fixlet expr params body args)
+(define (make-fixlet params body args)
   (define (print)
     (cons params
           (cons (print-list args)
@@ -267,7 +305,7 @@
   (define (transform fnc)
     (fnc self
          (lambda () (make-fixlet
-                      expr params
+                      params
                       (body 'transform fnc)
                       (transform-list args fnc)))))
   (define (gen-rust)
@@ -281,11 +319,6 @@
           (begin (display (rustify-identifier (car p*)))
                  (display ", ")
                  (gen-params (cdr p*)))))
-    (newline)
-    (display "//")
-    (write expr)
-    (newline)
-
     (display "(|")
     (gen-params params)
     (display "| {")
