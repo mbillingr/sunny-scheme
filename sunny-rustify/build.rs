@@ -26,7 +26,7 @@ fn main() {
 
 (let ((x 1) (y 2))
   (println (+ x y)))
-
+"/*
 (letrec ((even? (lambda (x)
                   (if (= x 0)
                       #t
@@ -41,7 +41,7 @@ fn main() {
                          (even? (- x 1)))))))
    (println (odd? 42)))
 
-",
+"*/,
         )
         .unwrap();
 
