@@ -1,13 +1,11 @@
-use std::cell::Cell;
-use sunny_core::{Scm, Mut};
+use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};
 
 include!(concat!(env!("OUT_DIR"), "/hello.rs"));
 
 #[allow(non_upper_case_globals)]
 mod scheme {
     pub mod write {
-        use std::cell::Cell;
-        use sunny_core::{self, Scm, Mut};
+        use sunny_core::{self, Mut, Scm};
 
         thread_local! {pub static display: Mut<Scm> = Mut::new(Scm::func(_display))}
         thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
@@ -24,8 +22,7 @@ mod scheme {
     }
 
     pub mod sunny_helpers {
-        use std::cell::Cell;
-        use sunny_core::{self, Scm, Mut};
+        use sunny_core::{self, Mut, Scm};
 
         thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
         thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}

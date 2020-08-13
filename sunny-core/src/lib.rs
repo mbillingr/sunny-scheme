@@ -1,9 +1,11 @@
 mod memory_model;
 
-use memory_model::prelude::*;
 pub use memory_model::prelude::Mut;
+use memory_model::prelude::*;
 
-pub type BoxedScm = Ref<Mut<Scm>>;
+pub type BoxedScm = Boxed<Scm>;
+
+pub const MEMORY_MODEL_KIND: &'static str = memory_model::KIND;
 
 #[derive(Clone)]
 #[cfg_attr(feature = "scm_copy", derive(Copy))]
@@ -23,7 +25,7 @@ impl Scm {
     }
 
     pub fn into_boxed(self) -> BoxedScm {
-        make_ref!(Mut::new(self))
+        BoxedScm::new(self)
     }
 
     #[cfg(feature = "scm_copy")]
