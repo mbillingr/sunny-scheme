@@ -203,13 +203,17 @@
   self)
 
 (define (make-reference name var)
+  (define (global?)
+    (eq? 'GLOBAL-REF (variable-getter var)))
   (define (print)
     (list (variable-getter var) name))
   (define (transform func)
     (func self (lambda () self)))
   (define (free-vars)
-    (set-add (make-set)
-             name))
+    (if (not (global?))
+        (set-add (make-set)
+                 name)
+        (make-set)))
   (define (gen-rust)
     (let ((getter (variable-getter var)))
       (cond ((eq? 'GLOBAL-REF getter)
@@ -496,21 +500,30 @@
   (define (free-vars)
     (set-remove* (body 'free-vars)
                  params))
+  (define (prepare-closure free-vars)
+    (if (pair? free-vars)
+        (let ((name (car free-vars)))
+          (display "let ")
+          (display (rustify-identifier name))
+          (display " = ")
+          (display (rustify-identifier name))
+          (display ".clone();")
+          (prepare-closure (cdr free-vars)))))
   (define (gen-rust)
     (define (gen-params p*)
       (if (pair? p*)
           (begin (display (rustify-identifier (car p*)))
                  (display ", ")
                  (gen-params (cdr p*)))))
-    ;(newline)
-    ;(display "// free vars:")
-    ;(display (free-vars))
-    (newline)
-    (display "Scm::func(move |args: &[Scm]| match &args {&[")
-    (gen-params params)
-    (display "] => {")
-    (body 'gen-rust)
-    (display "} _ => panic!(\"invalid arity\")})"))
+    (rust-block
+      (lambda ()
+        (prepare-closure (free-vars))
+        (display "Scm::func(move |args: &[Scm]| match &args {&[")
+        (gen-params params)
+        (display "] => ")
+        (rust-block (lambda ()
+                      (body 'gen-rust)))
+        (display " _ => panic!(\"invalid arity\")})"))))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
@@ -542,12 +555,12 @@
     (display "use scheme::write::*;")
     (display "use scheme::sunny_helpers::*;")
     (gen-global-defs globals)
-    (display "fn main() {")
-    (newline)
-    (body 'gen-rust)
-    (display ";")
-    (newline)
-    (display "}")
+    (display "fn main()")
+    (rust-block (lambda ()
+                  (newline)
+                  (body 'gen-rust)
+                  (display ";")
+                  (newline)))
     (newline))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
@@ -574,6 +587,12 @@
       (append ((car seq) 'free-vars local-env)
               (list-find-free-vars (cdr seq) local-env))
       '()))
+
+
+(define (rust-block code)
+  (display "{")
+  (code)
+  (display "}"))
 
 
 (define (rustify-identifier name)
@@ -683,6 +702,49 @@
 (define (atom? x)
   (not (pair? x)))
 
+
+;------------------------------------------------------------
+; quick and dirty implementation of sets as a unordered list
+
+(define (make-set)
+  '())
+
+(define (set-add set item)
+  (cond ((null? set)
+         (cons item '()))
+        ((eq? (car set) item)
+         set)
+        (else (cons (car set)
+                    (set-add (cdr set) item)))))
+
+(define (set-remove set item)
+  (cond ((null? set)
+         '())
+        ((eq? (car set) item)
+         (cdr set))
+        (else (cons (car set)
+                    (set-remove (cdr set) item)))))
+
+(define (set-add* set item*)
+  (set-do* set-add set item*))
+
+(define (set-remove* set item*)
+  (set-do* set-remove set item*))
+
+(define (set-do* func set item*)
+  (if (null? item*)
+      set
+      (set-do* func
+               (func set (car item*))
+               (cdr item*))))
+
+(define (set-union set1 set2)
+  (cond ((null? set1) set2)
+        ((null? set2) set1)
+        ((set-add* set1 set2))))
+
+
+;--------------------------------------------------
 
 (define (load-sexpr)
   (let ((expr (read)))
