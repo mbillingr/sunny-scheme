@@ -95,7 +95,7 @@
 
 (define (sexpr->fixlet param* body arg* env tail?)
   (let ((local-env (adjoin-local-env param* env)))
-    (let ((args (sexpr->args arg* env))
+    (let ((args      (sexpr->args arg* env))
           (func-body (sexpr->sequence body local-env tail?)))
       (make-fixlet param* func-body args))))
 
@@ -106,20 +106,15 @@
                  (sexpr->args (cdr arg*) env))))
 
 (define (sexpr->scope-seq bindings body env tail?)
-  (define body-env '*UNINIT*)
-  (define (bindings->ast bindings env)
-    (if (pair? bindings)
-        (let ((var (caar bindings))
-              (val (cadar bindings)))
-          (let ((local-env (adjoin-local-env `(,var) env)))
-            (cons (cons var (sexpr->ast val env #f))
-                  (bindings->ast (cdr bindings)
-                                 local-env))))
-        (begin (set! body-env env)
-               '())))
-  (let ((transformed-bindings (bindings->ast bindings env)))
-    (make-scope 'seq transformed-bindings
-                (sexpr->sequence body body-env tail?))))
+  (if (null? bindings)
+      (sexpr->sequence body env tail?)
+      (sexpr->scope-let (list (car bindings))
+                        (list (cons 'let*
+                                    (cons (cdr bindings)
+                                          body)))
+                        env
+                        tail?)))
+
 
 (define (sexpr->scope-rec bindings body env tail?)
   (let* ((body-env
@@ -384,16 +379,16 @@
     (define (gen-params p*)
       (if (pair? p*)
           (begin (display (rustify-identifier (car p*)))
-                 (display ": Scm, ")
+                 (display ", ")
                  (gen-params (cdr p*)))))
-    (display "(|")
-    (gen-params params)
-    (display "| {")
-    (body 'gen-rust)
-    (display "})")
-    (display "(")
-    (args 'gen-rust)
-    (display ")"))
+    (rust-block
+      (lambda ()
+        (display "let [")
+        (gen-params params)
+        (display "] = [")
+        (args 'gen-rust)
+        (display "];")
+        (body 'gen-rust))))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
@@ -632,6 +627,7 @@
   (list 'GLOBAL-MARKER
         (new-import 'display)
         (new-import 'newline)
+        (new-import 'assert-eq)
         (new-import '=)
         (new-import '+)
         (new-import '-)))

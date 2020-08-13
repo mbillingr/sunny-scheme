@@ -25,7 +25,15 @@ fn main() {
 (println ((lambda (x) (+ x 2)) foo))
 
 (let ((x 1) (y 2))
-  (println (+ x y)))
+  (assert-eq (+ x y) 3)
+
+  (let ((x y) (y x))
+    (assert-eq x 2)
+    (assert-eq y 1))
+
+  (let* ((x y) (y x))
+    (assert-eq x 2)
+    (assert-eq y 2)))
 
 (define (gen x)
   (lambda () x))
@@ -42,8 +50,8 @@ fn main() {
                      (if (= x 1)
                          #t
                          (even? (- x 1)))))))
-   (println (odd? 42))
-   (println (even? 42)))
+   (assert-eq (odd? 42) #f)
+   (assert-eq (even? 42) #t))
 "/*
 (let ((x 0))
   (set! x 42)

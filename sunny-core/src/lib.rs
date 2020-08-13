@@ -147,7 +147,22 @@ pub fn cons(args: &[Scm]) -> Scm {
 pub fn is_numeq(args: &[Scm]) -> Scm {
     match args {
         [Scm::Int(x), Scm::Int(y)] => Scm::from(x == y),
-        _ => panic!("Cannot add {:?}", args),
+        _ => panic!("Cannot compare {:?}", args),
+    }
+}
+
+
+
+pub fn is_ptreq(args: &[Scm]) -> bool {
+    use Scm::*;
+    match (&args[0], &args[1]) {
+        (Nil, Nil) => true,
+        (True, True) => true,
+        (False, False) => true,
+        (Int(a), Int(b)) => a == b,
+        (Symbol(a), Symbol(b)) => a == b,
+        (Pair(a), Pair(b)) => ref_as_ptr(a) == ref_as_ptr(b),
+        _ => false,
     }
 }
 

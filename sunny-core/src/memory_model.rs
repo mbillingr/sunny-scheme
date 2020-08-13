@@ -24,6 +24,10 @@ mod memory_model_impl {
             };
         }
 
+        pub fn ref_as_ptr<T>(r: &Ref<T>) -> *const T {
+            *r
+        }
+
         #[derive(Copy, Clone)]
         pub struct Boxed<T: 'static + Copy>(Ref<Mut<T>>);
 
@@ -80,6 +84,10 @@ mod memory_model_impl {
             ($x:expr) => {
                 Rc::new($x)
             };
+        }
+
+        pub fn ref_as_ptr<T>(r: &Ref<T>) -> *const T {
+            &**r
         }
 
         #[derive(Clone)]

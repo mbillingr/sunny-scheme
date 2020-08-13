@@ -9,6 +9,7 @@ mod scheme {
 
         thread_local! {pub static display: Mut<Scm> = Mut::new(Scm::func(_display))}
         thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
+        thread_local! {pub static assert_minus_eq: Mut<Scm> = Mut::new(Scm::func(_assert_eq))}
 
         fn _display(args: &[Scm]) -> Scm {
             print!("{:?}", args[0]);
@@ -18,6 +19,11 @@ mod scheme {
         fn _newline(_: &[Scm]) -> Scm {
             println!();
             Scm::Nil
+        }
+
+        fn _assert_eq(args: &[Scm]) -> Scm {
+            assert!(sunny_core::is_ptreq(args));
+            Scm::True
         }
     }
 
