@@ -44,11 +44,11 @@ fn main() {
                          (even? (- x 1)))))))
    (println (odd? 42))
    (println (even? 42)))
-
+"/*
 (let ((x 0))
   (set! x 42)
   (println x))
-",
+",*/
         )
         .unwrap();
 

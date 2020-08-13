@@ -6,7 +6,8 @@
 (define (program->ast exp*)
   (define global-env (make-global-env))
   (define ast (sexpr->sequence exp* global-env #f))
-  (make-program (cdr global-env) ast))
+  (make-program (cdr global-env)
+                ast ));(boxify ast)))
 
 (define (sexpr->ast exp env tail?)
   (if (atom? exp)
@@ -303,7 +304,7 @@
     (fnc self
          (lambda () (make-application
                       (func 'transform fnc)
-                      (args 'transform)
+                      (args 'transform fnc)
                       tail?))))
   (define (free-vars)
     (set-union (func 'free-vars)
@@ -715,6 +716,16 @@
 (define (atom? x)
   (not (pair? x)))
 
+
+;--------------------------------------------------------------
+; AST transformations
+
+(define (boxify node)
+  (define (transform node ignore)
+    (cond ((eq? (node 'kind) 'ABSTRACTION)
+           (error "boxify transform not implemented"))
+          (else (ignore))))
+  (node 'transform transform))
 
 ;------------------------------------------------------------
 ; quick and dirty implementation of sets as a unordered list
