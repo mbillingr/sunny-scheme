@@ -42,8 +42,12 @@ fn main() {
                      (if (= x 1)
                          #t
                          (even? (- x 1)))))))
-   (println (odd? 42)))
+   (println (odd? 42))
+   (println (even? 42)))
 
+(let ((x 0))
+  (set! x 42)
+  (println x))
 ",
         )
         .unwrap();
