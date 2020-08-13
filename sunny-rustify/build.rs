@@ -52,11 +52,12 @@ fn main() {
                          (even? (- x 1)))))))
    (assert-eq (odd? 42) #f)
    (assert-eq (even? 42) #t))
-"/*
-(let ((x 0))
-  (set! x 42)
+
+(define (foo x)
+  (set! x 123)
   (println x))
-",*/
+(foo 0)
+",
         )
         .unwrap();
 

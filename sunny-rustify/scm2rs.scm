@@ -7,7 +7,7 @@
   (define global-env (make-global-env))
   (define ast (sexpr->sequence exp* global-env #f))
   (make-program (cdr global-env)
-                ast ));(boxify ast)))
+                (boxify ast)))
 
 (define (sexpr->ast exp env tail?)
   (if (atom? exp)
@@ -136,7 +136,9 @@
 
 (define (sexpr->abstraction param* body env)
   (let ((local-env (adjoin-local-env param* env)))
-    (make-abstraction param* (sexpr->sequence body local-env #t))))
+    (make-abstraction param*
+                      (map (lambda (p) (lookup p local-env)) param*)
+                      (sexpr->sequence body local-env #t))))
 
 (define (sexpr->sequence expr* env tail?)
   (if (null? expr*)
@@ -249,7 +251,10 @@
              (val 'gen-rust)
              (display "))"))
             ((eq? 'BOXED-SET setter)
-             (error "set! not yet implemented for boxed variables"))
+             (display (rustify-identifier name))
+             (display ".set(")
+             (val 'gen-rust)
+             (display ")"))
             (else (error "set! on unboxed variable")))))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
@@ -488,7 +493,7 @@
           (else (error "Unknown message SEQUENCE" msg))))
   self)
 
-(define (make-abstraction params body)
+(define (make-abstraction params vars body)
   (define (print)
     (cons 'ABSTRACTION
           (cons params
@@ -536,6 +541,9 @@
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'ABSTRACTION)
           ((eq? 'gen-rust msg) (gen-rust))
+          ((eq? 'get-params msg) params)
+          ((eq? 'get-vars msg) vars)
+          ((eq? 'get-body msg) body)
           (else (error "Unknown message ABSTRACTION" msg))))
   self)
 
@@ -578,6 +586,32 @@
           ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message PROGRAM" msg))))
   self)
+
+(define (make-boxify name body)
+  (define (print)
+    (cons 'BOXIFY (cons name (body 'print))))
+  (define (transform func)
+    (func self (lambda () (make-boxify name (body 'transform func)))))
+  (define (free-vars)
+    (body 'free-vars))
+  (define (gen-rust)
+    (rust-block
+      (lambda ()
+        (display "let ")
+        (display (rustify-identifier name))
+        (display " = ")
+        (display (rustify-identifier name))
+        (display ".into_boxed();")
+        (body 'gen-rust))))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'free-vars msg) (free-vars))
+          ((eq? 'kind msg) 'BOXIFY)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message BOXIFY" msg))))
+  self)
+
 
 (define (print-list seq)
   (if (pair? seq)
@@ -704,6 +738,12 @@
 (define (variable-set-mutable! var)
   (set-car! (cddr var) #t))
 
+(define (variable-set-getter! var getter)
+  (set-car! var getter))
+
+(define (variable-set-setter! var setter)
+  (set-car! (cdr var) setter))
+
 (define (global-imported? var)
   (eq? 'IMPORT-SET
        (cadr var)))
@@ -719,9 +759,24 @@
 (define (boxify node)
   (define (transform node ignore)
     (cond ((eq? (node 'kind) 'ABSTRACTION)
-           (error "boxify transform not implemented"))
+           (boxify-abstraction (node 'get-params)
+                               (node 'get-vars)
+                               (node 'get-params)
+                               (node 'get-vars)
+                               (node 'get-body)))
           (else (ignore))))
   (node 'transform transform))
+
+
+(define (boxify-abstraction params vars param* var* body)
+  (if (null? var*)
+      (make-abstraction params vars body)
+      (if (variable-mut? (car var*))
+          (begin (variable-set-setter! (car var*) 'BOXED-SET)
+                 (variable-set-getter! (car var*) 'BOXED-REF)
+                 (boxify-abstraction params vars (cdr param*) (cdr var*)
+                                     (make-boxify (car param*) body)))
+          (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
 
 ;------------------------------------------------------------
 ; quick and dirty implementation of sets as a unordered list
