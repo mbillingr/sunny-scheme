@@ -41,15 +41,11 @@ fn main() {
 (letrec ((even? (lambda (x)
                   (if (= x 0)
                       #t
-                      (if (= x 1)
-                          #f
-                          (odd? (- x 1))))))
+                      (odd? (- x 1)))))
          (odd? (lambda (x)
                  (if (= x 0)
                      #f
-                     (if (= x 1)
-                         #t
-                         (even? (- x 1)))))))
+                     (even? (- x 1))))))
    (assert-eq (odd? 42) #f)
    (assert-eq (even? 42) #t))
 
@@ -57,6 +53,24 @@ fn main() {
   (set! x 123)
   (println x))
 (foo 0)
+
+(define (even? x)
+    (if (= x 0)
+        #t
+        (odd? (- x 1))
+    )
+)
+
+(define (odd? x)
+    (if (= x 0)
+        #f
+        (even? (- x 1))
+    )
+)
+
+(assert-eq (even? 3007) #f)
+
+(println 7531902468)
 ",
         )
         .unwrap();

@@ -51,16 +51,12 @@
   (make-constant exp))
 
 (define (sexpr->reference name env)
-  (let ((var (lookup name env)))
-    (if (not var)
-        (error "Undefined variable" name))
+  (let ((var (ensure-var name env)))
     (make-reference name var)))
 
 (define (sexpr->assignment name exp env)
   (let ((val (sexpr->ast exp env #f))
-        (var (lookup name env)))
-    (if (not var)
-        (error "Undefined variable" name))
+        (var (ensure-var name env)))
     (variable-set-mutable! var)
     (make-assignment name var val)))
 
