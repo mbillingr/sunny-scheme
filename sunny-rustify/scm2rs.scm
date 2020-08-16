@@ -61,14 +61,8 @@
     (make-assignment name var val)))
 
 (define (sexpr->definition exp env)
-  (let ((name (if (symbol? (cadr exp))
-                  (cadr exp)
-                  (caadr exp)))
-        (value (if (symbol? (cadr exp))
-                   (caddr exp)
-                   (cons 'lambda
-                         (cons (cdadr exp)
-                               (cddr exp))))))
+  (let ((name (definition-variable exp))
+        (value (definition-value exp)))
     (let ((val (sexpr->ast value env #f))
           (var (ensure-var name env)))
       (make-assignment name var val))))
@@ -113,17 +107,12 @@
 
 
 (define (sexpr->scope-rec bindings body env tail?)
-  (let* ((body-env
-           (adjoin-boxed-env
-             (map (lambda (b) (car b)) bindings)
-             env))
-         (transformed-bindings
-           (map (lambda (b)
-                  (cons (car b)
-                        (sexpr->ast (cadr b) body-env #f)))
-                bindings)))
-    (make-scope 'rec transformed-bindings
-                (sexpr->sequence body body-env tail?))))
+  (let* ((params (map (lambda (b) (car b)) bindings))
+         (body-env (adjoin-boxed-env params env))
+         (args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings)))
+    (make-scope params
+                (sexpr->sequence body body-env tail?)
+                args)))
 
 (define (sexpr->scope-let bindings body env tail?)
   (let* ((param* (map (lambda (b) (car b)) bindings))
@@ -131,7 +120,8 @@
     (sexpr->fixlet param* body arg* env tail?)))
 
 (define (sexpr->abstraction param* body env)
-  (let ((local-env (adjoin-local-env param* env)))
+  (let ((local-env (adjoin-local-env param* env))
+        (body (scan-out-defines body)))
     (make-abstraction param*
                       (map (lambda (p) (lookup p local-env)) param*)
                       (sexpr->sequence body local-env #t))))
@@ -145,6 +135,50 @@
       (let ((first (sexpr->ast (car expr*) env #f)))
         (make-sequence first
                        (sexpr->sequence (cdr expr*) env tail?)))))
+
+; ======================================================================
+; Syntax
+
+(define (scan-out-defines body)
+  (define (initializations exp*)
+    (cond ((null? exp*)
+           '())
+          ((definition? (car exp*))
+           (cons (list (definition-variable (car exp*))
+                       (definition-value (car exp*)))
+                 (initializations (cdr exp*))))
+          (else (initializations (cdr exp*)))))
+  (define (transform exp*)
+    (cond ((null? exp*)
+           '())
+          ((definition? (car exp*))
+           (transform (cdr exp*)))
+          (else (cons (car exp*)
+                      (transform (cdr exp*))))))
+  (list (cons 'letrec
+              (cons (initializations body)
+                    (transform body)))))
+
+
+(define (definition? expr)
+  (and (pair? expr)
+       (eq? (car expr) 'define)))
+
+(define (definition-variable expr)
+  (if (pair? (cadr expr))
+      (caadr expr)
+      (cadr expr)))
+
+(define (definition-value expr)
+  (if (pair? (cadr expr))
+      (cons 'lambda
+            (cons (cdadr expr)
+                  (cddr expr)))
+      (caddr expr)))
+
+
+; ======================================================================
+; AST
 
 
 (define (make-comment comment node)
@@ -368,9 +402,10 @@
 
 (define (make-fixlet params body args)
   (define (print)
-    (cons params
-          (cons (args 'print)
-                (body 'print))))
+    (cons 'FIXLET
+          (cons params
+                (cons (args 'print)
+                      (body 'print)))))
   (define (transform fnc)
     (fnc self
          (lambda () (make-fixlet
@@ -405,38 +440,29 @@
           (else (error "Unknown message FIXLET" msg))))
   self)
 
-(define (make-scope kind bindings body)
-  (define (print-bindings bindings)
-    (map (lambda (b) (list (car b)
-                           ((cdr b) 'print)))
-         bindings))
+(define (make-scope params body args)
   (define (print)
     (cons 'SCOPE
-          (cons kind
-                (cons (print-bindings bindings)
+          (cons params
+                (cons (args 'print)
                       (body 'print)))))
-  (define (transform-bindings bindings fnc)
-    (map (lambda (b) (cons (car b)
-                           ((cdr b) 'transform fnc)))
-         bindings))
   (define (transform fnc)
     (fnc self
          (lambda () (make-scope
-                      kind
-                      (transform-bindings bindings fnc)
-                      (body 'transform fnc)))))
+                      params
+                      (body 'transform fnc)
+                      (map (lambda (a) (a 'transform fnc)) args)))))
+  (define (free-vars-args args)
+    (if (null? args)
+        (make-set)
+        (set-union ((car args) 'free-vars)
+                   (free-vars-args (cdr args)))))
   (define (free-vars)
-    (error "Not implemented: (scope 'free-vars)"))
+    (set-union (set-remove* (body 'free-vars)
+                            params)
+               (free-vars-args args)))
 
-  (define (gen-bindings-seq bindings)
-    (for-each (lambda (b) (display "let ")
-                          (display (rustify-identifier (car b)))
-                          (display " = ")
-                          ((cdr b) 'gen-rust)
-                          (display ";")
-                          (newline))
-              bindings))
-  (define (gen-bindings-rec bindings)
+  (define (gen-bindings bindings)
     (for-each (lambda (b) (display "let ")
                           (display (rustify-identifier (car b)))
                           (display " = Scm::uninitialized().into_boxed();")
@@ -449,19 +475,28 @@
                           (newline))
               bindings))
   (define (gen-rust)
-    (display "{")
-    (if (eq? kind 'rec)
-        (gen-bindings-rec bindings)
-        (gen-bindings-seq bindings))
-    (body 'gen-rust)
-    (display "}"))
+    (rust-block
+      (lambda ()
+        (for-each (lambda (p) (display "let ")
+                              (display (rustify-identifier p))
+                              (display " = Scm::uninitialized().into_boxed();")
+                              (newline))
+                  params)
+        (for-each (lambda (p a) (display (rustify-identifier p))
+                                (display ".set(")
+                                (a 'gen-rust)
+                                (display ");")
+                                (newline))
+                  params
+                  args)
+        (body 'gen-rust))))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
-          ((eq? 'kind msg) 'FIXLET)
+          ((eq? 'kind msg) 'SCOPE)
           ((eq? 'gen-rust msg) (gen-rust))
-          (else (error "Unknown message FIXLET" msg))))
+          (else (error "Unknown message SCOPE" msg))))
   self)
 
 (define (make-sequence first next)

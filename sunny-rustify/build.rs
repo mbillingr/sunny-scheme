@@ -57,18 +57,23 @@ fn main() {
 (define (even? x)
     (if (= x 0)
         #t
-        (odd? (- x 1))
-    )
-)
+        (odd? (- x 1))))
 
 (define (odd? x)
     (if (= x 0)
         #f
-        (even? (- x 1))
-    )
-)
+        (even? (- x 1))))
 
 (assert-eq (even? 3007) #f)
+
+(define (outer)
+    (define (inner)
+        0
+    )
+    inner
+)
+(println (outer))
+(println ((outer)))
 
 (println 7531902468)
 ",
