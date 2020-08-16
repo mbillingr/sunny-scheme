@@ -18,6 +18,9 @@ fn main() {
         .unwrap()
         .write_all(
             b"
+(import (scheme base)
+        (scheme write))
+
 (define foo 40)
 
 (define (println x) (display x) (newline))

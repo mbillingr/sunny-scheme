@@ -1,13 +1,27 @@
 (import (scheme base)
-        (scheme cxr)
-        (scheme read)
-        (scheme write))
+        (only (scheme cxr) caadr
+                           caddr
+                           cdadr
+                           cadddr)
+        (only (scheme read) read)
+        (only (scheme write) display
+                             newline
+                             write))
 
 (define (program->ast exp*)
   (define global-env (make-global-env))
-  (define ast (sexpr->sequence exp* global-env #f))
-  (make-program (cdr global-env)
-                (boxify ast)))
+
+  (define (process-imports exp* imports)
+    (cond ((import? (car exp*))
+           (process-imports (cdr exp*)
+                            (append imports
+                                    (sexpr->import (cdar exp*) global-env))))
+
+          (else (make-program (cdr global-env)
+                              imports
+                              (boxify (sexpr->sequence exp* global-env #f))))))
+
+  (process-imports exp* '()))
 
 (define (sexpr->ast exp env tail?)
   (if (atom? exp)
@@ -37,10 +51,10 @@
                                        (sexpr->scope-rec (cadr exp)
                                                          (cddr exp)
                                                          env tail?)))
-            ((eq? 'if (car exp)) (sexpr-alternative (cadr exp)
-                                                    (caddr exp)
-                                                    (cadddr exp)
-                                                    env tail?))
+            ((eq? 'if (car exp)) (sexpr->alternative (cadr exp)
+                                                     (caddr exp)
+                                                     (cadddr exp)
+                                                     env tail?))
             (else (wrap-sexpr exp (sexpr->application (car exp)
                                                       (cdr exp)
                                                       env tail?))))))
@@ -52,12 +66,12 @@
   (make-constant exp))
 
 (define (sexpr->reference name env)
-  (let ((var (ensure-var name env)))
+  (let ((var (ensure-var! name env)))
     (make-reference name var)))
 
 (define (sexpr->assignment name exp env)
   (let ((val (sexpr->ast exp env #f))
-        (var (ensure-var name env)))
+        (var (ensure-var! name env)))
     (variable-set-mutable! var)
     (make-assignment name var val)))
 
@@ -65,10 +79,10 @@
   (let ((name (definition-variable exp))
         (value (definition-value exp)))
     (let ((val (sexpr->ast value env #f))
-          (var (ensure-var name env)))
+          (var (ensure-var! name env)))
       (make-assignment name var val))))
 
-(define (sexpr-alternative condition consequent alternative env tail?)
+(define (sexpr->alternative condition consequent alternative env tail?)
   (make-alternative (sexpr->ast condition env #f)
                     (sexpr->ast consequent env tail?)
                     (sexpr->ast alternative env tail?)))
@@ -137,6 +151,25 @@
         (make-sequence first
                        (sexpr->sequence (cdr expr*) env tail?)))))
 
+(define (sexpr->import stmt* env)
+  (cond ((null? stmt*)
+         '())
+        ((eq? 'only (caar stmt*))
+         (error "(only) imports not implemented"))
+        (else (cons (import-all (car stmt*) env)
+                    (sexpr->import (cdr stmt*) env)))))
+
+(define (import-all lib env)
+  (cond ((equal? lib '(scheme base))
+         (adjoin-import! '= env)
+         (adjoin-import! '+ env)
+         (adjoin-import! '- env))
+        ((equal? lib '(scheme write))
+         (adjoin-import! 'display env)
+         (adjoin-import! 'newline env))
+        (else (error "unknown library" lib)))
+  (make-import lib))
+
 ; ======================================================================
 ; Syntax
 
@@ -178,9 +211,13 @@
       (caddr expr)))
 
 
+(define (import? expr)
+  (and (pair? expr)
+       (eq? (car expr) 'import)))
+
+
 ; ======================================================================
 ; AST
-
 
 (define (make-comment comment node)
   (define (print)
@@ -207,6 +244,20 @@
           ((eq? 'kind msg) 'COMMENT)
           ((eq? 'gen-rust msg) (gen-rust))
           (else (error "Unknown message COMMENT" msg))))
+  self)
+
+(define (make-nop)
+  (define (print) 'NOP)
+  (define (transform func) (func self (lambda () self)))
+  (define (free-vars) (make-set))
+  (define (gen-rust) (display ""))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'free-vars msg) (free-vars))
+          ((eq? 'kind msg) 'NOP)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message NOP" msg))))
   self)
 
 (define (make-constant val)
@@ -588,15 +639,16 @@
           (else (error "Unknown message ABSTRACTION" msg))))
   self)
 
-(define (make-program globals body)
+(define (make-program globals imports body)
   (define (print)
     (cons 'PROGRAM
           (cons globals
-                (body 'print))))
+                (cons imports
+                      (body 'print)))))
   (define (transform func)
     (func self
           (lambda ()
-            (make-program globals (body 'transform func)))))
+            (make-program globals imports (body 'transform func)))))
   (define (gen-global-defs g)
     (if (null? g)
         (newline)
@@ -608,9 +660,14 @@
                    (display "\"))}")
                    (newline)
                    (gen-global-defs (cdr g))))))
+  (define (gen-imports)
+    (for-each (lambda (i)
+                (i 'gen-rust))
+              imports))
   (define (gen-rust)
-    (display "use scheme::write::*;") (newline)
     (display "use scheme::sunny_helpers::*;") (newline)
+    (newline)
+    (gen-imports)
     (newline)
     (display "mod globals")
     (rust-block (lambda ()
@@ -661,6 +718,33 @@
           (else (error "Unknown message BOXIFY" msg))))
   self)
 
+(define (make-import lib)
+  (define (print)
+    (cons 'IMPORT lib))
+  (define (transform func)
+    (func self (lambda () (make-import lib))))
+  (define (free-vars)
+    (body 'free-vars))
+  (define (gen-libname lib)
+    (if (null? lib)
+        (display "")
+        (begin (display (car lib))
+               (if (not (null? (cdr lib)))
+                   (display "::"))
+               (gen-libname (cdr lib)))))
+  (define (gen-rust)
+    (display "use ")
+    (gen-libname lib)
+    (display "::*;")
+    (newline))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'free-vars msg) (free-vars))
+          ((eq? 'kind msg) 'IMPORT)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message IMPORT" msg))))
+  self)
 
 (define (print-list seq)
   (if (pair? seq)
@@ -708,18 +792,13 @@
 
 (define (make-global-env)
   (list 'GLOBAL-MARKER
-        (new-import 'display)
-        (new-import 'newline)
-        (new-import 'assert-eq)
-        (new-import '=)
-        (new-import '+)
-        (new-import '-)))
+        (new-import 'assert-eq)))
 
-(define (ensure-var name env)
+(define (ensure-var! name env)
   (let ((var (lookup name env)))
     (if var
         var
-        (adjoin-global name env))))
+        (adjoin-global! name env))))
 
 (define (lookup name env)
   (cond ((null? env)
@@ -735,9 +814,14 @@
       env
       (find-globals (cdr env))))
 
-(define (adjoin-global name env)
-  (let ((genv (find-globals env))
-        (var (new-global name)))
+(define (adjoin-global! name env)
+  (adjoin-global-var! (new-global name) env))
+
+(define (adjoin-import! name env)
+  (adjoin-global-var! (new-import name) env))
+
+(define (adjoin-global-var! var env)
+  (let ((genv (find-globals env)))
     (set-cdr! genv (cons var (cdr genv)))
     (cdr var)))
 
