@@ -75,6 +75,8 @@ fn main() {
 (println (outer))
 (println ((outer)))
 
+(println 'foo)
+
 (println 7531902468)
 ",
         )
