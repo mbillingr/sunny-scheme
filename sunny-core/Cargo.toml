@@ -13,3 +13,4 @@ leaking = ["scm_copy"]
 scm_copy = []
 
 [dependencies]
+lazy_static = "1"

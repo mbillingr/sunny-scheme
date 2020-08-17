@@ -1,7 +1,11 @@
+extern crate lazy_static;
+
 mod memory_model;
+pub mod symbol;
 
 pub use memory_model::prelude::Mut;
 use memory_model::prelude::*;
+use symbol::Symbol;
 
 pub type BoxedScm = Boxed<Scm>;
 
@@ -14,7 +18,7 @@ pub enum Scm {
     False,
     True,
     Int(i64),
-    Symbol(Ref<String>),
+    Symbol(Symbol),
     Pair(Ref<(Mut<Scm>, Mut<Scm>)>),
     Func(Ref<dyn Fn(&[Scm]) -> Scm>),
 }
@@ -46,7 +50,7 @@ impl Scm {
     }
 
     pub fn symbol(s: &str) -> Self {
-        Scm::Symbol(make_ref!(s.to_owned()))
+        Scm::Symbol(Symbol::new(s))
     }
 
     pub fn pair(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
@@ -150,8 +154,6 @@ pub fn is_numeq(args: &[Scm]) -> Scm {
         _ => panic!("Cannot compare {:?}", args),
     }
 }
-
-
 
 pub fn is_ptreq(args: &[Scm]) -> bool {
     use Scm::*;
