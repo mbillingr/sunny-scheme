@@ -7,6 +7,7 @@ mod scheme {
     pub mod base {
         use sunny_core::{self, Mut, Scm};
 
+        thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
         thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
         thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
         thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
@@ -35,7 +36,7 @@ mod scheme {
         thread_local! {pub static assert_minus_eq: Mut<Scm> = Mut::new(Scm::func(_assert_eq))}
 
         fn _assert_eq(args: &[Scm]) -> Scm {
-            assert!(sunny_core::is_ptreq(args));
+            assert!(sunny_core::is_ptreq(args).is_true());
             Scm::True
         }
     }

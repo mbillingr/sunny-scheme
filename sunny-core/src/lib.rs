@@ -155,17 +155,17 @@ pub fn is_numeq(args: &[Scm]) -> Scm {
     }
 }
 
-pub fn is_ptreq(args: &[Scm]) -> bool {
+pub fn is_ptreq(args: &[Scm]) -> Scm {
     use Scm::*;
     match (&args[0], &args[1]) {
-        (Nil, Nil) => true,
-        (True, True) => true,
-        (False, False) => true,
-        (Int(a), Int(b)) => a == b,
-        (Symbol(a), Symbol(b)) => a == b,
-        (Pair(a), Pair(b)) => ref_as_ptr(a) == ref_as_ptr(b),
-        (Func(a), Func(b)) => ref_as_ptr(a) == ref_as_ptr(b),
-        _ => false,
+        (Nil, Nil) => Scm::True,
+        (True, True) => Scm::True,
+        (False, False) => Scm::True,
+        (Int(a), Int(b)) => Scm::bool(a == b),
+        (Symbol(a), Symbol(b)) => Scm::bool(a == b),
+        (Pair(a), Pair(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
+        (Func(a), Func(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
+        _ => Scm::False,
     }
 }
 
