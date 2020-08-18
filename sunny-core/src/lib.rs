@@ -164,6 +164,7 @@ pub fn is_ptreq(args: &[Scm]) -> bool {
         (Int(a), Int(b)) => a == b,
         (Symbol(a), Symbol(b)) => a == b,
         (Pair(a), Pair(b)) => ref_as_ptr(a) == ref_as_ptr(b),
+        (Func(a), Func(b)) => ref_as_ptr(a) == ref_as_ptr(b),
         _ => false,
     }
 }

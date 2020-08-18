@@ -24,7 +24,7 @@ mod memory_model_impl {
             };
         }
 
-        pub fn ref_as_ptr<T>(r: &Ref<T>) -> *const T {
+        pub fn ref_as_ptr<T: ?Sized>(r: &Ref<T>) -> *const T {
             *r
         }
 
@@ -86,7 +86,7 @@ mod memory_model_impl {
             };
         }
 
-        pub fn ref_as_ptr<T>(r: &Ref<T>) -> *const T {
+        pub fn ref_as_ptr<T: ?Sized>(r: &Ref<T>) -> *const T {
             &**r
         }
 
