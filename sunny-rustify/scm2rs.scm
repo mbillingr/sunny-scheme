@@ -51,10 +51,12 @@
                                        (sexpr->scope-rec (cadr exp)
                                                          (cddr exp)
                                                          env tail?)))
-            ((eq? 'if (car exp)) (sexpr->alternative (cadr exp)
-                                                     (caddr exp)
-                                                     (cadddr exp)
+            ((eq? 'if (car exp)) (sexpr->alternative (if-condition exp)
+                                                     (if-consequence exp)
+                                                     (if-alternative exp)
                                                      env tail?))
+            ((eq? 'cond (car exp)) (sexpr->cond (cond-clauses exp)
+                                                env tail?))
             (else (wrap-sexpr exp (sexpr->application (car exp)
                                                       (cdr exp)
                                                       env tail?))))))
@@ -216,6 +218,16 @@
             (cons (cdadr expr)
                   (cddr expr)))
       (caddr expr)))
+
+
+(define (if-condition expr)
+  (cadr expr))
+
+(define (if-consequence expr)
+  (caddr expr))
+
+(define (if-alternative expr)
+  (cadddr expr))
 
 
 (define (import? expr)
