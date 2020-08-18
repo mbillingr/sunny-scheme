@@ -209,6 +209,22 @@ impl std::fmt::Display for Scm {
     }
 }
 
+pub fn car(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Pair(p)] => p.0.get(),
+        [_] => panic!("Not a pair: car {:?}", args),
+        _ => panic!("Incorrect arity: cons {:?}", args),
+    }
+}
+
+pub fn cdr(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Pair(p)] => p.1.get(),
+        [_] => panic!("Not a pair: car {:?}", args),
+        _ => panic!("Incorrect arity: cons {:?}", args),
+    }
+}
+
 pub fn cons(args: &[Scm]) -> Scm {
     match args {
         [car, cdr] => Scm::pair(car.duplicate(), cdr.duplicate()),

@@ -83,6 +83,9 @@ fn main() {
 (println (cons 1 (cons 2 (cons 3 '()))))
 (println '(1 2 3 . 4))
 
+(assert-eq (car (cons 1 2)) 1)
+(assert-eq (cdr (cons 1 2)) 2)
+
 (println 7531902468)
 ",
         )

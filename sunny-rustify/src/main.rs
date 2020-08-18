@@ -10,6 +10,8 @@ mod scheme {
         thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
         thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
         thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
+        thread_local! {pub static car: Mut<Scm> = Mut::new(Scm::func(sunny_core::car))}
+        thread_local! {pub static cdr: Mut<Scm> = Mut::new(Scm::func(sunny_core::cdr))}
         thread_local! {pub static cons: Mut<Scm> = Mut::new(Scm::func(sunny_core::cons))}
         thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
         thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
@@ -21,6 +23,7 @@ mod scheme {
 
         thread_local! {pub static display: Mut<Scm> = Mut::new(Scm::func(_display))}
         thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
+        thread_local! {pub static write: Mut<Scm> = Mut::new(Scm::func(_write))}
 
         fn _display(args: &[Scm]) -> Scm {
             print!("{}", args[0]);
@@ -29,6 +32,11 @@ mod scheme {
 
         fn _newline(_: &[Scm]) -> Scm {
             println!();
+            Scm::Nil
+        }
+
+        fn _write(args: &[Scm]) -> Scm {
+            print!("{:?}", args[0]);
             Scm::Nil
         }
     }
