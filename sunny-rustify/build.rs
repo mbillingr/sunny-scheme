@@ -80,6 +80,7 @@ fn main() {
 
 (println 'foo)
 (println (cons 1 (cons 2 3)))
+(println (cons 1 (cons 2 (cons 3 '()))))
 
 (println 7531902468)
 ",
