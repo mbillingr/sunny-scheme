@@ -79,6 +79,7 @@ fn main() {
 (println ((outer)))
 
 (println 'foo)
+(println (cons 1 (cons 2 3)))
 
 (println 7531902468)
 ",

@@ -68,10 +68,24 @@ impl Scm {
         }
     }
 
+    pub fn is_null(&self) -> bool {
+        match self {
+            Scm::Nil => true,
+            _ => false,
+        }
+    }
+
     pub fn invoke(&self, args: &[Scm]) -> Scm {
         match self {
             Scm::Func(func) => func(args),
             _ => panic!("Attempt to call {:?}", self),
+        }
+    }
+
+    pub fn as_pair(&self) -> Option<(Scm, Scm)> {
+        match self {
+            Scm::Pair(p) => Some((p.0.get(), p.1.get())),
+            _ => None,
         }
     }
 }
@@ -136,6 +150,32 @@ impl std::fmt::Debug for Scm {
             Scm::Symbol(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{:?}", x),
             Scm::Pair(p) => write!(f, "({:?} . {:?})", p.0, p.1),
+            Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
+        }
+    }
+}
+
+impl std::fmt::Display for Scm {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Scm::Nil => write!(f, "'()"),
+            Scm::True => write!(f, "#t"),
+            Scm::False => write!(f, "#f"),
+            Scm::Symbol(s) => write!(f, "{}", s),
+            Scm::Int(x) => write!(f, "{}", x),
+            Scm::Pair(p) => {
+                write!(f, "(")?;
+                write!(f, "{}", p.0.get())?;
+                let mut x = p.1.get();
+                while let Some((car, cdr)) = x.as_pair() {
+                    write!(f, " {}", car)?;
+                    x = cdr;
+                }
+                if !x.is_null() {
+                    write!(f, " . {}", x)?;
+                }
+                write!(f, ")")
+            }
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
         }
     }

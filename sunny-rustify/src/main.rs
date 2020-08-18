@@ -7,10 +7,11 @@ mod scheme {
     pub mod base {
         use sunny_core::{self, Mut, Scm};
 
-        thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
         thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
         thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
         thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
+        thread_local! {pub static cons: Mut<Scm> = Mut::new(Scm::func(sunny_core::cons))}
+        thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
     }
 
     pub mod write {
@@ -20,7 +21,7 @@ mod scheme {
         thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
 
         fn _display(args: &[Scm]) -> Scm {
-            print!("{:?}", args[0]);
+            print!("{}", args[0]);
             Scm::Nil
         }
 
