@@ -61,6 +61,27 @@ impl Scm {
         Scm::Func(make_ref!(f))
     }
 
+    pub fn func0<T: Into<Scm>>(f: impl Fn() -> T + 'static) -> Self {
+        Scm::Func(make_ref!(move |args: &[Scm]| match args {
+            [] => f().into(),
+            _ => panic!("0-ary function called with {} arguments", args.len()),
+        }))
+    }
+
+    pub fn func1<T: Into<Scm>>(f: impl Fn(&Scm) -> T + 'static) -> Self {
+        Scm::Func(make_ref!(move |args: &[Scm]| match args {
+            [a] => f(a).into(),
+            _ => panic!("1-ary function called with {} arguments", args.len()),
+        }))
+    }
+
+    pub fn func2<T: Into<Scm>>(f: impl Fn(&Scm, &Scm) -> T + 'static) -> Self {
+        Scm::Func(make_ref!(move |args: &[Scm]| match args {
+            [a, b] => f(a, b).into(),
+            _ => panic!("2-ary function called with {} arguments", args.len()),
+        }))
+    }
+
     pub fn is_true(&self) -> bool {
         match self {
             Scm::Nil | Scm::False => false,
@@ -71,6 +92,13 @@ impl Scm {
     pub fn is_null(&self) -> bool {
         match self {
             Scm::Nil => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_pair(&self) -> bool {
+        match self {
+            Scm::Pair(_) => true,
             _ => false,
         }
     }
