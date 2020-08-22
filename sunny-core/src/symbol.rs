@@ -17,8 +17,16 @@ impl Symbol {
             return Symbol(*s);
         }
 
+        let mut strings = STRINGS.write().unwrap();
+
+        // check again after locking for write to avoid race condition (another
+        // thread may have written the symbol while we were waiting for the lock).
+        if let Some(s) = strings.get(name.as_ref()) {
+            return Symbol(*s);
+        }
+
         let static_name = make_static(name);
-        STRINGS.write().unwrap().insert(static_name);
+        strings.insert(static_name);
         Symbol(static_name)
     }
 
