@@ -94,6 +94,8 @@ fn main() {
 (assert-eq (sign -2) -1)
 (assert-eq (sign 3) 1)
 
+(println \"FOO bar\")
+
 (println 7531902468)
 ",
         )

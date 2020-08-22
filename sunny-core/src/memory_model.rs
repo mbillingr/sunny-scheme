@@ -28,6 +28,14 @@ mod memory_model_impl {
             *r
         }
 
+        pub fn str_reference(s: &'static str) -> Ref<str> {
+            s
+        }
+
+        pub fn string_reference(s: String) -> Ref<str> {
+            Box::leak(s.into_boxed_str())
+        }
+
         #[derive(Copy, Clone)]
         pub struct Boxed<T: 'static + Copy>(Ref<Mut<T>>);
 
@@ -88,6 +96,14 @@ mod memory_model_impl {
 
         pub fn ref_as_ptr<T: ?Sized>(r: &Ref<T>) -> *const T {
             &**r
+        }
+
+        pub fn str_reference(s: &'static str) -> Ref<str> {
+            string_reference(s.to_owned())
+        }
+
+        pub fn string_reference(s: String) -> Ref<str> {
+            s.into()
         }
 
         #[derive(Clone)]

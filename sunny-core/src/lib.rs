@@ -1,10 +1,12 @@
 extern crate lazy_static;
 
 mod memory_model;
+pub mod string;
 pub mod symbol;
 
 pub use memory_model::prelude::Mut;
 use memory_model::prelude::*;
+use string::ScmString;
 use symbol::Symbol;
 
 pub type BoxedScm = Boxed<Scm>;
@@ -19,6 +21,7 @@ pub enum Scm {
     True,
     Int(i64),
     Symbol(Symbol),
+    String(ScmString),
     Pair(Ref<(Mut<Scm>, Mut<Scm>)>),
     Func(Ref<dyn Fn(&[Scm]) -> Scm>),
 }
@@ -130,6 +133,18 @@ impl From<i64> for Scm {
     }
 }
 
+impl From<&'static str> for Scm {
+    fn from(s: &'static str) -> Self {
+        Scm::String(ScmString::from_static(s))
+    }
+}
+
+impl From<String> for Scm {
+    fn from(s: String) -> Self {
+        Scm::String(ScmString::from_string(s))
+    }
+}
+
 impl From<&Scm> for Scm {
     fn from(x: &Scm) -> Self {
         x.duplicate()
@@ -176,6 +191,7 @@ impl std::fmt::Debug for Scm {
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
             Scm::Symbol(s) => write!(f, "{}", s),
+            Scm::String(s) => write!(f, "{:?}", s),
             Scm::Int(x) => write!(f, "{:?}", x),
             Scm::Pair(p) => write!(f, "({:?} . {:?})", p.0, p.1),
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
@@ -190,6 +206,7 @@ impl std::fmt::Display for Scm {
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
             Scm::Symbol(s) => write!(f, "{}", s),
+            Scm::String(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{}", x),
             Scm::Pair(p) => {
                 write!(f, "(")?;
