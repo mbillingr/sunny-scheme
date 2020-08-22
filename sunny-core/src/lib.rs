@@ -239,6 +239,20 @@ pub fn is_numeq(args: &[Scm]) -> Scm {
     }
 }
 
+pub fn is_numgt(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Int(x), Scm::Int(y)] => Scm::from(x > y),
+        _ => panic!("Cannot compare {:?}", args),
+    }
+}
+
+pub fn is_numlt(args: &[Scm]) -> Scm {
+    match args {
+        [Scm::Int(x), Scm::Int(y)] => Scm::from(x < y),
+        _ => panic!("Cannot compare {:?}", args),
+    }
+}
+
 pub fn is_ptreq(args: &[Scm]) -> Scm {
     use Scm::*;
     match (&args[0], &args[1]) {

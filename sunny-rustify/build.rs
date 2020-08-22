@@ -86,6 +86,14 @@ fn main() {
 (assert-eq (car (cons 1 2)) 1)
 (assert-eq (cdr (cons 1 2)) 2)
 
+(define (sign x)
+    (cond ((= x 0) 0)
+          ((< x 0) -1)
+          (else 1)))
+(assert-eq (sign 0) 0)
+(assert-eq (sign -2) -1)
+(assert-eq (sign 3) 1)
+
 (println 7531902468)
 ",
         )

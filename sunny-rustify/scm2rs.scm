@@ -153,6 +153,15 @@
         (make-sequence first
                        (sexpr->sequence (cdr expr*) env tail?)))))
 
+(define (sexpr->cond clauses env tail?)
+  (cond ((null? clauses) (make-constant '*UNSPECIFIED*))
+        ((eq? 'else (cond-clause-condition (car clauses)))
+         (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?))
+        ((pair? clauses)
+         (make-alternative (sexpr->ast (cond-clause-condition (car clauses)) env #f)
+                           (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
+                           (sexpr->cond (cdr clauses) env tail?)))))
+
 (define (sexpr->import stmt* env)
   (cond ((null? stmt*)
          '())
@@ -164,6 +173,8 @@
 (define (import-all lib env)
   (cond ((equal? lib '(scheme base))
          (adjoin-import! '= env)
+         (adjoin-import! '> env)
+         (adjoin-import! '< env)
          (adjoin-import! '- env)
          (adjoin-import! '+ env)
          (adjoin-import! 'car env)
@@ -228,6 +239,16 @@
 
 (define (if-alternative expr)
   (cadddr expr))
+
+
+(define (cond-clauses expr)
+  (cdr expr))
+
+(define (cond-clause-condition clause)
+  (car clause))
+
+(define (cond-clause-sequence clause)
+  (cdr clause))
 
 
 (define (import? expr)
