@@ -1,7 +1,9 @@
 (import (scheme base)
         (only (scheme cxr) caadr
+                           cadar
                            caddr
                            cdadr
+                           cddar
                            cadddr)
         (only (scheme read) read)
         (only (scheme write) display
@@ -166,7 +168,8 @@
   (cond ((null? stmt*)
          '())
         ((eq? 'only (caar stmt*))
-         (error "(only) imports not implemented"))
+         (cons (import-only (cadar stmt*) (cddar stmt*) env)
+               (sexpr->import (cdr stmt*) env)))
         (else (cons (import-all (car stmt*) env)
                     (sexpr->import (cdr stmt*) env)))))
 
@@ -189,6 +192,10 @@
          (adjoin-import! 'write env))
         (else (error "unknown library" lib)))
   (make-import lib))
+
+(define (import-only lib names env)
+  (adjoin-import*! names env)
+  (make-import-only lib names))
 
 ; ======================================================================
 ; Syntax
@@ -772,7 +779,7 @@
   (define (transform func)
     (func self (lambda () (make-import lib))))
   (define (free-vars)
-    (body 'free-vars))
+    (make-set))
   (define (gen-libname lib)
     (if (null? lib)
         (display "")
@@ -784,6 +791,42 @@
     (display "use ")
     (gen-libname lib)
     (display "::*;")
+    (newline))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'free-vars msg) (free-vars))
+          ((eq? 'kind msg) 'IMPORT)
+          ((eq? 'gen-rust msg) (gen-rust))
+          (else (error "Unknown message IMPORT" msg))))
+  self)
+
+(define (make-import-only lib names)
+  (define (print)
+    (cons 'IMPORT-ONLY (cons lib names)))
+  (define (transform func)
+    (func self (lambda () (make-import-only lib names))))
+  (define (free-vars)
+    (make-set))
+  (define (gen-libname lib)
+    (if (null? lib)
+        (display "")
+        (begin (display (car lib))
+               (if (not (null? (cdr lib)))
+                   (display "::"))
+               (gen-libname (cdr lib)))))
+  (define (gen-imports names)
+    (if (null? names)
+        'DONE
+        (begin (display (car names))
+               (display ", ")
+               (gen-imports (cdr names)))))
+  (define (gen-rust)
+    (display "use ")
+    (gen-libname lib)
+    (display "::{")
+    (gen-imports names)
+    (display "};")
     (newline))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
@@ -881,6 +924,17 @@
         ((pair? name*) (adjoin-local-env (cdr name*)
                                          (adjoin-local (car name*) env)))
         (else (adjoin-local name* env))))
+
+(define (adjoin-import*! name* env)
+  (let ((genv (find-globals env)))
+    (define (loop name*)
+      (if (null? name*)
+          '()
+          (begin
+            (set-cdr! genv (cons (new-import (car name*))
+                                 (cdr genv)))
+            (loop (cdr name*)))))
+    (loop name*)))
 
 (define (adjoin-boxed name env)
   (cons (new-boxed name) env))

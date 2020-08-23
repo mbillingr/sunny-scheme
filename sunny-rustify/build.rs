@@ -19,7 +19,7 @@ fn main() {
         .write_all(
             b"
 (import (scheme base)
-        (scheme write))
+        (only (scheme write) display newline))
 
 (define foo 40)
 
