@@ -60,6 +60,14 @@ impl Scm {
         Scm::Pair(make_ref!((Mut::new(car.into()), Mut::new(cdr.into()))))
     }
 
+    pub fn list(items: &[Scm]) -> Self {
+        let mut list = Scm::Nil;
+        for x in items.iter().rev() {
+            list = Scm::pair(x, list);
+        }
+        list
+    }
+
     pub fn func(f: impl Fn(&[Scm]) -> Scm + 'static) -> Self {
         Scm::Func(make_ref!(f))
     }
