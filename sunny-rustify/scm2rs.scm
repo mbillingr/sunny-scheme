@@ -368,6 +368,9 @@
           ((symbol? val) (display "Scm::symbol(\"")
                          (write val)
                          (display "\")"))
+          ((char? val) (display "Scm::char('")
+                       (display val)
+                       (display "')"))
           ((pair? val) (display "Scm::pair(")
                        (gen-constant (car val))
                        (display ", ")
@@ -987,7 +990,12 @@
     (if (null? strs)
         ""
         (string-append (car strs) (append-all (cdr strs)))))
-  (append-all (map char-map (string->list (symbol->string name)))))
+  (cond ((eq? name 'fn) "fn_")
+        ((eq? name 'loop) "loop_")
+        ((eq? name 'let) "let_")
+        ((eq? name 'mut) "mut_")
+        ((eq? name 'ref) "ref_")
+        (else (append-all (map char-map (string->list (symbol->string name)))))))
 
 (define (make-global-env)
   (list 'GLOBAL-MARKER
@@ -1200,7 +1208,7 @@
 (define (set-union set1 set2)
   (cond ((null? set1) set2)
         ((null? set2) set1)
-        ((set-add* set1 set2))))
+        (else (set-add* set1 set2))))
 
 
 ;--------------------------------------------------
