@@ -96,6 +96,13 @@ fn main() {
 
 (println \"FOO bar\")
 
+(define (foo) 1 2 3)
+(assert-eq (foo) 3)
+
+(define (list . x) x)
+(assert-equal (list 1 2) '(1 2))
+(assert-equal (list) '())
+
 (println 7531902468)
 ",
         )

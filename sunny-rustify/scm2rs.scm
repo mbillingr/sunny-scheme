@@ -4,11 +4,17 @@
                            caddr
                            cdadr
                            cddar
+                           cdddr
                            cadddr)
         (only (scheme read) read)
         (only (scheme write) display
                              newline
                              write))
+
+(define (scm->ast exp*)
+  (if (library? exp*)
+      (library->ast (cddr exp*))
+      (program->ast exp*)))
 
 (define (program->ast exp*)
   (define global-env (make-global-env))
@@ -24,6 +30,35 @@
                               (boxify (sexpr->sequence exp* global-env #f))))))
 
   (process-imports exp* '()))
+
+(define (library->ast exp*)
+  (library-decls->ast exp* (make-nop) (make-global-env) '() '()))
+
+(define (library-decls->ast exp* body global-env imports exports)
+  (cond ((null? exp*)
+         (make-library (cdr global-env) body imports exports))
+        ((eq? 'export (caar exp*))
+         (library-decls->ast (cdr exp*)
+                             body
+                             global-env
+                             imports
+                             (cons (library-export->ast (cdar exp*))
+                                   exports)))
+        ((import? (car exp*))
+         (library-decls->ast (cdr exp*)
+                             body
+                             global-env
+                             (append imports
+                                     (sexpr->import (cdar exp*) global-env))
+                             exports))
+        ((eq? 'begin (caar exp*))
+         (library-decls->ast (cdr exp*)
+                             (make-sequence body
+                                            (sexpr->sequence (cdar exp*)
+                                                             global-env #f))
+                             imports
+                             exports))))
+
 
 (define (sexpr->ast exp env tail?)
   (if (atom? exp)
@@ -141,9 +176,14 @@
 (define (sexpr->abstraction param* body env)
   (let ((local-env (adjoin-local-env param* env))
         (body (scan-out-defines body)))
-    (make-abstraction param*
-                      (map (lambda (p) (lookup p local-env)) param*)
-                      (sexpr->sequence body local-env #t))))
+    (if (dotted-list? param*)
+        (make-vararg-abstraction (proper-list-part param*)
+                                (last-cdr param*)
+                                (map (lambda (p) (lookup p local-env)) param*)
+                                (sexpr->sequence body local-env #t))
+        (make-abstraction param*
+                          (map (lambda (p) (lookup p local-env)) param*)
+                          (sexpr->sequence body local-env #t)))))
 
 (define (sexpr->sequence expr* env tail?)
   (if (null? expr*)
@@ -200,6 +240,10 @@
 ; ======================================================================
 ; Syntax
 
+(define (library? exp*)
+  (and (pair? exp*)
+       (eq? 'define-library (car exp*))))
+
 (define (scan-out-defines body)
   (define (initializations exp*)
     (cond ((null? exp*)
@@ -245,7 +289,9 @@
   (caddr expr))
 
 (define (if-alternative expr)
-  (cadddr expr))
+  (if (pair? (cdddr expr))
+      (cadddr expr)
+      '*UNSPECIFIED*))
 
 
 (define (cond-clauses expr)
@@ -648,7 +694,7 @@
   (define (transform func)
     (func self
           (lambda ()
-            (make-abstraction params (body 'transform func)))))
+            (make-abstraction params vars (body 'transform func)))))
   (define (free-vars)
     (set-remove* (body 'free-vars)
                  params))
@@ -692,6 +738,66 @@
           ((eq? 'get-vars msg) vars)
           ((eq? 'get-body msg) body)
           (else (error "Unknown message ABSTRACTION" msg))))
+  self)
+
+(define (make-vararg-abstraction params vararg vars body)
+  (define (print)
+    (cons 'VARARG-ABSTRACTION
+          (cons params
+                (body 'print))))
+  (define (transform func)
+    (func self
+          (lambda ()
+            (make-vararg-abstraction params vararg vars (body 'transform func)))))
+  (define (free-vars)
+    (set-remove* (body 'free-vars)
+                 (cons vararg params)))
+  (define (prepare-closure free-vars)
+    (if (pair? free-vars)
+        (let ((name (car free-vars)))
+          (display "let ")
+          (display (rustify-identifier name))
+          (display " = ")
+          (display (rustify-identifier name))
+          (display ".clone();")
+          (prepare-closure (cdr free-vars)))))
+  (define (gen-rust)
+    (define (gen-params p* k)
+      (if (pair? p*)
+          (begin (display "let ")
+                 (display (rustify-identifier (car p*)))
+                 (display " = args[")
+                 (display k)
+                 (display "].clone();")
+                 (gen-params (cdr p*) (+ k 1)))
+          (begin (display "let ")
+                 (display (rustify-identifier vararg))
+                 (display " = Scm::list(&args[")
+                 (display k)
+                 (display "..]);"))))
+    (rust-block
+      (lambda ()
+        (prepare-closure (free-vars))
+        (display "Scm::func(move |args: &[Scm]|")
+        (rust-block
+          (lambda ()
+            (display "if args.len() < ")
+            (display (length params))
+            (display "{panic!(\"not enough args\")}")
+            (gen-params params 0)
+            (body 'gen-rust)))
+        (display ")"))))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'free-vars msg) (free-vars))
+          ((eq? 'kind msg) 'VARARG-ABSTRACTION)
+          ((eq? 'gen-rust msg) (gen-rust))
+          ((eq? 'get-params msg) params)
+          ((eq? 'get-vararg msg) vararg)
+          ((eq? 'get-vars msg) vars)
+          ((eq? 'get-body msg) body)
+          (else (error "Unknown message VARARG-ABSTRACTION" msg))))
   self)
 
 (define (make-program globals imports body)
@@ -883,7 +989,8 @@
 
 (define (make-global-env)
   (list 'GLOBAL-MARKER
-        (new-import 'assert-eq)))
+        (new-import 'assert-eq)
+        (new-import 'assert-equal)))
 
 (define (ensure-var! name env)
   (let ((var (lookup name env)))
@@ -999,6 +1106,14 @@
                                (node 'get-params)
                                (node 'get-vars)
                                (node 'get-body)))
+          ((eq? (node 'kind) 'VARARG-ABSTRACTION)
+           (boxify-vararg-abstraction (node 'get-params)
+                                      (node 'get-vararg)
+                                      (node 'get-vars)
+                                      (cons (node 'get-vararg)
+                                            (node 'get-params))
+                                      (node 'get-vars)
+                                      (node 'get-body)))
           (else (ignore))))
   (node 'transform transform))
 
@@ -1012,6 +1127,36 @@
                  (boxify-abstraction params vars (cdr param*) (cdr var*)
                                      (make-boxify (car param*) body)))
           (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
+
+(define (boxify-vararg-abstraction params vararg vars param* var* body)
+  (if (null? var*)
+      (make-vararg-abstraction params vararg vars body)
+      (if (variable-mut? (car var*))
+          (begin (variable-set-setter! (car var*) 'BOXED-SET)
+                 (variable-set-getter! (car var*) 'BOXED-REF)
+                 (boxify-vararg-abstraction params vararg vars
+                                            (cdr param*) (cdr var*)
+                                            (make-boxify (car param*) body)))
+          (boxify-vararg-abstraction params vararg vars (cdr param*) (cdr var*) body))))
+
+;------------------------------------------------------------
+; Utils
+
+(define (dotted-list? seq)
+  (cond ((null? seq) #f)
+        ((pair? seq) (dotted-list? (cdr seq)))
+        (else #t)))
+
+(define (last-cdr seq)
+  (if (pair? seq)
+      (last-cdr (cdr seq))
+      seq))
+
+(define (proper-list-part seq)
+  (if (pair? seq)
+      (cons (car seq)
+            (proper-list-part (cdr seq)))
+      '()))
 
 ;------------------------------------------------------------
 ; quick and dirty implementation of sets as a unordered list
@@ -1064,6 +1209,6 @@
 
 (define program (load-sexpr))
 
-(define ast (program->ast program))
+(define ast (scm->ast program))
 
 (ast 'gen-rust)
