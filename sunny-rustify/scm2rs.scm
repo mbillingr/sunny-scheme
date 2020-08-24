@@ -180,6 +180,7 @@
         (make-vararg-abstraction (proper-list-part param*)
                                 (last-cdr param*)
                                 (map (lambda (p) (lookup p local-env)) param*)
+                                (lookup (last-cdr param*) local-env)
                                 (sexpr->sequence body local-env #t))
         (make-abstraction param*
                           (map (lambda (p) (lookup p local-env)) param*)
@@ -740,7 +741,7 @@
           (else (error "Unknown message ABSTRACTION" msg))))
   self)
 
-(define (make-vararg-abstraction params vararg vars body)
+(define (make-vararg-abstraction params vararg vars varvar body)
   (define (print)
     (cons 'VARARG-ABSTRACTION
           (cons params
@@ -748,7 +749,7 @@
   (define (transform func)
     (func self
           (lambda ()
-            (make-vararg-abstraction params vararg vars (body 'transform func)))))
+            (make-vararg-abstraction params vararg vars varvar (body 'transform func)))))
   (define (free-vars)
     (set-remove* (body 'free-vars)
                  (cons vararg params)))
@@ -796,6 +797,7 @@
           ((eq? 'get-params msg) params)
           ((eq? 'get-vararg msg) vararg)
           ((eq? 'get-vars msg) vars)
+          ((eq? 'get-varvar msg) varvar)
           ((eq? 'get-body msg) body)
           (else (error "Unknown message VARARG-ABSTRACTION" msg))))
   self)
@@ -1110,9 +1112,11 @@
            (boxify-vararg-abstraction (node 'get-params)
                                       (node 'get-vararg)
                                       (node 'get-vars)
+                                      (node 'get-varvar)
                                       (cons (node 'get-vararg)
                                             (node 'get-params))
-                                      (node 'get-vars)
+                                      (cons (node 'get-varvar)
+                                            (node 'get-vars))
                                       (node 'get-body)))
           (else (ignore))))
   (node 'transform transform))
@@ -1128,16 +1132,16 @@
                                      (make-boxify (car param*) body)))
           (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
 
-(define (boxify-vararg-abstraction params vararg vars param* var* body)
+(define (boxify-vararg-abstraction params vararg vars varvar param* var* body)
   (if (null? var*)
-      (make-vararg-abstraction params vararg vars body)
+      (make-vararg-abstraction params vararg vars varvar body)
       (if (variable-mut? (car var*))
           (begin (variable-set-setter! (car var*) 'BOXED-SET)
                  (variable-set-getter! (car var*) 'BOXED-REF)
-                 (boxify-vararg-abstraction params vararg vars
+                 (boxify-vararg-abstraction params vararg vars varvar
                                             (cdr param*) (cdr var*)
                                             (make-boxify (car param*) body)))
-          (boxify-vararg-abstraction params vararg vars (cdr param*) (cdr var*) body))))
+          (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
 
 ;------------------------------------------------------------
 ; Utils
