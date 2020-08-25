@@ -618,9 +618,9 @@
         (set-union ((car args) 'free-vars)
                    (free-vars-args (cdr args)))))
   (define (free-vars)
-    (set-union (set-remove* (body 'free-vars)
-                            params)
-               (free-vars-args args)))
+    (set-remove* (set-union (body 'free-vars)
+                            (free-vars-args args))
+                 params))
 
   (define (gen-bindings bindings)
     (for-each (lambda (b) (display "let ")
@@ -990,11 +990,13 @@
     (if (null? strs)
         ""
         (string-append (car strs) (append-all (cdr strs)))))
-  (cond ((eq? name 'fn) "fn_")
+  (cond ((eq? name 'args) "args_")
+        ((eq? name 'fn) "fn_")
         ((eq? name 'loop) "loop_")
         ((eq? name 'let) "let_")
         ((eq? name 'mut) "mut_")
         ((eq? name 'ref) "ref_")
+        ((eq? name 'self) "self_")
         (else (append-all (map char-map (string->list (symbol->string name)))))))
 
 (define (make-global-env)
@@ -1043,15 +1045,14 @@
         (else (adjoin-local name* env))))
 
 (define (adjoin-import*! name* env)
-  (let ((genv (find-globals env)))
-    (define (loop name*)
-      (if (null? name*)
-          '()
-          (begin
-            (set-cdr! genv (cons (new-import (car name*))
-                                 (cdr genv)))
-            (loop (cdr name*)))))
-    (loop name*)))
+  (define (loop name* genv)
+    (if (null? name*)
+        '()
+        (begin
+          (set-cdr! genv (cons (new-import (car name*))
+                               (cdr genv)))
+          (loop (cdr name*) genv))))
+  (loop name* (find-globals env)))
 
 (define (adjoin-boxed name env)
   (cons (new-boxed name) env))
