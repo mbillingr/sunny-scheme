@@ -1,10 +1,8 @@
 [package]
-name = "sunny-rustify"
+name = "sunny-parse"
 version = "0.1.0"
 authors = ["Martin Billinger <mbillingr@users.noreply.github.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 default = []
@@ -13,5 +11,5 @@ leaking = ["sunny-core/leaking", "scm_copy"]
 scm_copy = ["sunny-core/scm_copy"]
 
 [dependencies]
+lexpr = "0.2"
 sunny-core = {path="../sunny-core"}
-sunny-parse = {path="../sunny-parse"}

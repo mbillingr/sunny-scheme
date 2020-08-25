@@ -45,11 +45,19 @@ impl Scm {
         self.clone()
     }
 
+    pub fn nil() -> Self {
+        Self::Nil
+    }
+
     pub fn bool(b: bool) -> Self {
         match b {
             true => Self::True,
             false => Self::False,
         }
+    }
+
+    pub fn int(i: i64) -> Self {
+        Scm::Int(i)
     }
 
     pub fn char(_ch: char) -> Self {

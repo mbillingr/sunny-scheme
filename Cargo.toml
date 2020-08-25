@@ -3,6 +3,7 @@
 members = [
     "sunny-core",
     "sunny-macro",
+    "sunny-parse",
     "sunny-rustify",
 ]
 
