@@ -13,100 +13,105 @@ fn main() {
         .spawn()
         .expect("Could not call Scheme interpreter");
 
-    cmd.stdin
-        .as_mut()
-        .unwrap()
-        .write_all(
-            b"
-(import (scheme base)
-        (only (scheme write) display newline))
+    let src = fs::read("scm2rs.scm").unwrap();
+    //let src = b"42".to_vec();
 
-(define foo 40)
+    cmd.stdin.as_mut().unwrap().write_all(&src).unwrap();
 
-(define (println x) (display x) (newline))
+    /*    cmd.stdin
+            .as_mut()
+            .unwrap()
+            .write_all(
+                b"
+    (import (scheme base)
+            (only (scheme write) display newline))
 
-(println ((lambda (x) (+ x 2)) foo))
+    (define foo 40)
 
-(let ((x 1) (y 2))
-  (assert-eq (+ x y) 3)
+    (define (println x) (display x) (newline))
 
-  (let ((x y) (y x))
-    (assert-eq x 2)
-    (assert-eq y 1))
+    (println ((lambda (x) (+ x 2)) foo))
 
-  (let* ((x y) (y x))
-    (assert-eq x 2)
-    (assert-eq y 2)))
+    (let ((x 1) (y 2))
+      (assert-eq (+ x y) 3)
 
-(define (gen x)
-  (lambda () x))
+      (let ((x y) (y x))
+        (assert-eq x 2)
+        (assert-eq y 1))
 
-(letrec ((even? (lambda (x)
-                  (if (= x 0)
-                      #t
-                      (odd? (- x 1)))))
-         (odd? (lambda (x)
-                 (if (= x 0)
-                     #f
-                     (even? (- x 1))))))
-   (assert-eq (odd? 42) #f)
-   (assert-eq (even? 42) #t))
+      (let* ((x y) (y x))
+        (assert-eq x 2)
+        (assert-eq y 2)))
 
-(define (foo x)
-  (set! x 123)
-  (println x))
-(foo 0)
+    (define (gen x)
+      (lambda () x))
 
-(define (even? x)
-    (if (= x 0)
-        #t
-        (odd? (- x 1))))
+    (letrec ((even? (lambda (x)
+                      (if (= x 0)
+                          #t
+                          (odd? (- x 1)))))
+             (odd? (lambda (x)
+                     (if (= x 0)
+                         #f
+                         (even? (- x 1))))))
+       (assert-eq (odd? 42) #f)
+       (assert-eq (even? 42) #t))
 
-(define (odd? x)
-    (if (= x 0)
-        #f
-        (even? (- x 1))))
+    (define (foo x)
+      (set! x 123)
+      (println x))
+    (foo 0)
 
-(assert-eq (even? 3007) #f)
+    (define (even? x)
+        (if (= x 0)
+            #t
+            (odd? (- x 1))))
 
-(define (outer)
-    (define (inner)
-        0
-    )
-    inner
-)
-(println (outer))
-(println ((outer)))
+    (define (odd? x)
+        (if (= x 0)
+            #f
+            (even? (- x 1))))
 
-(println 'foo)
-(println (cons 1 (cons 2 3)))
-(println (cons 1 (cons 2 (cons 3 '()))))
-(println '(1 2 3 . 4))
+    (assert-eq (even? 3007) #f)
 
-(assert-eq (car (cons 1 2)) 1)
-(assert-eq (cdr (cons 1 2)) 2)
-
-(define (sign x)
-    (cond ((= x 0) 0)
-          ((< x 0) -1)
-          (else 1)))
-(assert-eq (sign 0) 0)
-(assert-eq (sign -2) -1)
-(assert-eq (sign 3) 1)
-
-(println \"FOO bar\")
-
-(define (foo) 1 2 3)
-(assert-eq (foo) 3)
-
-(define (list . x) x)
-(assert-equal (list 1 2) '(1 2))
-(assert-equal (list) '())
-
-(println 7531902468)
-",
+    (define (outer)
+        (define (inner)
+            0
         )
-        .unwrap();
+        inner
+    )
+    (println (outer))
+    (println ((outer)))
+
+    (println 'foo)
+    (println (cons 1 (cons 2 3)))
+    (println (cons 1 (cons 2 (cons 3 '()))))
+    (println '(1 2 3 . 4))
+
+    (assert-eq (car (cons 1 2)) 1)
+    (assert-eq (cdr (cons 1 2)) 2)
+
+    (define (sign x)
+        (cond ((= x 0) 0)
+              ((< x 0) -1)
+              (else 1)))
+    (assert-eq (sign 0) 0)
+    (assert-eq (sign -2) -1)
+    (assert-eq (sign 3) 1)
+
+    (println \"FOO bar\")
+
+    (define (foo) 1 2 3)
+    (assert-eq (foo) 3)
+
+    (define (list . x) x)
+    (assert-equal (list 1 2) '(1 2))
+    (assert-equal (list) '())
+
+    (println 7531902468)
+    ",
+            )
+            .unwrap();*/
 
     let output = cmd.wait_with_output().unwrap();
 
