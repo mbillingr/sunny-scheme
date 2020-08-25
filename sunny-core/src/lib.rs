@@ -52,6 +52,10 @@ impl Scm {
         }
     }
 
+    pub fn char(_ch: char) -> Self {
+        unimplemented!()
+    }
+
     pub fn symbol(s: &str) -> Self {
         Scm::Symbol(Symbol::new(s))
     }
@@ -126,6 +130,36 @@ impl Scm {
             Scm::Pair(p) => Some((p.0.get(), p.1.get())),
             _ => None,
         }
+    }
+
+    pub fn car(&self) -> Option<Scm> {
+        match self {
+            Scm::Pair(p) => Some(p.0.get()),
+            _ => None,
+        }
+    }
+
+    pub fn cdr(&self) -> Option<Scm> {
+        match self {
+            Scm::Pair(p) => Some(p.1.get()),
+            _ => None,
+        }
+    }
+
+    pub fn caar(&self) -> Option<Scm> {
+        self.car()?.car()
+    }
+
+    pub fn cadr(&self) -> Option<Scm> {
+        self.cdr()?.car()
+    }
+
+    pub fn cdar(&self) -> Option<Scm> {
+        self.car()?.cdr()
+    }
+
+    pub fn cddr(&self) -> Option<Scm> {
+        self.cdr()?.cdr()
     }
 }
 
