@@ -295,7 +295,7 @@ impl std::fmt::Display for Scm {
             Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
-            Scm::Char(ch) => write!(f, "{:?}", ch),
+            Scm::Char(ch) => write!(f, "{}", ch),
             Scm::Symbol(s) => write!(f, "{}", s),
             Scm::String(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{}", x),
