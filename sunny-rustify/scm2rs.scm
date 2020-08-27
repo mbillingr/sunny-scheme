@@ -92,8 +92,11 @@
                                                      (if-consequence exp)
                                                      (if-alternative exp)
                                                      env tail?))
-            ((eq? 'cond (car exp)) (sexpr->cond (cond-clauses exp)
-                                                env tail?))
+            ((eq? 'cond (car exp)) (wrap-sexpr exp
+                                     (sexpr->cond (cond-clauses exp)
+                                                  env tail?)))
+            ((eq? 'and (car exp)) (wrap-sexpr exp
+                                    (sexpr->and (cdr exp) env tail?)))
             (else (wrap-sexpr exp (sexpr->application (car exp)
                                                       (cdr exp)
                                                       env tail?))))))
@@ -204,6 +207,15 @@
          (make-alternative (sexpr->ast (cond-clause-condition (car clauses)) env #f)
                            (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
                            (sexpr->cond (cdr clauses) env tail?)))))
+
+(define (sexpr->and args env tail?)
+  (cond ((null? args) (make-constant #t))
+        ((null? (cdr args))
+         (sexpr->ast (car args) env tail?))
+        (else (make-alternative (sexpr->ast (car args) env #f)
+                                (sexpr->and (cdr args) env tail?)
+                                (make-constant #f)))))
+
 
 (define (sexpr->import stmt* env)
   (cond ((null? stmt*)
