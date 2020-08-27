@@ -17,6 +17,7 @@ pub const MEMORY_MODEL_KIND: &'static str = memory_model::KIND;
 #[cfg_attr(feature = "scm_copy", derive(Copy))]
 pub enum Scm {
     Nil,
+    Eof,
     False,
     True,
     Int(i64),
@@ -47,6 +48,10 @@ impl Scm {
 
     pub fn nil() -> Self {
         Self::Nil
+    }
+
+    pub fn eof() -> Self {
+        Self::Eof
     }
 
     pub fn bool(b: bool) -> Self {
@@ -115,6 +120,13 @@ impl Scm {
     pub fn is_null(&self) -> bool {
         match self {
             Scm::Nil => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_eof(&self) -> bool {
+        match self {
+            Scm::Eof => true,
             _ => false,
         }
     }
@@ -238,6 +250,7 @@ impl std::fmt::Debug for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Scm::Nil => write!(f, "'()"),
+            Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
             Scm::Symbol(s) => write!(f, "{}", s),
@@ -253,6 +266,7 @@ impl std::fmt::Display for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Scm::Nil => write!(f, "'()"),
+            Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
             Scm::Symbol(s) => write!(f, "{}", s),

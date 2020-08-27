@@ -15,6 +15,7 @@ mod scheme {
         thread_local! {pub static car: Mut<Scm> = Mut::new(Scm::func(sunny_core::car))}
         thread_local! {pub static cdr: Mut<Scm> = Mut::new(Scm::func(sunny_core::cdr))}
         thread_local! {pub static cons: Mut<Scm> = Mut::new(Scm::func(sunny_core::cons))}
+        thread_local! {pub static eof_minus_object_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_eof))}
         thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
         thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
         thread_local! {pub static pair_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_pair))}
@@ -52,13 +53,17 @@ mod scheme {
 
     pub mod read {
         use sunny_core::{self, Mut, Scm};
-        use sunny_parse::from_reader;
+        use sunny_parse::{from_reader, Error};
         use std::io::{stdin, Read};
 
         thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
         fn _read(args: &[Scm]) -> Scm {
-            from_reader(stdin()).unwrap()
+            match from_reader(stdin()) {
+                Ok(x) => x,
+                Err(e) if e.is_eof() => Scm::eof(),
+                Err(e) => panic!("{:?}", e),
+            }
         }
     }
 

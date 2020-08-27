@@ -224,6 +224,7 @@
          (adjoin-import! 'car env)
          (adjoin-import! 'cdr env)
          (adjoin-import! 'cons env)
+         (adjoin-import! 'eof-object? env)
          (adjoin-import! 'eq? env)
          (adjoin-import! 'null? env)
          (adjoin-import! 'pair? env))
