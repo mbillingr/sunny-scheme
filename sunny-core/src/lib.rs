@@ -131,6 +131,13 @@ impl Scm {
         }
     }
 
+    pub fn is_symbol(&self) -> bool {
+        match self {
+            Scm::Symbol(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_pair(&self) -> bool {
         match self {
             Scm::Pair(_) => true,
