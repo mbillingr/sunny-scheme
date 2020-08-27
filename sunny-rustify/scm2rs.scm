@@ -412,10 +412,10 @@
   (define (transform func)
     (func self (lambda () self)))
   (define (free-vars)
-    (if (not (global?))
+    (if (global?)
+        (make-set)
         (set-add (make-set)
-                 name)
-        (make-set)))
+                 name)))
   (define (gen-rust)
     (let ((getter (variable-getter var)))
       (cond ((eq? 'GLOBAL-REF getter)
@@ -831,7 +831,8 @@
   (define (gen-global-defs g)
     (if (null? g)
         (newline)
-        (if (not (global-imported? (cdar g)))
+        (if (global-imported? (cdar g))
+            (display "")
             (begin (display "thread_local!{#[allow(non_upper_case_globals)] pub static ")
                    (display (rustify-identifier (caar g)))
                    (display ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL ")
@@ -908,7 +909,8 @@
     (if (null? lib)
         (display "")
         (begin (display (car lib))
-               (if (not (null? (cdr lib)))
+               (if (null? (cdr lib))
+                   (display "")
                    (display "::"))
                (gen-libname (cdr lib)))))
   (define (gen-rust)
@@ -936,7 +938,8 @@
     (if (null? lib)
         (display "")
         (begin (display (car lib))
-               (if (not (null? (cdr lib)))
+               (if (null? (cdr lib))
+                   (display "")
                    (display "::"))
                (gen-libname (cdr lib)))))
   (define (gen-imports names)
@@ -1116,7 +1119,9 @@
 
 
 (define (atom? x)
-  (not (pair? x)))
+  (if (pair? x)
+      #f
+      #t))
 
 
 ;--------------------------------------------------------------
@@ -1224,6 +1229,11 @@
         ((null? set2) set1)
         (else (set-add* set1 set2))))
 
+
+;--------------------------------------------------
+; std library stand-ins
+
+(define (list . x) x)
 
 ;--------------------------------------------------
 
