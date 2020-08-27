@@ -58,7 +58,7 @@ mod scheme {
         thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
         fn _read(args: &[Scm]) -> Scm {
-            from_reader(stdin())
+            from_reader(stdin()).unwrap()
         }
     }
 
