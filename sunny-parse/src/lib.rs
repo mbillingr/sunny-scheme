@@ -21,6 +21,7 @@ pub fn from_lexpr(value: Value) -> Result<Scm> {
     Ok(match value {
         Value::Number(n) if n.is_i64() => Scm::int(n.as_i64().unwrap()),
         Value::Cons(c) if c.car().as_symbol() == Some("quote") && c.cdr().as_pair() == Some((&Value::Null, &Value::Null)) => Scm::nil(),
+        Value::Symbol(s) => Scm::symbol(&s),
         _ => unimplemented!("{:?}", value),
     })
 }
@@ -47,5 +48,10 @@ mod tests {
         assert_eq!(from_reader(&mut stream).unwrap(), Scm::int(1));
         assert_eq!(from_reader(&mut stream).unwrap(), Scm::int(2));
         assert_eq!(from_reader(&mut stream).unwrap(), Scm::int(3));
+    }
+
+    #[test]
+    fn parse_symbol() {
+        assert_eq!(from_str("foo").unwrap(), Scm::symbol("foo"));
     }
 }
