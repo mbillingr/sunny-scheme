@@ -20,7 +20,9 @@ pub fn from_reader(r: impl Read) -> Result<Scm> {
 pub fn from_lexpr(value: Value) -> Result<Scm> {
     Ok(match value {
         Value::Null => Scm::nil(),
+        Value::Bool(b) => Scm::bool(b),
         Value::Number(n) if n.is_i64() => Scm::int(n.as_i64().unwrap()),
+        Value::Char(ch) => Scm::char(ch),
         Value::Symbol(s) => Scm::symbol(&s),
         _ => unimplemented!("{:?}", value),
     })
@@ -53,5 +55,16 @@ mod tests {
     #[test]
     fn parse_symbol() {
         assert_eq!(from_str("foo").unwrap(), Scm::symbol("foo"));
+    }
+
+    #[test]
+    fn parse_bool() {
+        assert_eq!(from_str("#t").unwrap(), Scm::True);
+        assert_eq!(from_str("#f").unwrap(), Scm::False);
+    }
+
+    #[test]
+    fn parse_char() {
+        assert_eq!(from_str(r"#\x").unwrap(), Scm::char('x'));
     }
 }
