@@ -656,11 +656,11 @@
                               (display " = Scm::uninitialized().into_boxed();")
                               (newline))
                   params)
-        (for-each (lambda (p a) (display (rustify-identifier p))
-                                (display ".set(")
-                                (a 'gen-rust)
-                                (display ");")
-                                (newline))
+        (for-each2 (lambda (p a) (display (rustify-identifier p))
+                                 (display ".set(")
+                                 (a 'gen-rust)
+                                 (display ");")
+                                 (newline))
                   params
                   args)
         (body 'gen-rust))))
@@ -1235,6 +1235,19 @@
 ; std library stand-ins
 
 (define (list . x) x)
+
+(define (for-each f seq)
+  (if (pair? seq)
+      (begin
+        (f (car seq))
+        (for-each f (cdr seq)))))
+
+(define (for-each2 f seq-a seq-b)
+  (if (and (pair? seq-a)
+           (pair? seq-b))
+      (begin
+        (f (car seq-a) (car seq-b))
+        (for-each2 f (cdr seq-a) (cdr seq-b)))))
 
 ;--------------------------------------------------
 
