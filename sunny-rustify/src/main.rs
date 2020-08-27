@@ -52,16 +52,13 @@ mod scheme {
 
     pub mod read {
         use sunny_core::{self, Mut, Scm};
-        use sunny_parse::from_str;
+        use sunny_parse::from_reader;
         use std::io::{stdin, Read};
 
         thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
         fn _read(args: &[Scm]) -> Scm {
-            let mut buf = String::new();
-            stdin().read_to_string(&mut buf).unwrap();
-
-            dbg!(from_str(&dbg!(buf)))
+            from_reader(stdin())
         }
     }
 
