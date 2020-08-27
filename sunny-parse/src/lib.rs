@@ -25,6 +25,10 @@ pub fn from_lexpr(value: Value) -> Result<Scm> {
         Value::Char(ch) => Scm::char(ch),
         Value::Symbol(s) => Scm::symbol(&s),
         Value::String(s) => Scm::string(s),
+        Value::Cons(p) => {
+            let (car, cdr) = p.into_pair();
+            Scm::pair(from_lexpr(car)?, from_lexpr(cdr)?)
+        }
         _ => unimplemented!("{:?}", value),
     })
 }
@@ -72,5 +76,26 @@ mod tests {
     #[test]
     fn parse_string() {
         assert_eq!(from_str("\"foo\"").unwrap(), Scm::str("foo"));
+    }
+
+    #[test]
+    fn parse_pair() {
+        assert_eq!(from_str("(1 . 2)").unwrap(), Scm::pair(1, 2));
+    }
+
+    #[test]
+    fn parse_list() {
+        assert_eq!(
+            from_str("(1 2 3)").unwrap(),
+            Scm::list(&[1.into(), 2.into(), 3.into()])
+        );
+    }
+
+    #[test]
+    fn parse_dotted_list() {
+        assert_eq!(
+            from_str("(1 2 . 3)").unwrap(),
+            Scm::pair(1, Scm::pair(2, 3))
+        );
     }
 }
