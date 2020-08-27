@@ -1,6 +1,6 @@
-use crate::memory_model::prelude::{str_reference, string_reference, Ref};
+use crate::memory_model::prelude::{ref_as_ptr, str_reference, string_reference, Ref};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 #[cfg_attr(feature = "scm_copy", derive(Copy))]
 pub struct ScmString(Ref<str>);
 
@@ -9,8 +9,12 @@ impl ScmString {
         ScmString(str_reference(s))
     }
 
-    pub fn from_string(s: String) -> Self {
+    pub fn from_string(s: impl Into<Box<str>>) -> Self {
         ScmString(string_reference(s))
+    }
+
+    pub fn is_ptreq(&self, other: &Self) -> bool {
+        ref_as_ptr(&self.0) == ref_as_ptr(&other.0)
     }
 }
 

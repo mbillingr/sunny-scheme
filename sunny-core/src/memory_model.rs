@@ -32,8 +32,8 @@ mod memory_model_impl {
             s
         }
 
-        pub fn string_reference(s: String) -> Ref<str> {
-            Box::leak(s.into_boxed_str())
+        pub fn string_reference(s: impl Into<Box<str>>) -> Ref<str> {
+            Box::leak(s.into())
         }
 
         #[derive(Copy, Clone)]
@@ -102,8 +102,8 @@ mod memory_model_impl {
             string_reference(s.to_owned())
         }
 
-        pub fn string_reference(s: String) -> Ref<str> {
-            s.into()
+        pub fn string_reference(s: impl Into<Box<str>>) -> Ref<str> {
+            s.into().into()
         }
 
         #[derive(Clone)]

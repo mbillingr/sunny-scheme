@@ -1,6 +1,6 @@
-use lexpr::{Number, Value, Parser};
-use sunny_core::Scm;
+use lexpr::{Number, Parser, Value};
 use std::io::Read;
+use sunny_core::Scm;
 
 pub use lexpr::parse::{Error, Result};
 
@@ -24,6 +24,7 @@ pub fn from_lexpr(value: Value) -> Result<Scm> {
         Value::Number(n) if n.is_i64() => Scm::int(n.as_i64().unwrap()),
         Value::Char(ch) => Scm::char(ch),
         Value::Symbol(s) => Scm::symbol(&s),
+        Value::String(s) => Scm::string(s),
         _ => unimplemented!("{:?}", value),
     })
 }
@@ -66,5 +67,10 @@ mod tests {
     #[test]
     fn parse_char() {
         assert_eq!(from_str(r"#\x").unwrap(), Scm::char('x'));
+    }
+
+    #[test]
+    fn parse_string() {
+        assert_eq!(from_str("\"foo\"").unwrap(), Scm::str("foo"));
     }
 }

@@ -74,6 +74,14 @@ impl Scm {
         Scm::Symbol(Symbol::new(s))
     }
 
+    pub fn str(s: &'static str) -> Self {
+        Scm::String(ScmString::from_static(s))
+    }
+
+    pub fn string(s: impl Into<Box<str>>) -> Self {
+        Scm::String(ScmString::from_string(s))
+    }
+
     pub fn pair(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
         Scm::Pair(make_ref!((Mut::new(car.into()), Mut::new(cdr.into()))))
     }
@@ -256,6 +264,7 @@ impl PartialEq for Scm {
             (Int(a), Int(b)) => a == b,
             (Char(a), Char(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
+            (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0.get() == b.0.get() && a.1.get() == b.1.get(),
             _ => false,
         }
@@ -361,6 +370,7 @@ pub fn is_ptreq(args: &[Scm]) -> Scm {
         (Int(a), Int(b)) => Scm::bool(a == b),
         (Char(a), Char(b)) => Scm::bool(a == b),
         (Symbol(a), Symbol(b)) => Scm::bool(a == b),
+        (String(a), String(b)) => Scm::bool(a.is_ptreq(b)),
         (Pair(a), Pair(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
         (Func(a), Func(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
         _ => Scm::False,

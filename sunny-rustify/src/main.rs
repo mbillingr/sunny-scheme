@@ -11,7 +11,7 @@ macro_rules! pipe {
 #[allow(non_upper_case_globals)]
 mod scheme {
     pub mod base {
-        use sunny_core::{self, Mut, Scm, car as _car, cdr as _cdr};
+        use sunny_core::{self, car as _car, cdr as _cdr, Mut, Scm};
 
         thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
         thread_local! {pub static _g_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numgt))}
@@ -34,7 +34,7 @@ mod scheme {
     }
 
     pub mod cxr {
-        use sunny_core::{Mut, Scm, car as _car, cdr as _cdr};
+        use sunny_core::{car as _car, cdr as _cdr, Mut, Scm};
 
         thread_local! {pub static caaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car]))}
         thread_local! {pub static caadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car]))}
@@ -64,9 +64,9 @@ mod scheme {
     }
 
     pub mod read {
+        use std::io::{stdin, Read};
         use sunny_core::{self, Mut, Scm};
         use sunny_parse::{from_reader, Error};
-        use std::io::{stdin, Read};
 
         thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
