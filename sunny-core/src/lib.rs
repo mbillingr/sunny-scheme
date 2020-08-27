@@ -21,6 +21,7 @@ pub enum Scm {
     False,
     True,
     Int(i64),
+    Char(char),
     Symbol(Symbol),
     String(ScmString),
     Pair(Ref<(Mut<Scm>, Mut<Scm>)>),
@@ -65,8 +66,8 @@ impl Scm {
         Scm::Int(i)
     }
 
-    pub fn char(_ch: char) -> Self {
-        unimplemented!()
+    pub fn char(ch: char) -> Self {
+        Scm::Char(ch)
     }
 
     pub fn symbol(s: &str) -> Self {
@@ -134,6 +135,13 @@ impl Scm {
     pub fn is_symbol(&self) -> bool {
         match self {
             Scm::Symbol(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_char(&self) -> bool {
+        match self {
+            Scm::Char(_) => true,
             _ => false,
         }
     }
@@ -260,6 +268,7 @@ impl std::fmt::Debug for Scm {
             Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
+            Scm::Char(ch) => write!(f, "{:?}", ch),
             Scm::Symbol(s) => write!(f, "{}", s),
             Scm::String(s) => write!(f, "{:?}", s),
             Scm::Int(x) => write!(f, "{:?}", x),
@@ -276,6 +285,7 @@ impl std::fmt::Display for Scm {
             Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
+            Scm::Char(ch) => write!(f, "{:?}", ch),
             Scm::Symbol(s) => write!(f, "{}", s),
             Scm::String(s) => write!(f, "{}", s),
             Scm::Int(x) => write!(f, "{}", x),

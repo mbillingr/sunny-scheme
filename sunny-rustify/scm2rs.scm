@@ -239,6 +239,7 @@
          (adjoin-import! 'cadr env)
          (adjoin-import! 'cdar env)
          (adjoin-import! 'cddr env)
+         (adjoin-import! 'char? env)
          (adjoin-import! 'cons env)
          (adjoin-import! 'eof-object? env)
          (adjoin-import! 'eq? env)
