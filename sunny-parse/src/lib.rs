@@ -19,8 +19,8 @@ pub fn from_reader(r: impl Read) -> Result<Scm> {
 
 pub fn from_lexpr(value: Value) -> Result<Scm> {
     Ok(match value {
+        Value::Null => Scm::nil(),
         Value::Number(n) if n.is_i64() => Scm::int(n.as_i64().unwrap()),
-        Value::Cons(c) if c.car().as_symbol() == Some("quote") && c.cdr().as_pair() == Some((&Value::Null, &Value::Null)) => Scm::nil(),
         Value::Symbol(s) => Scm::symbol(&s),
         _ => unimplemented!("{:?}", value),
     })
@@ -32,7 +32,7 @@ mod tests {
 
     #[test]
     fn parse_nil() {
-        assert_eq!(from_str("'()").unwrap(), Scm::nil());
+        assert_eq!(from_str("()").unwrap(), Scm::nil());
     }
 
     #[test]
