@@ -168,6 +168,13 @@ impl Scm {
         }
     }
 
+    pub fn as_symbol(&self) -> Option<Symbol> {
+        match self {
+            Scm::Symbol(s) => Some(*s),
+            _ => None,
+        }
+    }
+
     pub fn as_pair(&self) -> Option<(Scm, Scm)> {
         match self {
             Scm::Pair(p) => Some((p.0.get(), p.1.get())),

@@ -33,6 +33,7 @@ mod scheme {
         thread_local! {pub static set_minus_cdr_i: Mut<Scm> = Mut::new(Scm::func(_set_cdr))}
         thread_local! {pub static symbol_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_symbol))}
         thread_local! {pub static char_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_char))}
+        thread_local! {pub static symbol_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_symbol_to_string))}
 
         fn _set_car(args: &[Scm]) -> Scm {
             match args {
@@ -54,6 +55,10 @@ mod scheme {
                 [_, _] => panic!("Not a pair: set-cdr! {:?}", args),
                 _ => panic!("Incorrect arity: set-cdr! {:?}", args),
             }
+        }
+
+        fn _symbol_to_string(s: &Scm) -> Scm {
+            Scm::str(s.as_symbol().unwrap().name())
         }
     }
 

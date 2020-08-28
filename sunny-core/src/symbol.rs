@@ -34,7 +34,7 @@ impl Symbol {
         Symbol(make_static(name))
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &'static str {
         self.0
     }
 }
