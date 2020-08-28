@@ -243,6 +243,7 @@
          (adjoin-import! 'cons env)
          (adjoin-import! 'eof-object? env)
          (adjoin-import! 'eq? env)
+         (adjoin-import! 'list->string env)
          (adjoin-import! 'null? env)
          (adjoin-import! 'pair? env)
          (adjoin-import! 'set-car! env)

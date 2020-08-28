@@ -168,6 +168,13 @@ impl Scm {
         }
     }
 
+    pub fn as_char(&self) -> Option<char> {
+        match self {
+            Scm::Char(ch) => Some(*ch),
+            _ => None,
+        }
+    }
+
     pub fn as_symbol(&self) -> Option<Symbol> {
         match self {
             Scm::Symbol(s) => Some(*s),
