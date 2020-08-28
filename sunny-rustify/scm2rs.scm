@@ -245,6 +245,8 @@
          (adjoin-import! 'eq? env)
          (adjoin-import! 'null? env)
          (adjoin-import! 'pair? env)
+         (adjoin-import! 'set-car! env)
+         (adjoin-import! 'set-cdr! env)
          (adjoin-import! 'symbol? env))
         ((equal? lib '(scheme write))
          (adjoin-import! 'display env)

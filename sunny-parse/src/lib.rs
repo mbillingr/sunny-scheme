@@ -1,4 +1,4 @@
-use lexpr::{Number, Parser, Value};
+use lexpr::{Parser, Value};
 use std::io::Read;
 use sunny_core::Scm;
 

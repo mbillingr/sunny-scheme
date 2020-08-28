@@ -189,6 +189,26 @@ impl Scm {
         }
     }
 
+    pub fn set_car(&self, value: Scm) -> Option<()> {
+        match self {
+            Scm::Pair(p) => {
+                p.0.set(value);
+                Some(())
+            }
+            _ => None,
+        }
+    }
+
+    pub fn set_cdr(&self, value: Scm) -> Option<()> {
+        match self {
+            Scm::Pair(p) => {
+                p.1.set(value);
+                Some(())
+            }
+            _ => None,
+        }
+    }
+
     pub fn caar(&self) -> Option<Scm> {
         self.car()?.car()
     }

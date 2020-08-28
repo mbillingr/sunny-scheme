@@ -29,8 +29,32 @@ mod scheme {
         thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
         thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
         thread_local! {pub static pair_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_pair))}
+        thread_local! {pub static set_minus_car_i: Mut<Scm> = Mut::new(Scm::func(_set_car))}
+        thread_local! {pub static set_minus_cdr_i: Mut<Scm> = Mut::new(Scm::func(_set_cdr))}
         thread_local! {pub static symbol_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_symbol))}
         thread_local! {pub static char_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_char))}
+
+        fn _set_car(args: &[Scm]) -> Scm {
+            match args {
+                [Scm::Pair(p), x] => {
+                    p.0.set(x.clone());
+                    x.clone()
+                }
+                [_, _] => panic!("Not a pair: set-car! {:?}", args),
+                _ => panic!("Incorrect arity: set-car! {:?}", args),
+            }
+        }
+
+        fn _set_cdr(args: &[Scm]) -> Scm {
+            match args {
+                [Scm::Pair(p), x] => {
+                    p.1.set(x.clone());
+                    x.clone()
+                }
+                [_, _] => panic!("Not a pair: set-cdr! {:?}", args),
+                _ => panic!("Incorrect arity: set-cdr! {:?}", args),
+            }
+        }
     }
 
     pub mod cxr {
@@ -64,13 +88,13 @@ mod scheme {
     }
 
     pub mod read {
-        use std::io::{stdin, Read};
+        use std::io::stdin;
         use sunny_core::{self, Mut, Scm};
-        use sunny_parse::{from_reader, Error};
+        use sunny_parse::from_reader;
 
         thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
-        fn _read(args: &[Scm]) -> Scm {
+        fn _read(_args: &[Scm]) -> Scm {
             match from_reader(stdin()) {
                 Ok(x) => x,
                 Err(e) if e.is_eof() => Scm::eof(),
