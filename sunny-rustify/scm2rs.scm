@@ -247,6 +247,7 @@
          (adjoin-import! 'pair? env)
          (adjoin-import! 'set-car! env)
          (adjoin-import! 'set-cdr! env)
+         (adjoin-import! 'string->list env)
          (adjoin-import! 'symbol? env)
          (adjoin-import! 'symbol->string env))
         ((equal? lib '(scheme write))

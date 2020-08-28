@@ -16,6 +16,10 @@ impl ScmString {
     pub fn is_ptreq(&self, other: &Self) -> bool {
         ref_as_ptr(&self.0) == ref_as_ptr(&other.0)
     }
+
+    pub fn as_str(&self) -> &str {
+        &*self.0
+    }
 }
 
 impl std::fmt::Debug for ScmString {

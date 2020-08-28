@@ -175,6 +175,13 @@ impl Scm {
         }
     }
 
+    pub fn as_string(&self) -> Option<ScmString> {
+        match self {
+            Scm::String(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
+
     pub fn as_pair(&self) -> Option<(Scm, Scm)> {
         match self {
             Scm::Pair(p) => Some((p.0.get(), p.1.get())),
@@ -242,6 +249,12 @@ impl From<bool> for Scm {
 impl From<i64> for Scm {
     fn from(i: i64) -> Self {
         Scm::Int(i)
+    }
+}
+
+impl From<char> for Scm {
+    fn from(ch: char) -> Self {
+        Scm::Char(ch)
     }
 }
 
