@@ -248,6 +248,7 @@
          (adjoin-import! 'set-car! env)
          (adjoin-import! 'set-cdr! env)
          (adjoin-import! 'string->list env)
+         (adjoin-import! 'string-append env)
          (adjoin-import! 'symbol? env)
          (adjoin-import! 'symbol->string env))
         ((equal? lib '(scheme write))
@@ -1257,6 +1258,12 @@
       (begin
         (f (car seq-a) (car seq-b))
         (for-each2 f (cdr seq-a) (cdr seq-b)))))
+
+(define (map f seq)
+  (if (null? seq)
+      '()
+      (cons (f (car seq))
+            (map f (cdr seq)))))
 
 ;--------------------------------------------------
 

@@ -35,6 +35,7 @@ mod scheme {
         thread_local! {pub static char_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_char))}
         thread_local! {pub static symbol_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_symbol_to_string))}
         thread_local! {pub static string_minus__g_list: Mut<Scm> = Mut::new(Scm::func1(_string_to_list))}
+        thread_local! {pub static string_minus_append: Mut<Scm> = Mut::new(Scm::func2(_string_append))}
 
         fn _set_car(args: &[Scm]) -> Scm {
             match args {
@@ -71,6 +72,12 @@ mod scheme {
             }
 
             return seq;
+        }
+
+        fn _string_append(a: &Scm, b: &Scm) -> Scm {
+            let a = a.as_string().unwrap();
+            let b = b.as_string().unwrap();
+            Scm::string(a.as_str().to_owned() + b.as_str())
         }
     }
 
