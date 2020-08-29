@@ -1268,6 +1268,11 @@
              (map f (cdr seq)))
        '()))
 
+(define (length seq)
+  (if (pair? seq)
+      (+ 1 (length (cdr seq)))
+      0))
+
 ;--------------------------------------------------
 
 (define (load-sexpr)
