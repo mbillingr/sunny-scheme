@@ -1257,6 +1257,9 @@
 ;--------------------------------------------------
 ; std library stand-ins
 
+(define (not x)
+  (if x #f #t))
+
 (define (list . x) x)
 
 (define (for-each f seq)
