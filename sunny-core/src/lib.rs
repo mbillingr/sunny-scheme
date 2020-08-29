@@ -321,15 +321,27 @@ impl PartialEq for Scm {
 impl std::fmt::Debug for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Scm::Nil => write!(f, "'()"),
+            Scm::Nil => write!(f, "()"),
             Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
-            Scm::Char(ch) => write!(f, "{:?}", ch),
+            Scm::Char(ch) => write!(f, "#\\{}", ch),
             Scm::Symbol(s) => write!(f, "{}", s),
-            Scm::String(s) => write!(f, "{:?}", s),
+            Scm::String(s) => write!(f, "\"{}\"", s.as_str().replace('"', "\\\"")),
             Scm::Int(x) => write!(f, "{:?}", x),
-            Scm::Pair(p) => write!(f, "({:?} . {:?})", p.0, p.1),
+            Scm::Pair(p) => {
+                write!(f, "(")?;
+                write!(f, "{:?}", p.0.get())?;
+                let mut x = p.1.get();
+                while let Some((car, cdr)) = x.as_pair() {
+                    write!(f, " {:?}", car)?;
+                    x = cdr;
+                }
+                if !x.is_null() {
+                    write!(f, " . {:?}", x)?;
+                }
+                write!(f, ")")
+            }
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
         }
     }
@@ -338,7 +350,7 @@ impl std::fmt::Debug for Scm {
 impl std::fmt::Display for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Scm::Nil => write!(f, "'()"),
+            Scm::Nil => write!(f, "()"),
             Scm::Eof => write!(f, "#<eof>"),
             Scm::True => write!(f, "#t"),
             Scm::False => write!(f, "#f"),
