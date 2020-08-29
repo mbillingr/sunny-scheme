@@ -25,9 +25,10 @@
                             (append imports
                                     (sexpr->import (cdar exp*) global-env))))
 
-          (else (make-program (cdr global-env)
-                              imports
-                              (boxify (sexpr->sequence exp* global-env #f))))))
+          (else (let ((main (boxify (sexpr->sequence exp* global-env #f))))
+                  (make-program (cdr global-env)
+                                imports
+                                main)))))
 
   (process-imports exp* '()))
 
@@ -1261,10 +1262,10 @@
         (for-each2 f (cdr seq-a) (cdr seq-b)))))
 
 (define (map f seq)
-  (if (null? seq)
-      '()
-      (cons (f (car seq))
-            (map f (cdr seq)))))
+   (if (pair? seq)
+       (cons (f (car seq))
+             (map f (cdr seq)))
+       '()))
 
 ;--------------------------------------------------
 
