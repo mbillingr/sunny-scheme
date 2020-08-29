@@ -418,7 +418,8 @@
 
 (define (make-reference name var)
   (define (global?)
-    (or (eq? 'GLOBAL-REF (variable-getter var))
+    (if (eq? 'GLOBAL-REF (variable-getter var))
+        #t
         (eq? 'IMPORT-REF (variable-getter var))))
   (define (print)
     (list (variable-getter var) name))
