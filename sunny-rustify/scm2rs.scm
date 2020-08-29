@@ -1274,6 +1274,12 @@
       (+ 1 (length (cdr seq)))
       0))
 
+(define (append seq-a seq-b)
+  (if (pair? seq-a)
+      (cons (car seq-a)
+            (append (cdr seq-a) seq-b))
+      seq-b))
+
 ;--------------------------------------------------
 
 (define (load-sexpr)
