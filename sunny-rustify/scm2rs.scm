@@ -258,6 +258,7 @@
          (adjoin-import! 'set-cdr! env)
          (adjoin-import! 'string->list env)
          (adjoin-import! 'string-append env)
+         (adjoin-import! 'string<? env)
          (adjoin-import! 'symbol? env)
          (adjoin-import! 'symbol->string env))
         ((equal? lib '(scheme write))
