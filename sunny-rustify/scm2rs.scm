@@ -11,100 +11,6 @@
                              newline
                              write))
 
-; ======================================================================
-; Syntax
-
-(define (library? exp*)
-  (and (pair? exp*)
-       (eq? 'define-library (car exp*))))
-
-
-(define (definition? expr)
-  (and (pair? expr)
-       (eq? (car expr) 'define)))
-
-(define (definition-variable expr)
-  (if (pair? (cadr expr))
-      (caadr expr)
-      (cadr expr)))
-
-(define (definition-value expr)
-  (if (pair? (cadr expr))
-      (cons 'lambda
-            (cons (cdadr expr)
-                  (cddr expr)))
-      (caddr expr)))
-
-
-(define (if-condition expr)
-  (cadr expr))
-
-(define (if-consequence expr)
-  (caddr expr))
-
-(define (if-alternative expr)
-  (if (pair? (cdddr expr))
-      (cadddr expr)
-      '*UNSPECIFIED*))
-
-
-(define (cond-clauses expr)
-  (cdr expr))
-
-(define (cond-clause-condition clause)
-  (car clause))
-
-(define (cond-clause-sequence clause)
-  (cdr clause))
-
-
-(define (import? expr)
-  (and (pair? expr)
-       (eq? (car expr) 'import)))
-
-
-(define (scan-out-defines body)
-  (define (initializations exp*)
-    (cond ((null? exp*)
-           '())
-          ((definition? (car exp*))
-           (cons (list (definition-variable (car exp*))
-                       (definition-value (car exp*)))
-                 (initializations (cdr exp*))))
-          (else (initializations (cdr exp*)))))
-  (define (transform exp*)
-    (cond ((null? exp*)
-           '())
-          ((definition? (car exp*))
-           (transform (cdr exp*)))
-          (else (cons (car exp*)
-                      (transform (cdr exp*))))))
-  (list (cons 'letrec
-              (cons (initializations body)
-                    (transform body)))))
-
-;------------------------------------------------------------
-; Utils
-
-(define (dotted-list? seq)
-  (cond ((null? seq) #f)
-        ((pair? seq) (dotted-list? (cdr seq)))
-        (else #t)))
-
-(define (last-cdr seq)
-  (if (pair? seq)
-      (last-cdr (cdr seq))
-      seq))
-
-(define (proper-list-part seq)
-  (if (pair? seq)
-      (cons (car seq)
-            (proper-list-part (cdr seq)))
-      '()))
-
-; ======================================================================
-; Parsing
-
 (define (scm->ast exp*)
   (if (library? exp*)
       (library->ast (cddr exp*))
@@ -119,8 +25,12 @@
                             (append imports
                                     (sexpr->import (cdar exp*) global-env))))
 
-          (else (let ((main (boxify (sexpr->sequence exp* global-env #f))))
-                  (make-program (cdr global-env)
+          (else (let* ((main (boxify (sexpr->sequence exp* global-env #f)))
+                       (globals (sort (lambda (a b)
+                                        (string<? (symbol->string (car a))
+                                                  (symbol->string (car b))))
+                                      (cdr global-env))))
+                  (make-program globals
                                 imports
                                 main)))))
 
@@ -363,6 +273,79 @@
 
 
 ; ======================================================================
+; Syntax
+
+(define (library? exp*)
+  (and (pair? exp*)
+       (eq? 'define-library (car exp*))))
+
+
+(define (definition? expr)
+  (and (pair? expr)
+       (eq? (car expr) 'define)))
+
+(define (definition-variable expr)
+  (if (pair? (cadr expr))
+      (caadr expr)
+      (cadr expr)))
+
+(define (definition-value expr)
+  (if (pair? (cadr expr))
+      (cons 'lambda
+            (cons (cdadr expr)
+                  (cddr expr)))
+      (caddr expr)))
+
+
+(define (if-condition expr)
+  (cadr expr))
+
+(define (if-consequence expr)
+  (caddr expr))
+
+(define (if-alternative expr)
+  (if (pair? (cdddr expr))
+      (cadddr expr)
+      ''*UNSPECIFIED*))
+
+
+(define (cond-clauses expr)
+  (cdr expr))
+
+(define (cond-clause-condition clause)
+  (car clause))
+
+(define (cond-clause-sequence clause)
+  (cdr clause))
+
+
+(define (import? expr)
+  (and (pair? expr)
+       (eq? (car expr) 'import)))
+
+
+(define (scan-out-defines body)
+  (define (initializations exp*)
+    (cond ((null? exp*)
+           '())
+          ((definition? (car exp*))
+           (cons (list (definition-variable (car exp*))
+                       (definition-value (car exp*)))
+                 (initializations (cdr exp*))))
+          (else (initializations (cdr exp*)))))
+  (define (transform exp*)
+    (cond ((null? exp*)
+           '())
+          ((definition? (car exp*))
+           (transform (cdr exp*)))
+          (else (cons (car exp*)
+                      (transform (cdr exp*))))))
+  (list (cons 'letrec
+              (cons (initializations body)
+                    (transform body)))))
+
+
+; ======================================================================
 ; AST
 
 (define (make-comment comment node)
@@ -408,7 +391,8 @@
 
 (define (make-constant val)
   (define (print)
-    `(CONSTANT ,val))
+    (cons 'CONSTANT
+          val))
   (define (transform func)
     (func self (lambda () self)))
   (define (free-vars)
@@ -872,7 +856,7 @@
     (if (null? g)
         (newline)
         (if (global-imported? (cdar g))
-            (display "")
+            (gen-global-defs (cdr g))
             (begin (display "thread_local!{#[allow(non_upper_case_globals)] pub static ")
                    (display (rustify-identifier (caar g)))
                    (display ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL ")
@@ -1081,9 +1065,6 @@
       (find-globals (cdr env))))
 
 (define (adjoin-global! name env)
-  (display "// New Global: ")
-  (display name)
-  (newline)
   (adjoin-global-var! (new-global name) env))
 
 (define (adjoin-import! name env)
@@ -1253,6 +1234,24 @@
         ((null? set2) set1)
         (else (set-add* set1 set2))))
 
+;------------------------------------------------------------
+; Utils
+
+(define (dotted-list? seq)
+  (cond ((null? seq) #f)
+        ((pair? seq) (dotted-list? (cdr seq)))
+        (else #t)))
+
+(define (last-cdr seq)
+  (if (pair? seq)
+      (last-cdr (cdr seq))
+      seq))
+
+(define (proper-list-part seq)
+  (if (pair? seq)
+      (cons (car seq)
+            (proper-list-part (cdr seq)))
+      '()))
 
 ;--------------------------------------------------
 ; std library stand-ins
@@ -1278,6 +1277,14 @@
              (map f (cdr seq)))
        '()))
 
+(define (filter f seq)
+  (if (pair? seq)
+      (if (f (car seq))
+          (cons (car seq)
+                (filter f (cdr seq)))
+          (filter f (cdr seq)))
+      '()))
+
 (define (length seq)
   (if (pair? seq)
       (+ 1 (length (cdr seq)))
@@ -1288,6 +1295,18 @@
       (cons (car seq-a)
             (append (cdr seq-a) seq-b))
       seq-b))
+
+(define (sort cmp ass)
+  (if (pair? ass)
+      (let ((pivot (car ass)))
+        (append (sort cmp
+                      (filter (lambda (x) (cmp x pivot))
+                              (cdr ass)))
+                (cons pivot
+                      (sort cmp
+                            (filter (lambda (x) (not (cmp x pivot)))
+                                    (cdr ass))))))
+      '()))
 
 ;--------------------------------------------------
 
