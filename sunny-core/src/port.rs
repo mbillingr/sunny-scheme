@@ -1,9 +1,14 @@
 use std::fs::File;
-use std::io::{Read, BufReader, Stdin};
+use std::io::{Read, BufReader, Stdin, Write};
 use std::path::Path;
 use std::collections::VecDeque;
 
 pub trait InputPort: ScmReader {
+    fn is_open(&self) -> bool;
+    fn close(&mut self);
+}
+
+pub trait OutputPort: ScmWriter {
     fn is_open(&self) -> bool;
     fn close(&mut self);
 }
@@ -192,6 +197,34 @@ impl<T: Read> ScmReader for T {
             buffer.truncate(n);
             Some(buffer)
         }
+    }
+}
+
+pub trait ScmWriter: Write {
+    fn write_char(&mut self, ch: char);
+    fn write_str(&mut self, s: &str);
+    fn write_u8(&mut self, ch: u8);
+    fn write_bytevector(&mut self, buffer: &[u8]);
+}
+
+impl<T: Write> ScmWriter for T {
+    fn write_char(&mut self, ch: char) {
+        let mut buffer = [0; 4];
+        let s = ch.encode_utf8(&mut buffer);
+        self.write_str(s)
+    }
+
+    fn write_str(&mut self, s: &str) {
+        self.write_bytevector(s.as_bytes())
+    }
+
+    fn write_u8(&mut self, u: u8) {
+        let buffer = [u];
+        self.write_bytevector(&buffer)
+    }
+
+    fn write_bytevector(&mut self, buffer: &[u8]) {
+        self.write_all(buffer).unwrap()
     }
 }
 
