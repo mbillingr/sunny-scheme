@@ -1,6 +1,7 @@
 extern crate lazy_static;
 
 mod memory_model;
+pub mod port;
 pub mod string;
 pub mod symbol;
 
@@ -8,6 +9,8 @@ pub use memory_model::prelude::Mut;
 use memory_model::prelude::*;
 use string::ScmString;
 use symbol::Symbol;
+use crate::port::InputPort;
+use std::cell::RefCell;
 
 pub type BoxedScm = Boxed<Scm>;
 
@@ -26,6 +29,8 @@ pub enum Scm {
     String(ScmString),
     Pair(Ref<(Mut<Scm>, Mut<Scm>)>),
     Func(Ref<dyn Fn(&[Scm]) -> Scm>),
+
+    InputPort(Ref<RefCell<dyn InputPort>>),
 }
 
 impl Scm {
@@ -119,6 +124,10 @@ impl Scm {
         }))
     }
 
+    pub fn input_port(port: impl InputPort + 'static) -> Self {
+        Scm::InputPort(make_ref!(RefCell::new(port)))
+    }
+
     pub fn is_true(&self) -> bool {
         match self {
             Scm::Nil | Scm::False => false,
@@ -192,6 +201,13 @@ impl Scm {
     pub fn as_pair(&self) -> Option<(Scm, Scm)> {
         match self {
             Scm::Pair(p) => Some((p.0.get(), p.1.get())),
+            _ => None,
+        }
+    }
+
+    pub fn with_input_port<T>(&self, f: impl FnOnce(&mut dyn InputPort)->T) -> Option<T> {
+        match self {
+            Scm::InputPort(p) => Some(f(&mut *p.borrow_mut())),
             _ => None,
         }
     }
@@ -343,6 +359,7 @@ impl std::fmt::Debug for Scm {
                 write!(f, ")")
             }
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
+            Scm::InputPort(x) => write!(f, "<input port {:p}>", &*x),
         }
     }
 }
@@ -372,6 +389,7 @@ impl std::fmt::Display for Scm {
                 write!(f, ")")
             }
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
+            Scm::InputPort(x) => write!(f, "<input port {:p}>", &*x),
         }
     }
 }
@@ -432,6 +450,7 @@ pub fn is_ptreq(args: &[Scm]) -> Scm {
         (String(a), String(b)) => Scm::bool(a.is_ptreq(b)),
         (Pair(a), Pair(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
         (Func(a), Func(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
+        (InputPort(a), InputPort(b)) => Scm::bool(ref_as_ptr(a) == ref_as_ptr(b)),
         _ => Scm::False,
     }
 }
@@ -473,9 +492,32 @@ pub fn square(args: &[Scm]) -> Scm {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::port::{MemoryInputPort, FileInputPort};
 
     #[test]
     fn it_works() {
         assert_eq!(add(&[Scm::Int(2), Scm::Int(2)]), Scm::Int(4));
+    }
+
+    #[test]
+    fn input_port() {
+        let source = MemoryInputPort::from_str("foo");
+        let scm = Scm::input_port(source);
+        let line = scm.with_input_port(|port| {
+            port.read_line().unwrap()
+        }
+        ).unwrap();
+        assert_eq!(line, "foo");
+    }
+
+    #[test]
+    fn input_port2() {
+        let source = FileInputPort::open("Cargo.toml");
+        let scm = Scm::input_port(source);
+        let line = scm.with_input_port(|port| {
+            port.read_line().unwrap()
+        }
+        ).unwrap();
+        assert_eq!(line, "[package]");
     }
 }

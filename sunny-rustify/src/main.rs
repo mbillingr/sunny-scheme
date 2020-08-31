@@ -165,11 +165,21 @@ mod scheme {
 
         thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
-        fn _read(_args: &[Scm]) -> Scm {
-            match from_reader(stdin()) {
-                Ok(x) => x,
-                Err(e) if e.is_eof() => Scm::eof(),
-                Err(e) => panic!("{:?}", e),
+        fn _read(args: &[Scm]) -> Scm {
+            if args.len() == 0 {
+                match from_reader(stdin()) {
+                    Ok(x) => x,
+                    Err(e) if e.is_eof() => Scm::eof(),
+                    Err(e) => panic!("{:?}", e),
+                }
+            } else {
+                args[1].with_input_port(|port|{
+                    match from_reader(port) {
+                        Ok(x) => x,
+                        Err(e) if e.is_eof() => Scm::eof(),
+                        Err(e) => panic!("{:?}", e),
+                    }
+                }).unwrap_or(Scm::eof())
             }
         }
     }

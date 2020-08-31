@@ -71,7 +71,7 @@ mod memory_model_impl {
         pub type Ref<T> = Rc<T>;
 
         #[derive(Debug)]
-        pub struct Mut<T>(RefCell<T>);
+        pub struct Mut<T: ?Sized>(RefCell<T>);
 
         impl<T: Clone> Mut<T> {
             pub fn new(x: T) -> Self {
