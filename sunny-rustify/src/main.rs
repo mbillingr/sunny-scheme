@@ -130,6 +130,34 @@ mod scheme {
         thread_local! {pub static cddddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr _cdr]))}
     }
 
+    pub mod file {
+        use sunny_core::{self, Scm, Mut};
+        use sunny_core::port::FileInputPort;
+
+        thread_local! {pub static open_minus_input_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_input_file))}
+
+        fn _open_input_file(name: &Scm) -> Scm {
+            let port = FileInputPort::open(name.as_string().expect("Argument to open-input-file must be a string.").as_str());
+            Scm::input_port(port)
+        }
+    }
+
+    pub mod process_context {
+        use sunny_core::{self, Scm, Mut};
+        use std::env;
+
+        thread_local! {pub static command_minus_line: Mut<Scm> = Mut::new(Scm::func0(_command_line))}
+
+        fn _command_line() -> Scm {
+            let mut arglist = Scm::nil();
+            for arg in env::args().rev() {
+                arglist = Scm::pair(arg, arglist);
+            }
+            arglist
+        }
+
+    }
+
     pub mod read {
         use std::io::stdin;
         use sunny_core::{self, Mut, Scm};
