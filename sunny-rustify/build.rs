@@ -1,22 +1,19 @@
 use std::env;
 use std::fs;
-use std::io::prelude::*;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
 fn main() {
-    let mut cmd = Command::new("chibi-scheme")
-        .arg("scm2rs.scm")
+    let cmd = Command::new("chibi-scheme")
+        .arg("scm2rs.scm")  // the script we run
+        .arg("scm2rs.scm")  // the file we compile
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .expect("Could not call Scheme interpreter");
 
-    let src = fs::read("scm2rs.scm").unwrap();
-    //let src = b"42".to_vec();
-
-    cmd.stdin.as_mut().unwrap().write_all(&src).unwrap();
+    //cmd.stdin.as_mut().unwrap().write_all(&src).unwrap();
 
     /*    cmd.stdin
             .as_mut()

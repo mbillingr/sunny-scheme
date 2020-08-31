@@ -173,7 +173,7 @@ mod scheme {
                     Err(e) => panic!("{:?}", e),
                 }
             } else {
-                args[1].with_input_port(|port|{
+                args[0].with_input_port(|port|{
                     match from_reader(port) {
                         Ok(x) => x,
                         Err(e) if e.is_eof() => Scm::eof(),

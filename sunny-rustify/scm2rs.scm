@@ -9,7 +9,9 @@
         (only (scheme read) read)
         (only (scheme write) display
                              newline
-                             write))
+                             write)
+        (only (scheme process-context) command-line)
+        (only (scheme file) open-input-file))
 
 (define (scm->ast exp*)
   (if (library? exp*)
@@ -1326,8 +1328,12 @@
 
 ;--------------------------------------------------
 
+(define input-file-name (cadr (command-line)))
+
+(define input-file (open-input-file input-file-name))
+
 (define (load-sexpr)
-  (let ((expr (read)))
+  (let ((expr (read input-file)))
     (if (eof-object? expr)
         '()
         (cons expr (load-sexpr)))))
