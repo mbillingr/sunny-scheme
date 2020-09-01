@@ -6,6 +6,7 @@
     char? close-port cons
     eof-object?
     eq? equal?
+    error
     list->string
     null?
     pair?

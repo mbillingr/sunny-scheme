@@ -28,6 +28,7 @@ mod scheme {
         thread_local! {pub static eof_minus_object_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_eof))}
         thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
         thread_local! {pub static equal_p: Mut<Scm> = Mut::new(Scm::func2(Scm::eq))}
+        thread_local! {pub static error: Mut<Scm> = Mut::new(Scm::func(_error))}
         thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
         thread_local! {pub static pair_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_pair))}
         thread_local! {pub static set_minus_car_i: Mut<Scm> = Mut::new(Scm::func(_set_car))}
@@ -40,6 +41,10 @@ mod scheme {
         thread_local! {pub static string_l__p: Mut<Scm> = Mut::new(Scm::func2(_string_cmp))}
         thread_local! {pub static list_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_list_to_string))}
         thread_local! {pub static close_minus_port: Mut<Scm> = Mut::new(Scm::func1(Scm::close_port))}
+
+        fn _error(args: &[Scm]) -> Scm {
+            panic!("{}, {:?}", args[0], &args[1..])
+        }
 
         fn _set_car(args: &[Scm]) -> Scm {
             match args {
