@@ -14,15 +14,19 @@
                             open-output-file))
 
 (define (scm->ast exp*)
-  (if (library? exp*)
-      (library->ast (library-decls (car exp*)))
+  (if (library? (car exp*))
+      (library->ast (library-decls (car exp*)) '())
       (program->ast exp*)))
 
 (define (program->ast exp*)
   (define global-env (make-global-env))
+  (define library-env '())
 
   (define (process-imports exp* imports init)
     (cond ((import? (car exp*))
+           (set! library-env
+                 (register-libraries (import-libnames (car exp*))
+                                     library-env))
            (process-imports (cdr exp*)
                             (append imports
                                     (sexpr->import (cdar exp*) global-env))
@@ -33,6 +37,16 @@
                                         (string<? (symbol->string (car a))
                                                   (symbol->string (car b))))
                                       (cdr global-env))))
+                  (display "*********** TODO *************")
+                  (newline)
+                  (display "Compile these libraries into main program")
+                  (newline)
+                  (display "=================")
+                  (newline)
+                  (display library-env)
+                  (newline)
+                  (display "=================")
+                  (newline)
                   (make-program globals
                                 imports
                                 init
@@ -40,10 +54,10 @@
 
   (process-imports exp* '() (make-set)))
 
-(define (library->ast exp*)
-  (library-decls->ast exp* (make-set) (make-nop) (make-global-env) '() '()))
+(define (library->ast exp* library-env)
+  (library-decls->ast exp* (make-set) (make-nop) (make-global-env) library-env '() '()))
 
-(define (library-decls->ast exp* init body global-env imports exports)
+(define (library-decls->ast exp* init body global-env library-env imports exports)
   (cond ((null? exp*)
          (make-library (cdr global-env) init body imports exports))
         ((eq? 'export (caar exp*))
@@ -51,6 +65,7 @@
                              init
                              body
                              global-env
+                             library-env
                              imports
                              (append exports
                                      (sexpr->export (cdar exp*) global-env))))
@@ -59,6 +74,8 @@
                              (set-add* init (import-libnames (car exp*)))
                              body
                              global-env
+                             (register-libraries (import-libnames (car exp*))
+                                                 library-env)
                              (append imports
                                      (sexpr->import (cdar exp*) global-env))
                              exports))
@@ -69,8 +86,24 @@
                                             (sexpr->sequence (cdar exp*)
                                                              global-env #f))
                              global-env
+                             library-env
                              imports
                              exports))))
+
+
+(define (register-libraries libs library-env)
+  (cond ((null? libs) library-env)
+        ((assoc (car libs) library-env)
+         (register-libraries (cdr libs) library-env))
+        (else
+          (register-libraries
+            (cdr libs)
+            (cons (cons (car libs)
+                        (let ((lib (get-lib (car libs))))
+                          (if (library? lib)
+                              (library->ast (library-decls lib) library-env)  ; TODO: how to get libs from the library into the outer library-env?
+                              #f)))
+                  library-env)))))
 
 
 (define (sexpr->ast exp env tail?)
@@ -307,8 +340,7 @@
 
 (define (library? exp*)
   (and (pair? exp*)
-       (pair? (car exp*))
-       (eq? 'define-library (caar exp*))))
+       (eq? 'define-library (car exp*))))
 
 
 (define (definition? expr)
@@ -1475,6 +1507,13 @@
       (if (eq? obj (car seq))
           seq
           (memq obj (cdr seq)))
+      #f))
+
+(define (assoc obj seq)
+  (if (pair? seq)
+      (if (equal? obj (caar seq))
+          (car seq)
+          (assoc obj (cdr seq)))
       #f))
 
 (define (append seq-a seq-b)
