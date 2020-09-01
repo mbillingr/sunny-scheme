@@ -9,7 +9,7 @@ pub use memory_model::prelude::Mut;
 use memory_model::prelude::*;
 use string::ScmString;
 use symbol::Symbol;
-use crate::port::InputPort;
+use crate::port::{InputPort, OutputPort};
 use std::cell::RefCell;
 
 pub type BoxedScm = Boxed<Scm>;
@@ -31,6 +31,7 @@ pub enum Scm {
     Func(Ref<dyn Fn(&[Scm]) -> Scm>),
 
     InputPort(Ref<RefCell<dyn InputPort>>),
+    OutputPort(Ref<RefCell<dyn OutputPort>>),
 }
 
 impl Scm {
@@ -128,6 +129,10 @@ impl Scm {
         Scm::InputPort(make_ref!(RefCell::new(port)))
     }
 
+    pub fn output_port(port: impl OutputPort + 'static) -> Self {
+        Scm::OutputPort(make_ref!(RefCell::new(port)))
+    }
+
     pub fn is_true(&self) -> bool {
         match self {
             Scm::Nil | Scm::False => false,
@@ -212,6 +217,13 @@ impl Scm {
         }
     }
 
+    pub fn with_output_port<T>(&self, f: impl FnOnce(&mut dyn OutputPort)->T) -> Option<T> {
+        match self {
+            Scm::OutputPort(p) => Some(f(&mut *p.borrow_mut())),
+            _ => None,
+        }
+    }
+
     pub fn car(&self) -> Option<Scm> {
         match self {
             Scm::Pair(p) => Some(p.0.get()),
@@ -260,6 +272,20 @@ impl Scm {
 
     pub fn cddr(&self) -> Option<Scm> {
         self.cdr()?.cdr()
+    }
+
+    pub fn close_port(&self) {
+        match self {
+            Scm::InputPort(p) => p.borrow_mut().close(),
+            Scm::OutputPort(p) => p.borrow_mut().close(),
+            _ => panic!("not a port: {:?}", self),
+        }
+    }
+}
+
+impl From<()> for Scm {
+    fn from(_: ()) -> Self {
+        Scm::nil()
     }
 }
 
@@ -360,6 +386,7 @@ impl std::fmt::Debug for Scm {
             }
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
             Scm::InputPort(x) => write!(f, "<input port {:p}>", &*x),
+            Scm::OutputPort(x) => write!(f, "<output port {:p}>", &*x),
         }
     }
 }
@@ -390,6 +417,7 @@ impl std::fmt::Display for Scm {
             }
             Scm::Func(x) => write!(f, "<procedure {:p}>", &*x),
             Scm::InputPort(x) => write!(f, "<input port {:p}>", &*x),
+            Scm::OutputPort(x) => write!(f, "<output port {:p}>", &*x),
         }
     }
 }

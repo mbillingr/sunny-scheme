@@ -39,6 +39,7 @@ mod scheme {
         thread_local! {pub static string_minus_append: Mut<Scm> = Mut::new(Scm::func2(_string_append))}
         thread_local! {pub static string_l__p: Mut<Scm> = Mut::new(Scm::func2(_string_cmp))}
         thread_local! {pub static list_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_list_to_string))}
+        thread_local! {pub static close_minus_port: Mut<Scm> = Mut::new(Scm::func1(Scm::close_port))}
 
         fn _set_car(args: &[Scm]) -> Scm {
             match args {
@@ -132,13 +133,19 @@ mod scheme {
 
     pub mod file {
         use sunny_core::{self, Scm, Mut};
-        use sunny_core::port::FileInputPort;
+        use sunny_core::port::{FileInputPort, FileOutputPort};
 
         thread_local! {pub static open_minus_input_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_input_file))}
+        thread_local! {pub static open_minus_output_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_output_file))}
 
         fn _open_input_file(name: &Scm) -> Scm {
             let port = FileInputPort::open(name.as_string().expect("Argument to open-input-file must be a string.").as_str());
             Scm::input_port(port)
+        }
+
+        fn _open_output_file(name: &Scm) -> Scm {
+            let port = FileOutputPort::open(name.as_string().expect("Argument to open-output-file must be a string.").as_str());
+            Scm::output_port(port)
         }
     }
 
@@ -192,18 +199,39 @@ mod scheme {
         thread_local! {pub static write: Mut<Scm> = Mut::new(Scm::func(_write))}
 
         fn _display(args: &[Scm]) -> Scm {
-            print!("{}", args[0]);
-            Scm::Nil
+            if args.len() == 1 {
+                print!("{}", args[0]);
+                Scm::Nil
+            } else {
+                args[1].with_output_port(|port|{
+                    write!(port, "{}", args[0]).unwrap();
+                }).unwrap();
+                Scm::Nil
+            }
         }
 
-        fn _newline(_: &[Scm]) -> Scm {
-            println!();
-            Scm::Nil
+        fn _newline(args: &[Scm]) -> Scm {
+            if args.len() == 0 {
+                println!();
+                Scm::Nil
+            } else {
+                args[0].with_output_port(|port|{
+                    write!(port, "\n").unwrap();
+                }).unwrap();
+                Scm::Nil
+            }
         }
 
         fn _write(args: &[Scm]) -> Scm {
-            print!("{:?}", args[0]);
-            Scm::Nil
+            if args.len() == 1 {
+                print!("{:?}", args[0]);
+                Scm::Nil
+            } else {
+                args[1].with_output_port(|port|{
+                    write!(port, "{:?}", args[0]).unwrap();
+                }).unwrap();
+                Scm::Nil
+            }
         }
     }
 

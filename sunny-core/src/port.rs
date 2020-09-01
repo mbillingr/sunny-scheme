@@ -79,6 +79,41 @@ impl Read for FileInputPort {
     }
 }
 
+pub struct FileOutputPort {
+    handle: Option<File>,
+}
+
+impl FileOutputPort {
+    pub fn open<P: AsRef<Path>>(path: P) -> Self {
+        FileOutputPort {
+            handle: Some(File::create(path).unwrap()),
+        }
+    }
+}
+
+impl OutputPort for FileOutputPort {
+    fn is_open(&self) -> bool { self.handle.is_some() }
+    fn close(&mut self) {
+        self.handle = None;
+    }
+}
+
+impl Write for FileOutputPort {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        match &mut self.handle {
+            Some(f) => f.write(buf),
+            None => Ok(0),
+        }
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        match &mut self.handle {
+            Some(f) => f.flush(),
+            None => Ok(()),
+        }
+    }
+}
+
 pub trait ScmReader: Read {
     fn read_char(&mut self) -> Option<char>;
     fn read_line(&mut self) -> Option<String>;
