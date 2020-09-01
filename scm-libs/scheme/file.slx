@@ -1,0 +1,5 @@
+(declare-library-exports (scheme write)
+  (export
+    file-exists?
+    open-input-file
+    open-output-file))
