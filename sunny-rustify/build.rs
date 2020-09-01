@@ -4,9 +4,13 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 fn main() {
+    let out_dir = env::var_os("OUT_DIR").unwrap();
+    let dest_path = Path::new(&out_dir).join("hello.rs");
+
     let cmd = Command::new("chibi-scheme")
         .arg("scm2rs.scm")  // the script we run
         .arg("scm2rs.scm")  // the file we compile
+        .arg(&dest_path)  // the output fi!le
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -112,10 +116,7 @@ fn main() {
 
     let output = cmd.wait_with_output().unwrap();
 
-    let out_dir = env::var_os("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("hello.rs");
-
-    fs::write(&dest_path, output.stdout).expect("Error writing destination file");
+    println!("{}", String::from_utf8(output.stdout).unwrap());
 
     if !output.status.success() {
         panic!("{}", String::from_utf8(output.stderr).unwrap());
