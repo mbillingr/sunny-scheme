@@ -15,7 +15,7 @@
 
 (define (scm->ast exp*)
   (if (library? exp*)
-      (library->ast (cddr exp*))
+      (library->ast (library-decls (car exp*)))
       (program->ast exp*)))
 
 (define (program->ast exp*)
@@ -49,8 +49,8 @@
                              body
                              global-env
                              imports
-                             (cons (library-export->ast (cdar exp*))
-                                   exports)))
+                             (append exports
+                                     (sexpr->export (cdar exp*) global-env))))
         ((import? (car exp*))
          (library-decls->ast (cdr exp*)
                              body
@@ -63,6 +63,7 @@
                              (make-sequence body
                                             (sexpr->sequence (cdar exp*)
                                                              global-env #f))
+                             global-env
                              imports
                              exports))))
 
@@ -235,6 +236,12 @@
         (else (cons (import-all (car stmt*) env)
                     (sexpr->import (cdr stmt*) env)))))
 
+(define (sexpr->export export-spec* env)
+  (cond ((null? export-spec*)
+         '())
+        (else (cons (make-export env (car export-spec*) (car export-spec*))
+                    (sexpr->export (cdr export-spec*) env)))))
+
 (define (import-all lib env)
   (adjoin-import*!
     (library-exports (library-decls (get-lib lib)))
@@ -295,7 +302,8 @@
 
 (define (library? exp*)
   (and (pair? exp*)
-       (eq? 'define-library (car exp*))))
+       (pair? (car exp*))
+       (eq? 'define-library (caar exp*))))
 
 
 (define (definition? expr)
@@ -883,18 +891,6 @@
     (func self
           (lambda ()
             (make-program globals imports (body 'transform func)))))
-  (define (gen-global-defs port g)
-    (if (null? g)
-        (newline port)
-        (if (global-imported? (cdar g))
-            (gen-global-defs port (cdr g))
-            (begin (display "thread_local!{#[allow(non_upper_case_globals)] pub static " port)
-                   (display (rustify-identifier (caar g)) port)
-                   (display ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " port)
-                   (display (caar g) port)
-                   (display "\"))}" port)
-                   (newline port)
-                   (gen-global-defs port (cdr g))))))
   (define (gen-imports port)
     (for-each (lambda (i)
                 (i 'gen-rust port))
@@ -908,19 +904,19 @@
     (rust-block port
       (lambda ()
         (display "use super::*;" port)
-        (gen-global-defs port globals)))
+        (rust-gen-global-defs port globals)))
     (newline port)
     (newline port)
     (display "fn main()" port)
     (rust-block port
       (lambda ()
-             (newline port)
-             (display "eprintln!(\"built with\");" port)
-             (display "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);" port)
-             (newline port)
-             (body 'gen-rust port)
-             (display ";" port)
-             (newline port)))
+        (newline port)
+        (display "eprintln!(\"built with\");" port)
+        (display "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);" port)
+        (newline port)
+        (body 'gen-rust port)
+        (display ";" port)
+        (newline port)))
     (newline port))
   (define (self msg . args)
     (cond ((eq? 'print msg) (print))
@@ -928,6 +924,54 @@
           ((eq? 'kind msg) 'PROGRAM)
           ((eq? 'gen-rust msg) (gen-rust (car args)))
           (else (error "Unknown message PROGRAM" msg))))
+  self)
+
+(define (make-library globals body imports exports)
+  (define (print)
+    (cons 'LIBRARY
+          (cons exports
+                (cons imports
+                      (cons globals
+                            (body 'print))))))
+  (define (transform func)
+    (func self
+          (lambda ()
+            (make-library globals
+                          (body 'transform func)
+                          imports
+                          exports))))
+  (define (gen-exports port exports)
+    (for-each (lambda (expo) (expo 'gen-rust port))
+              exports))
+  (define (gen-rust port)
+    (for-each (lambda (i) (i 'gen-rust port))
+              imports)
+    (newline port)
+    (display "pub mod exports" port)
+    (rust-block port
+      (lambda ()
+        (gen-exports port exports)))
+    (newline port)
+    (newline port)
+    (display "mod globals" port)
+    (rust-block port
+      (lambda ()
+        (display "use super::*;" port)
+        (rust-gen-global-defs port globals)))
+    (newline port)
+    (newline port)
+    (display "fn initialize()" port)
+    (rust-block port
+      (lambda ()
+        (body 'gen-rust port)
+        (display ";" port)
+        (newline port))))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'NOP)
+          ((eq? 'gen-rust msg) (gen-rust (car args)))
+          (else (error "Unknown message NOP" msg))))
   self)
 
 (define (make-boxify name body)
@@ -953,6 +997,34 @@
           ((eq? 'kind msg) 'BOXIFY)
           ((eq? 'gen-rust msg) (gen-rust (car args)))
           (else (error "Unknown message BOXIFY" msg))))
+  self)
+
+(define (make-export env name exname)
+  (define (print)
+    (list 'EXPORT name 'AS exname))
+  (define (transform func)
+    (func self (lambda () self)))
+  (define (gen-rust port)
+    (display "pub use super::" port)
+    (let ((var (lookup name env)))
+      (cond ((not var)
+             (error "undefined export" name))
+            ((eq? 'GLOBAL-REF (variable-getter var))
+             (display "globals::" port))
+            ((eq? 'IMPORT-REF (variable-getter var))
+             (display "" port))
+            (else (error "invalid export variable" var name))))
+    (display (rustify-identifier name) port)
+    (display " as " port)
+    (display (rustify-identifier exname) port)
+    (display ";" port)
+    (newline port))
+  (define (self msg . args)
+    (cond ((eq? 'print msg) (print))
+          ((eq? 'transform msg) (transform (car args)))
+          ((eq? 'kind msg) 'EXPORT)
+          ((eq? 'gen-rust msg) (gen-rust (car args)))
+          (else (error "Unknown message EXPORT" msg))))
   self)
 
 (define (make-import lib)
@@ -1038,6 +1110,20 @@
       (append ((car seq) 'free-vars local-env)
               (list-find-free-vars (cdr seq) local-env))
       '()))
+
+
+(define (rust-gen-global-defs port g)
+  (if (null? g)
+      (newline port)
+      (if (global-imported? (cdar g))
+          (rust-gen-global-defs port (cdr g))
+          (begin (display "thread_local!{#[allow(non_upper_case_globals)] pub static " port)
+                 (display (rustify-identifier (caar g)) port)
+                 (display ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " port)
+                 (display (caar g) port)
+                 (display "\"))}" port)
+                 (newline port)
+                 (rust-gen-global-defs port (cdr g))))))
 
 
 (define (rust-block port code)
