@@ -1,4 +1,5 @@
 (import (scheme base)
+        (scheme write)
         (only (scheme cxr) caadr
                            cadar
                            caddr
@@ -7,11 +8,10 @@
                            cdddr
                            cadddr)
         (only (scheme read) read)
-        (only (scheme write) display
-                             newline
-                             write)
         (only (scheme process-context) command-line)
-        (only (scheme file) open-input-file open-output-file))
+        (only (scheme file) file-exists?
+                            open-input-file
+                            open-output-file))
 
 (define (scm->ast exp*)
   (if (library? exp*)
@@ -236,44 +236,45 @@
                     (sexpr->import (cdr stmt*) env)))))
 
 (define (import-all lib env)
-  (cond ((equal? lib '(scheme base))
-         (adjoin-import! '= env)
-         (adjoin-import! '> env)
-         (adjoin-import! '< env)
-         (adjoin-import! '- env)
-         (adjoin-import! '+ env)
-         (adjoin-import! 'car env)
-         (adjoin-import! 'cdr env)
-         (adjoin-import! 'caar env)
-         (adjoin-import! 'cadr env)
-         (adjoin-import! 'cdar env)
-         (adjoin-import! 'cddr env)
-         (adjoin-import! 'char? env)
-         (adjoin-import! 'close-port env)
-         (adjoin-import! 'cons env)
-         (adjoin-import! 'eof-object? env)
-         (adjoin-import! 'eq? env)
-         (adjoin-import! 'equal? env)
-         (adjoin-import! 'list->string env)
-         (adjoin-import! 'null? env)
-         (adjoin-import! 'pair? env)
-         (adjoin-import! 'set-car! env)
-         (adjoin-import! 'set-cdr! env)
-         (adjoin-import! 'string->list env)
-         (adjoin-import! 'string-append env)
-         (adjoin-import! 'string<? env)
-         (adjoin-import! 'symbol? env)
-         (adjoin-import! 'symbol->string env))
-        ((equal? lib '(scheme write))
-         (adjoin-import! 'display port env)
-         (adjoin-import! 'newline port env)
-         (adjoin-import! 'write port env))
-        (else (error "unknown library" lib)))
+  (adjoin-import*!
+    (library-exports (cddr (get-lib lib)))
+    env)
   (make-import lib))
 
 (define (import-only lib names env)
   (adjoin-import*! names env)
   (make-import-only lib names))
+
+(define (get-lib lib)
+    (read (open-input-file
+            (find-library
+              '("scm-libs" "../scm-libs")
+              (library-path lib)
+              '(".sld" ".slx")))))
+
+(define (find-library base-path* relative-path extension*)
+  (if (null? base-path*)
+      #f
+      (let* ((path (string-append (car base-path*) relative-path))
+             (full-path (find-library-ext path extension*)))
+        (if full-path
+            full-path
+            (find-library (cdr base-path*) relative-path extension*)))))
+
+(define (find-library-ext path extension*)
+  (if (null? extension*)
+      #f
+      (let ((full-path (string-append path (car extension*))))
+        (if (file-exists? full-path)
+            full-path
+            (find-library-ext path (cdr extension*))))))
+
+(define (library-path lib)
+  (reduce (lambda (left right)
+            (string-append left
+                           (string-append "/" right)))
+          ""
+          (map symbol->string lib)))
 
 
 ; ======================================================================
@@ -347,6 +348,15 @@
   (list (cons 'letrec
               (cons (initializations body)
                     (transform body)))))
+
+
+(define (library-exports lib-decl*)
+  (cond ((null? lib-decl*) '())
+        ((eq? 'export (caar lib-decl*))
+         (append (cdar lib-decl*)
+                 (library-exports (cdr lib-decl*))))
+        (else (library-exports (cdr lib-decl*)))))
+
 
 
 ; ======================================================================
@@ -1303,6 +1313,11 @@
                 (filter f (cdr seq)))
           (filter f (cdr seq)))
       '()))
+
+(define (reduce f init seq)
+  (if (pair? seq)
+      (reduce f (f init (car seq)) (cdr seq))
+      init))
 
 (define (length seq)
   (if (pair? seq)

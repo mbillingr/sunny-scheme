@@ -1,0 +1,5 @@
+(declare-library-exports (scheme write)
+  (export
+    display
+    newline
+    write))

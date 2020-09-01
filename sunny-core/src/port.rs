@@ -56,9 +56,9 @@ pub struct FileInputPort {
 }
 
 impl FileInputPort {
-    pub fn open<P: AsRef<Path>>(path: P) -> Self {
+    pub fn open<P: AsRef<Path> + std::fmt::Debug>(path: P) -> Self {
         FileInputPort {
-            handle: Some(BufReader::new(File::open(path).unwrap())),
+            handle: Some(BufReader::new(File::open(path.as_ref()).expect(&format!("Error opening {:?}", path)))),
         }
     }
 }

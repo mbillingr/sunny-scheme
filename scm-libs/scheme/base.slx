@@ -1,0 +1,14 @@
+(declare-library-exports (scheme base)
+  (export
+    = > < - +
+    car caar cadr
+    cdr cdar cddr
+    char? close-port cons
+    eof-object?
+    eq? equal?
+    list->string
+    null?
+    pair?
+    set-car! set-cdr!
+    string->list string-append string<?
+    symbol? symbol->string))
