@@ -17,18 +17,17 @@
   (if (library? (car exp*))
       (library->ast (library-name (car exp*))
                     (library-decls (car exp*))
-                    '())
+                    (list '()))
       (program->ast exp*)))
 
 (define (program->ast exp*)
   (define global-env (make-global-env))
-  (define library-env '())
+  (define library-env (list '()))
 
   (define (process-imports exp* imports init)
     (cond ((import? (car exp*))
-           (set! library-env
-                 (register-libraries (import-libnames (car exp*))
-                                     library-env))
+           (register-libraries (import-libnames (car exp*))
+                               library-env)
            (process-imports (cdr exp*)
                             (append imports
                                     (sexpr->import (cdar exp*) global-env))
@@ -52,7 +51,9 @@
                   (make-program globals
                                 imports
                                 init
-                                main)))))
+                                main
+                                (filter cdr
+                                        (car library-env)))))))
 
   (process-imports exp* '() (make-set)))
 
@@ -73,13 +74,14 @@
                              (append exports
                                      (sexpr->export (cdar exp*) global-env))))
         ((import? (car exp*))
+         (register-libraries (import-libnames (car exp*))
+                             library-env)
          (library-decls->ast name
                              (cdr exp*)
                              (set-add* init (import-libnames (car exp*)))
                              body
                              global-env
-                             (register-libraries (import-libnames (car exp*))
-                                                 library-env)
+                             library-env
                              (append imports
                                      (sexpr->import (cdar exp*) global-env))
                              exports))
@@ -97,20 +99,20 @@
 
 
 (define (register-libraries libs library-env)
-  (cond ((null? libs) library-env)
-        ((assoc (car libs) library-env)
+  (cond ((null? libs) 'DONE)
+        ((assoc (car libs) (car library-env))
          (register-libraries (cdr libs) library-env))
         (else
-          (register-libraries
-            (cdr libs)
-            (cons (cons (car libs)
-                        (let ((lib (get-lib (car libs))))
-                          (if (library? lib)
-                              (library->ast (library-name lib)
-                                            (library-decls lib)
-                                            library-env)  ; TODO: how to get libs from the library into the outer library-env?
-                              #f)))
-                  library-env)))))
+          (set-car! library-env
+                    (cons (cons (car libs)
+                                (let ((lib (get-lib (car libs))))
+                                  (if (library? lib)
+                                      (library->ast (library-name lib)
+                                                    (library-decls lib)
+                                                    library-env)
+                                      #f)))
+                          (car library-env)))
+          (register-libraries (cdr libs) library-env))))
 
 
 (define (sexpr->ast exp env tail?)
@@ -915,7 +917,7 @@
           (else (error "Unknown message VARARG-ABSTRACTION" msg))))
   self)
 
-(define (make-program globals imports init body)
+(define (make-program globals imports init body libraries)
   (define (repr)
     (cons 'PROGRAM
           (cons globals
@@ -958,7 +960,8 @@
                   init)
         (body 'gen-rust port)
         (println port ";")))
-    (newline port))
+    (newline port)
+    (rust-gen-modules port libraries))
   (define (self msg . args)
     (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
@@ -1171,6 +1174,41 @@
                    (caar g)
                    "\"))}")
                  (rust-gen-global-defs port (cdr g))))))
+
+
+(define (rust-gen-modules port libs)
+  '(root (hello l)
+         (scheme (cxr l)
+                 (stuff l)))
+  (println port "// " libs)
+
+  (let ((hierarchy (list '())))
+    (for-each (lambda (lib) (module-hierarchy-insert! (car lib) hierarchy))
+              libs)))
+
+(define (module-hierarchy-insert! lib hierarchy)
+  (cond ((hierarchy-empty? hierarchy)
+         (init-hierarchy! hierarchy lib))
+        ((eq? (hierarchy-first hierarchy) (car lib))
+         (module-hierarchy-insert! (cdr lib) (subhierarchy hierarchy)))
+        (else
+         (module-hierarchy-insert! lib (hierarchy-rest hierarchy)))))
+
+(define (hierarchy-empty? h)
+  (null? (cdr h)))
+
+(define (init-hierarchy! h lib)
+  (set-cdr! h (listify-lib lib)))
+
+(define (hierarchy-first h)
+  (car h))
+
+(define (listify-lib lib)
+  (if (null? lib)
+      '()
+      (list (car lib) (listify-lib (cdr lib)))))
+
+
 
 
 (define (rust-block port code)
@@ -1444,6 +1482,11 @@
   (for-each (lambda (a) (write a port))
             args)
   (newline port))
+
+(define (append! seq-a seq-b)
+  (if (null? (cdr seq-a))
+      (set-cdr! seq-a seq-b)
+      (append! (cdr seq-a) seq-b)))
 
 ;--------------------------------------------------
 ; std library stand-ins
