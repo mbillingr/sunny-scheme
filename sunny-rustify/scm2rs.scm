@@ -1015,8 +1015,8 @@
     (display "pub fn initialize()" port)
     (rust-block port
       (lambda ()
-        (println port "if INITIALIZED.get() { return }")
-        (println port "INITIALIZED.set(true);")
+        (println port "if INITIALIZED.with(|x| x.get()) { return }")
+        (println port "INITIALIZED.with(|x| x.set(true));")
         (newline port)
         (for-each (lambda (lib)
                     (for-each (lambda (l) (print port (rustify-libname l) "::"))
