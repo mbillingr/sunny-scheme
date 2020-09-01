@@ -21,11 +21,12 @@
 (define (program->ast exp*)
   (define global-env (make-global-env))
 
-  (define (process-imports exp* imports)
+  (define (process-imports exp* imports init)
     (cond ((import? (car exp*))
            (process-imports (cdr exp*)
                             (append imports
-                                    (sexpr->import (cdar exp*) global-env))))
+                                    (sexpr->import (cdar exp*) global-env))
+                            (set-add* init (import-libnames (car exp*)))))
 
           (else (let* ((main (boxify (sexpr->sequence exp* global-env #f)))
                        (globals (sort (lambda (a b)
@@ -34,18 +35,20 @@
                                       (cdr global-env))))
                   (make-program globals
                                 imports
+                                init
                                 main)))))
 
-  (process-imports exp* '()))
+  (process-imports exp* '() (make-set)))
 
 (define (library->ast exp*)
-  (library-decls->ast exp* (make-nop) (make-global-env) '() '()))
+  (library-decls->ast exp* (make-set) (make-nop) (make-global-env) '() '()))
 
-(define (library-decls->ast exp* body global-env imports exports)
+(define (library-decls->ast exp* init body global-env imports exports)
   (cond ((null? exp*)
-         (make-library (cdr global-env) body imports exports))
+         (make-library (cdr global-env) init body imports exports))
         ((eq? 'export (caar exp*))
          (library-decls->ast (cdr exp*)
+                             init
                              body
                              global-env
                              imports
@@ -53,6 +56,7 @@
                                      (sexpr->export (cdar exp*) global-env))))
         ((import? (car exp*))
          (library-decls->ast (cdr exp*)
+                             (set-add* init (import-libnames (car exp*)))
                              body
                              global-env
                              (append imports
@@ -60,6 +64,7 @@
                              exports))
         ((eq? 'begin (caar exp*))
          (library-decls->ast (cdr exp*)
+                             init
                              (make-sequence body
                                             (sexpr->sequence (cdar exp*)
                                                              global-env #f))
@@ -257,7 +262,7 @@
 
 (define (get-lib lib)
   (let ((full-path (find-library
-                     '("scm-libs" "../scm-libs")
+                     '("." "scm-libs" "../scm-libs")
                      (library-path lib)
                      '(".sld" ".slx"))))
     (if full-path
@@ -349,6 +354,16 @@
   (and (pair? expr)
        (eq? (car expr) 'import)))
 
+(define (import-libnames exp*)
+  (map importset-libname (cdr exp*)))
+
+(define (importset-libname expr)
+  (cond ((eq? 'only (car expr))
+         (importset-libname (cadr expr)))
+        ((eq? 'except (car expr))
+         (importset-libname (cadr expr)))
+        (else expr)))
+
 
 (define (scan-out-defines body)
   (define (initializations exp*)
@@ -390,10 +405,10 @@
 ; AST
 
 (define (make-comment comment node)
-  (define (print)
+  (define (repr)
     (cons 'COMMENT
           (cons comment
-                (node 'print))))
+                (node 'repr))))
   (define (transform func)
     (func self (lambda () (make-comment comment
                                         (node 'transform func)))))
@@ -406,7 +421,7 @@
     (newline port)
     (node 'gen-rust port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'COMMENT)
@@ -415,12 +430,12 @@
   self)
 
 (define (make-nop)
-  (define (print) '(NOP))
+  (define (repr) '(NOP))
   (define (transform func) (func self (lambda () self)))
   (define (free-vars) (make-set))
   (define (gen-rust port) (display "" port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'NOP)
@@ -429,7 +444,7 @@
   self)
 
 (define (make-constant val)
-  (define (print)
+  (define (repr)
     (cons 'CONSTANT
           val))
   (define (transform func)
@@ -457,7 +472,7 @@
   (define (gen-rust port)
     (gen-constant port val))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'CONSTANT)
@@ -470,7 +485,7 @@
     (if (eq? 'GLOBAL-REF (variable-getter var))
         #t
         (eq? 'IMPORT-REF (variable-getter var))))
-  (define (print)
+  (define (repr)
     (list (variable-getter var) name))
   (define (transform func)
     (func self (lambda () self)))
@@ -495,7 +510,7 @@
               (display (rustify-identifier name) port)
               (display ".clone()" port)))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'REFERENCE)
@@ -504,8 +519,8 @@
   self)
 
 (define (make-assignment name var val)
-  (define (print)
-    (list (variable-setter var) name (val 'print)))
+  (define (repr)
+    (list (variable-setter var) name (val 'repr)))
   (define (transform func)
     (func self
           (lambda () (make-assignment name
@@ -529,7 +544,7 @@
              (display ")" port))
             (else (error "set! on unboxed variable")))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'ASSIGNMENT)
@@ -538,8 +553,8 @@
   self)
 
 (define (make-alternative condition consequent alternative)
-  (define (print)
-    (list 'IF (condition 'print) (consequent 'print) (alternative 'print)))
+  (define (repr)
+    (list 'IF (condition 'repr) (consequent 'repr) (alternative 'repr)))
   (define (transform func)
     (func self (lambda ()
                  (make-alternative (condition 'transform func)
@@ -559,7 +574,7 @@
     (alternative 'gen-rust port)
     (display "}" port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'ALTERNATIVE)
@@ -568,10 +583,10 @@
   self)
 
 (define (make-application func args tail?)
-  (define (print)
+  (define (repr)
     (cons (if tail? 'APPLY-TC 'APPLY)
-          (cons (func 'print)
-                (args 'print))))
+          (cons (func 'repr)
+                (args 'repr))))
   (define (transform fnc)
     (fnc self
          (lambda () (make-application
@@ -587,7 +602,7 @@
     (args 'gen-rust port)
     (display "])" port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'APPLICATION)
@@ -596,13 +611,13 @@
   self)
 
 (define (make-null-arg)
-  (define (print) (list 'NULL-ARG))
+  (define (repr) (list 'NULL-ARG))
   (define (transform fnc) (fnc self (lambda () self)))
   (define (free-vars) (make-set))
   (define (gen-rust port) (display "" port))
 
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'NULL-ARG)
@@ -611,7 +626,7 @@
   self)
 
 (define (make-args arg next)
-  (define (print)
+  (define (repr)
     (cons 'ARG
           (cons arg
                 next)))
@@ -628,7 +643,7 @@
     (next 'gen-rust port))
 
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'ARG)
@@ -637,11 +652,11 @@
   self)
 
 (define (make-fixlet params body args)
-  (define (print)
+  (define (repr)
     (cons 'FIXLET
           (cons params
-                (cons (args 'print)
-                      (body 'print)))))
+                (cons (args 'repr)
+                      (body 'repr)))))
   (define (transform fnc)
     (fnc self
          (lambda () (make-fixlet
@@ -668,7 +683,7 @@
         (display "];" port)
         (body 'gen-rust port))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'FIXLET)
@@ -677,11 +692,11 @@
   self)
 
 (define (make-scope params body args)
-  (define (print)
+  (define (repr)
     (cons 'SCOPE
           (cons params
-                (cons (args 'print)
-                      (body 'print)))))
+                (cons (args 'repr)
+                      (body 'repr)))))
   (define (transform fnc)
     (fnc self
          (lambda () (make-scope
@@ -727,7 +742,7 @@
                   args)
         (body 'gen-rust port))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'SCOPE)
@@ -736,8 +751,8 @@
   self)
 
 (define (make-sequence first next)
-  (define (print)
-    (list 'SEQUENCE (first 'print) (next 'print)))
+  (define (repr)
+    (list 'SEQUENCE (first 'repr) (next 'repr)))
   (define (transform func)
     (func self
           (lambda ()
@@ -757,7 +772,7 @@
     (gen-rust-inner port)
     (display "}" port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'SEQUENCE)
@@ -767,10 +782,10 @@
   self)
 
 (define (make-abstraction params vars body)
-  (define (print)
+  (define (repr)
     (cons 'ABSTRACTION
           (cons params
-                (body 'print))))
+                (body 'repr))))
   (define (transform func)
     (func self
           (lambda ()
@@ -809,7 +824,7 @@
             (body 'gen-rust port)))
         (display ")" port))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'ABSTRACTION)
@@ -821,10 +836,10 @@
   self)
 
 (define (make-vararg-abstraction params vararg vars varvar body)
-  (define (print)
+  (define (repr)
     (cons 'VARARG-ABSTRACTION
           (cons params
-                (body 'print))))
+                (body 'repr))))
   (define (transform func)
     (func self
           (lambda ()
@@ -868,7 +883,7 @@
             (body 'gen-rust port)))
         (display ")" port))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'VARARG-ABSTRACTION)
@@ -881,16 +896,16 @@
           (else (error "Unknown message VARARG-ABSTRACTION" msg))))
   self)
 
-(define (make-program globals imports body)
-  (define (print)
+(define (make-program globals imports init body)
+  (define (repr)
     (cons 'PROGRAM
           (cons globals
                 (cons imports
-                      (body 'print)))))
+                      (body 'repr)))))
   (define (transform func)
     (func self
           (lambda ()
-            (make-program globals imports (body 'transform func)))))
+            (make-program globals imports init (body 'transform func)))))
   (define (gen-imports port)
     (for-each (lambda (i)
                 (i 'gen-rust port))
@@ -914,29 +929,38 @@
         (display "eprintln!(\"built with\");" port)
         (display "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);" port)
         (newline port)
+        (for-each (lambda (lib)
+                    (for-each (lambda (l)
+                                (display (rustify-libname l) port)
+                                (display "::" port))
+                              lib)
+                    (display "initialize();" port)
+                    (newline port))
+                  init)
         (body 'gen-rust port)
         (display ";" port)
         (newline port)))
     (newline port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'PROGRAM)
           ((eq? 'gen-rust msg) (gen-rust (car args)))
           (else (error "Unknown message PROGRAM" msg))))
   self)
 
-(define (make-library globals body imports exports)
-  (define (print)
+(define (make-library globals init body imports exports)
+  (define (repr)
     (cons 'LIBRARY
           (cons exports
                 (cons imports
                       (cons globals
-                            (body 'print))))))
+                            (body 'repr))))))
   (define (transform func)
     (func self
           (lambda ()
             (make-library globals
+                          init
                           (body 'transform func)
                           imports
                           exports))))
@@ -956,18 +980,27 @@
     (display "mod globals" port)
     (rust-block port
       (lambda ()
-        (display "use super::*;" port)
+        (println port "use super::*;")
         (rust-gen-global-defs port globals)))
     (newline port)
     (newline port)
-    (display "fn initialize()" port)
+    (println port "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")
+    (newline port)
+    (display "pub fn initialize()" port)
     (rust-block port
       (lambda ()
+        (println port "if INITIALIZED.get() { return }")
+        (println port "INITIALIZED.set(true);")
+        (newline port)
+        (for-each (lambda (lib)
+                    (for-each (lambda (l) (print port (rustify-libname l) "::"))
+                              lib)
+                    (println port "initialize();"))
+                  init)
         (body 'gen-rust port)
-        (display ";" port)
-        (newline port))))
+        (println port ";"))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'NOP)
           ((eq? 'gen-rust msg) (gen-rust (car args)))
@@ -975,8 +1008,8 @@
   self)
 
 (define (make-boxify name body)
-  (define (print)
-    (cons 'BOXIFY (cons name (body 'print))))
+  (define (repr)
+    (cons 'BOXIFY (cons name (body 'repr))))
   (define (transform func)
     (func self (lambda () (make-boxify name (body 'transform func)))))
   (define (free-vars)
@@ -991,7 +1024,7 @@
         (display ".into_boxed( port);")
         (body 'gen-rust port))))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'BOXIFY)
@@ -1000,7 +1033,7 @@
   self)
 
 (define (make-export env name exname)
-  (define (print)
+  (define (repr)
     (list 'EXPORT name 'AS exname))
   (define (transform func)
     (func self (lambda () self)))
@@ -1020,7 +1053,7 @@
     (display ";" port)
     (newline port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'kind msg) 'EXPORT)
           ((eq? 'gen-rust msg) (gen-rust (car args)))
@@ -1028,7 +1061,7 @@
   self)
 
 (define (make-import lib)
-  (define (print)
+  (define (repr)
     (cons 'IMPORT lib))
   (define (transform func)
     (func self (lambda () (make-import lib))))
@@ -1048,7 +1081,7 @@
     (display "::exports::*;" port)
     (newline port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'IMPORT)
@@ -1057,7 +1090,7 @@
   self)
 
 (define (make-import-only lib names)
-  (define (print)
+  (define (repr)
     (cons 'IMPORT-ONLY (cons lib names)))
   (define (transform func)
     (func self (lambda () (make-import-only lib names))))
@@ -1085,7 +1118,7 @@
     (display "};" port)
     (newline port))
   (define (self msg . args)
-    (cond ((eq? 'print msg) (print))
+    (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
           ((eq? 'free-vars msg) (free-vars))
           ((eq? 'kind msg) 'IMPORT)
@@ -1095,7 +1128,7 @@
 
 (define (print-list seq)
   (if (pair? seq)
-      (cons ((car seq) 'print)
+      (cons ((car seq) 'repr)
             (print-list (cdr seq)))
       '()))
 
@@ -1334,7 +1367,7 @@
 (define (set-add set item)
   (cond ((null? set)
          (cons item '()))
-        ((eq? (car set) item)
+        ((equal? (car set) item)
          set)
         (else (cons (car set)
                     (set-add (cdr set) item)))))
@@ -1342,7 +1375,7 @@
 (define (set-remove set item)
   (cond ((null? set)
          '())
-        ((eq? (car set) item)
+        ((equal? (car set) item)
          (cdr set))
         (else (cons (car set)
                     (set-remove (cdr set) item)))))
@@ -1383,6 +1416,20 @@
       (cons (car seq)
             (proper-list-part (cdr seq)))
       '()))
+
+(define (println port . args)
+  (for-each (lambda (a) (display a port))
+            args)
+  (newline port))
+
+(define (print port . args)
+  (for-each (lambda (a) (display a port))
+            args))
+
+(define (writeln port . args)
+  (for-each (lambda (a) (write a port))
+            args)
+  (newline port))
 
 ;--------------------------------------------------
 ; std library stand-ins

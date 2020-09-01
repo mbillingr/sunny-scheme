@@ -11,9 +11,9 @@ macro_rules! pipe {
 #[allow(non_upper_case_globals)]
 mod scheme {
     pub mod base {
+        pub fn initialize() { }
         pub mod exports {
             use sunny_core::{self, car as _car, cdr as _cdr, Mut, Scm};
-
             thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
             thread_local! {pub static _g_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numgt))}
             thread_local! {pub static _l_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numlt))}
@@ -109,6 +109,7 @@ mod scheme {
     }
 
     pub mod cxr {
+        pub fn initialize() { }
         pub mod exports {
             use sunny_core::{car as _car, cdr as _cdr, Mut, Scm};
 
@@ -141,6 +142,7 @@ mod scheme {
     }
 
     pub mod file {
+        pub fn initialize() { }
         pub mod exports {
             use std::path::Path;
             use sunny_core::{self, Scm, Mut};
@@ -169,6 +171,7 @@ mod scheme {
     }
 
     pub mod process_context {
+        pub fn initialize() { }
         pub mod exports {
             use sunny_core::{self, Scm, Mut};
             use std::env;
@@ -187,6 +190,7 @@ mod scheme {
     }
 
     pub mod read {
+        pub fn initialize() { }
         pub mod exports {
             use std::io::stdin;
             use sunny_core::{self, Mut, Scm};
@@ -215,6 +219,7 @@ mod scheme {
     }
 
     pub mod write {
+        pub fn initialize() { }
         pub mod exports {
             use sunny_core::{self, Mut, Scm};
 
