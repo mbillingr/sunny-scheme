@@ -483,7 +483,7 @@
              (display (rustify-identifier name) port)
              (display ".with(|value| value.set(" port)
              (val 'gen-rust port)
-             (display ")" port))
+             (display "))" port))
             ((eq? 'BOXED-SET setter)
              (display (rustify-identifier name) port)
              (display ".set(" port)
