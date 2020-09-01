@@ -15,7 +15,9 @@
 
 (define (scm->ast exp*)
   (if (library? (car exp*))
-      (library->ast (library-decls (car exp*)) '())
+      (library->ast (library-name (car exp*))
+                    (library-decls (car exp*))
+                    '())
       (program->ast exp*)))
 
 (define (program->ast exp*)
@@ -54,14 +56,15 @@
 
   (process-imports exp* '() (make-set)))
 
-(define (library->ast exp* library-env)
-  (library-decls->ast exp* (make-set) (make-nop) (make-global-env) library-env '() '()))
+(define (library->ast name exp* library-env)
+  (library-decls->ast name exp* (make-set) (make-nop) (make-global-env) library-env '() '()))
 
-(define (library-decls->ast exp* init body global-env library-env imports exports)
+(define (library-decls->ast name exp* init body global-env library-env imports exports)
   (cond ((null? exp*)
-         (make-library (cdr global-env) init body imports exports))
+         (make-library name (cdr global-env) init body imports exports))
         ((eq? 'export (caar exp*))
-         (library-decls->ast (cdr exp*)
+         (library-decls->ast name
+                             (cdr exp*)
                              init
                              body
                              global-env
@@ -70,7 +73,8 @@
                              (append exports
                                      (sexpr->export (cdar exp*) global-env))))
         ((import? (car exp*))
-         (library-decls->ast (cdr exp*)
+         (library-decls->ast name
+                             (cdr exp*)
                              (set-add* init (import-libnames (car exp*)))
                              body
                              global-env
@@ -80,7 +84,8 @@
                                      (sexpr->import (cdar exp*) global-env))
                              exports))
         ((eq? 'begin (caar exp*))
-         (library-decls->ast (cdr exp*)
+         (library-decls->ast name
+                             (cdr exp*)
                              init
                              (make-sequence body
                                             (sexpr->sequence (cdar exp*)
@@ -101,7 +106,9 @@
             (cons (cons (car libs)
                         (let ((lib (get-lib (car libs))))
                           (if (library? lib)
-                              (library->ast (library-decls lib) library-env)  ; TODO: how to get libs from the library into the outer library-env?
+                              (library->ast (library-name lib)
+                                            (library-decls lib)
+                                            library-env)  ; TODO: how to get libs from the library into the outer library-env?
                               #f)))
                   library-env)))))
 
@@ -697,8 +704,7 @@
   (define (gen-rust port)
     (define (gen-params p*)
       (if (pair? p*)
-          (begin (display (rustify-identifier (car p*)) port)
-                 (display ", " port)
+          (begin (print port (rustify-identifier (car p*)) ", ")
                  (gen-params (cdr p*)))))
     (rust-block port
       (lambda ()
@@ -738,32 +744,19 @@
     (set-remove* (set-union (body 'free-vars)
                             (free-vars-args args))
                  params))
-
-  (define (gen-bindings bindings)
-    (for-each (lambda (b) (display "let " port)
-                          (display (rustify-identifier (car b)) port)
-                          (display " = Scm::uninitialized().into_boxed();" port)
-                          (newline port))
-              bindings)
-    (for-each (lambda (b) (display (rustify-identifier (car b)) port)
-                          (display ".set(" port)
-                          ((cdr b) 'gen-rust port)
-                          (display ");" port)
-                          (newline port))
-              bindings))
   (define (gen-rust port)
     (rust-block port
       (lambda ()
-        (for-each (lambda (p) (display "let " port)
-                              (display (rustify-identifier p) port)
-                              (display " = Scm::uninitialized().into_boxed();" port)
-                              (newline port))
+        (for-each (lambda (p) (println port
+                                "let "
+                                (rustify-identifier p)
+                                " = Scm::uninitialized().into_boxed();"))
                   params)
-        (for-each2 (lambda (p a) (display (rustify-identifier p) port)
-                                 (display ".set(" port)
+        (for-each2 (lambda (p a) (print port
+                                        (rustify-identifier p)
+                                        ".set(")
                                  (a 'gen-rust port)
-                                 (display ");" port)
-                                 (newline port))
+                                 (println port ");"))
                   params
                   args)
         (body 'gen-rust port))))
@@ -952,8 +945,8 @@
     (rust-block port
       (lambda ()
         (newline port)
-        (display "eprintln!(\"built with\");" port)
-        (display "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);" port)
+        (println port "eprintln!(\"built with\");")
+        (println port "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);")
         (newline port)
         (for-each (lambda (lib)
                     (for-each (lambda (l)
@@ -964,8 +957,7 @@
                     (newline port))
                   init)
         (body 'gen-rust port)
-        (display ";" port)
-        (newline port)))
+        (println port ";")))
     (newline port))
   (define (self msg . args)
     (cond ((eq? 'repr msg) (print))
@@ -975,13 +967,9 @@
           (else (error "Unknown message PROGRAM" msg))))
   self)
 
-(define (make-library globals init body imports exports)
+(define (make-library name globals init body imports exports)
   (define (repr)
-    (cons 'LIBRARY
-          (cons exports
-                (cons imports
-                      (cons globals
-                            (body 'repr))))))
+    (append 'LIBRARY name exports imports globals (body 'repr)))
   (define (transform func)
     (func self
           (lambda ()
@@ -1073,11 +1061,11 @@
             ((eq? 'IMPORT-REF (variable-getter var))
              (display "" port))
             (else (error "invalid export variable" var name))))
-    (display (rustify-identifier name) port)
-    (display " as " port)
-    (display (rustify-identifier exname) port)
-    (display ";" port)
-    (newline port))
+    (println port
+      (rustify-identifier name)
+      " as "
+      (rustify-identifier exname)
+      ";"))
   (define (self msg . args)
     (cond ((eq? 'repr msg) (print))
           ((eq? 'transform msg) (transform (car args)))
@@ -1176,12 +1164,12 @@
       (newline port)
       (if (global-imported? (cdar g))
           (rust-gen-global-defs port (cdr g))
-          (begin (display "thread_local!{#[allow(non_upper_case_globals)] pub static " port)
-                 (display (rustify-identifier (caar g)) port)
-                 (display ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " port)
-                 (display (caar g) port)
-                 (display "\"))}" port)
-                 (newline port)
+          (begin (println port
+                   "thread_local!{#[allow(non_upper_case_globals)] pub static "
+                   (rustify-identifier (caar g))
+                   ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "
+                   (caar g)
+                   "\"))}")
                  (rust-gen-global-defs port (cdr g))))))
 
 
