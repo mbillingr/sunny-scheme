@@ -237,20 +237,26 @@
 
 (define (import-all lib env)
   (adjoin-import*!
-    (library-exports (cddr (get-lib lib)))
+    (library-exports (library-decls (get-lib lib)))
     env)
   (make-import lib))
 
 (define (import-only lib names env)
+  (check-imports names
+                 (library-exports (library-decls (get-lib lib)))
+                 lib)
   (adjoin-import*! names env)
   (make-import-only lib names))
 
 (define (get-lib lib)
-    (read (open-input-file
-            (find-library
-              '("scm-libs" "../scm-libs")
-              (library-path lib)
-              '(".sld" ".slx")))))
+  (let ((full-path (find-library
+                     '("scm-libs" "../scm-libs")
+                     (library-path lib)
+                     '(".sld" ".slx"))))
+    (if full-path
+        (read (open-input-file full-path))
+        (error "Unknown library" lib))))
+
 
 (define (find-library base-path* relative-path extension*)
   (if (null? base-path*)
@@ -275,6 +281,13 @@
                            (string-append "/" right)))
           ""
           (map symbol->string lib)))
+
+(define (check-imports imports exports lib)
+  (if (null? imports)
+      #t
+      (if (memq (car imports) exports)
+          (check-imports (cdr imports) exports lib)
+          (error "Invalid import" (car imports) lib))))
 
 
 ; ======================================================================
@@ -349,6 +362,12 @@
               (cons (initializations body)
                     (transform body)))))
 
+
+(define (library-name expr)
+  (cadr expr))
+
+(define (library-decls expr)
+  (cddr expr))
 
 (define (library-exports lib-decl*)
   (cond ((null? lib-decl*) '())
@@ -1287,6 +1306,11 @@
 
 (define (list . x) x)
 
+(define (length seq)
+  (if (pair? seq)
+      (+ 1 (length (cdr seq)))
+      0))
+
 (define (for-each f seq)
   (if (pair? seq)
       (begin
@@ -1319,10 +1343,12 @@
       (reduce f (f init (car seq)) (cdr seq))
       init))
 
-(define (length seq)
+(define (memq obj seq)
   (if (pair? seq)
-      (+ 1 (length (cdr seq)))
-      0))
+      (if (eq? obj (car seq))
+          seq
+          (memq obj (cdr seq)))
+      #f))
 
 (define (append seq-a seq-b)
   (if (pair? seq-a)
