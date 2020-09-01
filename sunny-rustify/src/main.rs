@@ -11,239 +11,251 @@ macro_rules! pipe {
 #[allow(non_upper_case_globals)]
 mod scheme {
     pub mod base {
-        use sunny_core::{self, car as _car, cdr as _cdr, Mut, Scm};
+        pub mod exports {
+            use sunny_core::{self, car as _car, cdr as _cdr, Mut, Scm};
 
-        thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
-        thread_local! {pub static _g_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numgt))}
-        thread_local! {pub static _l_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numlt))}
-        thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
-        thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
-        thread_local! {pub static car: Mut<Scm> = Mut::new(Scm::func(sunny_core::car))}
-        thread_local! {pub static cdr: Mut<Scm> = Mut::new(Scm::func(sunny_core::cdr))}
-        thread_local! {pub static caar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car]))}
-        thread_local! {pub static cadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car]))}
-        thread_local! {pub static cdar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr]))}
-        thread_local! {pub static cddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr]))}
-        thread_local! {pub static cons: Mut<Scm> = Mut::new(Scm::func(sunny_core::cons))}
-        thread_local! {pub static eof_minus_object_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_eof))}
-        thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
-        thread_local! {pub static equal_p: Mut<Scm> = Mut::new(Scm::func2(Scm::eq))}
-        thread_local! {pub static error: Mut<Scm> = Mut::new(Scm::func(_error))}
-        thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
-        thread_local! {pub static pair_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_pair))}
-        thread_local! {pub static set_minus_car_i: Mut<Scm> = Mut::new(Scm::func(_set_car))}
-        thread_local! {pub static set_minus_cdr_i: Mut<Scm> = Mut::new(Scm::func(_set_cdr))}
-        thread_local! {pub static symbol_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_symbol))}
-        thread_local! {pub static char_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_char))}
-        thread_local! {pub static symbol_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_symbol_to_string))}
-        thread_local! {pub static string_minus__g_list: Mut<Scm> = Mut::new(Scm::func1(_string_to_list))}
-        thread_local! {pub static string_minus_append: Mut<Scm> = Mut::new(Scm::func2(_string_append))}
-        thread_local! {pub static string_l__p: Mut<Scm> = Mut::new(Scm::func2(_string_cmp))}
-        thread_local! {pub static list_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_list_to_string))}
-        thread_local! {pub static close_minus_port: Mut<Scm> = Mut::new(Scm::func1(Scm::close_port))}
+            thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
+            thread_local! {pub static _g_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numgt))}
+            thread_local! {pub static _l_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numlt))}
+            thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
+            thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
+            thread_local! {pub static car: Mut<Scm> = Mut::new(Scm::func(sunny_core::car))}
+            thread_local! {pub static cdr: Mut<Scm> = Mut::new(Scm::func(sunny_core::cdr))}
+            thread_local! {pub static caar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car]))}
+            thread_local! {pub static cadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car]))}
+            thread_local! {pub static cdar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr]))}
+            thread_local! {pub static cddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr]))}
+            thread_local! {pub static cons: Mut<Scm> = Mut::new(Scm::func(sunny_core::cons))}
+            thread_local! {pub static eof_minus_object_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_eof))}
+            thread_local! {pub static eq_p: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_ptreq))}
+            thread_local! {pub static equal_p: Mut<Scm> = Mut::new(Scm::func2(Scm::eq))}
+            thread_local! {pub static error: Mut<Scm> = Mut::new(Scm::func(_error))}
+            thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
+            thread_local! {pub static pair_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_pair))}
+            thread_local! {pub static set_minus_car_i: Mut<Scm> = Mut::new(Scm::func(_set_car))}
+            thread_local! {pub static set_minus_cdr_i: Mut<Scm> = Mut::new(Scm::func(_set_cdr))}
+            thread_local! {pub static symbol_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_symbol))}
+            thread_local! {pub static char_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_char))}
+            thread_local! {pub static symbol_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_symbol_to_string))}
+            thread_local! {pub static string_minus__g_list: Mut<Scm> = Mut::new(Scm::func1(_string_to_list))}
+            thread_local! {pub static string_minus_append: Mut<Scm> = Mut::new(Scm::func2(_string_append))}
+            thread_local! {pub static string_l__p: Mut<Scm> = Mut::new(Scm::func2(_string_cmp))}
+            thread_local! {pub static list_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_list_to_string))}
+            thread_local! {pub static close_minus_port: Mut<Scm> = Mut::new(Scm::func1(Scm::close_port))}
 
-        fn _error(args: &[Scm]) -> Scm {
-            panic!("{}, {:?}", args[0], &args[1..])
-        }
+            fn _error(args: &[Scm]) -> Scm {
+                panic!("{}, {:?}", args[0], &args[1..])
+            }
 
-        fn _set_car(args: &[Scm]) -> Scm {
-            match args {
-                [Scm::Pair(p), x] => {
-                    p.0.set(x.clone());
-                    x.clone()
+            fn _set_car(args: &[Scm]) -> Scm {
+                match args {
+                    [Scm::Pair(p), x] => {
+                        p.0.set(x.clone());
+                        x.clone()
+                    }
+                    [_, _] => panic!("Not a pair: set-car! {:?}", args),
+                    _ => panic!("Incorrect arity: set-car! {:?}", args),
                 }
-                [_, _] => panic!("Not a pair: set-car! {:?}", args),
-                _ => panic!("Incorrect arity: set-car! {:?}", args),
             }
-        }
 
-        fn _set_cdr(args: &[Scm]) -> Scm {
-            match args {
-                [Scm::Pair(p), x] => {
-                    p.1.set(x.clone());
-                    x.clone()
+            fn _set_cdr(args: &[Scm]) -> Scm {
+                match args {
+                    [Scm::Pair(p), x] => {
+                        p.1.set(x.clone());
+                        x.clone()
+                    }
+                    [_, _] => panic!("Not a pair: set-cdr! {:?}", args),
+                    _ => panic!("Incorrect arity: set-cdr! {:?}", args),
                 }
-                [_, _] => panic!("Not a pair: set-cdr! {:?}", args),
-                _ => panic!("Incorrect arity: set-cdr! {:?}", args),
-            }
-        }
-
-        fn _symbol_to_string(s: &Scm) -> Scm {
-            Scm::str(s.as_symbol().unwrap().name())
-        }
-
-        fn _string_to_list(s: &Scm) -> Scm {
-            let s = s.as_string().unwrap();
-
-            let mut seq = Scm::nil();
-            for ch in s.as_str().chars().rev() {
-                seq = Scm::pair(ch, seq);
             }
 
-            return seq;
-        }
-
-        fn _string_append(a: &Scm, b: &Scm) -> Scm {
-            let a = a.as_string().unwrap();
-            let b = b.as_string().unwrap();
-            Scm::string(a.as_str().to_owned() + b.as_str())
-        }
-
-        fn _string_cmp(a: &Scm, b: &Scm) -> Scm {
-            let a = a.as_string().unwrap();
-            let b = b.as_string().unwrap();
-            Scm::bool(a.as_str() < b.as_str())
-        }
-
-        fn _list_to_string(seq: &Scm) -> Scm {
-            let mut seq = seq.clone();
-            let mut s = String::new();
-            while !seq.is_null() {
-                s.push(seq.car().unwrap().as_char().unwrap());
-                seq = seq.cdr().unwrap()
+            fn _symbol_to_string(s: &Scm) -> Scm {
+                Scm::str(s.as_symbol().unwrap().name())
             }
-            s.into()
+
+            fn _string_to_list(s: &Scm) -> Scm {
+                let s = s.as_string().unwrap();
+
+                let mut seq = Scm::nil();
+                for ch in s.as_str().chars().rev() {
+                    seq = Scm::pair(ch, seq);
+                }
+
+                return seq;
+            }
+
+            fn _string_append(a: &Scm, b: &Scm) -> Scm {
+                let a = a.as_string().unwrap();
+                let b = b.as_string().unwrap();
+                Scm::string(a.as_str().to_owned() + b.as_str())
+            }
+
+            fn _string_cmp(a: &Scm, b: &Scm) -> Scm {
+                let a = a.as_string().unwrap();
+                let b = b.as_string().unwrap();
+                Scm::bool(a.as_str() < b.as_str())
+            }
+
+            fn _list_to_string(seq: &Scm) -> Scm {
+                let mut seq = seq.clone();
+                let mut s = String::new();
+                while !seq.is_null() {
+                    s.push(seq.car().unwrap().as_char().unwrap());
+                    seq = seq.cdr().unwrap()
+                }
+                s.into()
+            }
         }
     }
 
     pub mod cxr {
-        use sunny_core::{car as _car, cdr as _cdr, Mut, Scm};
+        pub mod exports {
+            use sunny_core::{car as _car, cdr as _cdr, Mut, Scm};
 
-        thread_local! {pub static caaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car]))}
-        thread_local! {pub static caadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car]))}
-        thread_local! {pub static cadar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _car]))}
-        thread_local! {pub static caddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _car]))}
-        thread_local! {pub static cdaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _cdr]))}
-        thread_local! {pub static cdadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _cdr]))}
-        thread_local! {pub static cddar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _cdr]))}
-        thread_local! {pub static cdddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr]))}
+            thread_local! {pub static caaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car]))}
+            thread_local! {pub static caadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car]))}
+            thread_local! {pub static cadar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _car]))}
+            thread_local! {pub static caddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _car]))}
+            thread_local! {pub static cdaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _cdr]))}
+            thread_local! {pub static cdadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _cdr]))}
+            thread_local! {pub static cddar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _cdr]))}
+            thread_local! {pub static cdddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr]))}
 
-        thread_local! {pub static caaaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car _car]))}
-        thread_local! {pub static caaadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car _car]))}
-        thread_local! {pub static caadar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _car _car]))}
-        thread_local! {pub static caaddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _car _car]))}
-        thread_local! {pub static cadaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _cdr _car]))}
-        thread_local! {pub static cadadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _cdr _car]))}
-        thread_local! {pub static caddar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _cdr _car]))}
-        thread_local! {pub static cadddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr _car]))}
-        thread_local! {pub static cdaaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car _cdr]))}
-        thread_local! {pub static cdaadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car _cdr]))}
-        thread_local! {pub static cdadar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _car _cdr]))}
-        thread_local! {pub static cdaddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _car _cdr]))}
-        thread_local! {pub static cddaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _cdr _cdr]))}
-        thread_local! {pub static cddadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _cdr _cdr]))}
-        thread_local! {pub static cdddar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _cdr _cdr]))}
-        thread_local! {pub static cddddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr _cdr]))}
+            thread_local! {pub static caaaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car _car]))}
+            thread_local! {pub static caaadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car _car]))}
+            thread_local! {pub static caadar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _car _car]))}
+            thread_local! {pub static caaddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _car _car]))}
+            thread_local! {pub static cadaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _cdr _car]))}
+            thread_local! {pub static cadadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _cdr _car]))}
+            thread_local! {pub static caddar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _cdr _car]))}
+            thread_local! {pub static cadddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr _car]))}
+            thread_local! {pub static cdaaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _car _cdr]))}
+            thread_local! {pub static cdaadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _car _cdr]))}
+            thread_local! {pub static cdadar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _car _cdr]))}
+            thread_local! {pub static cdaddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _car _cdr]))}
+            thread_local! {pub static cddaar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car _cdr _cdr]))}
+            thread_local! {pub static cddadr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _car _cdr _cdr]))}
+            thread_local! {pub static cdddar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _cdr _cdr _cdr]))}
+            thread_local! {pub static cddddr: Mut<Scm> = Mut::new(Scm::func(pipe![_cdr _cdr _cdr _cdr]))}
+        }
     }
 
     pub mod file {
-        use std::path::Path;
-        use sunny_core::{self, Scm, Mut};
-        use sunny_core::port::{FileInputPort, FileOutputPort};
+        pub mod exports {
+            use std::path::Path;
+            use sunny_core::{self, Scm, Mut};
+            use sunny_core::port::{FileInputPort, FileOutputPort};
 
-        thread_local! {pub static open_minus_input_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_input_file))}
-        thread_local! {pub static open_minus_output_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_output_file))}
-        thread_local! {pub static file_minus_exists_p: Mut<Scm> = Mut::new(Scm::func1(_file_exists))}
+            thread_local! {pub static open_minus_input_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_input_file))}
+            thread_local! {pub static open_minus_output_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_output_file))}
+            thread_local! {pub static file_minus_exists_p: Mut<Scm> = Mut::new(Scm::func1(_file_exists))}
 
-        fn _open_input_file(name: &Scm) -> Scm {
-            let port = FileInputPort::open(name.as_string().expect("Argument to open-input-file must be a string.").as_str());
-            Scm::input_port(port)
-        }
+            fn _open_input_file(name: &Scm) -> Scm {
+                let port = FileInputPort::open(name.as_string().expect("Argument to open-input-file must be a string.").as_str());
+                Scm::input_port(port)
+            }
 
-        fn _open_output_file(name: &Scm) -> Scm {
-            let port = FileOutputPort::open(name.as_string().expect("Argument to open-output-file must be a string.").as_str());
-            Scm::output_port(port)
-        }
+            fn _open_output_file(name: &Scm) -> Scm {
+                let port = FileOutputPort::open(name.as_string().expect("Argument to open-output-file must be a string.").as_str());
+                Scm::output_port(port)
+            }
 
-        fn _file_exists(name: &Scm) -> Scm {
-            let name = name.as_string().expect("Argument to open-input-file must be a string.");
-            let path = Path::new(name.as_str());
-            Scm::bool(path.exists())
+            fn _file_exists(name: &Scm) -> Scm {
+                let name = name.as_string().expect("Argument to open-input-file must be a string.");
+                let path = Path::new(name.as_str());
+                Scm::bool(path.exists())
+            }
         }
     }
 
     pub mod process_context {
-        use sunny_core::{self, Scm, Mut};
-        use std::env;
+        pub mod exports {
+            use sunny_core::{self, Scm, Mut};
+            use std::env;
 
-        thread_local! {pub static command_minus_line: Mut<Scm> = Mut::new(Scm::func0(_command_line))}
+            thread_local! {pub static command_minus_line: Mut<Scm> = Mut::new(Scm::func0(_command_line))}
 
-        fn _command_line() -> Scm {
-            let mut arglist = Scm::nil();
-            for arg in env::args().rev() {
-                arglist = Scm::pair(arg, arglist);
+            fn _command_line() -> Scm {
+                let mut arglist = Scm::nil();
+                for arg in env::args().rev() {
+                    arglist = Scm::pair(arg, arglist);
+                }
+                arglist
             }
-            arglist
         }
 
     }
 
     pub mod read {
-        use std::io::stdin;
-        use sunny_core::{self, Mut, Scm};
-        use sunny_parse::from_reader;
+        pub mod exports {
+            use std::io::stdin;
+            use sunny_core::{self, Mut, Scm};
+            use sunny_parse::from_reader;
 
-        thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
+            thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
 
-        fn _read(args: &[Scm]) -> Scm {
-            if args.len() == 0 {
-                match from_reader(stdin()) {
-                    Ok(x) => x,
-                    Err(e) if e.is_eof() => Scm::eof(),
-                    Err(e) => panic!("{:?}", e),
-                }
-            } else {
-                args[0].with_input_port(|port|{
-                    match from_reader(port) {
+            fn _read(args: &[Scm]) -> Scm {
+                if args.len() == 0 {
+                    match from_reader(stdin()) {
                         Ok(x) => x,
                         Err(e) if e.is_eof() => Scm::eof(),
                         Err(e) => panic!("{:?}", e),
                     }
-                }).unwrap_or(Scm::eof())
+                } else {
+                    args[0].with_input_port(|port|{
+                        match from_reader(port) {
+                            Ok(x) => x,
+                            Err(e) if e.is_eof() => Scm::eof(),
+                            Err(e) => panic!("{:?}", e),
+                        }
+                    }).unwrap_or(Scm::eof())
+                }
             }
         }
     }
 
     pub mod write {
-        use sunny_core::{self, Mut, Scm};
+        pub mod exports {
+            use sunny_core::{self, Mut, Scm};
 
-        thread_local! {pub static display: Mut<Scm> = Mut::new(Scm::func(_display))}
-        thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
-        thread_local! {pub static write: Mut<Scm> = Mut::new(Scm::func(_write))}
+            thread_local! {pub static display: Mut<Scm> = Mut::new(Scm::func(_display))}
+            thread_local! {pub static newline: Mut<Scm> = Mut::new(Scm::func(_newline))}
+            thread_local! {pub static write: Mut<Scm> = Mut::new(Scm::func(_write))}
 
-        fn _display(args: &[Scm]) -> Scm {
-            if args.len() == 1 {
-                print!("{}", args[0]);
-                Scm::Nil
-            } else {
-                args[1].with_output_port(|port|{
-                    write!(port, "{}", args[0]).unwrap();
-                }).unwrap();
-                Scm::Nil
+            fn _display(args: &[Scm]) -> Scm {
+                if args.len() == 1 {
+                    print!("{}", args[0]);
+                    Scm::Nil
+                } else {
+                    args[1].with_output_port(|port|{
+                        write!(port, "{}", args[0]).unwrap();
+                    }).unwrap();
+                    Scm::Nil
+                }
             }
-        }
 
-        fn _newline(args: &[Scm]) -> Scm {
-            if args.len() == 0 {
-                println!();
-                Scm::Nil
-            } else {
-                args[0].with_output_port(|port|{
-                    write!(port, "\n").unwrap();
-                }).unwrap();
-                Scm::Nil
+            fn _newline(args: &[Scm]) -> Scm {
+                if args.len() == 0 {
+                    println!();
+                    Scm::Nil
+                } else {
+                    args[0].with_output_port(|port|{
+                        write!(port, "\n").unwrap();
+                    }).unwrap();
+                    Scm::Nil
+                }
             }
-        }
 
-        fn _write(args: &[Scm]) -> Scm {
-            if args.len() == 1 {
-                print!("{:?}", args[0]);
-                Scm::Nil
-            } else {
-                args[1].with_output_port(|port|{
-                    write!(port, "{:?}", args[0]).unwrap();
-                }).unwrap();
-                Scm::Nil
+            fn _write(args: &[Scm]) -> Scm {
+                if args.len() == 1 {
+                    print!("{:?}", args[0]);
+                    Scm::Nil
+                } else {
+                    args[1].with_output_port(|port|{
+                        write!(port, "{:?}", args[0]).unwrap();
+                    }).unwrap();
+                    Scm::Nil
+                }
             }
         }
     }
