@@ -11,7 +11,8 @@
         (only (scheme process-context) command-line)
         (only (scheme file) file-exists?
                             open-input-file
-                            open-output-file))
+                            open-output-file)
+        (syntax))
 
 (define (scm->ast exp*)
   (if (library? (car exp*))
@@ -294,7 +295,7 @@
 
 (define (get-lib lib)
   (let ((full-path (find-library
-                     '("." "scm-libs" "../scm-libs")
+                     '("." "./lib" "scm-libs" "../scm-libs")
                      (library-path lib)
                      '(".sld" ".slx"))))
     (if full-path
@@ -337,64 +338,6 @@
 ; ======================================================================
 ; Syntax
 
-(define (library? exp*)
-  (and (pair? exp*)
-       (eq? 'define-library (car exp*))))
-
-
-(define (definition? expr)
-  (and (pair? expr)
-       (eq? (car expr) 'define)))
-
-(define (definition-variable expr)
-  (if (pair? (cadr expr))
-      (caadr expr)
-      (cadr expr)))
-
-(define (definition-value expr)
-  (if (pair? (cadr expr))
-      (cons 'lambda
-            (cons (cdadr expr)
-                  (cddr expr)))
-      (caddr expr)))
-
-
-(define (if-condition expr)
-  (cadr expr))
-
-(define (if-consequence expr)
-  (caddr expr))
-
-(define (if-alternative expr)
-  (if (pair? (cdddr expr))
-      (cadddr expr)
-      ''*UNSPECIFIED*))
-
-
-(define (cond-clauses expr)
-  (cdr expr))
-
-(define (cond-clause-condition clause)
-  (car clause))
-
-(define (cond-clause-sequence clause)
-  (cdr clause))
-
-
-(define (import? expr)
-  (and (pair? expr)
-       (eq? (car expr) 'import)))
-
-(define (import-libnames exp*)
-  (map importset-libname (cdr exp*)))
-
-(define (importset-libname expr)
-  (cond ((eq? 'only (car expr))
-         (importset-libname (cadr expr)))
-        ((eq? 'except (car expr))
-         (importset-libname (cadr expr)))
-        (else expr)))
-
 
 (define (scan-out-defines body)
   (define (initializations exp*)
@@ -415,22 +358,6 @@
   (list (cons 'letrec
               (cons (initializations body)
                     (transform body)))))
-
-
-(define (library-name expr)
-  (cadr expr))
-
-(define (library-decls expr)
-  (cddr expr))
-
-(define (library-exports lib-decl*)
-  (cond ((null? lib-decl*) '())
-        ((eq? 'export (caar lib-decl*))
-         (append (cdar lib-decl*)
-                 (library-exports (cdr lib-decl*))))
-        (else (library-exports (cdr lib-decl*)))))
-
-
 
 ; ======================================================================
 ; AST

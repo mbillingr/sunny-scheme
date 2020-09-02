@@ -5,6 +5,7 @@ pub use crate::scheme::cxr::exports::{caadr, cadar, caddr, cdadr, cddar, cdddr, 
 pub use crate::scheme::read::exports::{read, };
 pub use crate::scheme::process_context::exports::{command_minus_line, };
 pub use crate::scheme::file::exports::{file_minus_exists_p, open_minus_input_minus_file, open_minus_output_minus_file, };
+pub use crate::syntax::exports::*;
 }
 
 mod globals{use sunny_core::{Mut, Scm};
@@ -27,12 +28,6 @@ thread_local!{#[allow(non_upper_case_globals)] pub static boxify: Mut<Scm> = Mut
 thread_local!{#[allow(non_upper_case_globals)] pub static boxify_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxify-abstraction"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static boxify_minus_vararg_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxify-vararg-abstraction"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static check_minus_imports: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL check-imports"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-condition"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-sequence"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static cond_minus_clauses: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clauses"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static definition_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-value"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static definition_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-variable"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static dotted_minus_list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL dotted-list?"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static ensure_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ensure-var!"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static filter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL filter"))}
@@ -44,25 +39,15 @@ thread_local!{#[allow(non_upper_case_globals)] pub static for_minus_each2: Mut<S
 thread_local!{#[allow(non_upper_case_globals)] pub static get_minus_lib: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-lib"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static global_minus_imported_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-imported?"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static global_minus_regular_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-regular?"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static if_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL if-alternative"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static if_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL if-condition"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static if_minus_consequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL if-consequence"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static import_minus_all: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-all"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static import_minus_libnames: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-libnames"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static import_minus_only: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-only"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static import_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import?"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static input_minus_file: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL input-file"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static input_minus_file_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL input-file-name"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static length: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL length"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static library_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library->ast"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static library_minus_decls: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-decls"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static library_minus_decls_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-decls->ast"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static library_minus_exports: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-exports"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static library_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-name"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static library_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-path"))}
-thread_local!{#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static list_minus_find_minus_free_minus_vars: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-find-free-vars"))}
 thread_local!{#[allow(non_upper_case_globals)] pub static load_minus_sexpr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL load-sexpr"))}
@@ -174,23 +159,24 @@ crate::scheme::cxr::initialize();
 crate::scheme::read::initialize();
 crate::scheme::process_context::initialize();
 crate::scheme::file::initialize();
+crate::syntax::initialize();
 {
 // (define (scm->ast exp*) (if (library? (car exp*)) (library->ast (library-name (car exp*)) (library-decls (car exp*)) (list (quote ()))) (program->ast exp*)))
 globals::scm_minus__g_ast.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();
 // (letrec () (if (library? (car exp*)) (library->ast (library-name (car exp*)) (library-decls (car exp*)) (list (quote ()))) (program->ast exp*)))
 {if (
 // (library? (car exp*))
-globals::library_p.with(|value| value.get()).invoke(&[
+imports::library_p.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])).is_true() {
 // (library->ast (library-name (car exp*)) (library-decls (car exp*)) (list (quote ())))
 globals::library_minus__g_ast.with(|value| value.get()).invoke(&[
 // (library-name (car exp*))
-globals::library_minus_name.with(|value| value.get()).invoke(&[
+imports::library_minus_name.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), 
 // (library-decls (car exp*))
-globals::library_minus_decls.with(|value| value.get()).invoke(&[
+imports::library_minus_decls.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), 
 // (list (quote ()))
@@ -215,13 +201,13 @@ process_minus_imports.set({let library_minus_env = library_minus_env.clone();let
 // (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((main (boxify (sexpr->sequence exp* global-env #f))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))
 if (
 // (import? (car exp*))
-globals::import_p.with(|value| value.get()).invoke(&[
+imports::import_p.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])).is_true() {{
 // (register-libraries (import-libnames (car exp*)) library-env)
 globals::register_minus_libraries.with(|value| value.get()).invoke(&[
 // (import-libnames (car exp*))
-globals::import_minus_libnames.with(|value| value.get()).invoke(&[
+imports::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), library_minus_env.get(), ]);
 // (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))
@@ -237,7 +223,7 @@ imports::cdar.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), global_m
 // (set-add* init (import-libnames (car exp*)))
 globals::set_minus_add_star_.with(|value| value.get()).invoke(&[init.clone(), 
 // (import-libnames (car exp*))
-globals::import_minus_libnames.with(|value| value.get()).invoke(&[
+imports::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), ]), ])}} else {
 // (let* ((main (boxify (sexpr->sequence exp* global-env #f))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
@@ -316,13 +302,13 @@ globals::sexpr_minus__g_export.with(|value| value.get()).invoke(&[
 // (cdar exp*)
 imports::cdar.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), global_minus_env.clone(), ]), ]), ])} else {if (
 // (import? (car exp*))
-globals::import_p.with(|value| value.get()).invoke(&[
+imports::import_p.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])).is_true() {{
 // (register-libraries (import-libnames (car exp*)) library-env)
 globals::register_minus_libraries.with(|value| value.get()).invoke(&[
 // (import-libnames (car exp*))
-globals::import_minus_libnames.with(|value| value.get()).invoke(&[
+imports::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), library_minus_env.clone(), ]);
 // (library-decls->ast name (cdr exp*) (set-add* init (import-libnames (car exp*))) body global-env library-env (append imports (sexpr->import (cdar exp*) global-env)) exports)
@@ -332,7 +318,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone(), ]),
 // (set-add* init (import-libnames (car exp*)))
 globals::set_minus_add_star_.with(|value| value.get()).invoke(&[init.clone(), 
 // (import-libnames (car exp*))
-globals::import_minus_libnames.with(|value| value.get()).invoke(&[
+imports::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), ]), body.clone(), global_minus_env.clone(), library_minus_env.clone(), 
 // (append imports (sexpr->import (cdar exp*) global-env))
@@ -388,13 +374,13 @@ globals::get_minus_lib.with(|value| value.get()).invoke(&[
 // (car libs)
 imports::car.with(|value| value.get()).invoke(&[libs.clone(), ]), ]), ];if (
 // (library? lib)
-globals::library_p.with(|value| value.get()).invoke(&[lib.clone(), ])).is_true() {
+imports::library_p.with(|value| value.get()).invoke(&[lib.clone(), ])).is_true() {
 // (library->ast (library-name lib) (library-decls lib) library-env)
 globals::library_minus__g_ast.with(|value| value.get()).invoke(&[
 // (library-name lib)
-globals::library_minus_name.with(|value| value.get()).invoke(&[lib.clone(), ]), 
+imports::library_minus_name.with(|value| value.get()).invoke(&[lib.clone(), ]), 
 // (library-decls lib)
-globals::library_minus_decls.with(|value| value.get()).invoke(&[lib.clone(), ]), library_minus_env.clone(), ])} else {Scm::False}}, ]), 
+imports::library_minus_decls.with(|value| value.get()).invoke(&[lib.clone(), ]), library_minus_env.clone(), ])} else {Scm::False}}, ]), 
 // (car library-env)
 imports::car.with(|value| value.get()).invoke(&[library_minus_env.clone(), ]), ]), ]);
 // (register-libraries (cdr libs) library-env)
@@ -502,11 +488,11 @@ imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
 // (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)
 globals::sexpr_minus__g_alternative.with(|value| value.get()).invoke(&[
 // (if-condition exp)
-globals::if_minus_condition.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::if_minus_condition.with(|value| value.get()).invoke(&[exp.clone(), ]), 
 // (if-consequence exp)
-globals::if_minus_consequence.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::if_minus_consequence.with(|value| value.get()).invoke(&[exp.clone(), ]), 
 // (if-alternative exp)
-globals::if_minus_alternative.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ])} else {if (
+imports::if_minus_alternative.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ])} else {if (
 // (eq? (quote cond) (car exp))
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("cond"), 
 // (car exp)
@@ -516,7 +502,7 @@ globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->cond (cond-clauses exp) env tail?)
 globals::sexpr_minus__g_cond.with(|value| value.get()).invoke(&[
 // (cond-clauses exp)
-globals::cond_minus_clauses.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
+imports::cond_minus_clauses.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
 // (eq? (quote and) (car exp))
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("and"), 
 // (car exp)
@@ -578,11 +564,11 @@ globals::sexpr_minus__g_definition.with(|value| value.set({Scm::func(move |args:
 // (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val))
 {let [name, ] = [
 // (definition-variable exp)
-globals::definition_minus_variable.with(|value| value.get()).invoke(&[exp.clone(), ]), ];
+imports::definition_minus_variable.with(|value| value.get()).invoke(&[exp.clone(), ]), ];
 // (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val))
 {let [value, ] = [
 // (definition-value exp)
-globals::definition_minus_value.with(|value| value.get()).invoke(&[exp.clone(), ]), ];
+imports::definition_minus_value.with(|value| value.get()).invoke(&[exp.clone(), ]), ];
 // (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val))
 {let [var, ] = [
 // (ensure-var! name env)
@@ -846,13 +832,13 @@ globals::make_minus_constant.with(|value| value.get()).invoke(&[Scm::symbol("*UN
 // (eq? (quote else) (cond-clause-condition (car clauses)))
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("else"), 
 // (cond-clause-condition (car clauses))
-globals::cond_minus_clause_minus_condition.with(|value| value.get()).invoke(&[
+imports::cond_minus_clause_minus_condition.with(|value| value.get()).invoke(&[
 // (car clauses)
 imports::car.with(|value| value.get()).invoke(&[clauses.clone(), ]), ]), ])).is_true() {
 // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
 globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[
 // (cond-clause-sequence (car clauses))
-globals::cond_minus_clause_minus_sequence.with(|value| value.get()).invoke(&[
+imports::cond_minus_clause_minus_sequence.with(|value| value.get()).invoke(&[
 // (car clauses)
 imports::car.with(|value| value.get()).invoke(&[clauses.clone(), ]), ]), env.clone(), tail_p.clone(), ])} else {if (
 // (pair? clauses)
@@ -862,7 +848,7 @@ imports::pair_p.with(|value| value.get()).invoke(&[clauses.clone(), ])).is_true(
 // (sexpr->ast (cond-clause-condition (car clauses)) env #f)
 globals::sexpr_minus__g_ast.with(|value| value.get()).invoke(&[
 // (cond-clause-condition (car clauses))
-globals::cond_minus_clause_minus_condition.with(|value| value.get()).invoke(&[
+imports::cond_minus_clause_minus_condition.with(|value| value.get()).invoke(&[
 // (car clauses)
 imports::car.with(|value| value.get()).invoke(&[clauses.clone(), ]), ]), env.clone(), Scm::False, ]), ];
 // (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
@@ -870,7 +856,7 @@ imports::car.with(|value| value.get()).invoke(&[clauses.clone(), ]), ]), env.clo
 // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
 globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[
 // (cond-clause-sequence (car clauses))
-globals::cond_minus_clause_minus_sequence.with(|value| value.get()).invoke(&[
+imports::cond_minus_clause_minus_sequence.with(|value| value.get()).invoke(&[
 // (car clauses)
 imports::car.with(|value| value.get()).invoke(&[clauses.clone(), ]), ]), env.clone(), tail_p.clone(), ]), ];
 // (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
@@ -974,9 +960,9 @@ globals::import_minus_all.with(|value| value.set({Scm::func(move |args: &[Scm]|{
 // (adjoin-import*! (library-exports (library-decls (get-lib lib))) env)
 globals::adjoin_minus_import_star__i.with(|value| value.get()).invoke(&[
 // (library-exports (library-decls (get-lib lib)))
-globals::library_minus_exports.with(|value| value.get()).invoke(&[
+imports::library_minus_exports.with(|value| value.get()).invoke(&[
 // (library-decls (get-lib lib))
-globals::library_minus_decls.with(|value| value.get()).invoke(&[
+imports::library_minus_decls.with(|value| value.get()).invoke(&[
 // (get-lib lib)
 globals::get_minus_lib.with(|value| value.get()).invoke(&[lib.clone(), ]), ]), ]), env.clone(), ]);
 // (make-import lib)
@@ -988,23 +974,23 @@ globals::import_minus_only.with(|value| value.set({Scm::func(move |args: &[Scm]|
 // (check-imports names (library-exports (library-decls (get-lib lib))) lib)
 globals::check_minus_imports.with(|value| value.get()).invoke(&[names.clone(), 
 // (library-exports (library-decls (get-lib lib)))
-globals::library_minus_exports.with(|value| value.get()).invoke(&[
+imports::library_minus_exports.with(|value| value.get()).invoke(&[
 // (library-decls (get-lib lib))
-globals::library_minus_decls.with(|value| value.get()).invoke(&[
+imports::library_minus_decls.with(|value| value.get()).invoke(&[
 // (get-lib lib)
 globals::get_minus_lib.with(|value| value.get()).invoke(&[lib.clone(), ]), ]), ]), lib.clone(), ]);
 // (adjoin-import*! names env)
 globals::adjoin_minus_import_star__i.with(|value| value.get()).invoke(&[names.clone(), env.clone(), ]);
 // (make-import-only lib names)
 globals::make_minus_import_minus_only.with(|value| value.get()).invoke(&[lib.clone(), names.clone(), ])}}})}));
-// (define (get-lib lib) (let ((full-path (find-library (quote ("." "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
+// (define (get-lib lib) (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
 globals::get_minus_lib.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();
-// (letrec () (let ((full-path (find-library (quote ("." "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
+// (letrec () (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
 {
-// (let ((full-path (find-library (quote ("." "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib)))
+// (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib)))
 {let [full_minus_path, ] = [
-// (find-library (quote ("." "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx")))
-globals::find_minus_library.with(|value| value.get()).invoke(&[Scm::pair(Scm::from("."), Scm::pair(Scm::from("scm-libs"), Scm::pair(Scm::from("../scm-libs"), Scm::Nil))), 
+// (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx")))
+globals::find_minus_library.with(|value| value.get()).invoke(&[Scm::pair(Scm::from("."), Scm::pair(Scm::from("./lib"), Scm::pair(Scm::from("scm-libs"), Scm::pair(Scm::from("../scm-libs"), Scm::Nil)))), 
 // (library-path lib)
 globals::library_minus_path.with(|value| value.get()).invoke(&[lib.clone(), ]), Scm::pair(Scm::from(".sld"), Scm::pair(Scm::from(".slx"), Scm::Nil)), ]), ];if (full_minus_path.clone()).is_true() {
 // (read (open-input-file full-path))
@@ -1085,142 +1071,6 @@ imports::cdr.with(|value| value.get()).invoke(&[imports.clone(), ]), exports.clo
 imports::error.with(|value| value.get()).invoke(&[Scm::from("Invalid import"), 
 // (car imports)
 imports::car.with(|value| value.get()).invoke(&[imports.clone(), ]), lib.clone(), ])}}}})}));
-// (define (library? exp*) (and (pair? exp*) (eq? (quote define-library) (car exp*))))
-globals::library_p.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();
-// (letrec () (and (pair? exp*) (eq? (quote define-library) (car exp*))))
-{
-// (and (pair? exp*) (eq? (quote define-library) (car exp*)))
-if (
-// (pair? exp*)
-imports::pair_p.with(|value| value.get()).invoke(&[exp_star_.clone(), ])).is_true() {
-// (eq? (quote define-library) (car exp*))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("define-library"), 
-// (car exp*)
-imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])} else {Scm::False}}})}));
-// (define (definition? expr) (and (pair? expr) (eq? (car expr) (quote define))))
-globals::definition_p.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (and (pair? expr) (eq? (car expr) (quote define))))
-{
-// (and (pair? expr) (eq? (car expr) (quote define)))
-if (
-// (pair? expr)
-imports::pair_p.with(|value| value.get()).invoke(&[expr.clone(), ])).is_true() {
-// (eq? (car expr) (quote define))
-imports::eq_p.with(|value| value.get()).invoke(&[
-// (car expr)
-imports::car.with(|value| value.get()).invoke(&[expr.clone(), ]), Scm::symbol("define"), ])} else {Scm::False}}})}));
-// (define (definition-variable expr) (if (pair? (cadr expr)) (caadr expr) (cadr expr)))
-globals::definition_minus_variable.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (if (pair? (cadr expr)) (caadr expr) (cadr expr)))
-{if (
-// (pair? (cadr expr))
-imports::pair_p.with(|value| value.get()).invoke(&[
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ]), ])).is_true() {
-// (caadr expr)
-imports::caadr.with(|value| value.get()).invoke(&[expr.clone(), ])} else {
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ])}}})}));
-// (define (definition-value expr) (if (pair? (cadr expr)) (cons (quote lambda) (cons (cdadr expr) (cddr expr))) (caddr expr)))
-globals::definition_minus_value.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (if (pair? (cadr expr)) (cons (quote lambda) (cons (cdadr expr) (cddr expr))) (caddr expr)))
-{if (
-// (pair? (cadr expr))
-imports::pair_p.with(|value| value.get()).invoke(&[
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ]), ])).is_true() {
-// (cons (quote lambda) (cons (cdadr expr) (cddr expr)))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("lambda"), 
-// (cons (cdadr expr) (cddr expr))
-imports::cons.with(|value| value.get()).invoke(&[
-// (cdadr expr)
-imports::cdadr.with(|value| value.get()).invoke(&[expr.clone(), ]), 
-// (cddr expr)
-imports::cddr.with(|value| value.get()).invoke(&[expr.clone(), ]), ]), ])} else {
-// (caddr expr)
-imports::caddr.with(|value| value.get()).invoke(&[expr.clone(), ])}}})}));
-// (define (if-condition expr) (cadr expr))
-globals::if_minus_condition.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (cadr expr))
-{
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ])}})}));
-// (define (if-consequence expr) (caddr expr))
-globals::if_minus_consequence.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (caddr expr))
-{
-// (caddr expr)
-imports::caddr.with(|value| value.get()).invoke(&[expr.clone(), ])}})}));
-// (define (if-alternative expr) (if (pair? (cdddr expr)) (cadddr expr) (quote (quote *UNSPECIFIED*))))
-globals::if_minus_alternative.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (if (pair? (cdddr expr)) (cadddr expr) (quote (quote *UNSPECIFIED*))))
-{if (
-// (pair? (cdddr expr))
-imports::pair_p.with(|value| value.get()).invoke(&[
-// (cdddr expr)
-imports::cdddr.with(|value| value.get()).invoke(&[expr.clone(), ]), ])).is_true() {
-// (cadddr expr)
-imports::cadddr.with(|value| value.get()).invoke(&[expr.clone(), ])} else {Scm::pair(Scm::symbol("quote"), Scm::pair(Scm::symbol("*UNSPECIFIED*"), Scm::Nil))}}})}));
-// (define (cond-clauses expr) (cdr expr))
-globals::cond_minus_clauses.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (cdr expr))
-{
-// (cdr expr)
-imports::cdr.with(|value| value.get()).invoke(&[expr.clone(), ])}})}));
-// (define (cond-clause-condition clause) (car clause))
-globals::cond_minus_clause_minus_condition.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let clause = args[0].clone();
-// (letrec () (car clause))
-{
-// (car clause)
-imports::car.with(|value| value.get()).invoke(&[clause.clone(), ])}})}));
-// (define (cond-clause-sequence clause) (cdr clause))
-globals::cond_minus_clause_minus_sequence.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let clause = args[0].clone();
-// (letrec () (cdr clause))
-{
-// (cdr clause)
-imports::cdr.with(|value| value.get()).invoke(&[clause.clone(), ])}})}));
-// (define (import? expr) (and (pair? expr) (eq? (car expr) (quote import))))
-globals::import_p.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (and (pair? expr) (eq? (car expr) (quote import))))
-{
-// (and (pair? expr) (eq? (car expr) (quote import)))
-if (
-// (pair? expr)
-imports::pair_p.with(|value| value.get()).invoke(&[expr.clone(), ])).is_true() {
-// (eq? (car expr) (quote import))
-imports::eq_p.with(|value| value.get()).invoke(&[
-// (car expr)
-imports::car.with(|value| value.get()).invoke(&[expr.clone(), ]), Scm::symbol("import"), ])} else {Scm::False}}})}));
-// (define (import-libnames exp*) (map importset-libname (cdr exp*)))
-globals::import_minus_libnames.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();
-// (letrec () (map importset-libname (cdr exp*)))
-{
-// (map importset-libname (cdr exp*))
-globals::map.with(|value| value.get()).invoke(&[globals::importset_minus_libname.with(|value| value.get()), 
-// (cdr exp*)
-imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])}})}));
-// (define (importset-libname expr) (cond ((eq? (quote only) (car expr)) (importset-libname (cadr expr))) ((eq? (quote except) (car expr)) (importset-libname (cadr expr))) (else expr)))
-globals::importset_minus_libname.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (cond ((eq? (quote only) (car expr)) (importset-libname (cadr expr))) ((eq? (quote except) (car expr)) (importset-libname (cadr expr))) (else expr)))
-{
-// (cond ((eq? (quote only) (car expr)) (importset-libname (cadr expr))) ((eq? (quote except) (car expr)) (importset-libname (cadr expr))) (else expr))
-if (
-// (eq? (quote only) (car expr))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("only"), 
-// (car expr)
-imports::car.with(|value| value.get()).invoke(&[expr.clone(), ]), ])).is_true() {
-// (importset-libname (cadr expr))
-globals::importset_minus_libname.with(|value| value.get()).invoke(&[
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ]), ])} else {if (
-// (eq? (quote except) (car expr))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("except"), 
-// (car expr)
-imports::car.with(|value| value.get()).invoke(&[expr.clone(), ]), ])).is_true() {
-// (importset-libname (cadr expr))
-globals::importset_minus_libname.with(|value| value.get()).invoke(&[
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ]), ])} else {expr.clone()}}}})}));
 // (define (scan-out-defines body) (define (initializations exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*))))) (define (transform exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))) (list (cons (quote letrec) (cons (initializations body) (transform body)))))
 globals::scan_minus_out_minus_defines.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let body = args[0].clone();
 // (letrec ((initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))))) (list (cons (quote letrec) (cons (initializations body) (transform body)))))
@@ -1234,7 +1084,7 @@ if (
 // (null? exp*)
 imports::null_p.with(|value| value.get()).invoke(&[exp_star_.clone(), ])).is_true() {Scm::Nil} else {if (
 // (definition? (car exp*))
-globals::definition_p.with(|value| value.get()).invoke(&[
+imports::definition_p.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])).is_true() {
 // (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))
@@ -1242,11 +1092,11 @@ imports::cons.with(|value| value.get()).invoke(&[
 // (list (definition-variable (car exp*)) (definition-value (car exp*)))
 globals::list.with(|value| value.get()).invoke(&[
 // (definition-variable (car exp*))
-globals::definition_minus_variable.with(|value| value.get()).invoke(&[
+imports::definition_minus_variable.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), 
 // (definition-value (car exp*))
-globals::definition_minus_value.with(|value| value.get()).invoke(&[
+imports::definition_minus_value.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), ]), 
 // (initializations (cdr exp*))
@@ -1265,7 +1115,7 @@ if (
 // (null? exp*)
 imports::null_p.with(|value| value.get()).invoke(&[exp_star_.clone(), ])).is_true() {Scm::Nil} else {if (
 // (definition? (car exp*))
-globals::definition_p.with(|value| value.get()).invoke(&[
+imports::definition_p.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])).is_true() {
 // (transform (cdr exp*))
@@ -1291,42 +1141,6 @@ imports::cons.with(|value| value.get()).invoke(&[
 initializations.get().invoke(&[body.clone(), ]), 
 // (transform body)
 transform.get().invoke(&[body.clone(), ]), ]), ]), ])}})}));
-// (define (library-name expr) (cadr expr))
-globals::library_minus_name.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (cadr expr))
-{
-// (cadr expr)
-imports::cadr.with(|value| value.get()).invoke(&[expr.clone(), ])}})}));
-// (define (library-decls expr) (cddr expr))
-globals::library_minus_decls.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expr = args[0].clone();
-// (letrec () (cddr expr))
-{
-// (cddr expr)
-imports::cddr.with(|value| value.get()).invoke(&[expr.clone(), ])}})}));
-// (define (library-exports lib-decl*) (cond ((null? lib-decl*) (quote ())) ((eq? (quote export) (caar lib-decl*)) (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))) (else (library-exports (cdr lib-decl*)))))
-globals::library_minus_exports.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib_minus_decl_star_ = args[0].clone();
-// (letrec () (cond ((null? lib-decl*) (quote ())) ((eq? (quote export) (caar lib-decl*)) (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))) (else (library-exports (cdr lib-decl*)))))
-{
-// (cond ((null? lib-decl*) (quote ())) ((eq? (quote export) (caar lib-decl*)) (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))) (else (library-exports (cdr lib-decl*))))
-if (
-// (null? lib-decl*)
-imports::null_p.with(|value| value.get()).invoke(&[lib_minus_decl_star_.clone(), ])).is_true() {Scm::Nil} else {if (
-// (eq? (quote export) (caar lib-decl*))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("export"), 
-// (caar lib-decl*)
-imports::caar.with(|value| value.get()).invoke(&[lib_minus_decl_star_.clone(), ]), ])).is_true() {
-// (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))
-globals::append.with(|value| value.get()).invoke(&[
-// (cdar lib-decl*)
-imports::cdar.with(|value| value.get()).invoke(&[lib_minus_decl_star_.clone(), ]), 
-// (library-exports (cdr lib-decl*))
-globals::library_minus_exports.with(|value| value.get()).invoke(&[
-// (cdr lib-decl*)
-imports::cdr.with(|value| value.get()).invoke(&[lib_minus_decl_star_.clone(), ]), ]), ])} else {
-// (library-exports (cdr lib-decl*))
-globals::library_minus_exports.with(|value| value.get()).invoke(&[
-// (cdr lib-decl*)
-imports::cdr.with(|value| value.get()).invoke(&[lib_minus_decl_star_.clone(), ]), ])}}}})}));
 // (define (make-comment comment node) (define (repr) (cons (quote COMMENT) (cons comment (node (quote repr))))) (define (transform func) (func self (lambda () (make-comment comment (node (quote transform) func))))) (define (free-vars) (node (quote free-vars))) (define (gen-rust port) (newline port) (display "// " port) (write comment port) (newline port) (node (quote gen-rust) port)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote COMMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message COMMENT" msg)))) self)
 globals::make_minus_comment.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let comment = args[0].clone();let node = args[1].clone();
 // (letrec ((repr (lambda () (cons (quote COMMENT) (cons comment (node (quote repr)))))) (transform (lambda (func) (func self (lambda () (make-comment comment (node (quote transform) func)))))) (free-vars (lambda () (node (quote free-vars)))) (gen-rust (lambda (port) (newline port) (display "// " port) (write comment port) (newline port) (node (quote gen-rust) port))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote COMMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message COMMENT" msg)))))) self)
@@ -5026,3 +4840,4 @@ crate::native::file::initialize();
 (/*NOP*/);}
 }
 }
+pub mod syntax {
