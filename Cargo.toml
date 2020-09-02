@@ -5,5 +5,5 @@ members = [
     "sunny-macro",
     "sunny-parse",
     "sunny-rustify",
+    "sunny-libs-native"
 ]
-
