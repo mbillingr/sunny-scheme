@@ -172,6 +172,16 @@ pub mod scheme {
         }
 
         pub mod exports {
+            pub use super::globals::assq;
+            pub use super::globals::length;
+            pub use super::globals::list;
+            pub use super::globals::list_minus_copy;
+            pub use super::globals::list_p;
+            pub use super::globals::memq;
+            pub use super::globals::not;
+            pub use super::globals::reverse;
+            pub use super::globals::string_e__p;
+            pub use super::globals::symbol_e__p;
             pub use super::imports::_e_;
             pub use super::imports::_g_;
             pub use super::imports::_l_;
@@ -202,11 +212,501 @@ pub mod scheme {
             pub use super::imports::symbol_p;
         }
 
-        mod globals {}
+        mod globals {
+            use sunny_core::{Mut, Scm};
+            thread_local! {#[allow(non_upper_case_globals)] pub static __string_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _string=?"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static string_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL string=?"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static s: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL s"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static __symbol_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _symbol=?"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static symbol_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL symbol=?"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static reverse_minus_iter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reverse-iter"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static reverse: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reverse"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static length: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL length"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list?"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list"))}
+            thread_local! {#[allow(non_upper_case_globals)] pub static not: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL not"))}
+        }
+
+        thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
 
         pub fn initialize() {
+            if INITIALIZED.with(|x| x.get()) {
+                return;
+            }
+            INITIALIZED.with(|x| x.set(true));
+
             crate::native::base::initialize();
-            (/*NOP*/);
+            {
+                (/*NOP*/);
+                // (define (not x) (if x #f #t))
+                globals::not.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let x = args[0].clone();
+                            // (letrec () (if x #f #t))
+                            {
+                                if (x.clone()).is_true() {
+                                    Scm::False
+                                } else {
+                                    Scm::True
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (list . x) x)
+                globals::list.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() < 0 {
+                                panic!("not enough args")
+                            }
+                            let x = Scm::list(&args[0..]);
+                            // (letrec () x)
+                            {
+                                x.clone()
+                            }
+                        })
+                    })
+                });
+                // (define (list? seq) (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f)))
+                globals::list_p.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let seq = args[0].clone();
+                            // (letrec () (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f)))
+                            {
+                                // (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f))
+                                if (
+                                    // (null? seq)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                )
+                                .is_true()
+                                {
+                                    Scm::True
+                                } else {
+                                    if (
+                                        // (pair? seq)
+                                        imports::pair_p
+                                            .with(|value| value.get())
+                                            .invoke(&[seq.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (list? (cdr seq))
+                                        globals::list_p.with(|value| value.get()).invoke(&[
+                                            // (cdr seq)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                        ])
+                                    } else {
+                                        Scm::False
+                                    }
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (length seq) (if (pair? seq) (+ 1 (length (cdr seq))) 0))
+                globals::length.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let seq = args[0].clone();
+                            // (letrec () (if (pair? seq) (+ 1 (length (cdr seq))) 0))
+                            {
+                                if (
+                                    // (pair? seq)
+                                    imports::pair_p
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                )
+                                .is_true()
+                                {
+                                    // (+ 1 (length (cdr seq)))
+                                    imports::_plus_.with(|value| value.get()).invoke(&[
+                                        Scm::from(1),
+                                        // (length (cdr seq))
+                                        globals::length.with(|value| value.get()).invoke(&[
+                                            // (cdr seq)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                        ]),
+                                    ])
+                                } else {
+                                    Scm::from(0)
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (reverse seq) (reverse-iter seq (quote ())))
+                globals::reverse.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let seq = args[0].clone();
+                            // (letrec () (reverse-iter seq (quote ())))
+                            {
+                                // (reverse-iter seq (quote ()))
+                                globals::reverse_minus_iter
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone(), Scm::Nil])
+                            }
+                        })
+                    })
+                });
+                // (define (reverse-iter seq out) (if (null? seq) out (reverse-iter (cdr seq) (cons (car seq) out))))
+                globals::reverse_minus_iter.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let seq = args[0].clone();
+                            let out = args[1].clone();
+                            // (letrec () (if (null? seq) out (reverse-iter (cdr seq) (cons (car seq) out))))
+                            {
+                                if (
+                                    // (null? seq)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                )
+                                .is_true()
+                                {
+                                    out.clone()
+                                } else {
+                                    // (reverse-iter (cdr seq) (cons (car seq) out))
+                                    globals::reverse_minus_iter
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (cdr seq)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                            // (cons (car seq) out)
+                                            imports::cons.with(|value| value.get()).invoke(&[
+                                                // (car seq)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[seq.clone()]),
+                                                out.clone(),
+                                            ]),
+                                        ])
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (list-copy obj) (if (pair? obj) (cons (car obj) (list-copy (cdr obj))) obj))
+                globals::list_minus_copy.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let obj = args[0].clone();
+                            // (letrec () (if (pair? obj) (cons (car obj) (list-copy (cdr obj))) obj))
+                            {
+                                if (
+                                    // (pair? obj)
+                                    imports::pair_p
+                                        .with(|value| value.get())
+                                        .invoke(&[obj.clone()])
+                                )
+                                .is_true()
+                                {
+                                    // (cons (car obj) (list-copy (cdr obj)))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        // (car obj)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[obj.clone()]),
+                                        // (list-copy (cdr obj))
+                                        globals::list_minus_copy.with(|value| value.get()).invoke(
+                                            &[
+                                                // (cdr obj)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[obj.clone()]),
+                                            ],
+                                        ),
+                                    ])
+                                } else {
+                                    obj.clone()
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (assq obj seq) (if (pair? seq) (if (eq? obj (caar seq)) (car seq) (assq obj (cdr seq))) #f))
+                globals::assq.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let obj = args[0].clone();
+                            let seq = args[1].clone();
+                            // (letrec () (if (pair? seq) (if (eq? obj (caar seq)) (car seq) (assq obj (cdr seq))) #f))
+                            {
+                                if (
+                                    // (pair? seq)
+                                    imports::pair_p
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                )
+                                .is_true()
+                                {
+                                    if (
+                                        // (eq? obj (caar seq))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            obj.clone(),
+                                            // (caar seq)
+                                            imports::caar
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (car seq)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[seq.clone()])
+                                    } else {
+                                        // (assq obj (cdr seq))
+                                        globals::assq.with(|value| value.get()).invoke(&[
+                                            obj.clone(),
+                                            // (cdr seq)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                        ])
+                                    }
+                                } else {
+                                    Scm::False
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (memq obj seq) (if (pair? seq) (if (eq? obj (car seq)) seq (memq obj (cdr seq))) #f))
+                globals::memq.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let obj = args[0].clone();
+                            let seq = args[1].clone();
+                            // (letrec () (if (pair? seq) (if (eq? obj (car seq)) seq (memq obj (cdr seq))) #f))
+                            {
+                                if (
+                                    // (pair? seq)
+                                    imports::pair_p
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                )
+                                .is_true()
+                                {
+                                    if (
+                                        // (eq? obj (car seq))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            obj.clone(),
+                                            // (car seq)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        seq.clone()
+                                    } else {
+                                        // (memq obj (cdr seq))
+                                        globals::memq.with(|value| value.get()).invoke(&[
+                                            obj.clone(),
+                                            // (cdr seq)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()]),
+                                        ])
+                                    }
+                                } else {
+                                    Scm::False
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (symbol=? s1 s2 . args) (_symbol=? s1 (cons s2 args)))
+                globals::symbol_e__p.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() < 2 {
+                                panic!("not enough args")
+                            }
+                            let s1 = args[0].clone();
+                            let s2 = args[1].clone();
+                            let args_ = Scm::list(&args[2..]);
+                            // (letrec () (_symbol=? s1 (cons s2 args)))
+                            {
+                                // (_symbol=? s1 (cons s2 args))
+                                globals::__symbol_e__p.with(|value| value.get()).invoke(&[
+                                    s1.clone(),
+                                    // (cons s2 args)
+                                    imports::cons
+                                        .with(|value| value.get())
+                                        .invoke(&[s2.clone(), args_.clone()]),
+                                ])
+                            }
+                        })
+                    })
+                });
+                // (define (_symbol=? s1 s*) (cond ((null? s*) #t) ((eq? s1 (car s)) (_symbol=? s1 (cdr s*))) (else #f)))
+                globals::__symbol_e__p.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let s1 = args[0].clone();
+                            let s_star_ = args[1].clone();
+                            // (letrec () (cond ((null? s*) #t) ((eq? s1 (car s)) (_symbol=? s1 (cdr s*))) (else #f)))
+                            {
+                                // (cond ((null? s*) #t) ((eq? s1 (car s)) (_symbol=? s1 (cdr s*))) (else #f))
+                                if (
+                                    // (null? s*)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[s_star_.clone()])
+                                )
+                                .is_true()
+                                {
+                                    Scm::True
+                                } else {
+                                    if (
+                                        // (eq? s1 (car s))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            s1.clone(),
+                                            // (car s)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[globals::s.with(|value| value.get())]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (_symbol=? s1 (cdr s*))
+                                        globals::__symbol_e__p.with(|value| value.get()).invoke(&[
+                                            s1.clone(),
+                                            // (cdr s*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[s_star_.clone()]),
+                                        ])
+                                    } else {
+                                        Scm::False
+                                    }
+                                }
+                            }
+                        })
+                    })
+                });
+                // (define (string=? s1 s2 . args) (_string=? s1 (cons s2 args)))
+                globals::string_e__p.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() < 2 {
+                                panic!("not enough args")
+                            }
+                            let s1 = args[0].clone();
+                            let s2 = args[1].clone();
+                            let args_ = Scm::list(&args[2..]);
+                            // (letrec () (_string=? s1 (cons s2 args)))
+                            {
+                                // (_string=? s1 (cons s2 args))
+                                globals::__string_e__p.with(|value| value.get()).invoke(&[
+                                    s1.clone(),
+                                    // (cons s2 args)
+                                    imports::cons
+                                        .with(|value| value.get())
+                                        .invoke(&[s2.clone(), args_.clone()]),
+                                ])
+                            }
+                        })
+                    })
+                });
+                // (define (_string=? s1 s*) (cond ((null? s*) #t) ((equal? s1 (car s*)) (_string=? s1 (cdr s*))) (else #f)))
+                globals::__string_e__p.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let s1 = args[0].clone();
+                            let s_star_ = args[1].clone();
+                            // (letrec () (cond ((null? s*) #t) ((equal? s1 (car s*)) (_string=? s1 (cdr s*))) (else #f)))
+                            {
+                                // (cond ((null? s*) #t) ((equal? s1 (car s*)) (_string=? s1 (cdr s*))) (else #f))
+                                if (
+                                    // (null? s*)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[s_star_.clone()])
+                                )
+                                .is_true()
+                                {
+                                    Scm::True
+                                } else {
+                                    if (
+                                        // (equal? s1 (car s*))
+                                        imports::equal_p.with(|value| value.get()).invoke(&[
+                                            s1.clone(),
+                                            // (car s*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[s_star_.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (_string=? s1 (cdr s*))
+                                        globals::__string_e__p.with(|value| value.get()).invoke(&[
+                                            s1.clone(),
+                                            // (cdr s*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[s_star_.clone()]),
+                                        ])
+                                    } else {
+                                        Scm::False
+                                    }
+                                }
+                            }
+                        })
+                    })
+                })
+            };
         }
     }
     pub mod cxr {
@@ -861,7 +1361,6 @@ pub mod sunny {
             thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global!"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-import"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_append_minus_child_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-append-child!"))}
-            thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_find_minus_child: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-find-child"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_set_minus_children_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-set-children!"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_module_minus_tree_minus_leaf: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-module-tree-leaf"))}
@@ -877,14 +1376,12 @@ pub mod sunny {
             thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_find_minus_free_minus_vars: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-find-free-vars"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static transform_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL transform-list"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static print_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print-list"))}
-            thread_local! {#[allow(non_upper_case_globals)] pub static not: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL not"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_boxify: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-boxify"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_modules: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-modules"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rustify-libname"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_global_minus_defs: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-global-defs"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_regular_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-regular?"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static any: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any"))}
-            thread_local! {#[allow(non_upper_case_globals)] pub static length: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL length"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static for_minus_each2: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL for-each2"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static println: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL println"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL for-each"))}
@@ -898,7 +1395,6 @@ pub mod sunny {
             thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
-            thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static reduce: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reduce"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_library_minus_ext: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-library-ext"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-path"))}
@@ -982,7 +1478,6 @@ pub mod sunny {
             thread_local! {#[allow(non_upper_case_globals)] pub static program_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL program->ast"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-name"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_decls: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-decls"))}
-            thread_local! {#[allow(non_upper_case_globals)] pub static list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static library_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library->ast"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static scm_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scm->ast"))}
@@ -1047,7 +1542,7 @@ pub mod sunny {
                                                         .invoke(&[exp_star_.clone()]),
                                                 ]),
                                             // (list (quote ()))
-                                            globals::list
+                                            imports::list
                                                 .with(|value| value.get())
                                                 .invoke(&[Scm::Nil]),
                                         ])
@@ -1072,7 +1567,7 @@ global_minus_env.set(
 globals::make_minus_global_minus_env.with(|value| value.get()).invoke(&[]));
 library_minus_env.set(
 // (list (quote ()))
-globals::list.with(|value| value.get()).invoke(&[Scm::Nil, ]));
+imports::list.with(|value| value.get()).invoke(&[Scm::Nil, ]));
 process_minus_imports.set({let library_minus_env = library_minus_env.clone();let process_minus_imports = process_minus_imports.clone();let global_minus_env = global_minus_env.clone();Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp_star_ = args[0].clone();let imports = args[1].clone();let init = args[2].clone();
 // (letrec () (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((main (boxify (sexpr->sequence exp* global-env #f))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))
 {
@@ -2063,14 +2558,14 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                         .with(|value| value.get())
                                         .invoke(&[
                                             // (list (car bindings))
-                                            globals::list.with(|value| value.get()).invoke(&[
+                                            imports::list.with(|value| value.get()).invoke(&[
                                                 // (car bindings)
                                                 imports::car
                                                     .with(|value| value.get())
                                                     .invoke(&[bindings.clone()]),
                                             ]),
                                             // (list (cons (quote let*) (cons (cdr bindings) body)))
-                                            globals::list.with(|value| value.get()).invoke(&[
+                                            imports::list.with(|value| value.get()).invoke(&[
                                                 // (cons (quote let*) (cons (cdr bindings) body))
                                                 imports::cons.with(|value| value.get()).invoke(&[
                                                     Scm::symbol("let*"),
@@ -3131,7 +3626,7 @@ globals::make_minus_alternative.with(|value| value.get()).invoke(&[condition.clo
                                 } else {
                                     if (
                                         // (memq (car imports) exports)
-                                        globals::memq.with(|value| value.get()).invoke(&[
+                                        imports::memq.with(|value| value.get()).invoke(&[
                                             // (car imports)
                                             imports::car
                                                 .with(|value| value.get())
@@ -3711,7 +4206,7 @@ globals::make_minus_alternative.with(|value| value.get()).invoke(&[condition.clo
                                                         .with(|value| value.get())
                                                         .invoke(&[
                                                         // (list (definition-variable (car exp*)) (definition-value (car exp*)))
-                                                        globals::list
+                                                        imports::list
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 // (definition-variable (car exp*))
@@ -3826,7 +4321,7 @@ globals::make_minus_alternative.with(|value| value.get()).invoke(&[condition.clo
                                 });
 
                                 // (list (cons (quote letrec) (cons (initializations body) (transform body))))
-                                globals::list.with(|value| value.get()).invoke(&[
+                                imports::list.with(|value| value.get()).invoke(&[
                                     // (cons (quote letrec) (cons (initializations body) (transform body)))
                                     imports::cons.with(|value| value.get()).invoke(&[
                                         Scm::symbol("letrec"),
@@ -4238,7 +4733,7 @@ repr.set({let var = var.clone();let name = name.clone();Scm::func(move |args: &[
 // (letrec () (list (variable-getter var) name))
 {
 // (list (variable-getter var) name)
-globals::list.with(|value| value.get()).invoke(&[
+imports::list.with(|value| value.get()).invoke(&[
 // (variable-getter var)
 globals::variable_minus_getter.with(|value| value.get()).invoke(&[var.clone(), ]), name.clone(), ])}})});
 transform.set({let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();
@@ -4332,7 +4827,7 @@ repr.set({let var = var.clone();let name = name.clone();let val = val.clone();Sc
 // (letrec () (list (variable-setter var) name (val (quote repr))))
 {
 // (list (variable-setter var) name (val (quote repr)))
-globals::list.with(|value| value.get()).invoke(&[
+imports::list.with(|value| value.get()).invoke(&[
 // (variable-setter var)
 globals::variable_minus_setter.with(|value| value.get()).invoke(&[var.clone(), ]), name.clone(), 
 // (val (quote repr))
@@ -4428,7 +4923,7 @@ repr.set({let condition = condition.clone();let consequent = consequent.clone();
 // (letrec () (list (quote IF) (condition (quote repr)) (consequent (quote repr)) (alternative (quote repr))))
 {
 // (list (quote IF) (condition (quote repr)) (consequent (quote repr)) (alternative (quote repr)))
-globals::list.with(|value| value.get()).invoke(&[Scm::symbol("IF"), 
+imports::list.with(|value| value.get()).invoke(&[Scm::symbol("IF"), 
 // (condition (quote repr))
 condition.clone().invoke(&[Scm::symbol("repr"), ]), 
 // (consequent (quote repr))
@@ -4604,7 +5099,7 @@ repr.set({Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity
 // (letrec () (list (quote NULL-ARG)))
 {
 // (list (quote NULL-ARG))
-globals::list.with(|value| value.get()).invoke(&[Scm::symbol("NULL-ARG"), ])}})});
+imports::list.with(|value| value.get()).invoke(&[Scm::symbol("NULL-ARG"), ])}})});
 transform.set({let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();
 // (letrec () (fnc self (lambda () self)))
 {
@@ -5139,7 +5634,7 @@ repr.set({let first = first.clone();let next = next.clone();Scm::func(move |args
 // (letrec () (list (quote SEQUENCE) (first (quote repr)) (next (quote repr))))
 {
 // (list (quote SEQUENCE) (first (quote repr)) (next (quote repr)))
-globals::list.with(|value| value.get()).invoke(&[Scm::symbol("SEQUENCE"), 
+imports::list.with(|value| value.get()).invoke(&[Scm::symbol("SEQUENCE"), 
 // (first (quote repr))
 first.clone().invoke(&[Scm::symbol("repr"), ]), 
 // (next (quote repr))
@@ -5337,7 +5832,7 @@ imports::display.with(|value| value.get()).invoke(&[Scm::from("if args.len() != 
 // (display (length params) port)
 imports::display.with(|value| value.get()).invoke(&[
 // (length params)
-globals::length.with(|value| value.get()).invoke(&[params.clone(), ]), port.clone(), ]);
+imports::length.with(|value| value.get()).invoke(&[params.clone(), ]), port.clone(), ]);
 // (display "{panic!(\"invalid arity\")}" port)
 imports::display.with(|value| value.get()).invoke(&[Scm::from("{panic!(\"invalid arity\")}"), port.clone(), ]);
 // (gen-params params 0)
@@ -5507,7 +6002,7 @@ imports::display.with(|value| value.get()).invoke(&[Scm::from("if args.len() < "
 // (display (length params) port)
 imports::display.with(|value| value.get()).invoke(&[
 // (length params)
-globals::length.with(|value| value.get()).invoke(&[params.clone(), ]), port.clone(), ]);
+imports::length.with(|value| value.get()).invoke(&[params.clone(), ]), port.clone(), ]);
 // (display "{panic!(\"not enough args\")}" port)
 imports::display.with(|value| value.get()).invoke(&[Scm::from("{panic!(\"not enough args\")}"), port.clone(), ]);
 // (gen-params params 0)
@@ -5953,7 +6448,7 @@ repr.set({let name = name.clone();let exname = exname.clone();Scm::func(move |ar
 // (letrec () (list (quote EXPORT) name (quote AS) exname))
 {
 // (list (quote EXPORT) name (quote AS) exname)
-globals::list.with(|value| value.get()).invoke(&[Scm::symbol("EXPORT"), name.clone(), Scm::symbol("AS"), exname.clone(), ])}})});
+imports::list.with(|value| value.get()).invoke(&[Scm::symbol("EXPORT"), name.clone(), Scm::symbol("AS"), exname.clone(), ])}})});
 transform.set({let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();
 // (letrec () (func self (lambda () self)))
 {
@@ -5973,7 +6468,7 @@ globals::lookup.with(|value| value.get()).invoke(&[name.clone(), env.clone(), ])
 // (cond ((not var) (error "undefined export" name)) ((eq? (quote GLOBAL-REF) (variable-getter var)) (display "globals::" port)) ((eq? (quote IMPORT-REF) (variable-getter var)) (display "imports::" port)) (else (error "invalid export variable" var name)))
 if (
 // (not var)
-globals::not.with(|value| value.get()).invoke(&[var.clone(), ])).is_true() {
+imports::not.with(|value| value.get()).invoke(&[var.clone(), ])).is_true() {
 // (error "undefined export" name)
 imports::error.with(|value| value.get()).invoke(&[Scm::from("undefined export"), name.clone(), ])} else {if (
 // (eq? (quote GLOBAL-REF) (variable-getter var))
@@ -6590,7 +7085,7 @@ globals::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[mod
                                     {
                                         if (
                                             // (not (null? (cdr node)))
-                                            globals::not.with(|value| value.get()).invoke(&[
+                                            imports::not.with(|value| value.get()).invoke(&[
                                                 // (null? (cdr node))
                                                 imports::null_p.with(|value| value.get()).invoke(
                                                     &[
@@ -6605,7 +7100,7 @@ globals::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[mod
                                         .is_true()
                                         {
                                             // (not (pair? (cdr node)))
-                                            globals::not.with(|value| value.get()).invoke(&[
+                                            imports::not.with(|value| value.get()).invoke(&[
                                                 // (pair? (cdr node))
                                                 imports::pair_p.with(|value| value.get()).invoke(
                                                     &[
@@ -6734,7 +7229,7 @@ globals::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[mod
                                         Scm::symbol("*UNSPECIFIED*")
                                     };
                                     // (assq name (module-tree-children node))
-                                    globals::assq.with(|value| value.get()).invoke(&[
+                                    imports::assq.with(|value| value.get()).invoke(&[
                                         name.clone(),
                                         // (module-tree-children node)
                                         globals::module_minus_tree_minus_children
@@ -6875,7 +7370,7 @@ imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(), Scm::char('/'), ]))
 // (list->string (list ch))
 imports::list_minus__g_string.with(|value| value.get()).invoke(&[
 // (list ch)
-globals::list.with(|value| value.get()).invoke(&[ch.clone(), ]), ])}}}}}}}}}}}})});
+imports::list.with(|value| value.get()).invoke(&[ch.clone(), ]), ])}}}}}}}}}}}})});
 append_minus_all.set({let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();
 // (letrec () (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))
 {if (
@@ -6960,7 +7455,7 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                                                         .with(|value| value.get())
                                                         .invoke(&[
                                                             // (list ch)
-                                                            globals::list
+                                                            imports::list
                                                                 .with(|value| value.get())
                                                                 .invoke(&[ch.clone()]),
                                                         ])
@@ -7051,7 +7546,7 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                             // (letrec () (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
                             {
                                 // (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
-                                globals::list.with(|value| value.get()).invoke(&[
+                                imports::list.with(|value| value.get()).invoke(&[
                                     Scm::symbol("GLOBAL-MARKER"),
                                     // (new-import (quote assert-eq))
                                     globals::new_minus_import
@@ -7668,7 +8163,7 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                             // (letrec () (list getter setter mut?))
                             {
                                 // (list getter setter mut?)
-                                globals::list.with(|value| value.get()).invoke(&[
+                                imports::list.with(|value| value.get()).invoke(&[
                                     getter.clone(),
                                     setter.clone(),
                                     mut_p.clone(),
@@ -8774,76 +9269,6 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                         })
                     })
                 });
-                // (define (not x) (if x #f #t))
-                globals::not.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 1 {
-                                panic!("invalid arity")
-                            }
-                            let x = args[0].clone();
-                            // (letrec () (if x #f #t))
-                            {
-                                if (x.clone()).is_true() {
-                                    Scm::False
-                                } else {
-                                    Scm::True
-                                }
-                            }
-                        })
-                    })
-                });
-                // (define (list . x) x)
-                globals::list.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() < 0 {
-                                panic!("not enough args")
-                            }
-                            let x = Scm::list(&args[0..]);
-                            // (letrec () x)
-                            {
-                                x.clone()
-                            }
-                        })
-                    })
-                });
-                // (define (length seq) (if (pair? seq) (+ 1 (length (cdr seq))) 0))
-                globals::length.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 1 {
-                                panic!("invalid arity")
-                            }
-                            let seq = args[0].clone();
-                            // (letrec () (if (pair? seq) (+ 1 (length (cdr seq))) 0))
-                            {
-                                if (
-                                    // (pair? seq)
-                                    imports::pair_p
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()])
-                                )
-                                .is_true()
-                                {
-                                    // (+ 1 (length (cdr seq)))
-                                    imports::_plus_.with(|value| value.get()).invoke(&[
-                                        Scm::from(1),
-                                        // (length (cdr seq))
-                                        globals::length.with(|value| value.get()).invoke(&[
-                                            // (cdr seq)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[seq.clone()]),
-                                        ]),
-                                    ])
-                                } else {
-                                    Scm::from(0)
-                                }
-                            }
-                        })
-                    })
-                });
                 // (define (for-each f seq) (if (pair? seq) (begin (f (car seq)) (for-each f (cdr seq)))))
                 globals::for_minus_each.with(|value| {
                     value.set({
@@ -9150,55 +9575,6 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                         })
                     })
                 });
-                // (define (memq obj seq) (if (pair? seq) (if (eq? obj (car seq)) seq (memq obj (cdr seq))) #f))
-                globals::memq.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 2 {
-                                panic!("invalid arity")
-                            }
-                            let obj = args[0].clone();
-                            let seq = args[1].clone();
-                            // (letrec () (if (pair? seq) (if (eq? obj (car seq)) seq (memq obj (cdr seq))) #f))
-                            {
-                                if (
-                                    // (pair? seq)
-                                    imports::pair_p
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()])
-                                )
-                                .is_true()
-                                {
-                                    if (
-                                        // (eq? obj (car seq))
-                                        imports::eq_p.with(|value| value.get()).invoke(&[
-                                            obj.clone(),
-                                            // (car seq)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[seq.clone()]),
-                                        ])
-                                    )
-                                    .is_true()
-                                    {
-                                        seq.clone()
-                                    } else {
-                                        // (memq obj (cdr seq))
-                                        globals::memq.with(|value| value.get()).invoke(&[
-                                            obj.clone(),
-                                            // (cdr seq)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[seq.clone()]),
-                                        ])
-                                    }
-                                } else {
-                                    Scm::False
-                                }
-                            }
-                        })
-                    })
-                });
                 // (define (assoc obj seq) (if (pair? seq) (if (equal? obj (caar seq)) (car seq) (assoc obj (cdr seq))) #f))
                 globals::assoc.with(|value| {
                     value.set({
@@ -9221,58 +9597,6 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                                     if (
                                         // (equal? obj (caar seq))
                                         imports::equal_p.with(|value| value.get()).invoke(&[
-                                            obj.clone(),
-                                            // (caar seq)
-                                            imports::caar
-                                                .with(|value| value.get())
-                                                .invoke(&[seq.clone()]),
-                                        ])
-                                    )
-                                    .is_true()
-                                    {
-                                        // (car seq)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[seq.clone()])
-                                    } else {
-                                        // (assoc obj (cdr seq))
-                                        globals::assoc.with(|value| value.get()).invoke(&[
-                                            obj.clone(),
-                                            // (cdr seq)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[seq.clone()]),
-                                        ])
-                                    }
-                                } else {
-                                    Scm::False
-                                }
-                            }
-                        })
-                    })
-                });
-                // (define (assq obj seq) (if (pair? seq) (if (eq? obj (caar seq)) (car seq) (assoc obj (cdr seq))) #f))
-                globals::assq.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 2 {
-                                panic!("invalid arity")
-                            }
-                            let obj = args[0].clone();
-                            let seq = args[1].clone();
-                            // (letrec () (if (pair? seq) (if (eq? obj (caar seq)) (car seq) (assoc obj (cdr seq))) #f))
-                            {
-                                if (
-                                    // (pair? seq)
-                                    imports::pair_p
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()])
-                                )
-                                .is_true()
-                                {
-                                    if (
-                                        // (eq? obj (caar seq))
-                                        imports::eq_p.with(|value| value.get()).invoke(&[
                                             obj.clone(),
                                             // (caar seq)
                                             imports::caar
@@ -9425,7 +9749,7 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                                                                     // (letrec () (not (cmp x pivot)))
                                                                     {
                                                                         // (not (cmp x pivot))
-                                                                        globals::not
+                                                                        imports::not
                                                                             .with(|value| {
                                                                                 value.get()
                                                                             })

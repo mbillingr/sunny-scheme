@@ -1543,16 +1543,6 @@
     ;--------------------------------------------------
     ; std library stand-ins
 
-    (define (not x)
-      (if x #f #t))
-
-    (define (list . x) x)
-
-    (define (length seq)
-      (if (pair? seq)
-          (+ 1 (length (cdr seq)))
-          0))
-
     (define (for-each f seq)
       (if (pair? seq)
           (begin
@@ -1592,23 +1582,9 @@
           (reduce f (f init (car seq)) (cdr seq))
           init))
 
-    (define (memq obj seq)
-      (if (pair? seq)
-          (if (eq? obj (car seq))
-              seq
-              (memq obj (cdr seq)))
-          #f))
-
     (define (assoc obj seq)
       (if (pair? seq)
           (if (equal? obj (caar seq))
-              (car seq)
-              (assoc obj (cdr seq)))
-          #f))
-
-    (define (assq obj seq)
-      (if (pair? seq)
-          (if (eq? obj (caar seq))
               (car seq)
               (assoc obj (cdr seq)))
           #f))
