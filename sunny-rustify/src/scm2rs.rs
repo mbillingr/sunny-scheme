@@ -2863,7 +2863,7 @@ globals::make_minus_alternative.with(|value| value.get()).invoke(&[condition.clo
                         })
                     })
                 });
-                // (define (get-lib lib) (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
+                // (define (get-lib lib) (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs" "../../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
                 globals::get_minus_lib.with(|value| {
                     value.set({
                         Scm::func(move |args: &[Scm]| {
@@ -2871,12 +2871,12 @@ globals::make_minus_alternative.with(|value| value.get()).invoke(&[condition.clo
                                 panic!("invalid arity")
                             }
                             let lib = args[0].clone();
-                            // (letrec () (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
+                            // (letrec () (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs" "../../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
                             {
-                                // (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib)))
+                                // (let ((full-path (find-library (quote ("." "./lib" "scm-libs" "../scm-libs" "../../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib)))
                                 {
                                     let [full_minus_path] = [
-                                        // (find-library (quote ("." "./lib" "scm-libs" "../scm-libs")) (library-path lib) (quote (".sld" ".slx")))
+                                        // (find-library (quote ("." "./lib" "scm-libs" "../scm-libs" "../../scm-libs")) (library-path lib) (quote (".sld" ".slx")))
                                         globals::find_minus_library
                                             .with(|value| value.get())
                                             .invoke(&[
@@ -2888,7 +2888,10 @@ globals::make_minus_alternative.with(|value| value.get()).invoke(&[condition.clo
                                                             Scm::from("scm-libs"),
                                                             Scm::pair(
                                                                 Scm::from("../scm-libs"),
-                                                                Scm::Nil,
+                                                                Scm::pair(
+                                                                    Scm::from("../../scm-libs"),
+                                                                    Scm::Nil,
+                                                                ),
                                                             ),
                                                         ),
                                                     ),

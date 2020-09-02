@@ -298,7 +298,7 @@
 
     (define (get-lib lib)
       (let ((full-path (find-library
-                         '("." "./lib" "scm-libs" "../scm-libs")
+                         '("." "./lib" "scm-libs" "../scm-libs" "../../scm-libs")
                          (library-path lib)
                          '(".sld" ".slx"))))
         (if full-path
