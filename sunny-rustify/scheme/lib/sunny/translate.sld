@@ -14,10 +14,12 @@
           (only (scheme read) read)
           (only (scheme file) file-exists?
                               open-input-file
-                              open-output-file))
+                              open-output-file)
+          (sunny utils))
 
   (begin
     (define (scm->ast exp*)
+      (error "TODO: recursively register libraries imported by libraries")
       (if (library? (car exp*))
           (library->ast (library-name (car exp*))
                         (library-decls (car exp*))
@@ -42,6 +44,8 @@
                                             (string<? (symbol->string (car a))
                                                       (symbol->string (car b))))
                                           (cdr global-env))))
+                      (display library-env)
+                      (newline)
                       (make-program globals
                                     imports
                                     init
@@ -1504,16 +1508,6 @@
 
     ;------------------------------------------------------------
     ; Utils
-
-    (define (dotted-list? seq)
-      (cond ((null? seq) #f)
-            ((pair? seq) (dotted-list? (cdr seq)))
-            (else #t)))
-
-    (define (last-cdr seq)
-      (if (pair? seq)
-          (last-cdr (cdr seq))
-          seq))
 
     (define (proper-list-part seq)
       (if (pair? seq)
