@@ -941,7 +941,7 @@
         (rust-gen-global-defs port globals)))
     (newline port)
     (newline port)
-    (display "fn main()" port)
+    (display "pub fn main()" port)
     (rust-block port
       (lambda ()
         (newline port)
@@ -1634,6 +1634,13 @@
 
 (define input-file-name (cadr (command-line)))
 (define output-file-name (caddr (command-line)))
+
+(newline)
+(display input-file-name)
+(display " --> ")
+(display output-file-name)
+(newline)
+(newline)
 
 (define input-file (open-input-file input-file-name))
 
