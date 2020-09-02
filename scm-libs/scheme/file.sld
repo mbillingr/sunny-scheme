@@ -1,4 +1,4 @@
-(define-library (scheme write)
+(define-library (scheme file)
   (export
     file-exists?
     open-input-file
