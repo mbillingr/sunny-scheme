@@ -236,7 +236,7 @@
         (if (dotted-list? param*)
             (make-vararg-abstraction (proper-list-part param*)
                                     (last-cdr param*)
-                                    (map (lambda (p) (lookup p local-env)) param*)
+                                    (map (lambda (p) (lookup p local-env)) (proper-list-part param*))
                                     (lookup (last-cdr param*) local-env)
                                     (sexpr->sequence body local-env #t))
             (make-abstraction param*
@@ -752,11 +752,11 @@
                                     (rustify-identifier p)
                                     " = Scm::uninitialized().into_boxed();"))
                       params)
-            (for-each2 (lambda (p a) (print port
-                                            (rustify-identifier p)
-                                            ".set(")
-                                     (a 'gen-rust port)
-                                     (println port ");"))
+            (for-each (lambda (p a) (print port
+                                           (rustify-identifier p)
+                                           ".set(")
+                                    (a 'gen-rust port)
+                                    (println port ");"))
                       params
                       args)
             (body 'gen-rust port))))
@@ -1525,25 +1525,6 @@
 
     ;--------------------------------------------------
     ; std library stand-ins
-
-    (define (for-each f seq)
-      (if (pair? seq)
-          (begin
-            (f (car seq))
-            (for-each f (cdr seq)))))
-
-    (define (for-each2 f seq-a seq-b)
-      (if (and (pair? seq-a)
-               (pair? seq-b))
-          (begin
-            (f (car seq-a) (car seq-b))
-            (for-each2 f (cdr seq-a) (cdr seq-b)))))
-
-    (define (map f seq)
-       (if (pair? seq)
-           (cons (f (car seq))
-                 (map f (cdr seq)))
-           '()))
 
     (define (filter f seq)
       (if (pair? seq)

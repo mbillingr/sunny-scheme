@@ -9,11 +9,13 @@
     eof-object?
     eq? equal?
     error
+    for-each
     length
     list
     list?
     list->string
     list-copy
+    map
     memq
     not
     null?
@@ -42,24 +44,13 @@
             (else #f)))
 
     (define (length seq)
-      (if (pair? seq)
-          (+ 1 (length (cdr seq)))
-          0))
+      (fold-left (lambda (acc _) (+ acc 1)) 0 seq))
 
     (define (reverse seq)
-      (reverse-iter seq '()))
-
-    (define (reverse-iter seq out)
-      (if (null? seq)
-          out
-          (reverse-iter (cdr seq)
-                        (cons (car seq) out))))
+      (fold-left (lambda (acc x) (cons x acc)) '() seq))
 
     (define (list-copy obj)
-      (if (pair? obj)
-          (cons (car obj)
-                (list-copy (cdr obj)))
-          obj))
+      (fold-right cons '() seq))
 
     (define (assq obj seq)
       (if (pair? seq)
@@ -85,7 +76,7 @@
             ((eq? s1 (car s)) (_symbol=? s1 (cdr s*)))
             (else #f)))
 
-    ; ====== symbols =======================
+    ; ====== strings =======================
 
     (define (string=? s1 s2 . args)
       (_string=? s1 (cons s2 args)))
@@ -93,4 +84,52 @@
     (define (_string=? s1 s*)
       (cond ((null? s*) #t)
             ((equal? s1 (car s*)) (_string=? s1 (cdr s*)))
-            (else #f)))))
+            (else #f)))
+
+    ; ====== control features =======================
+
+    (define (for-each proc . seq*)
+      (_for-each proc seq*))
+
+    (define (map func . seq*)
+      (_map func seq*))
+
+    (define (_for-each proc seq*)
+      (if (any? null? seq*)
+          '()
+          (begin (apply proc (map-1 car seq*))
+                 (_for-each proc (map-1 cdr seq*)))))
+
+    (define (_map func seq*)
+      (if (any? null? seq*)
+          '()
+          (cons (apply func (map-1 car seq*))
+                (_map func (map-1 cdr seq*)))))
+
+    ; ====== low-level building blocks =======================
+
+    (define (all? pred seq)
+      (cond ((null? seq) #t)
+            ((pred (car seq)) (all? pred (cdr seq)))
+            (else #f)))
+
+    (define (any? pred seq)
+      (cond ((null? seq) #f)
+            ((pred (car seq)) #t)
+            (else (any? pred (cdr seq)))))
+
+    (define (map-1 func seq)
+      (fold-right (lambda (x acc) (cons (func x) acc)) '() seq))
+
+    (define (fold-right op init seq)
+      (if (null? seq)
+          init
+          (op (car seq)
+              (fold-right op init (cdr seq)))))
+
+    (define (fold-left op init seq)
+      (if (null? seq)
+          init
+          (fold-left op
+                     (op init (car seq))
+                     (cdr seq))))))
