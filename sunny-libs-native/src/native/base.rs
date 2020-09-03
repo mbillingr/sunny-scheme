@@ -6,6 +6,7 @@ pub mod exports {
     thread_local! {pub static _l_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numlt))}
     thread_local! {pub static _minus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::sub))}
     thread_local! {pub static _plus_: Mut<Scm> = Mut::new(Scm::func(sunny_core::add))}
+    thread_local! {pub static apply: Mut<Scm> = Mut::new(Scm::func(_apply))}
     thread_local! {pub static car: Mut<Scm> = Mut::new(Scm::func(sunny_core::car))}
     thread_local! {pub static cdr: Mut<Scm> = Mut::new(Scm::func(sunny_core::cdr))}
     thread_local! {pub static caar: Mut<Scm> = Mut::new(Scm::func(pipe![_car _car]))}
@@ -91,5 +92,20 @@ pub mod exports {
             seq = seq.cdr().unwrap()
         }
         s.into()
+    }
+
+    fn _apply(args: &[Scm]) -> Scm {
+        match args {
+            [proc, args @ .., listargs] => {
+                let mut args = args.to_vec();
+                let mut listargs = listargs.clone();
+                while let Some((a, d)) = listargs.as_pair() {
+                    args.push(a);
+                    listargs = d;
+                }
+                proc.invoke(&args)
+            }
+            _ => panic!("Incorrect arity: apply {:?}", args),
+        }
     }
 }

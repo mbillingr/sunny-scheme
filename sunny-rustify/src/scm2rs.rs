@@ -187,6 +187,7 @@ pub mod scheme {
             pub use super::imports::_l_;
             pub use super::imports::_minus_;
             pub use super::imports::_plus_;
+            pub use super::imports::apply;
             pub use super::imports::caar;
             pub use super::imports::cadr;
             pub use super::imports::car;

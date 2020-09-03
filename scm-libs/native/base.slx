@@ -1,6 +1,7 @@
 (declare-library-exports (scheme base)
   (export
     = > < - +
+    apply
     car caar cadr
     cdr cdar cddr
     char? close-port cons

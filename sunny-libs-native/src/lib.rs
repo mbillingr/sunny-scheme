@@ -1,4 +1,3 @@
-
 macro_rules! pipe {
     ($f:tt) =>  { $f };
     ($f:tt $g:ident) => { |x| $g(&[$f(x)]) };

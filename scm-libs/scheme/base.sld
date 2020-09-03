@@ -1,6 +1,7 @@
 (define-library (scheme base)
   (export
     = > < - +
+    apply
     assq
     car caar cadr
     cdr cdar cddr
