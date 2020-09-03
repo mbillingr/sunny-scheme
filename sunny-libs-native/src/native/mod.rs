@@ -2,6 +2,7 @@
 
 pub mod base;
 pub mod file;
+pub mod filesystem;
 pub mod process_context;
 pub mod read;
 pub mod write;

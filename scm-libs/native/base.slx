@@ -1,4 +1,4 @@
-(declare-library-exports (scheme base)
+(declare-library-exports (native base)
   (export
     = > < - +
     apply

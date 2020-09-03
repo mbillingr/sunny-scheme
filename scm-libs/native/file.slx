@@ -1,4 +1,4 @@
-(declare-library-exports (scheme write)
+(declare-library-exports (native file)
   (export
     file-exists?
     open-input-file

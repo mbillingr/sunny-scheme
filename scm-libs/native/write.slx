@@ -1,4 +1,4 @@
-(declare-library-exports (scheme write)
+(declare-library-exports (native write)
   (export
     display
     newline
