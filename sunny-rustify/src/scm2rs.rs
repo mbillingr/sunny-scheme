@@ -1329,10 +1329,12 @@ pub mod sunny {
         pub mod exports {
             pub use super::globals::dotted_minus_list_p;
             pub use super::globals::last_minus_cdr;
+            pub use super::globals::proper_minus_list_minus_part;
         }
 
         mod globals {
             use sunny_core::{Mut, Scm};
+            thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static dotted_minus_list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL dotted-list?"))}
         }
@@ -1403,6 +1405,47 @@ pub mod sunny {
                             }
                         })
                     })
+                });
+                // (define (proper-list-part seq) (if (pair? seq) (cons (car seq) (proper-list-part (cdr seq))) (quote ())))
+                globals::proper_minus_list_minus_part.with(|value| {
+                    value.set({
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let seq = args[0].clone();
+                            // (letrec () (if (pair? seq) (cons (car seq) (proper-list-part (cdr seq))) (quote ())))
+                            {
+                                if (
+                                    // (pair? seq)
+                                    imports::pair_p
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                )
+                                .is_true()
+                                {
+                                    // (cons (car seq) (proper-list-part (cdr seq)))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        // (car seq)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[seq.clone()]),
+                                        // (proper-list-part (cdr seq))
+                                        globals::proper_minus_list_minus_part
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cdr seq)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[seq.clone()]),
+                                            ]),
+                                    ])
+                                } else {
+                                    Scm::Nil
+                                }
+                            }
+                        })
+                    })
                 })
             };
         }
@@ -1429,7 +1472,6 @@ pub mod sunny {
 
         mod globals {
             use sunny_core::{Mut, Scm};
-            thread_local! {#[allow(non_upper_case_globals)] pub static append_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append!"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static writeln: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL writeln"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_do_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-do*"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove"))}
@@ -1499,7 +1541,6 @@ pub mod sunny {
             thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-sequence"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-condition"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-abstraction"))}
-            thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static lookup: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lookup"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_vararg_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-vararg-abstraction"))}
             thread_local! {#[allow(non_upper_case_globals)] pub static scan_minus_out_minus_defines: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scan-out-defines"))}
@@ -2994,7 +3035,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                             .with(|value| value.get())
                                             .invoke(&[
                                                 // (proper-list-part param*)
-                                                globals::proper_minus_list_minus_part
+                                                imports::proper_minus_list_minus_part
                                                     .with(|value| value.get())
                                                     .invoke(&[param_star_.clone()]),
                                                 // (last-cdr param*)
@@ -9183,47 +9224,6 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                         })
                     })
                 });
-                // (define (proper-list-part seq) (if (pair? seq) (cons (car seq) (proper-list-part (cdr seq))) (quote ())))
-                globals::proper_minus_list_minus_part.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 1 {
-                                panic!("invalid arity")
-                            }
-                            let seq = args[0].clone();
-                            // (letrec () (if (pair? seq) (cons (car seq) (proper-list-part (cdr seq))) (quote ())))
-                            {
-                                if (
-                                    // (pair? seq)
-                                    imports::pair_p
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()])
-                                )
-                                .is_true()
-                                {
-                                    // (cons (car seq) (proper-list-part (cdr seq)))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        // (car seq)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[seq.clone()]),
-                                        // (proper-list-part (cdr seq))
-                                        globals::proper_minus_list_minus_part
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cdr seq)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[seq.clone()]),
-                                            ]),
-                                    ])
-                                } else {
-                                    Scm::Nil
-                                }
-                            }
-                        })
-                    })
-                });
                 // (define (println port . args) (for-each (lambda (a) (display a port)) args) (newline port))
                 globals::println.with(|value| {
                     value.set({
@@ -9336,46 +9336,6 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                                     imports::newline
                                         .with(|value| value.get())
                                         .invoke(&[port.clone()])
-                                }
-                            }
-                        })
-                    })
-                });
-                // (define (append! seq-a seq-b) (if (null? (cdr seq-a)) (set-cdr! seq-a seq-b) (append! (cdr seq-a) seq-b)))
-                globals::append_i.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 2 {
-                                panic!("invalid arity")
-                            }
-                            let seq_minus_a = args[0].clone();
-                            let seq_minus_b = args[1].clone();
-                            // (letrec () (if (null? (cdr seq-a)) (set-cdr! seq-a seq-b) (append! (cdr seq-a) seq-b)))
-                            {
-                                if (
-                                    // (null? (cdr seq-a))
-                                    imports::null_p.with(|value| value.get()).invoke(&[
-                                        // (cdr seq-a)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[seq_minus_a.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    // (set-cdr! seq-a seq-b)
-                                    imports::set_minus_cdr_i
-                                        .with(|value| value.get())
-                                        .invoke(&[seq_minus_a.clone(), seq_minus_b.clone()])
-                                } else {
-                                    // (append! (cdr seq-a) seq-b)
-                                    globals::append_i.with(|value| value.get()).invoke(&[
-                                        // (cdr seq-a)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[seq_minus_a.clone()]),
-                                        seq_minus_b.clone(),
-                                    ])
                                 }
                             }
                         })

@@ -1509,12 +1509,6 @@
     ;------------------------------------------------------------
     ; Utils
 
-    (define (proper-list-part seq)
-      (if (pair? seq)
-          (cons (car seq)
-                (proper-list-part (cdr seq)))
-          '()))
-
     (define (println port . args)
       (for-each (lambda (a) (display a port))
                 args)
@@ -1528,11 +1522,6 @@
       (for-each (lambda (a) (write a port))
                 args)
       (newline port))
-
-    (define (append! seq-a seq-b)
-      (if (null? (cdr seq-a))
-          (set-cdr! seq-a seq-b)
-          (append! (cdr seq-a) seq-b)))
 
     ;--------------------------------------------------
     ; std library stand-ins
