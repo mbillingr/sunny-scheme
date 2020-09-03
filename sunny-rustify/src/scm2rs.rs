@@ -1656,6 +1656,26 @@ pub mod scheme {
         }
     }
 }
+pub mod chibi {
+    pub mod filesystem {
+        #[allow(unused_imports)]
+        use sunny_core::{Mut, Scm};
+        mod imports {
+            pub use crate::native::filesystem::exports::*;
+        }
+
+        pub mod exports {
+            pub use super::imports::create_minus_directory_star_;
+        }
+
+        mod globals {}
+
+        pub fn initialize() {
+            crate::native::filesystem::initialize();
+            (/*NOP*/);
+        }
+    }
+}
 pub mod sunny {
     pub mod utils {
         #[allow(unused_imports)]
@@ -1792,6 +1812,7 @@ pub mod sunny {
         #[allow(unused_imports)]
         use sunny_core::{Mut, Scm};
         mod imports {
+            pub use crate::chibi::filesystem::exports::*;
             pub use crate::scheme::base::exports::*;
             pub use crate::scheme::cxr::exports::{
                 caadr, cadar, cadddr, caddr, cdadr, cddar, cdddr,
@@ -1959,6 +1980,7 @@ pub mod sunny {
             crate::scheme::cxr::initialize();
             crate::scheme::read::initialize();
             crate::scheme::file::initialize();
+            crate::chibi::filesystem::initialize();
             crate::sunny::utils::initialize();
             {
                 (/*NOP*/);
@@ -6766,9 +6788,9 @@ imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {
 // (error "Unknown message PROGRAM" msg)
 imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message PROGRAM"), msg.clone(), ])}}}}}})});
 self_.get()}})}));
-                // (define (make-library name globals init body imports exports) (define (repr) (append (quote LIBRARY) name exports imports globals (body (quote repr)))) (define (transform func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports)))) (define (gen-exports port exports) (for-each (lambda (expo) (expo (quote gen-rust) port)) exports)) (define (gen-rust port) (println port "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (display "mod imports" port) (rust-block port (lambda () (for-each (lambda (i) (i (quote gen-rust) port)) imports))) (newline port) (newline port) (display "pub mod exports" port) (rust-block port (lambda () (gen-exports port exports))) (newline port) (newline port) (display "mod globals" port) (rust-block port (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println port "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs port globals))) (newline port) (newline port) (if (eq? (quote NOP) (body (quote kind))) (println port "pub fn initialize() {") (begin (println port "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (newline port) (println port "pub fn initialize() {") (println port "if INITIALIZED.with(|x| x.get()) { return }") (println port "INITIALIZED.with(|x| x.set(true));") (newline port))) (for-each (lambda (lib) (display "crate::" port) (for-each (lambda (l) (print port (rustify-libname l) "::")) lib) (println port "initialize();")) init) (body (quote gen-rust) port) (println port ";}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote NOP)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NOP" msg)))) self)
+                // (define (make-library name globals init body imports exports) (define (repr) (append (quote LIBRARY) name exports imports globals (body (quote repr)))) (define (transform func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports)))) (define (gen-exports port exports) (for-each (lambda (expo) (expo (quote gen-rust) port)) exports)) (define (gen-rust port) (println port "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (display "mod imports" port) (rust-block port (lambda () (for-each (lambda (i) (i (quote gen-rust) port)) imports))) (newline port) (newline port) (display "pub mod exports" port) (rust-block port (lambda () (gen-exports port exports))) (newline port) (newline port) (display "mod globals" port) (rust-block port (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println port "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs port globals))) (newline port) (newline port) (if (eq? (quote NOP) (body (quote kind))) (println port "pub fn initialize() {") (begin (println port "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (newline port) (println port "pub fn initialize() {") (println port "if INITIALIZED.with(|x| x.get()) { return }") (println port "INITIALIZED.with(|x| x.set(true));") (newline port))) (for-each (lambda (lib) (display "crate::" port) (for-each (lambda (l) (print port (rustify-libname l) "::")) lib) (println port "initialize();")) init) (body (quote gen-rust) port) (println port ";}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))) self)
                 globals::make_minus_library.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 6{panic!("invalid arity")}let name = args[0].clone();let globals = args[1].clone();let init = args[2].clone();let body = args[3].clone();let imports = args[4].clone();let exports = args[5].clone();
-// (letrec ((repr (lambda () (append (quote LIBRARY) name exports imports globals (body (quote repr))))) (transform (lambda (func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports))))) (gen-exports (lambda (port exports) (for-each (lambda (expo) (expo (quote gen-rust) port)) exports))) (gen-rust (lambda (port) (println port "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (display "mod imports" port) (rust-block port (lambda () (for-each (lambda (i) (i (quote gen-rust) port)) imports))) (newline port) (newline port) (display "pub mod exports" port) (rust-block port (lambda () (gen-exports port exports))) (newline port) (newline port) (display "mod globals" port) (rust-block port (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println port "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs port globals))) (newline port) (newline port) (if (eq? (quote NOP) (body (quote kind))) (println port "pub fn initialize() {") (begin (println port "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (newline port) (println port "pub fn initialize() {") (println port "if INITIALIZED.with(|x| x.get()) { return }") (println port "INITIALIZED.with(|x| x.set(true));") (newline port))) (for-each (lambda (lib) (display "crate::" port) (for-each (lambda (l) (print port (rustify-libname l) "::")) lib) (println port "initialize();")) init) (body (quote gen-rust) port) (println port ";}"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote NOP)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NOP" msg)))))) self)
+// (letrec ((repr (lambda () (append (quote LIBRARY) name exports imports globals (body (quote repr))))) (transform (lambda (func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports))))) (gen-exports (lambda (port exports) (for-each (lambda (expo) (expo (quote gen-rust) port)) exports))) (gen-rust (lambda (port) (println port "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (display "mod imports" port) (rust-block port (lambda () (for-each (lambda (i) (i (quote gen-rust) port)) imports))) (newline port) (newline port) (display "pub mod exports" port) (rust-block port (lambda () (gen-exports port exports))) (newline port) (newline port) (display "mod globals" port) (rust-block port (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println port "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs port globals))) (newline port) (newline port) (if (eq? (quote NOP) (body (quote kind))) (println port "pub fn initialize() {") (begin (println port "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (newline port) (println port "pub fn initialize() {") (println port "if INITIALIZED.with(|x| x.get()) { return }") (println port "INITIALIZED.with(|x| x.set(true));") (newline port))) (for-each (lambda (lib) (display "crate::" port) (for-each (lambda (l) (print port (rustify-libname l) "::")) lib) (println port "initialize();")) init) (body (quote gen-rust) port) (println port ";}"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))))) self)
 {let repr = Scm::uninitialized().into_boxed();
 let transform = Scm::uninitialized().into_boxed();
 let gen_minus_exports = Scm::uninitialized().into_boxed();
@@ -6894,10 +6916,10 @@ globals::println.with(|value| value.get()).invoke(&[port.clone(), Scm::from("ini
 body.clone().invoke(&[Scm::symbol("gen-rust"), port.clone(), ]);
 // (println port ";}")
 globals::println.with(|value| value.get()).invoke(&[port.clone(), Scm::from(";}"), ])}}})});
-self_.set({let transform = transform.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
-// (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote NOP)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NOP" msg))))
+self_.set({let transform = transform.clone();let name = name.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
+// (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg))))
 {
-// (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote NOP)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NOP" msg)))
+// (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))
 if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"), msg.clone(), ])).is_true() {
@@ -6910,15 +6932,17 @@ transform.get().invoke(&[
 // (car args)
 imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("NOP")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("LIBRARY")} else {if (
+// (eq? (quote libname) msg)
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("libname"), msg.clone(), ])).is_true() {name.clone()} else {if (
 // (eq? (quote gen-rust) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"), msg.clone(), ])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
 imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {
-// (error "Unknown message NOP" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message NOP"), msg.clone(), ])}}}}}})});
+// (error "Unknown message LIBRARY" msg)
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message LIBRARY"), msg.clone(), ])}}}}}}})});
 self_.get()}})}));
                 // (define (make-boxify name body) (define (repr) (cons (quote BOXIFY) (cons name (body (quote repr))))) (define (transform func) (func self (lambda () (make-boxify name (body (quote transform) func))))) (define (free-vars) (body (quote free-vars))) (define (gen-rust port) (rust-block port (lambda () (display "let " port) (display (rustify-identifier name port)) (display " = " port) (display (rustify-identifier name port)) (display ".into_boxed( port);") (body (quote gen-rust) port)))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg)))) self)
                 globals::make_minus_boxify.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name = args[0].clone();let body = args[1].clone();
@@ -7465,11 +7489,11 @@ imports::caar.with(|value| value.get()).invoke(&[g.clone(), ]), Scm::from("\"))}
 globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[port.clone(), 
 // (cdr g)
 imports::cdr.with(|value| value.get()).invoke(&[g.clone(), ]), ])}}}}})}));
-                // (define (rust-gen-modules port libs) (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list port (module-tree-children module-tree))))
+                // (define (rust-gen-modules port libs) (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list port "." (module-tree-children module-tree))))
                 globals::rust_minus_gen_minus_modules.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let port = args[0].clone();let libs = args[1].clone();
-// (letrec () (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list port (module-tree-children module-tree))))
+// (letrec () (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list port "." (module-tree-children module-tree))))
 {
-// (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list port (module-tree-children module-tree)))
+// (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list port "." (module-tree-children module-tree)))
 {let [module_minus_tree, ] = [
 // (make-module-tree-node (quote root))
 globals::make_minus_module_minus_tree_minus_node.with(|value| value.get()).invoke(&[Scm::symbol("root"), ]), ];{
@@ -7483,99 +7507,74 @@ globals::module_minus_tree_minus_insert_i.with(|value| value.get()).invoke(&[mod
 imports::car.with(|value| value.get()).invoke(&[lib.clone(), ]), 
 // (cdr lib)
 imports::cdr.with(|value| value.get()).invoke(&[lib.clone(), ]), ])}})}, libs.clone(), ]);
-// (rust-gen-module-tree-list port (module-tree-children module-tree))
-globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[port.clone(), 
+// (rust-gen-module-tree-list port "." (module-tree-children module-tree))
+globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[port.clone(), Scm::from("."), 
 // (module-tree-children module-tree)
 globals::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[module_minus_tree.clone(), ]), ])}}}})}));
-                // (define (rust-gen-module-tree port node) (println port "pub mod " (rustify-libname (module-tree-name node)) " {") (if (module-tree-leaf? node) ((module-tree-libobj node) (quote gen-rust) port) (rust-gen-module-tree-list port (module-tree-children node))) (println port "}"))
-                globals::rust_minus_gen_minus_module_minus_tree.with(|value| {
-                    value.set({
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 2 {
-                                panic!("invalid arity")
-                            }
-                            let port = args[0].clone();
-                            let node = args[1].clone();
-                            // (letrec () (println port "pub mod " (rustify-libname (module-tree-name node)) " {") (if (module-tree-leaf? node) ((module-tree-libobj node) (quote gen-rust) port) (rust-gen-module-tree-list port (module-tree-children node))) (println port "}"))
-                            {
-                                {
-                                    // (println port "pub mod " (rustify-libname (module-tree-name node)) " {")
-                                    globals::println.with(|value| value.get()).invoke(&[
-                                        port.clone(),
-                                        Scm::from("pub mod "),
-                                        // (rustify-libname (module-tree-name node))
-                                        globals::rustify_minus_libname
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (module-tree-name node)
-                                                globals::module_minus_tree_minus_name
-                                                    .with(|value| value.get())
-                                                    .invoke(&[node.clone()]),
-                                            ]),
-                                        Scm::from(" {"),
-                                    ]);
-                                    if (
-                                        // (module-tree-leaf? node)
-                                        globals::module_minus_tree_minus_leaf_p
-                                            .with(|value| value.get())
-                                            .invoke(&[node.clone()])
-                                    )
-                                    .is_true()
-                                    {
-                                        // ((module-tree-libobj node) (quote gen-rust) port)
+                // (define (rust-gen-module-tree port path node) (println port "pub mod " (rustify-libname (module-tree-name node)) " {") (if (module-tree-leaf? node) (begin (create-directory* path) ((module-tree-libobj node) (quote gen-rust) port)) (rust-gen-module-tree-list port (string-append (string-append path "/") (rustify-libname (module-tree-name node))) (module-tree-children node))) (println port "}"))
+                globals::rust_minus_gen_minus_module_minus_tree.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let port = args[0].clone();let path = args[1].clone();let node = args[2].clone();
+// (letrec () (println port "pub mod " (rustify-libname (module-tree-name node)) " {") (if (module-tree-leaf? node) (begin (create-directory* path) ((module-tree-libobj node) (quote gen-rust) port)) (rust-gen-module-tree-list port (string-append (string-append path "/") (rustify-libname (module-tree-name node))) (module-tree-children node))) (println port "}"))
+{{
+// (println port "pub mod " (rustify-libname (module-tree-name node)) " {")
+globals::println.with(|value| value.get()).invoke(&[port.clone(), Scm::from("pub mod "), 
+// (rustify-libname (module-tree-name node))
+globals::rustify_minus_libname.with(|value| value.get()).invoke(&[
+// (module-tree-name node)
+globals::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(), ]), ]), Scm::from(" {"), ]);if (
+// (module-tree-leaf? node)
+globals::module_minus_tree_minus_leaf_p.with(|value| value.get()).invoke(&[node.clone(), ])).is_true() {{
+// (create-directory* path)
+imports::create_minus_directory_star_.with(|value| value.get()).invoke(&[path.clone(), ]);
+// ((module-tree-libobj node) (quote gen-rust) port)
 
-                                        // (module-tree-libobj node)
-                                        globals::module_minus_tree_minus_libobj
-                                            .with(|value| value.get())
-                                            .invoke(&[node.clone()])
-                                            .invoke(&[Scm::symbol("gen-rust"), port.clone()])
-                                    } else {
-                                        // (rust-gen-module-tree-list port (module-tree-children node))
-                                        globals::rust_minus_gen_minus_module_minus_tree_minus_list
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                port.clone(),
-                                                // (module-tree-children node)
-                                                globals::module_minus_tree_minus_children
-                                                    .with(|value| value.get())
-                                                    .invoke(&[node.clone()]),
-                                            ])
-                                    };
-                                    // (println port "}")
-                                    globals::println
-                                        .with(|value| value.get())
-                                        .invoke(&[port.clone(), Scm::from("}")])
-                                }
-                            }
-                        })
-                    })
-                });
-                // (define (rust-gen-module-tree-list port nodes) (for-each (lambda (child) (rust-gen-module-tree port child)) nodes))
+// (module-tree-libobj node)
+globals::module_minus_tree_minus_libobj.with(|value| value.get()).invoke(&[node.clone(), ]).invoke(&[Scm::symbol("gen-rust"), port.clone(), ])}} else {
+// (rust-gen-module-tree-list port (string-append (string-append path "/") (rustify-libname (module-tree-name node))) (module-tree-children node))
+globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[port.clone(), 
+// (string-append (string-append path "/") (rustify-libname (module-tree-name node)))
+imports::string_minus_append.with(|value| value.get()).invoke(&[
+// (string-append path "/")
+imports::string_minus_append.with(|value| value.get()).invoke(&[path.clone(), Scm::from("/"), ]), 
+// (rustify-libname (module-tree-name node))
+globals::rustify_minus_libname.with(|value| value.get()).invoke(&[
+// (module-tree-name node)
+globals::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(), ]), ]), ]), 
+// (module-tree-children node)
+globals::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[node.clone(), ]), ])};
+// (println port "}")
+globals::println.with(|value| value.get()).invoke(&[port.clone(), Scm::from("}"), ])}}})}));
+                // (define (rust-gen-module-tree-list port path nodes) (for-each (lambda (child) (rust-gen-module-tree port path child)) nodes))
                 globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| {
                     value.set({
                         Scm::func(move |args: &[Scm]| {
-                            if args.len() != 2 {
+                            if args.len() != 3 {
                                 panic!("invalid arity")
                             }
                             let port = args[0].clone();
-                            let nodes = args[1].clone();
-                            // (letrec () (for-each (lambda (child) (rust-gen-module-tree port child)) nodes))
+                            let path = args[1].clone();
+                            let nodes = args[2].clone();
+                            // (letrec () (for-each (lambda (child) (rust-gen-module-tree port path child)) nodes))
                             {
-                                // (for-each (lambda (child) (rust-gen-module-tree port child)) nodes)
+                                // (for-each (lambda (child) (rust-gen-module-tree port path child)) nodes)
                                 imports::for_minus_each.with(|value| value.get()).invoke(&[
                                     {
                                         let port = port.clone();
+                                        let path = path.clone();
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 1 {
                                                 panic!("invalid arity")
                                             }
                                             let child = args[0].clone();
-                                            // (letrec () (rust-gen-module-tree port child))
+                                            // (letrec () (rust-gen-module-tree port path child))
                                             {
-                                                // (rust-gen-module-tree port child)
+                                                // (rust-gen-module-tree port path child)
                                                 globals::rust_minus_gen_minus_module_minus_tree
                                                     .with(|value| value.get())
-                                                    .invoke(&[port.clone(), child.clone()])
+                                                    .invoke(&[
+                                                        port.clone(),
+                                                        path.clone(),
+                                                        child.clone(),
+                                                    ])
                                             }
                                         })
                                     },

@@ -15,6 +15,7 @@
           (only (scheme file) file-exists?
                               open-input-file
                               open-output-file)
+          (chibi filesystem)
           (sunny utils))
 
   (begin
@@ -1032,9 +1033,10 @@
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
-              ((eq? 'kind msg) 'NOP)
+              ((eq? 'kind msg) 'LIBRARY)
+              ((eq? 'libname msg) name)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
-              (else (error "Unknown message NOP" msg))))
+              (else (error "Unknown message LIBRARY" msg))))
       self)
 
     (define (make-boxify name body)
@@ -1195,21 +1197,28 @@
                     (module-tree-insert! module-tree (car lib) (cdr lib)))
                   libs)
 
-        (rust-gen-module-tree-list port (module-tree-children module-tree))))
+        (rust-gen-module-tree-list port "." (module-tree-children module-tree))))
 
 
-    (define (rust-gen-module-tree port node)
+    (define (rust-gen-module-tree port path node)
       (println port "pub mod "
                     (rustify-libname (module-tree-name node))
                     " {")
       (if (module-tree-leaf? node)
-          ((module-tree-libobj node) 'gen-rust port)
-          (rust-gen-module-tree-list port (module-tree-children node)))
+          (begin
+            (error "TODO: specify outdir rather than outfile, so that module direcories make sense?")
+            (create-directory* path)
+            ((module-tree-libobj node) 'gen-rust port))
+          (rust-gen-module-tree-list port
+                                     (string-append
+                                       (string-append path "/")
+                                       (rustify-libname (module-tree-name node)))
+                                     (module-tree-children node)))
       (println port "}"))
 
-    (define (rust-gen-module-tree-list port nodes)
+    (define (rust-gen-module-tree-list port path nodes)
       (for-each (lambda (child)
-                  (rust-gen-module-tree port child))
+                  (rust-gen-module-tree port path child))
                 nodes))
 
 
