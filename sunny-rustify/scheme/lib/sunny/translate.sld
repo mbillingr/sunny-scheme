@@ -303,7 +303,7 @@
 
     (define (get-lib lib)
       (let ((full-path (find-library
-                         '("." "./lib" "scm-libs" "../scm-libs" "../../scm-libs")
+                         '("." "./lib" "scm-libs" "../scheme/lib" "../scm-libs" "../../scm-libs")
                          (library-path lib)
                          '(".sld" ".slx"))))
         (if full-path
@@ -1199,16 +1199,23 @@
 
         (rust-gen-module-tree-list port "." (module-tree-children module-tree))))
 
-
     (define (rust-gen-module-tree port path node)
       (println port "pub mod "
                     (rustify-libname (module-tree-name node))
                     " {")
       (if (module-tree-leaf? node)
           (begin
-            (error "TODO: specify outdir rather than outfile, so that module direcories make sense?")
             (create-directory* path)
-            ((module-tree-libobj node) 'gen-rust port))
+            (let ((file (open-output-file
+                          (string-append
+                            path
+                            (string-append
+                              "/"
+                              (string-append
+                                (rustify-libname (module-tree-name node))
+                                ".rs"))))))
+              ((module-tree-libobj node) 'gen-rust file)
+              (close-port file)))
           (rust-gen-module-tree-list port
                                      (string-append
                                        (string-append path "/")
@@ -1217,6 +1224,13 @@
       (println port "}"))
 
     (define (rust-gen-module-tree-list port path nodes)
+      (create-directory* path)
+      (display path) (newline)
+      (let ((file (open-output-file
+                    (string-append
+                      path
+                      "/mod.rs"))))
+        (close-port file))
       (for-each (lambda (child)
                   (rust-gen-module-tree port path child))
                 nodes))
