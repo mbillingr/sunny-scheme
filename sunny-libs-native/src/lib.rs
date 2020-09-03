@@ -7,7 +7,7 @@ macro_rules! pipe {
 #[allow(non_upper_case_globals)]
 pub mod native {
     pub mod base {
-        pub fn initialize() { }
+        pub fn initialize() {}
         pub mod exports {
             use sunny_core::{self, car as _car, cdr as _cdr, Mut, Scm};
             thread_local! {pub static _e_: Mut<Scm> = Mut::new(Scm::func(sunny_core::is_numeq))}
@@ -105,7 +105,7 @@ pub mod native {
     }
 
     pub mod cxr {
-        pub fn initialize() { }
+        pub fn initialize() {}
         pub mod exports {
             use sunny_core::{car as _car, cdr as _cdr, Mut, Scm};
 
@@ -138,28 +138,38 @@ pub mod native {
     }
 
     pub mod file {
-        pub fn initialize() { }
+        pub fn initialize() {}
         pub mod exports {
             use std::path::Path;
-            use sunny_core::{self, Scm, Mut};
             use sunny_core::port::{FileInputPort, FileOutputPort};
+            use sunny_core::{self, Mut, Scm};
 
             thread_local! {pub static open_minus_input_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_input_file))}
             thread_local! {pub static open_minus_output_minus_file: Mut<Scm> = Mut::new(Scm::func1(_open_output_file))}
             thread_local! {pub static file_minus_exists_p: Mut<Scm> = Mut::new(Scm::func1(_file_exists))}
 
             fn _open_input_file(name: &Scm) -> Scm {
-                let port = FileInputPort::open(name.as_string().expect("Argument to open-input-file must be a string.").as_str());
+                let port = FileInputPort::open(
+                    name.as_string()
+                        .expect("Argument to open-input-file must be a string.")
+                        .as_str(),
+                );
                 Scm::input_port(port)
             }
 
             fn _open_output_file(name: &Scm) -> Scm {
-                let port = FileOutputPort::open(name.as_string().expect("Argument to open-output-file must be a string.").as_str());
+                let port = FileOutputPort::open(
+                    name.as_string()
+                        .expect("Argument to open-output-file must be a string.")
+                        .as_str(),
+                );
                 Scm::output_port(port)
             }
 
             fn _file_exists(name: &Scm) -> Scm {
-                let name = name.as_string().expect("Argument to open-input-file must be a string.");
+                let name = name
+                    .as_string()
+                    .expect("Argument to open-input-file must be a string.");
                 let path = Path::new(name.as_str());
                 Scm::bool(path.exists())
             }
@@ -167,10 +177,10 @@ pub mod native {
     }
 
     pub mod process_context {
-        pub fn initialize() { }
+        pub fn initialize() {}
         pub mod exports {
-            use sunny_core::{self, Scm, Mut};
             use std::env;
+            use sunny_core::{self, Mut, Scm};
 
             thread_local! {pub static command_minus_line: Mut<Scm> = Mut::new(Scm::func0(_command_line))}
 
@@ -182,11 +192,10 @@ pub mod native {
                 arglist
             }
         }
-
     }
 
     pub mod read {
-        pub fn initialize() { }
+        pub fn initialize() {}
         pub mod exports {
             use std::io::stdin;
             use sunny_core::{self, Mut, Scm};
@@ -202,20 +211,20 @@ pub mod native {
                         Err(e) => panic!("{:?}", e),
                     }
                 } else {
-                    args[0].with_input_port(|port|{
-                        match from_reader(port) {
+                    args[0]
+                        .with_input_port(|port| match from_reader(port) {
                             Ok(x) => x,
                             Err(e) if e.is_eof() => Scm::eof(),
                             Err(e) => panic!("{:?}", e),
-                        }
-                    }).unwrap_or(Scm::eof())
+                        })
+                        .unwrap_or(Scm::eof())
                 }
             }
         }
     }
 
     pub mod write {
-        pub fn initialize() { }
+        pub fn initialize() {}
         pub mod exports {
             use sunny_core::{self, Mut, Scm};
 
@@ -228,9 +237,11 @@ pub mod native {
                     print!("{}", args[0]);
                     Scm::Nil
                 } else {
-                    args[1].with_output_port(|port|{
-                        write!(port, "{}", args[0]).unwrap();
-                    }).unwrap();
+                    args[1]
+                        .with_output_port(|port| {
+                            write!(port, "{}", args[0]).unwrap();
+                        })
+                        .unwrap();
                     Scm::Nil
                 }
             }
@@ -240,9 +251,11 @@ pub mod native {
                     println!();
                     Scm::Nil
                 } else {
-                    args[0].with_output_port(|port|{
-                        write!(port, "\n").unwrap();
-                    }).unwrap();
+                    args[0]
+                        .with_output_port(|port| {
+                            write!(port, "\n").unwrap();
+                        })
+                        .unwrap();
                     Scm::Nil
                 }
             }
@@ -252,9 +265,11 @@ pub mod native {
                     print!("{:?}", args[0]);
                     Scm::Nil
                 } else {
-                    args[1].with_output_port(|port|{
-                        write!(port, "{:?}", args[0]).unwrap();
-                    }).unwrap();
+                    args[1]
+                        .with_output_port(|port| {
+                            write!(port, "{:?}", args[0]).unwrap();
+                        })
+                        .unwrap();
                     Scm::Nil
                 }
             }

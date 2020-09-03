@@ -5,12 +5,12 @@ pub mod port;
 pub mod string;
 pub mod symbol;
 
+use crate::port::{InputPort, OutputPort};
 pub use memory_model::prelude::Mut;
 use memory_model::prelude::*;
+use std::cell::RefCell;
 use string::ScmString;
 use symbol::Symbol;
-use crate::port::{InputPort, OutputPort};
-use std::cell::RefCell;
 
 pub type BoxedScm = Boxed<Scm>;
 
@@ -210,14 +210,14 @@ impl Scm {
         }
     }
 
-    pub fn with_input_port<T>(&self, f: impl FnOnce(&mut dyn InputPort)->T) -> Option<T> {
+    pub fn with_input_port<T>(&self, f: impl FnOnce(&mut dyn InputPort) -> T) -> Option<T> {
         match self {
             Scm::InputPort(p) => Some(f(&mut *p.borrow_mut())),
             _ => None,
         }
     }
 
-    pub fn with_output_port<T>(&self, f: impl FnOnce(&mut dyn OutputPort)->T) -> Option<T> {
+    pub fn with_output_port<T>(&self, f: impl FnOnce(&mut dyn OutputPort) -> T) -> Option<T> {
         match self {
             Scm::OutputPort(p) => Some(f(&mut *p.borrow_mut())),
             _ => None,
@@ -520,7 +520,7 @@ pub fn square(args: &[Scm]) -> Scm {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::port::{MemoryInputPort, FileInputPort};
+    use crate::port::{FileInputPort, MemoryInputPort};
 
     #[test]
     fn it_works() {
@@ -531,10 +531,9 @@ mod tests {
     fn input_port() {
         let source = MemoryInputPort::from_str("foo");
         let scm = Scm::input_port(source);
-        let line = scm.with_input_port(|port| {
-            port.read_line().unwrap()
-        }
-        ).unwrap();
+        let line = scm
+            .with_input_port(|port| port.read_line().unwrap())
+            .unwrap();
         assert_eq!(line, "foo");
     }
 
@@ -542,10 +541,9 @@ mod tests {
     fn input_port2() {
         let source = FileInputPort::open("Cargo.toml");
         let scm = Scm::input_port(source);
-        let line = scm.with_input_port(|port| {
-            port.read_line().unwrap()
-        }
-        ).unwrap();
+        let line = scm
+            .with_input_port(|port| port.read_line().unwrap())
+            .unwrap();
         assert_eq!(line, "[package]");
     }
 }

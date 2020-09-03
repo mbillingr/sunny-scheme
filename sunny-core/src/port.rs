@@ -1,7 +1,7 @@
-use std::fs::File;
-use std::io::{Read, BufReader, Stdin, Write};
-use std::path::Path;
 use std::collections::VecDeque;
+use std::fs::File;
+use std::io::{BufReader, Read, Stdin, Write};
+use std::path::Path;
 
 pub trait InputPort: ScmReader {
     fn is_open(&self) -> bool;
@@ -14,24 +14,28 @@ pub trait OutputPort: ScmWriter {
 }
 
 impl InputPort for Stdin {
-    fn is_open(&self) -> bool { true }
+    fn is_open(&self) -> bool {
+        true
+    }
     fn close(&mut self) {}
 }
 
 pub struct MemoryInputPort {
-    bytes: VecDeque<u8>
+    bytes: VecDeque<u8>,
 }
 
 impl MemoryInputPort {
     pub fn from_str(s: &str) -> Self {
         MemoryInputPort {
-            bytes: s.to_owned().into_bytes().into()
+            bytes: s.to_owned().into_bytes().into(),
         }
     }
 }
 
 impl InputPort for MemoryInputPort {
-    fn is_open(&self) -> bool { true }
+    fn is_open(&self) -> bool {
+        true
+    }
     fn close(&mut self) {}
 }
 
@@ -44,7 +48,7 @@ impl Read for MemoryInputPort {
                 buf = &mut buf[1..];
                 n += 1;
             } else {
-                break
+                break;
             }
         }
         Ok(n)
@@ -58,13 +62,17 @@ pub struct FileInputPort {
 impl FileInputPort {
     pub fn open<P: AsRef<Path> + std::fmt::Debug>(path: P) -> Self {
         FileInputPort {
-            handle: Some(BufReader::new(File::open(path.as_ref()).expect(&format!("Error opening {:?}", path)))),
+            handle: Some(BufReader::new(
+                File::open(path.as_ref()).expect(&format!("Error opening {:?}", path)),
+            )),
         }
     }
 }
 
 impl InputPort for FileInputPort {
-    fn is_open(&self) -> bool { self.handle.is_some() }
+    fn is_open(&self) -> bool {
+        self.handle.is_some()
+    }
     fn close(&mut self) {
         self.handle = None;
     }
@@ -92,7 +100,9 @@ impl FileOutputPort {
 }
 
 impl OutputPort for FileOutputPort {
-    fn is_open(&self) -> bool { self.handle.is_some() }
+    fn is_open(&self) -> bool {
+        self.handle.is_some()
+    }
     fn close(&mut self) {
         self.handle = None;
     }
@@ -168,7 +178,7 @@ impl<T: Read> ScmReader for T {
                     // Eof
                     return None;
                 }
-                break
+                break;
             }
         }
 
@@ -185,9 +195,9 @@ impl<T: Read> ScmReader for T {
             if self.read(&mut buffer[n..]).unwrap() == 0 {
                 if buffer.len() == 1 {
                     // Eof
-                    return None
+                    return None;
                 }
-                break
+                break;
             }
 
             let n = buffer.len();
@@ -196,15 +206,15 @@ impl<T: Read> ScmReader for T {
                 b if b < 0b11100000 => {
                     buffer.resize(n + 1, 0);
                     self.read_exact(&mut buffer[n..]).unwrap()
-                },
+                }
                 b if b < 0b11110000 => {
                     buffer.resize(n + 2, 0);
                     self.read_exact(&mut buffer[n..]).unwrap()
-                },
+                }
                 b if b < 0b11111000 => {
                     buffer.resize(n + 3, 0);
                     self.read_exact(&mut buffer[n..]).unwrap()
-                },
+                }
                 _ => panic!("Invalid UTF-8 data"),
             };
 
