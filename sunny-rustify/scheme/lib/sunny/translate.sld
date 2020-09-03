@@ -19,7 +19,6 @@
 
   (begin
     (define (scm->ast exp*)
-      (error "TODO: recursively register libraries imported by libraries")
       (if (library? (car exp*))
           (library->ast (library-name (car exp*))
                         (library-decls (car exp*))
@@ -101,15 +100,16 @@
             ((assoc (car libs) (car library-env))
              (register-libraries (cdr libs) library-env))
             (else
-              (set-car! library-env
-                        (cons (cons (car libs)
-                                    (let ((lib (get-lib (car libs))))
-                                      (if (library? lib)
-                                          (library->ast (library-name lib)
-                                                        (library-decls lib)
-                                                        library-env)
-                                          #f)))
-                              (car library-env)))
+              (let* ((lib (get-lib (car libs)))
+                     (libast (if (library? lib)
+                                 (library->ast (library-name lib)
+                                               (library-decls lib)
+                                               library-env)
+                                 #f)))
+                (set-car! library-env
+                          (cons (cons (car libs)
+                                      libast)
+                                (car library-env))))
               (register-libraries (cdr libs) library-env))))
 
 
