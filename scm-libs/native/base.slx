@@ -12,5 +12,5 @@
     null?
     pair?
     set-car! set-cdr!
-    string->list string-append string<?
+    string->list string-cons string<?
     symbol? symbol->string))

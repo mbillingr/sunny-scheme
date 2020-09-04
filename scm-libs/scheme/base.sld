@@ -68,23 +68,16 @@
 
     ; ====== symbols =======================
 
-    (define (symbol=? s1 s2 . args)
-      (_symbol=? s1 (cons s2 args)))
-
-    (define (_symbol=? s1 s*)
-      (cond ((null? s*) #t)
-            ((eq? s1 (car s)) (_symbol=? s1 (cdr s*)))
-            (else #f)))
+    (define (symbol=? s1 . args)
+      (all? (lambda (s) (eq? s1 s)) args))
 
     ; ====== strings =======================
 
-    (define (string=? s1 s2 . args)
-      (_string=? s1 (cons s2 args)))
+    (define (string=? s1 . args)
+      (all? (lambda (s) (equal? s1 s)) args))
 
-    (define (_string=? s1 s*)
-      (cond ((null? s*) #t)
-            ((equal? s1 (car s*)) (_string=? s1 (cdr s*)))
-            (else #f)))
+    (define (string-append s1 . args)
+      (fold-right string-cons s1 args))
 
     ; ====== control features =======================
 

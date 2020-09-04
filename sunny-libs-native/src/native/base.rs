@@ -26,7 +26,7 @@ pub mod exports {
     thread_local! {pub static char_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_char))}
     thread_local! {pub static symbol_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_symbol_to_string))}
     thread_local! {pub static string_minus__g_list: Mut<Scm> = Mut::new(Scm::func1(_string_to_list))}
-    thread_local! {pub static string_minus_append: Mut<Scm> = Mut::new(Scm::func2(_string_append))}
+    thread_local! {pub static string_minus_cons: Mut<Scm> = Mut::new(Scm::func2(_string_cons))}
     thread_local! {pub static string_l__p: Mut<Scm> = Mut::new(Scm::func2(_string_cmp))}
     thread_local! {pub static list_minus__g_string: Mut<Scm> = Mut::new(Scm::func1(_list_to_string))}
     thread_local! {pub static close_minus_port: Mut<Scm> = Mut::new(Scm::func1(Scm::close_port))}
@@ -72,7 +72,7 @@ pub mod exports {
         return seq;
     }
 
-    fn _string_append(a: &Scm, b: &Scm) -> Scm {
+    fn _string_cons(a: &Scm, b: &Scm) -> Scm {
         let a = a.as_string().unwrap();
         let b = b.as_string().unwrap();
         Scm::string(a.as_str().to_owned() + b.as_str())
