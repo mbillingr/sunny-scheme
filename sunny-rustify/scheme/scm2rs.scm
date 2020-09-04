@@ -7,12 +7,12 @@
         (sunny translate))
 
 (define input-file-name (cadr (command-line)))
-(define output-file-name (caddr (command-line)))
+(define output-module-name (caddr (command-line)))
 
 (newline)
 (display input-file-name)
 (display " --> ")
-(display output-file-name)
+(display output-module-name)
 (newline)
 (newline)
 
@@ -28,8 +28,6 @@
 
 (define ast (scm->ast program))
 
-(define output-file (open-output-file output-file-name))
-
-(ast 'gen-rust output-file)
-
-(close-port output-file)
+(rust-gen-in-module output-module-name "."
+  (lambda (output-file _)
+    (ast 'gen-rust output-file)))

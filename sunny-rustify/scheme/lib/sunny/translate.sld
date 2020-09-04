@@ -1,6 +1,7 @@
 (define-library (sunny translate)
 
-  (export scm->ast)
+  (export rust-gen-in-module scm->ast)
+
 
   (import (scheme base)
           (scheme write)
@@ -1202,38 +1203,27 @@
     (define (rust-gen-module-tree port path node)
       (println port "pub mod "
                     (rustify-libname (module-tree-name node))
-                    " {")
+                    ";")
       (if (module-tree-leaf? node)
-          (begin
-            (create-directory* path)
-            (let ((file (open-output-file
-                          (string-append
-                            path
-                            (string-append
-                              "/"
-                              (string-append
-                                (rustify-libname (module-tree-name node))
-                                ".rs"))))))
-              ((module-tree-libobj node) 'gen-rust file)
-              (close-port file)))
-          (rust-gen-module-tree-list port
-                                     (string-append
-                                       (string-append path "/")
-                                       (rustify-libname (module-tree-name node)))
-                                     (module-tree-children node)))
-      (println port "}"))
+          (rust-gen-in-module (module-tree-name node) path
+            (lambda (port path)
+              ((module-tree-libobj node) 'gen-rust port)))
+          (rust-gen-in-module (module-tree-name node) path
+            (lambda (port path)
+              (rust-gen-module-tree-list port path (module-tree-children node))))))
 
     (define (rust-gen-module-tree-list port path nodes)
-      (create-directory* path)
-      (display path) (newline)
-      (let ((file (open-output-file
-                    (string-append
-                      path
-                      "/mod.rs"))))
-        (close-port file))
       (for-each (lambda (child)
                   (rust-gen-module-tree port path child))
                 nodes))
+
+    (define (rust-gen-in-module name base-path body)
+      (let ((path (string-append
+                    base-path "/" (rustify-libname name))))
+        (create-directory* path)
+        (let ((file (open-output-file (string-append path "/mod.rs"))))
+          (body file path)
+          (close-port file))))
 
 
     (define (make-module-tree-node name)
@@ -1327,8 +1317,11 @@
         (if (null? strs)
             ""
             (string-append (car strs) (append-all (cdr strs)))))
-      (cond ((eq? name 'fn) "fn_")
-            (else (append-all (map char-map (string->list (symbol->string name)))))))
+      (let ((name (if (symbol? name)
+                      (symbol->string name)
+                      name)))
+        (cond ((eq? name 'fn) "fn_")
+              (else (append-all (map char-map (string->list name)))))))
 
     (define (make-global-env)
       (list 'GLOBAL-MARKER
