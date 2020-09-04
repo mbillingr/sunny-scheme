@@ -29,5 +29,5 @@
 (define ast (scm->ast program))
 
 (rust-gen-in-module output-module-name "."
-  (lambda (output-file _)
-    (ast 'gen-rust output-file)))
+  (lambda (module)
+    (ast 'gen-rust module)))
