@@ -77,7 +77,7 @@
       (all? (lambda (s) (equal? s1 s)) args))
 
     (define (string-append s1 . args)
-      (fold-right string-cons s1 args))
+      (fold-left string-cons s1 args))
 
     ; ====== control features =======================
 

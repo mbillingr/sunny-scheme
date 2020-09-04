@@ -425,7 +425,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (string-append s1 . args) (fold-right string-cons s1 args))
+        // (define (string-append s1 . args) (fold-left string-cons s1 args))
         globals::string_minus_append.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -434,16 +434,14 @@ pub fn initialize() {
                     }
                     let s1 = args[0].clone();
                     let args_ = Scm::list(&args[1..]);
-                    // (letrec () (fold-right string-cons s1 args))
+                    // (letrec () (fold-left string-cons s1 args))
                     {
-                        // (fold-right string-cons s1 args)
-                        globals::fold_minus_right
-                            .with(|value| value.get())
-                            .invoke(&[
-                                imports::string_minus_cons.with(|value| value.get()),
-                                s1.clone(),
-                                args_.clone(),
-                            ])
+                        // (fold-left string-cons s1 args)
+                        globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                            imports::string_minus_cons.with(|value| value.get()),
+                            s1.clone(),
+                            args_.clone(),
+                        ])
                     }
                 })
             })
