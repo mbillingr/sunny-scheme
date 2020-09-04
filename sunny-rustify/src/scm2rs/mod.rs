@@ -12,10 +12,12 @@ mod imports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static args_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL input-file"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL input-file-name"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static load_minus_sexpr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL load-sexpr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_dir: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL output-dir"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_module_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL output-module-name"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL program"))}
 }
@@ -32,28 +34,54 @@ pub fn main() {
     crate::scheme::process_context::initialize();
     crate::sunny::translate::initialize();
     {
-        // (define input-file-name (cadr (command-line)))
-        globals::input_minus_file_minus_name.with(|value| {
+        // (define args (command-line))
+        globals::args_.with(|value| {
             value.set(
-                // (cadr (command-line))
-                imports::cadr.with(|value| value.get()).invoke(&[
-                    // (command-line)
-                    imports::command_minus_line
-                        .with(|value| value.get())
-                        .invoke(&[]),
-                ]),
+                // (command-line)
+                imports::command_minus_line
+                    .with(|value| value.get())
+                    .invoke(&[]),
             )
         });
-        // (define output-module-name (caddr (command-line)))
+        // (define input-file-name (cadr args))
+        globals::input_minus_file_minus_name.with(|value| {
+            value.set(
+                // (cadr args)
+                imports::cadr
+                    .with(|value| value.get())
+                    .invoke(&[globals::args_.with(|value| value.get())]),
+            )
+        });
+        // (define output-module-name (caddr args))
         globals::output_minus_module_minus_name.with(|value| {
             value.set(
-                // (caddr (command-line))
-                imports::caddr.with(|value| value.get()).invoke(&[
-                    // (command-line)
-                    imports::command_minus_line
+                // (caddr args)
+                imports::caddr
+                    .with(|value| value.get())
+                    .invoke(&[globals::args_.with(|value| value.get())]),
+            )
+        });
+        // (define output-dir (if (pair? (cdddr args)) (cadddr args) "."))
+        globals::output_minus_dir.with(|value| {
+            value.set(
+                if (
+                    // (pair? (cdddr args))
+                    imports::pair_p.with(|value| value.get()).invoke(&[
+                        // (cdddr args)
+                        imports::cdddr
+                            .with(|value| value.get())
+                            .invoke(&[globals::args_.with(|value| value.get())]),
+                    ])
+                )
+                .is_true()
+                {
+                    // (cadddr args)
+                    imports::cadddr
                         .with(|value| value.get())
-                        .invoke(&[]),
-                ]),
+                        .invoke(&[globals::args_.with(|value| value.get())])
+                } else {
+                    Scm::from(".")
+                },
             )
         });
         // (newline)
@@ -66,6 +94,14 @@ pub fn main() {
         imports::display
             .with(|value| value.get())
             .invoke(&[Scm::from(" --> ")]);
+        // (display output-dir)
+        imports::display
+            .with(|value| value.get())
+            .invoke(&[globals::output_minus_dir.with(|value| value.get())]);
+        // (display "/")
+        imports::display
+            .with(|value| value.get())
+            .invoke(&[Scm::from("/")]);
         // (display output-module-name)
         imports::display
             .with(|value| value.get())
@@ -142,12 +178,12 @@ pub fn main() {
                     .invoke(&[globals::program.with(|value| value.get())]),
             )
         });
-        // (rust-gen-in-module output-module-name "." (lambda (module) (ast (quote gen-rust) module)))
+        // (rust-gen-in-module output-module-name output-dir (lambda (module) (ast (quote gen-rust) module)))
         imports::rust_minus_gen_minus_in_minus_module
             .with(|value| value.get())
             .invoke(&[
                 globals::output_minus_module_minus_name.with(|value| value.get()),
-                Scm::from("."),
+                globals::output_minus_dir.with(|value| value.get()),
                 {
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
