@@ -1,13 +1,16 @@
-#[allow(unused_imports)] use sunny_core::{Mut, Scm};
-mod imports{pub use crate::native::read::exports::*;
+#[allow(unused_imports)]
+use sunny_core::{Mut, Scm};
+mod imports {
+    pub use crate::native::read::exports::*;
 }
 
-pub mod exports{pub use super::imports::read as read;
+pub mod exports {
+    pub use super::imports::read;
 }
 
-mod globals{
-}
+mod globals {}
 
 pub fn initialize() {
-crate::native::read::initialize();
-(/*NOP*/);}
+    crate::native::read::initialize();
+    (/*NOP*/);
+}
