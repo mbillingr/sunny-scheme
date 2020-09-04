@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd src
-chibi-scheme -A ../scheme/lib ../scheme/scm2rs.scm ../scheme/scm2rs.scm scm2rs.rs
-cd ..
+chibi-scheme -I scheme/lib scheme/scm2rs.scm scheme/scm2rs.scm src/scm2rs
+
 cargo fmt
+

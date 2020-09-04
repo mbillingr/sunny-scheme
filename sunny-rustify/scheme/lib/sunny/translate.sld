@@ -304,7 +304,7 @@
 
     (define (get-lib lib)
       (let ((full-path (find-library
-                         '("." "./lib" "scm-libs" "../scheme/lib" "../scm-libs" "../../scm-libs")
+                         '("." "./lib" "./scheme/lib" "scm-libs" "../scheme/lib" "../scm-libs" "../../scm-libs")
                          (library-path lib)
                          '(".sld" ".slx"))))
         (if full-path
