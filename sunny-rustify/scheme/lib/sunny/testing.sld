@@ -36,7 +36,9 @@
             (failed (caddr result)))
         (for-each
            (lambda (f)
-             (println "  " (car f) ": " (cadr f)))
+             (println "  " (car f) ": ")
+             (println "    " (cadr f))
+             (println "    " (caddr f)))
            failed)
         (if (= 0 n-fail)
             (println "ALL " n-pass " tests passed.")
@@ -71,7 +73,7 @@
                (begin
                  (if (pred arg ...)
                      #f
-                     '(description (pred arg ...)))
+                     `(description (pred arg ...) (pred ,arg ...)))
                  ...)))))
 
         ((testcase "when" body)

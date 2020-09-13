@@ -2,6 +2,11 @@
         (sunny testing))
 
 (testsuite "Scheme Tests"
-  (testcase "The empty list"
+  (testcase "the empty list"
     (given (x <- '()))
-    (then (null? x))))
+    (then (null? x)))
+
+  (testcase "integers"
+    (given (x <- 1)
+           (y <- '1))
+    (then (= x y))))

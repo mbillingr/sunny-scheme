@@ -11,7 +11,9 @@
                              cdadr
                              cddar
                              cdddr
-                             cadddr)
+                             caaddr
+                             cadddr
+                             cdaddr)
           (only (scheme read) read)
           (only (scheme file) file-exists?
                               open-input-file
@@ -99,6 +101,8 @@
 
     (define (register-libraries libs library-env)
       (cond ((null? libs) 'DONE)
+            ((equal? '(sunny testing) (car libs))  ; ignore testing library
+             (register-libraries (cdr libs) library-env))
             ((assoc (car libs) (car library-env))
              (register-libraries (cdr libs) library-env))
             (else
@@ -152,6 +156,9 @@
                                                       env tail?)))
                 ((eq? 'and (car exp)) (wrap-sexpr exp
                                         (sexpr->and (cdr exp) env tail?)))
+                ((and (eq? 'testsuite (car exp))
+                      (not (lookup 'testsuite env)))
+                 (sexpr->testsuite (cadr exp) (cddr exp) env))
                 (else (wrap-sexpr exp (sexpr->application (car exp)
                                                           (cdr exp)
                                                           env tail?))))))
@@ -277,6 +284,8 @@
     (define (sexpr->import stmt* env)
       (cond ((null? stmt*)
              '())
+            ((equal? '(sunny testing) (car stmt*))  ; ignore the testing library
+             (sexpr->import (cdr stmt*) env))
             ((eq? 'only (caar stmt*))
              (cons (import-only (cadar stmt*) (cddar stmt*) env)
                    (sexpr->import (cdr stmt*) env)))
@@ -342,6 +351,47 @@
           (if (memq (car imports) exports)
               (check-imports (cdr imports) exports lib)
               (error "Invalid import" (car imports) lib))))
+
+    (define (sexpr->testsuite name cases env)
+      (make-testsuite
+        name
+        (map (lambda (case) (sexpr->testcase case env))
+             cases)))
+
+    (define (sexpr->testcase case env)
+      (define (given stmt body)
+        (list 'let
+          (map (lambda (assignment)
+                 (list (car assignment)
+                       (caddr assignment)))
+               (cdr stmt))
+          body))
+
+      (define (when stmt body)
+        (error "not implemented (testcase/when)"))
+
+      (define (then stmt body)
+        (cons 'begin
+              (append
+                (map (lambda (pred)
+                       (list 'assert pred))
+                     (cdr stmt))
+                body)))
+
+      (define (dispatch section* body)
+        (cond ((null? section*)
+               body)
+              ((eq? 'given (caar section*))
+               (given (car section*) (dispatch (cdr section*) body)))
+              ((eq? 'when (caar section*))
+               (dispatch (cdr section*) (when (car section*) body)))
+              ((eq? 'then (caar section*))
+               (then (car section*) (dispatch (cdr section*) body)))
+              (else (error "invalid testcase"))))
+
+      (let ((body (dispatch (cddr case) '())))
+        (display body) (newline)
+        (make-testcase (cadr case) (sexpr->ast body env #f))))
 
 
     ; ======================================================================
