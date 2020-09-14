@@ -8,6 +8,7 @@ mod imports {
     pub use crate::scheme::read::exports::*;
     pub use crate::scheme::write::exports::*;
     pub use crate::sunny::translate::exports::*;
+    pub use crate::testsuite::exports::*;
 }
 
 mod globals {
@@ -33,6 +34,7 @@ pub fn main() {
     crate::scheme::write::initialize();
     crate::scheme::process_context::initialize();
     crate::sunny::translate::initialize();
+    crate::testsuite::initialize();
     {
         // (define args (command-line))
         globals::args_.with(|value| {

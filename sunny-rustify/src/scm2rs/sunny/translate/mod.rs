@@ -12,7 +12,6 @@ mod imports {
     pub use crate::scheme::read::exports::read;
     pub use crate::scheme::write::exports::*;
     pub use crate::sunny::utils::exports::*;
-    pub use crate::testsuite::exports::*;
 }
 
 pub mod exports {
@@ -190,7 +189,6 @@ pub fn initialize() {
     crate::scheme::file::initialize();
     crate::chibi::filesystem::initialize();
     crate::sunny::utils::initialize();
-    crate::testsuite::initialize();
     {
         (/*NOP*/);
         // (define (scm->ast exp*) (if (library? (car exp*)) (library->ast (library-name (car exp*)) (library-decls (car exp*)) (list (quote ()))) (program->ast exp*)))

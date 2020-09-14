@@ -19,8 +19,7 @@
                               open-input-file
                               open-output-file)
           (chibi filesystem)
-          (sunny utils)
-          (testsuite))
+          (sunny utils))
 
   (begin
     (define (scm->ast exp*)

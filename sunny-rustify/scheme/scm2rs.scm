@@ -4,7 +4,8 @@
         (scheme read)
         (scheme write)
         (only (scheme process-context) command-line)
-        (sunny translate))
+        (sunny translate)
+        (testsuite))
 
 (define args (command-line))
 
