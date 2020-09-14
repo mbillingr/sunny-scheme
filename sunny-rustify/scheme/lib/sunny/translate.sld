@@ -19,7 +19,8 @@
                               open-input-file
                               open-output-file)
           (chibi filesystem)
-          (sunny utils))
+          (sunny utils)
+          (testsuite))
 
   (begin
     (define (scm->ast exp*)
@@ -47,8 +48,6 @@
                                             (string<? (symbol->string (car a))
                                                       (symbol->string (car b))))
                                           (cdr global-env))))
-                      (display library-env)
-                      (newline)
                       (make-program globals
                                     imports
                                     init
@@ -159,6 +158,9 @@
                 ((and (eq? 'testsuite (car exp))
                       (not (lookup 'testsuite env)))
                  (sexpr->testsuite (cadr exp) (cddr exp) env))
+                ((and (eq? 'assert (car exp))
+                      (not (lookup 'assert env)))
+                 (sexpr->assert (cadr exp) env))
                 (else (wrap-sexpr exp (sexpr->application (car exp)
                                                           (cdr exp)
                                                           env tail?))))))
@@ -390,8 +392,10 @@
               (else (error "invalid testcase"))))
 
       (let ((body (dispatch (cddr case) '())))
-        (display body) (newline)
         (make-testcase (cadr case) (sexpr->ast body env #f))))
+
+    (define (sexpr->assert cond env)
+      (make-assert (sexpr->ast cond env #f)))
 
 
     ; ======================================================================
@@ -446,7 +450,10 @@
            (eq? (car expr) 'import)))
 
     (define (import-libnames exp*)
-      (map importset-libname (cdr exp*)))
+      (filter
+        (lambda (libname)
+           (not (equal? libname '(sunny testing))))
+        (map importset-libname (cdr exp*))))
 
     (define (importset-libname expr)
       (cond ((eq? 'only (car expr))
@@ -520,7 +527,7 @@
       (define (repr) '(NOP))
       (define (transform func) (func self (lambda () self)))
       (define (free-vars) (make-set))
-      (define (gen-rust module) (print module "(/*NOP*/)"))
+      (define (gen-rust module) (print module "(/*NOP*/).into()"))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
@@ -1078,8 +1085,18 @@
                               lib)
                     (println module "initialize();"))
                   init)
-        (body 'gen-rust module)
-        (println module ";}"))
+        (let ((tests (list 'dummy)))
+          ((body 'transform (lambda (node ignore)
+                              (if (eq? (node 'kind) 'TESTSUITE)
+                                  (begin
+                                    (set-cdr! tests (cons node (cdr tests)))
+                                    (make-nop))
+                                  (ignore))))
+           'gen-rust module)
+          (println module ";}")
+
+          (for-each (lambda (test) (test 'gen-rust module))
+                    (cdr tests))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
@@ -1206,6 +1223,70 @@
               ((eq? 'kind msg) 'IMPORT)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message IMPORT" msg))))
+      self)
+
+    (define (make-testcase description body)
+      (define (repr)
+        (list 'TESTCASE description body))
+      (define (transform func)
+        (func self (lambda () (make-testcase description
+                                             (body 'transform func)))))
+      (define (gen-rust module)
+        (println module "#[test]")
+        (println module "fn testcase() {")
+        (body 'gen-rust module)
+        (println module "}"))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'kind msg) 'TESTCASE)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message TESTCASE" msg))))
+      self)
+
+    (define (make-testsuite name cases)
+      (define (repr)
+        (list 'TESTSUITE name cases))
+      (define (transform func)
+         (func self
+               (lambda ()
+                (make-testsuite name
+                                (map (lambda (c) (c 'transform func))
+                                     cases)))))
+      (define (gen-rust module)
+         (println module "#[cfg(test)]")
+         (println module "mod tests {")
+         (println module "use super::*;")
+         (for-each (lambda (c)
+                     (c 'gen-rust module))
+                   cases)
+         (println module "}"))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'kind msg) 'TESTSUITE)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message TESTSUITE" msg))))
+      self)
+
+    (define (make-assert condition)
+      (define (repr)
+        (list 'ASSERT condition))
+      (define (transform func)
+        (func self (lambda () (make-assert (condition 'transform func)))))
+      (define (free-vars)
+        (condition 'free-vars))
+      (define (gen-rust module)
+        (print module "assert!(")
+        (condition 'gen-rust module)
+        (println module ".is_true());"))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'ASSERT)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message ASSERT" msg))))
       self)
 
     (define (print-list seq)
