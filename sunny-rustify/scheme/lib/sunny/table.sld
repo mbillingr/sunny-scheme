@@ -43,7 +43,10 @@
       (set-fields!
         table
         (cons (cons key value)
-              (fields table)))))
+              (fields table))))
+
+    (define (call-method table key . args)
+      (apply (get-field table key) table args)))
 
   (begin
     (define (run-tests)
@@ -92,4 +95,25 @@
           (when (set-field! t 'x 1)
                 (s <- (clone t))
                 (set-field! s 'x 2))
-          (then (= (get-field t 'x) 1)))))))
+          (then (= (get-field t 'x) 1)))
+
+        (testcase "call unary method"
+          (given (t <- (let ((t (make-table)))
+                         (set-field! t 'count 0)
+                         (set-field! t 'inc (lambda (self)
+                                              (set-field! self 'count
+                                                (+ 1 (get-field self 'count)))))
+                         t)))
+          (when (call-method t 'inc))
+          (then (= (get-field t 'count) 1)))
+
+        (testcase "call binary method"
+          (given (t <- (let ((t (make-table)))
+                         (set-field! t 'value 1)
+                         (set-field! t 'add (lambda (self other)
+                                              (set-field! self 'value
+                                                (+ (get-field self 'value)
+                                                   (get-field other 'value)))))
+                         t)))
+          (when (call-method t 'add t))
+          (then (= (get-field t 'value) 2)))))))
