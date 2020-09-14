@@ -14,5 +14,4 @@
         (testcase "integers"
           (given (x <- 1)
                  (y <- '1))
-          (then (= x y))))
-      'OK)))
+          (then (= x y)))))))

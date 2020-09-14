@@ -1,4 +1,8 @@
 (import (scheme base)
-        (testsuite))
+        (rename (testsuite) (run-tests run-scheme-tests))
+        (rename (sunny table) (run-tests run-table-tests))
+        (sunny testing))
 
-(run-tests)
+(report-tests
+  (run-scheme-tests)
+  (run-table-tests))

@@ -1090,7 +1090,7 @@
                               (if (eq? (node 'kind) 'TESTSUITE)
                                   (begin
                                     (set-cdr! tests (cons node (cdr tests)))
-                                    (make-nop))
+                                    (make-constant '*UNSPECIFIED*))
                                   (ignore))))
            'gen-rust module)
           (println module ";}")

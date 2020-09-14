@@ -24,19 +24,16 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (run-tests) (testsuite "Scheme Tests" (testcase "the empty list" (given (x <- (quote ()))) (then (null? x))) (testcase "integers" (given (x <- 1) (y <- (quote 1))) (then (= x y)))) (quote OK))
+        // (define (run-tests) (testsuite "Scheme Tests" (testcase "the empty list" (given (x <- (quote ()))) (then (null? x))) (testcase "integers" (given (x <- 1) (y <- (quote 1))) (then (= x y)))))
         globals::run_minus_tests.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (testsuite "Scheme Tests" (testcase "the empty list" (given (x <- (quote ()))) (then (null? x))) (testcase "integers" (given (x <- 1) (y <- (quote 1))) (then (= x y)))) (quote OK))
+                    // (letrec () (testsuite "Scheme Tests" (testcase "the empty list" (given (x <- (quote ()))) (then (null? x))) (testcase "integers" (given (x <- 1) (y <- (quote 1))) (then (= x y)))))
                     {
-                        {
-                            (/*NOP*/);
-                            Scm::symbol("OK")
-                        }
+                        Scm::symbol("*UNSPECIFIED*")
                     }
                 })
             })

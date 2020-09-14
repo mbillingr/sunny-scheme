@@ -1,5 +1,5 @@
 (define-library (sunny testing)
-  (export testcase testsuite)
+  (export testcase testsuite report-tests)
 
   (import (scheme base)
           (scheme cxr)
@@ -8,7 +8,9 @@
   (begin
 
     (define (testsuite description . testcases)
-      (report-tests (run-tests testcases 0 0 '())))
+      (display description)
+      (display ": ")
+      (run-tests testcases 0 0 '()))
 
     (define (run-tests case* n-pass n-fail failures)
       (if (null? case*)
@@ -30,7 +32,17 @@
                              n-fail
                              failures))))))
 
-    (define (report-tests result)
+    (define (report-tests . result*)
+      (define (loop results n-pass n-fail failed)
+        (if (null? results)
+            (report-testresult (list n-pass n-fail failed))
+            (loop (cdr results)
+                  (+ n-pass (caar results))
+                  (+ n-fail (cadar results))
+                  (append failed (caddar results)))))
+      (loop result* 0 0 '()))
+
+    (define (report-testresult result)
       (let ((n-pass (car result))
             (n-fail (cadr result))
             (failed (caddr result)))
