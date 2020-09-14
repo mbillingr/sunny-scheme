@@ -5,6 +5,7 @@
         (scheme write)
         (only (scheme process-context) command-line)
         (sunny translate)
+        (sunny table)
         (testsuite))
 
 (define args (command-line))
