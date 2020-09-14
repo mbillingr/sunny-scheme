@@ -1,4 +1,6 @@
 (define-library (testsuite)
+  (export run-tests)
+
   (import (scheme base)
           (sunny testing))
 
@@ -12,4 +14,5 @@
         (testcase "integers"
           (given (x <- 1)
                  (y <- '1))
-          (then (= x y)))))))
+          (then (= x y))))
+      'OK)))

@@ -527,7 +527,7 @@
       (define (repr) '(NOP))
       (define (transform func) (func self (lambda () self)))
       (define (free-vars) (make-set))
-      (define (gen-rust module) (print module "(/*NOP*/).into()"))
+      (define (gen-rust module) (print module "(/*NOP*/)"))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
@@ -1233,7 +1233,7 @@
                                              (body 'transform func)))))
       (define (gen-rust module)
         (println module "#[test]")
-        (println module "fn testcase() {")
+        (println module "fn " (rustify-testname description) "() {")
         (body 'gen-rust module)
         (println module "}"))
       (define (self msg . args)
@@ -1479,6 +1479,16 @@
                       name)))
         (cond ((eq? name 'fn) "fn_")
               (else (append-all (map char-map (string->list name)))))))
+
+    (define (rustify-testname name)
+      (define (char-map ch)
+        (cond ((eq? ch #\space) "_")
+              (else (list->string (list ch)))))
+      (define (append-all strs)
+        (if (null? strs)
+            ""
+            (string-append (car strs) (append-all (cdr strs)))))
+      (append-all (map char-map (string->list name))))
 
     (define (make-global-env)
       (list 'GLOBAL-MARKER

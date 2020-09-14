@@ -205,3 +205,4 @@ pub fn main() {
 pub mod chibi;
 pub mod scheme;
 pub mod sunny;
+pub mod testsuite;
