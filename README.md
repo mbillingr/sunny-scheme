@@ -1,5 +1,5 @@
 # sunny-scheme
-Sunny Scheme shines a lispy sun on friendly crabs
+Scheme, Rust, and more...
 
 # Crates
 
@@ -61,7 +61,7 @@ At the moment it does not completely support Scheme although it is complete enou
     - [ ] `let-values`
     - [ ] `let*-values`
   - [ ] Sequencing
-    - [ ] `begin`
+    - [x] `begin`
   - [ ] Iteration
     - [ ] `do`
     - [ ] named `let`
