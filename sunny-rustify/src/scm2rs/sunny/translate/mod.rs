@@ -3,9 +3,7 @@ use sunny_core::{Mut, Scm};
 mod imports {
     pub use crate::chibi::filesystem::exports::*;
     pub use crate::scheme::base::exports::*;
-    pub use crate::scheme::cxr::exports::{
-        caaddr, caadr, cadar, cadddr, caddr, cdaddr, cdadr, cddar, cdddr,
-    };
+    pub use crate::scheme::cxr::exports::*;
     pub use crate::scheme::file::exports::{
         file_minus_exists_p, open_minus_input_minus_file, open_minus_output_minus_file,
     };
@@ -2639,7 +2637,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                 })
             })
         });
-        // (define (sexpr->testcase case env) (define (given stmt body) (list (quote let) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)) (define (when stmt body) (error "not implemented (testcase/when)")) (define (then stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))) (define (dispatch section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (dispatch (cdr section*) (when (car section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
+        // (define (sexpr->testcase case env) (define (given stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)) (define (when stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (display (loop (cdr stmt))) (newline) (loop (cdr stmt))) (define (then stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))) (define (dispatch section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
         globals::sexpr_minus__g_testcase.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -2648,7 +2646,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                     }
                     let case = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec ((given (lambda (stmt body) (list (quote let) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (error "not implemented (testcase/when)"))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (dispatch (cdr section*) (when (car section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
+                    // (letrec ((given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (display (loop (cdr stmt))) (newline) (loop (cdr stmt)))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
                     {
                         let given = Scm::uninitialized().into_boxed();
                         let when = Scm::uninitialized().into_boxed();
@@ -2661,11 +2659,11 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                 }
                                 let stmt = args[0].clone();
                                 let body = args[1].clone();
-                                // (letrec () (list (quote let) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))
+                                // (letrec () (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))
                                 {
-                                    // (list (quote let) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)
+                                    // (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)
                                     imports::list.with(|value| value.get()).invoke(&[
-                                        Scm::symbol("let"),
+                                        Scm::symbol("let*"),
                                         // (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt))
                                         imports::map.with(|value| value.get()).invoke(&[
                                             {
@@ -2709,12 +2707,137 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                 }
                                 let stmt = args[0].clone();
                                 let body = args[1].clone();
-                                // (letrec () (error "not implemented (testcase/when)"))
+                                // (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (display (loop (cdr stmt))) (newline) (loop (cdr stmt)))
                                 {
-                                    // (error "not implemented (testcase/when)")
-                                    imports::error
-                                        .with(|value| value.get())
-                                        .invoke(&[Scm::from("not implemented (testcase/when)")])
+                                    let loop_ = Scm::uninitialized().into_boxed();
+                                    loop_.set({
+                                        let body = body.clone();
+                                        let loop_ = loop_.clone();
+                                        Scm::func(move |args: &[Scm]| {
+                                            if args.len() != 1 {
+                                                panic!("invalid arity")
+                                            }
+                                            let stmt_star_ = args[0].clone();
+                                            // (letrec () (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*))))))
+                                            {
+                                                // (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))
+                                                if (
+                                                    // (null? stmt*)
+                                                    imports::null_p
+                                                        .with(|value| value.get())
+                                                        .invoke(&[stmt_star_.clone()])
+                                                )
+                                                .is_true()
+                                                {
+                                                    body.clone()
+                                                } else {
+                                                    if (
+                                                        // (eq? (quote <-) (cadar stmt*))
+                                                        imports::eq_p
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                Scm::symbol("<-"),
+                                                                // (cadar stmt*)
+                                                                imports::cadar
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[stmt_star_.clone()]),
+                                                            ])
+                                                    )
+                                                    .is_true()
+                                                    {
+                                                        // (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))
+                                                        imports::list
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                Scm::symbol("let"),
+                                                                // (list (list (caar stmt*) (caddar stmt*)))
+                                                                imports::list
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[
+                                                                        // (list (caar stmt*) (caddar stmt*))
+                                                                        imports::list
+                                                                            .with(|value| {
+                                                                                value.get()
+                                                                            })
+                                                                            .invoke(&[
+                                                                                // (caar stmt*)
+                                                                                imports::caar
+                                                                                    .with(|value| {
+                                                                                        value.get()
+                                                                                    })
+                                                                                    .invoke(&[
+                                                                                        stmt_star_
+                                                                                            .clone(
+                                                                                            ),
+                                                                                    ]),
+                                                                                // (caddar stmt*)
+                                                                                imports::caddar
+                                                                                    .with(|value| {
+                                                                                        value.get()
+                                                                                    })
+                                                                                    .invoke(&[
+                                                                                        stmt_star_
+                                                                                            .clone(
+                                                                                            ),
+                                                                                    ]),
+                                                                            ]),
+                                                                    ]),
+                                                                // (loop (cdr stmt*))
+                                                                loop_.get().invoke(&[
+                                                                    // (cdr stmt*)
+                                                                    imports::cdr
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            stmt_star_.clone()
+                                                                        ]),
+                                                                ]),
+                                                            ])
+                                                    } else {
+                                                        // (list (quote begin) (car stmt*) (loop (cdr stmt*)))
+                                                        imports::list
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                Scm::symbol("begin"),
+                                                                // (car stmt*)
+                                                                imports::car
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[stmt_star_.clone()]),
+                                                                // (loop (cdr stmt*))
+                                                                loop_.get().invoke(&[
+                                                                    // (cdr stmt*)
+                                                                    imports::cdr
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            stmt_star_.clone()
+                                                                        ]),
+                                                                ]),
+                                                            ])
+                                                    }
+                                                }
+                                            }
+                                        })
+                                    });
+                                    {
+                                        // (display (loop (cdr stmt)))
+                                        imports::display.with(|value| value.get()).invoke(&[
+                                            // (loop (cdr stmt))
+                                            loop_.get().invoke(&[
+                                                // (cdr stmt)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[stmt.clone()]),
+                                            ]),
+                                        ]);
+                                        // (newline)
+                                        imports::newline.with(|value| value.get()).invoke(&[]);
+                                        // (loop (cdr stmt))
+                                        loop_.get().invoke(&[
+                                            // (cdr stmt)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[stmt.clone()]),
+                                        ])
+                                    }
                                 }
                             })
                         });
@@ -2774,9 +2897,9 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                 }
                                 let section_star_ = args[0].clone();
                                 let body = args[1].clone();
-                                // (letrec () (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (dispatch (cdr section*) (when (car section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase"))))
+                                // (letrec () (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase"))))
                                 {
-                                    // (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (dispatch (cdr section*) (when (car section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))
+                                    // (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))
                                     if (
                                         // (null? section*)
                                         imports::null_p
@@ -2827,16 +2950,16 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                             )
                                             .is_true()
                                             {
-                                                // (dispatch (cdr section*) (when (car section*) body))
-                                                dispatch.get().invoke(&[
-                                                    // (cdr section*)
-                                                    imports::cdr
+                                                // (when (car section*) (dispatch (cdr section*) body))
+                                                when.get().invoke(&[
+                                                    // (car section*)
+                                                    imports::car
                                                         .with(|value| value.get())
                                                         .invoke(&[section_star_.clone()]),
-                                                    // (when (car section*) body)
-                                                    when.get().invoke(&[
-                                                        // (car section*)
-                                                        imports::car
+                                                    // (dispatch (cdr section*) body)
+                                                    dispatch.get().invoke(&[
+                                                        // (cdr section*)
+                                                        imports::cdr
                                                             .with(|value| value.get())
                                                             .invoke(&[section_star_.clone()]),
                                                         body.clone(),
@@ -4028,7 +4151,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                 })
             })
         });
-        // (define (make-constant val) (define (repr) (cons (quote CONSTANT) val)) (define (transform func) (func self (lambda () self))) (define (free-vars) (make-set)) (define (gen-constant module val) (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")")))) (define (gen-rust module) (gen-constant module val)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote CONSTANT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message CONSTANT" msg)))) self)
+        // (define (make-constant val) (define (repr) (cons (quote CONSTANT) val)) (define (transform func) (func self (lambda () self))) (define (free-vars) (make-set)) (define (gen-constant module val) (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((eq? val #\') (print module "Scm::char('\'')")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")")))) (define (gen-rust module) (gen-constant module val)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote CONSTANT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message CONSTANT" msg)))) self)
         globals::make_minus_constant.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -4036,7 +4159,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                         panic!("invalid arity")
                     }
                     let val = args[0].clone();
-                    // (letrec ((repr (lambda () (cons (quote CONSTANT) val))) (transform (lambda (func) (func self (lambda () self)))) (free-vars (lambda () (make-set))) (gen-constant (lambda (module val) (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")"))))) (gen-rust (lambda (module) (gen-constant module val))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote CONSTANT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message CONSTANT" msg)))))) self)
+                    // (letrec ((repr (lambda () (cons (quote CONSTANT) val))) (transform (lambda (func) (func self (lambda () self)))) (free-vars (lambda () (make-set))) (gen-constant (lambda (module val) (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((eq? val #\') (print module "Scm::char('\'')")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")"))))) (gen-rust (lambda (module) (gen-constant module val))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote CONSTANT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message CONSTANT" msg)))))) self)
                     {
                         let repr = Scm::uninitialized().into_boxed();
                         let transform = Scm::uninitialized().into_boxed();
@@ -4106,9 +4229,9 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                 }
                                 let module = args[0].clone();
                                 let val = args[1].clone();
-                                // (letrec () (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")"))))
+                                // (letrec () (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((eq? val #\') (print module "Scm::char('\'')")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")"))))
                                 {
-                                    // (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")")))
+                                    // (cond ((null? val) (print module "Scm::Nil")) ((eq? val #t) (print module "Scm::True")) ((eq? val #f) (print module "Scm::False")) ((symbol? val) (print module "Scm::symbol(\"" val "\")")) ((eq? val #\') (print module "Scm::char('\'')")) ((char? val) (print module "Scm::char('" val "')")) ((pair? val) (print module "Scm::pair(") (gen-constant module (car val)) (print module ", ") (gen-constant module (cdr val)) (print module ")")) (else (print module "Scm::from(") (show module val) (print module ")")))
                                     if (
                                         // (null? val)
                                         imports::null_p
@@ -4168,93 +4291,122 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                                     )
                                                 } else {
                                                     if (
-                                                        // (char? val)
-                                                        imports::char_p
+                                                        // (eq? val #\')
+                                                        imports::eq_p
                                                             .with(|value| value.get())
-                                                            .invoke(&[val.clone()])
+                                                            .invoke(&[val.clone(), Scm::char('\'')])
                                                     )
                                                     .is_true()
                                                     {
-                                                        // (print module "Scm::char('" val "')")
+                                                        // (print module "Scm::char('\'')")
                                                         globals::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
-                                                                Scm::from("Scm::char('"),
-                                                                val.clone(),
-                                                                Scm::from("')"),
+                                                                Scm::from("Scm::char('\'')"),
                                                             ])
                                                     } else {
                                                         if (
-                                                            // (pair? val)
-                                                            imports::pair_p
+                                                            // (char? val)
+                                                            imports::char_p
                                                                 .with(|value| value.get())
                                                                 .invoke(&[val.clone()])
                                                         )
                                                         .is_true()
                                                         {
-                                                            {
-                                                                // (print module "Scm::pair(")
-                                                                globals::print
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        module.clone(),
-                                                                        Scm::from("Scm::pair("),
-                                                                    ]);
-                                                                // (gen-constant module (car val))
-                                                                gen_minus_constant.get().invoke(&[
+                                                            // (print module "Scm::char('" val "')")
+                                                            globals::print
+                                                                .with(|value| value.get())
+                                                                .invoke(&[
                                                                     module.clone(),
-                                                                    // (car val)
-                                                                    imports::car
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[val.clone()]),
-                                                                ]);
-                                                                // (print module ", ")
-                                                                globals::print
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        module.clone(),
-                                                                        Scm::from(", "),
-                                                                    ]);
-                                                                // (gen-constant module (cdr val))
-                                                                gen_minus_constant.get().invoke(&[
-                                                                    module.clone(),
-                                                                    // (cdr val)
-                                                                    imports::cdr
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[val.clone()]),
-                                                                ]);
-                                                                // (print module ")")
-                                                                globals::print
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        module.clone(),
-                                                                        Scm::from(")"),
-                                                                    ])
-                                                            }
+                                                                    Scm::from("Scm::char('"),
+                                                                    val.clone(),
+                                                                    Scm::from("')"),
+                                                                ])
                                                         } else {
+                                                            if (
+                                                                // (pair? val)
+                                                                imports::pair_p
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[val.clone()])
+                                                            )
+                                                            .is_true()
                                                             {
-                                                                // (print module "Scm::from(")
-                                                                globals::print
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        module.clone(),
-                                                                        Scm::from("Scm::from("),
-                                                                    ]);
-                                                                // (show module val)
-                                                                globals::show
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        module.clone(),
-                                                                        val.clone(),
-                                                                    ]);
-                                                                // (print module ")")
-                                                                globals::print
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        module.clone(),
-                                                                        Scm::from(")"),
-                                                                    ])
+                                                                {
+                                                                    // (print module "Scm::pair(")
+                                                                    globals::print
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            Scm::from("Scm::pair("),
+                                                                        ]);
+                                                                    // (gen-constant module (car val))
+                                                                    gen_minus_constant
+                                                                        .get()
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            // (car val)
+                                                                            imports::car
+                                                                                .with(|value| {
+                                                                                    value.get()
+                                                                                })
+                                                                                .invoke(&[
+                                                                                    val.clone()
+                                                                                ]),
+                                                                        ]);
+                                                                    // (print module ", ")
+                                                                    globals::print
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            Scm::from(", "),
+                                                                        ]);
+                                                                    // (gen-constant module (cdr val))
+                                                                    gen_minus_constant
+                                                                        .get()
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            // (cdr val)
+                                                                            imports::cdr
+                                                                                .with(|value| {
+                                                                                    value.get()
+                                                                                })
+                                                                                .invoke(&[
+                                                                                    val.clone()
+                                                                                ]),
+                                                                        ]);
+                                                                    // (print module ")")
+                                                                    globals::print
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            Scm::from(")"),
+                                                                        ])
+                                                                }
+                                                            } else {
+                                                                {
+                                                                    // (print module "Scm::from(")
+                                                                    globals::print
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            Scm::from("Scm::from("),
+                                                                        ]);
+                                                                    // (show module val)
+                                                                    globals::show
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            val.clone(),
+                                                                        ]);
+                                                                    // (print module ")")
+                                                                    globals::print
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            module.clone(),
+                                                                            Scm::from(")"),
+                                                                        ])
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -8482,7 +8634,7 @@ self_.get()}})}));
                 })
             })
         });
-        // (define (make-testcase description body) (define (repr) (list (quote TESTCASE) description body)) (define (transform func) (func self (lambda () (make-testcase description (body (quote transform) func))))) (define (gen-rust module) (println module "#[test]") (println module "fn " (rustify-testname description) "() {") (body (quote gen-rust) module) (println module "}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote TESTCASE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message TESTCASE" msg)))) self)
+        // (define (make-testcase description body) (define (repr) (list (quote TESTCASE) description body)) (define (transform func) (func self (lambda () (make-testcase description (body (quote transform) func))))) (define (gen-rust module) (println module "#[test]") (println module "fn " (rustify-testname description) "() {") (println module "super::initialize();") (body (quote gen-rust) module) (println module "}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote TESTCASE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message TESTCASE" msg)))) self)
         globals::make_minus_testcase.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -8491,7 +8643,7 @@ self_.get()}})}));
                     }
                     let description = args[0].clone();
                     let body = args[1].clone();
-                    // (letrec ((repr (lambda () (list (quote TESTCASE) description body))) (transform (lambda (func) (func self (lambda () (make-testcase description (body (quote transform) func)))))) (gen-rust (lambda (module) (println module "#[test]") (println module "fn " (rustify-testname description) "() {") (body (quote gen-rust) module) (println module "}"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote TESTCASE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message TESTCASE" msg)))))) self)
+                    // (letrec ((repr (lambda () (list (quote TESTCASE) description body))) (transform (lambda (func) (func self (lambda () (make-testcase description (body (quote transform) func)))))) (gen-rust (lambda (module) (println module "#[test]") (println module "fn " (rustify-testname description) "() {") (println module "super::initialize();") (body (quote gen-rust) module) (println module "}"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote TESTCASE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message TESTCASE" msg)))))) self)
                     {
                         let repr = Scm::uninitialized().into_boxed();
                         let transform = Scm::uninitialized().into_boxed();
@@ -8562,7 +8714,7 @@ self_.get()}})}));
                                     panic!("invalid arity")
                                 }
                                 let module = args[0].clone();
-                                // (letrec () (println module "#[test]") (println module "fn " (rustify-testname description) "() {") (body (quote gen-rust) module) (println module "}"))
+                                // (letrec () (println module "#[test]") (println module "fn " (rustify-testname description) "() {") (println module "super::initialize();") (body (quote gen-rust) module) (println module "}"))
                                 {
                                     {
                                         // (println module "#[test]")
@@ -8578,6 +8730,11 @@ self_.get()}})}));
                                                 .with(|value| value.get())
                                                 .invoke(&[description.clone()]),
                                             Scm::from("() {"),
+                                        ]);
+                                        // (println module "super::initialize();")
+                                        globals::println.with(|value| value.get()).invoke(&[
+                                            module.clone(),
+                                            Scm::from("super::initialize();"),
                                         ]);
                                         // (body (quote gen-rust) module)
                                         body.clone()
@@ -10174,7 +10331,7 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                 })
             })
         });
-        // (define (rustify-testname name) (define (char-map ch) (cond ((eq? ch #\ ) "_") (else (list->string (list ch))))) (define (append-all strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))) (append-all (map char-map (string->list name))))
+        // (define (rustify-testname name) (define (char-map ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch))))) (define (append-all strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))) (append-all (filter (lambda (x) x) (map char-map (string->list name)))))
         globals::rustify_minus_testname.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -10182,7 +10339,7 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                         panic!("invalid arity")
                     }
                     let name = args[0].clone();
-                    // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\ ) "_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (append-all (map char-map (string->list name))))
+                    // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (append-all (filter (lambda (x) x) (map char-map (string->list name)))))
                     {
                         let char_minus_map = Scm::uninitialized().into_boxed();
                         let append_minus_all = Scm::uninitialized().into_boxed();
@@ -10192,9 +10349,9 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                                     panic!("invalid arity")
                                 }
                                 let ch = args[0].clone();
-                                // (letrec () (cond ((eq? ch #\ ) "_") (else (list->string (list ch)))))
+                                // (letrec () (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))
                                 {
-                                    // (cond ((eq? ch #\ ) "_") (else (list->string (list ch))))
+                                    // (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch))))
                                     if (
                                         // (eq? ch #\ )
                                         imports::eq_p
@@ -10205,15 +10362,26 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                                     {
                                         Scm::from("_")
                                     } else {
-                                        // (list->string (list ch))
-                                        imports::list_minus__g_string
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (list ch)
-                                                imports::list
-                                                    .with(|value| value.get())
-                                                    .invoke(&[ch.clone()]),
-                                            ])
+                                        if (
+                                            // (eq? ch #\')
+                                            imports::eq_p
+                                                .with(|value| value.get())
+                                                .invoke(&[ch.clone(), Scm::char('\'')])
+                                        )
+                                        .is_true()
+                                        {
+                                            Scm::False
+                                        } else {
+                                            // (list->string (list ch))
+                                            imports::list_minus__g_string
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    // (list ch)
+                                                    imports::list
+                                                        .with(|value| value.get())
+                                                        .invoke(&[ch.clone()]),
+                                                ])
+                                        }
                                     }
                                 }
                             })
@@ -10258,15 +10426,30 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone(),
                             })
                         });
 
-                        // (append-all (map char-map (string->list name)))
+                        // (append-all (filter (lambda (x) x) (map char-map (string->list name))))
                         append_minus_all.get().invoke(&[
-                            // (map char-map (string->list name))
-                            imports::map.with(|value| value.get()).invoke(&[
-                                char_minus_map.get(),
-                                // (string->list name)
-                                imports::string_minus__g_list
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone()]),
+                            // (filter (lambda (x) x) (map char-map (string->list name)))
+                            globals::filter.with(|value| value.get()).invoke(&[
+                                {
+                                    Scm::func(move |args: &[Scm]| {
+                                        if args.len() != 1 {
+                                            panic!("invalid arity")
+                                        }
+                                        let x = args[0].clone();
+                                        // (letrec () x)
+                                        {
+                                            x.clone()
+                                        }
+                                    })
+                                },
+                                // (map char-map (string->list name))
+                                imports::map.with(|value| value.get()).invoke(&[
+                                    char_minus_map.get(),
+                                    // (string->list name)
+                                    imports::string_minus__g_list
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone()]),
+                                ]),
                             ]),
                         ])
                     }

@@ -5,15 +5,7 @@
 
   (import (scheme base)
           (scheme write)
-          (only (scheme cxr) caadr
-                             cadar
-                             caddr
-                             cdadr
-                             cddar
-                             cdddr
-                             caaddr
-                             cadddr
-                             cdaddr)
+          (scheme cxr)
           (only (scheme read) read)
           (only (scheme file) file-exists?
                               open-input-file
@@ -361,7 +353,7 @@
 
     (define (sexpr->testcase case env)
       (define (given stmt body)
-        (list 'let
+        (list 'let*
           (map (lambda (assignment)
                  (list (car assignment)
                        (caddr assignment)))
@@ -369,7 +361,19 @@
           body))
 
       (define (when stmt body)
-        (error "not implemented (testcase/when)"))
+        (define (loop stmt*)
+          (cond ((null? stmt*)
+                 body)
+                ((eq? '<- (cadar stmt*))
+                 (list
+                   'let (list (list (caar stmt*)
+                                    (caddar stmt*)))
+                   (loop (cdr stmt*))))
+                (else
+                  (list 'begin (car stmt*) (loop (cdr stmt*))))))
+        (display (loop (cdr stmt)))
+        (newline)
+        (loop (cdr stmt)))
 
       (define (then stmt body)
         (cons 'begin
@@ -385,7 +389,7 @@
               ((eq? 'given (caar section*))
                (given (car section*) (dispatch (cdr section*) body)))
               ((eq? 'when (caar section*))
-               (dispatch (cdr section*) (when (car section*) body)))
+               (when (car section*) (dispatch (cdr section*) body)))
               ((eq? 'then (caar section*))
                (then (car section*) (dispatch (cdr section*) body)))
               (else (error "invalid testcase"))))
@@ -549,6 +553,7 @@
               ((eq? val #t) (print module "Scm::True"))
               ((eq? val #f) (print module "Scm::False"))
               ((symbol? val) (print module "Scm::symbol(\"" val "\")"))
+              ((eq? val #\') (print module "Scm::char('\\'')"))
               ((char? val) (print module "Scm::char('" val "')"))
               ((pair? val) (print module "Scm::pair(")
                            (gen-constant module (car val))
@@ -1233,6 +1238,7 @@
       (define (gen-rust module)
         (println module "#[test]")
         (println module "fn " (rustify-testname description) "() {")
+        (println module "super::initialize();")
         (body 'gen-rust module)
         (println module "}"))
       (define (self msg . args)
@@ -1482,12 +1488,14 @@
     (define (rustify-testname name)
       (define (char-map ch)
         (cond ((eq? ch #\space) "_")
+              ((eq? ch #\') #f)
               (else (list->string (list ch)))))
       (define (append-all strs)
         (if (null? strs)
             ""
             (string-append (car strs) (append-all (cdr strs)))))
-      (append-all (map char-map (string->list name))))
+      (append-all (filter (lambda (x) x)
+                          (map char-map (string->list name)))))
 
     (define (make-global-env)
       (list 'GLOBAL-MARKER

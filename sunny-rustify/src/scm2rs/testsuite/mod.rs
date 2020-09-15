@@ -45,9 +45,12 @@ mod tests {
     use super::*;
     #[test]
     fn the_empty_list() {
-        // (let ((x (quote ()))) (begin (assert (null? x))))
+        super::initialize();
+
+        // (let* ((x (quote ()))) (begin (assert (null? x))))
         {
             let [x] = [Scm::Nil];
+            // (let* () (begin (assert (null? x))))
             assert!(
                 // (null? x)
                 imports::null_p
@@ -59,16 +62,23 @@ mod tests {
     }
     #[test]
     fn integers() {
-        // (let ((x 1) (y (quote 1))) (begin (assert (= x y))))
+        super::initialize();
+
+        // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
         {
-            let [x, y] = [Scm::from(1), Scm::from(1)];
-            assert!(
-                // (= x y)
-                imports::_e_
-                    .with(|value| value.get())
-                    .invoke(&[x.clone(), y.clone(),])
-                    .is_true()
-            );
+            let [x] = [Scm::from(1)];
+            // (let* ((y (quote 1))) (begin (assert (= x y))))
+            {
+                let [y] = [Scm::from(1)];
+                // (let* () (begin (assert (= x y))))
+                assert!(
+                    // (= x y)
+                    imports::_e_
+                        .with(|value| value.get())
+                        .invoke(&[x.clone(), y.clone(),])
+                        .is_true()
+                );
+            }
         }
     }
 }

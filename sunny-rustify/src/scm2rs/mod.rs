@@ -7,6 +7,7 @@ mod imports {
     pub use crate::scheme::process_context::exports::command_minus_line;
     pub use crate::scheme::read::exports::*;
     pub use crate::scheme::write::exports::*;
+    pub use crate::sunny::table::exports::*;
     pub use crate::sunny::translate::exports::*;
     pub use crate::testsuite::exports::*;
 }
@@ -34,6 +35,7 @@ pub fn main() {
     crate::scheme::write::initialize();
     crate::scheme::process_context::initialize();
     crate::sunny::translate::initialize();
+    crate::sunny::table::initialize();
     crate::testsuite::initialize();
     {
         // (define args (command-line))
