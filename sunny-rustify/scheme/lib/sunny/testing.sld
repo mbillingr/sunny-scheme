@@ -83,10 +83,10 @@
            (let* ((var val) ...)
              (testcase "when" statement ...
                (begin
-                 (if (pred arg ...)
-                     #f
-                     `(description (pred arg ...) (pred ,arg ...)))
-                 ...)))))
+                 (cond ((not (pred arg ...))
+                        `(description (pred arg ...) (pred ,arg ...)))
+                       ...
+                       (else #f)))))))
 
         ((testcase "when" body)
          body)
