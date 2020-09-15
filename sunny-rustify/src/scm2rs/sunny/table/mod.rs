@@ -5,6 +5,7 @@ mod imports {
 }
 
 pub mod exports {
+    pub use super::globals::call_minus_method;
     pub use super::globals::clone;
     pub use super::globals::fields;
     pub use super::globals::get_minus_field;

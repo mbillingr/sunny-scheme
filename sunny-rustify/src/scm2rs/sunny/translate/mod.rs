@@ -2637,7 +2637,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                 })
             })
         });
-        // (define (sexpr->testcase case env) (define (given stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)) (define (when stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (display (loop (cdr stmt))) (newline) (loop (cdr stmt))) (define (then stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))) (define (dispatch section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
+        // (define (sexpr->testcase case env) (define (given stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)) (define (when stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt))) (define (then stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))) (define (dispatch section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
         globals::sexpr_minus__g_testcase.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -2646,7 +2646,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                     }
                     let case = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec ((given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (display (loop (cdr stmt))) (newline) (loop (cdr stmt)))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
+                    // (letrec ((given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt)))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
                     {
                         let given = Scm::uninitialized().into_boxed();
                         let when = Scm::uninitialized().into_boxed();
@@ -2707,7 +2707,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                 }
                                 let stmt = args[0].clone();
                                 let body = args[1].clone();
-                                // (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (display (loop (cdr stmt))) (newline) (loop (cdr stmt)))
+                                // (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (loop (cdr stmt)))
                                 {
                                     let loop_ = Scm::uninitialized().into_boxed();
                                     loop_.set({
@@ -2817,27 +2817,14 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                             }
                                         })
                                     });
-                                    {
-                                        // (display (loop (cdr stmt)))
-                                        imports::display.with(|value| value.get()).invoke(&[
-                                            // (loop (cdr stmt))
-                                            loop_.get().invoke(&[
-                                                // (cdr stmt)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[stmt.clone()]),
-                                            ]),
-                                        ]);
-                                        // (newline)
-                                        imports::newline.with(|value| value.get()).invoke(&[]);
-                                        // (loop (cdr stmt))
-                                        loop_.get().invoke(&[
-                                            // (cdr stmt)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[stmt.clone()]),
-                                        ])
-                                    }
+
+                                    // (loop (cdr stmt))
+                                    loop_.get().invoke(&[
+                                        // (cdr stmt)
+                                        imports::cdr
+                                            .with(|value| value.get())
+                                            .invoke(&[stmt.clone()]),
+                                    ])
                                 }
                             })
                         });
