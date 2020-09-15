@@ -371,8 +371,6 @@
                    (loop (cdr stmt*))))
                 (else
                   (list 'begin (car stmt*) (loop (cdr stmt*))))))
-        (display (loop (cdr stmt)))
-        (newline)
         (loop (cdr stmt)))
 
       (define (then stmt body)
