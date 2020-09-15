@@ -6,6 +6,7 @@
           get-field
           set-field!
           fields
+          call-method
           run-tests)
 
   (import (scheme base)
