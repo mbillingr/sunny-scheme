@@ -181,7 +181,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (get-field table key) (let ((value (assq key (fields table)))) (cond (value (cdr value)) ((parent table) (get-field (parent table) key)) (else #f))))
+            // (define (get-field table key) (let ((entry (assq key (fields table)))) (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f))))
             globals::get_minus_field.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -190,11 +190,11 @@ pub fn initialize() {
                         }
                         let table = args[0].clone();
                         let key = args[1].clone();
-                        // (letrec () (let ((value (assq key (fields table)))) (cond (value (cdr value)) ((parent table) (get-field (parent table) key)) (else #f))))
+                        // (letrec () (let ((entry (assq key (fields table)))) (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f))))
                         {
-                            // (let ((value (assq key (fields table)))) (cond (value (cdr value)) ((parent table) (get-field (parent table) key)) (else #f)))
+                            // (let ((entry (assq key (fields table)))) (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f)))
                             {
-                                let [value] = [
+                                let [entry] = [
                                     // (assq key (fields table))
                                     imports::assq.with(|value| value.get()).invoke(&[
                                         key.clone(),
@@ -204,12 +204,12 @@ pub fn initialize() {
                                             .invoke(&[table.clone()]),
                                     ]),
                                 ];
-                                // (cond (value (cdr value)) ((parent table) (get-field (parent table) key)) (else #f))
-                                if (value.clone()).is_true() {
-                                    // (cdr value)
+                                // (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f))
+                                if (entry.clone()).is_true() {
+                                    // (cdr entry)
                                     imports::cdr
                                         .with(|value| value.get())
-                                        .invoke(&[value.clone()])
+                                        .invoke(&[entry.clone()])
                                 } else {
                                     if (
                                         // (parent table)
@@ -238,7 +238,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (set-field! table key value) (set-fields! table (cons (cons key value) (fields table))))
+            // (define (set-field! table key value) (let ((entry (assq key (fields table)))) (if entry (set-cdr! entry value) (set-fields! table (cons (cons key value) (fields table))))))
             globals::set_minus_field_i.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -248,25 +248,45 @@ pub fn initialize() {
                         let table = args[0].clone();
                         let key = args[1].clone();
                         let value = args[2].clone();
-                        // (letrec () (set-fields! table (cons (cons key value) (fields table))))
+                        // (letrec () (let ((entry (assq key (fields table)))) (if entry (set-cdr! entry value) (set-fields! table (cons (cons key value) (fields table))))))
                         {
-                            // (set-fields! table (cons (cons key value) (fields table)))
-                            globals::set_minus_fields_i
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    table.clone(),
-                                    // (cons (cons key value) (fields table))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        // (cons key value)
-                                        imports::cons
-                                            .with(|value| value.get())
-                                            .invoke(&[key.clone(), value.clone()]),
+                            // (let ((entry (assq key (fields table)))) (if entry (set-cdr! entry value) (set-fields! table (cons (cons key value) (fields table)))))
+                            {
+                                let [entry] = [
+                                    // (assq key (fields table))
+                                    imports::assq.with(|value| value.get()).invoke(&[
+                                        key.clone(),
                                         // (fields table)
                                         globals::fields
                                             .with(|value| value.get())
                                             .invoke(&[table.clone()]),
                                     ]),
-                                ])
+                                ];
+                                if (entry.clone()).is_true() {
+                                    // (set-cdr! entry value)
+                                    imports::set_minus_cdr_i
+                                        .with(|value| value.get())
+                                        .invoke(&[entry.clone(), value.clone()])
+                                } else {
+                                    // (set-fields! table (cons (cons key value) (fields table)))
+                                    globals::set_minus_fields_i
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            table.clone(),
+                                            // (cons (cons key value) (fields table))
+                                            imports::cons.with(|value| value.get()).invoke(&[
+                                                // (cons key value)
+                                                imports::cons
+                                                    .with(|value| value.get())
+                                                    .invoke(&[key.clone(), value.clone()]),
+                                                // (fields table)
+                                                globals::fields
+                                                    .with(|value| value.get())
+                                                    .invoke(&[table.clone()]),
+                                            ]),
+                                        ])
+                                }
+                            }
                         }
                     })
                 })
@@ -297,14 +317,14 @@ pub fn initialize() {
                 })
             })
         };
-        // (define (run-tests) (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2)))))
+        // (define (run-tests) (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?)))))))
         globals::run_minus_tests.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2)))))
+                    // (letrec () (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?)))))))
                     {
                         Scm::symbol("*UNSPECIFIED*")
                     }
@@ -787,6 +807,288 @@ mod tests {
                         ])
                         .is_true()
                 );
+            }
+        }
+    }
+    #[test]
+    fn big_example() {
+        super::initialize();
+
+        // (let* ((goblin (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))
+        {
+            let [goblin] = [
+                // (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)
+                {
+                    let [goblin] = [
+                        // (make-table)
+                        globals::make_minus_table
+                            .with(|value| value.get())
+                            .invoke(&[]),
+                    ];
+                    {
+                        // (set-field! goblin (quote health) 30)
+                        globals::set_minus_field_i
+                            .with(|value| value.get())
+                            .invoke(&[goblin.clone(), Scm::symbol("health"), Scm::from(30)]);
+                        // (set-field! goblin (quote armor) 10)
+                        globals::set_minus_field_i
+                            .with(|value| value.get())
+                            .invoke(&[goblin.clone(), Scm::symbol("armor"), Scm::from(10)]);
+                        // (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0)))
+                        globals::set_minus_field_i
+                            .with(|value| value.get())
+                            .invoke(&[goblin.clone(), Scm::symbol("alive?"), {
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 1 {
+                                        panic!("invalid arity")
+                                    }
+                                    let self_ = args[0].clone();
+                                    // (letrec () (> (get-field self (quote health)) 0))
+                                    {
+                                        // (> (get-field self (quote health)) 0)
+                                        imports::_g_.with(|value| value.get()).invoke(&[
+                                            // (get-field self (quote health))
+                                            globals::get_minus_field
+                                                .with(|value| value.get())
+                                                .invoke(&[self_.clone(), Scm::symbol("health")]),
+                                            Scm::from(0),
+                                        ])
+                                    }
+                                })
+                            }]);
+                        // (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor))))))))
+                        globals::set_minus_field_i
+                            .with(|value| value.get())
+                            .invoke(&[goblin.clone(), Scm::symbol("take-damage!"), {
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 2 {
+                                        panic!("invalid arity")
+                                    }
+                                    let self_ = args[0].clone();
+                                    let amount = args[1].clone();
+                                    // (letrec () (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))
+                                    {
+                                        if (
+                                            // (> amount (get-field self (quote armor)))
+                                            imports::_g_.with(|value| value.get()).invoke(&[
+                                                amount.clone(),
+                                                // (get-field self (quote armor))
+                                                globals::get_minus_field
+                                                    .with(|value| value.get())
+                                                    .invoke(&[self_.clone(), Scm::symbol("armor")]),
+                                            ])
+                                        )
+                                        .is_true()
+                                        {
+                                            // (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))
+                                            globals::set_minus_field_i
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    self_.clone(),
+                                                    Scm::symbol("health"),
+                                                    // (- (get-field self (quote health)) (- amount (get-field self (quote armor))))
+                                                    imports::_minus_
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (get-field self (quote health))
+                                                            globals::get_minus_field
+                                                                .with(|value| value.get())
+                                                                .invoke(&[
+                                                                    self_.clone(),
+                                                                    Scm::symbol("health"),
+                                                                ]),
+                                                            // (- amount (get-field self (quote armor)))
+                                                            imports::_minus_
+                                                                .with(|value| value.get())
+                                                                .invoke(&[
+                                                                    amount.clone(),
+                                                                    // (get-field self (quote armor))
+                                                                    globals::get_minus_field
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            self_.clone(),
+                                                                            Scm::symbol("armor"),
+                                                                        ]),
+                                                                ]),
+                                                        ]),
+                                                ])
+                                        } else {
+                                            Scm::symbol("*UNSPECIFIED*")
+                                        }
+                                    }
+                                })
+                            }]);
+                        // (set-field! goblin (quote spawn) (lambda (self) (clone self)))
+                        globals::set_minus_field_i
+                            .with(|value| value.get())
+                            .invoke(&[goblin.clone(), Scm::symbol("spawn"), {
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 1 {
+                                        panic!("invalid arity")
+                                    }
+                                    let self_ = args[0].clone();
+                                    // (letrec () (clone self))
+                                    {
+                                        // (clone self)
+                                        globals::clone
+                                            .with(|value| value.get())
+                                            .invoke(&[self_.clone()])
+                                    }
+                                })
+                            }]);
+                        goblin.clone()
+                    }
+                },
+            ];
+            // (let* ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))
+            {
+                let [goblin_minus_wizard] = [
+                    // (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard)
+                    {
+                        let [goblin_minus_wizard] = [
+                            // (clone goblin)
+                            globals::clone
+                                .with(|value| value.get())
+                                .invoke(&[goblin.clone()]),
+                        ];
+                        {
+                            // (set-field! goblin-wizard (quote health) 20)
+                            globals::set_minus_field_i
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    goblin_minus_wizard.clone(),
+                                    Scm::symbol("health"),
+                                    Scm::from(20),
+                                ]);
+                            // (set-field! goblin-wizard (quote armor) 0)
+                            globals::set_minus_field_i
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    goblin_minus_wizard.clone(),
+                                    Scm::symbol("armor"),
+                                    Scm::from(0),
+                                ]);
+                            goblin_minus_wizard.clone()
+                        }
+                    },
+                ];
+                // (let* () (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))
+
+                // (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))
+                {
+                    let [krog] = [
+                        // (call-method goblin (quote spawn))
+                        globals::call_minus_method
+                            .with(|value| value.get())
+                            .invoke(&[goblin.clone(), Scm::symbol("spawn")]),
+                    ];
+                    // (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))
+                    {
+                        let [kold] = [
+                            // (call-method goblin (quote spawn))
+                            globals::call_minus_method
+                                .with(|value| value.get())
+                                .invoke(&[goblin.clone(), Scm::symbol("spawn")]),
+                        ];
+                        // (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))
+                        {
+                            let [vard] = [
+                                // (call-method goblin (quote spawn))
+                                globals::call_minus_method
+                                    .with(|value| value.get())
+                                    .invoke(&[goblin.clone(), Scm::symbol("spawn")]),
+                            ];
+                            // (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))
+                            {
+                                let [dega] = [
+                                    // (call-method goblin-wizard (quote spawn))
+                                    globals::call_minus_method
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            goblin_minus_wizard.clone(),
+                                            Scm::symbol("spawn"),
+                                        ]),
+                                ];
+                                {
+                                    // (call-method krog (quote take-damage!) 15)
+                                    globals::call_minus_method
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            krog.clone(),
+                                            Scm::symbol("take-damage!"),
+                                            Scm::from(15),
+                                        ]);
+                                    // (call-method kold (quote take-damage!) 30)
+                                    globals::call_minus_method
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            kold.clone(),
+                                            Scm::symbol("take-damage!"),
+                                            Scm::from(30),
+                                        ]);
+                                    // (call-method vard (quote take-damage!) 45)
+                                    globals::call_minus_method
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            vard.clone(),
+                                            Scm::symbol("take-damage!"),
+                                            Scm::from(45),
+                                        ]);
+                                    // (call-method dega (quote take-damage!) 20)
+                                    globals::call_minus_method
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            dega.clone(),
+                                            Scm::symbol("take-damage!"),
+                                            Scm::from(20),
+                                        ]);
+                                    assert!(
+                                        // (call-method krog (quote alive?))
+                                        globals::call_minus_method
+                                            .with(|value| value.get())
+                                            .invoke(&[krog.clone(), Scm::symbol("alive?"),])
+                                            .is_true()
+                                    );
+                                    assert!(
+                                        // (call-method kold (quote alive?))
+                                        globals::call_minus_method
+                                            .with(|value| value.get())
+                                            .invoke(&[kold.clone(), Scm::symbol("alive?"),])
+                                            .is_true()
+                                    );
+                                    assert!(
+                                        // (not (call-method vard (quote alive?)))
+                                        imports::not
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (call-method vard (quote alive?))
+                                                globals::call_minus_method
+                                                    .with(|value| value.get())
+                                                    .invoke(
+                                                        &[vard.clone(), Scm::symbol("alive?"),]
+                                                    ),
+                                            ])
+                                            .is_true()
+                                    );
+                                    assert!(
+                                        // (not (call-method dega (quote alive?)))
+                                        imports::not
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (call-method dega (quote alive?))
+                                                globals::call_minus_method
+                                                    .with(|value| value.get())
+                                                    .invoke(
+                                                        &[dega.clone(), Scm::symbol("alive?"),]
+                                                    ),
+                                            ])
+                                            .is_true()
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

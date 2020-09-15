@@ -34,16 +34,19 @@
       (set-cdr! (cdr table) fields))
 
     (define (get-field table key)
-      (let ((value (assq key (fields table))))
-        (cond (value (cdr value))
+      (let ((entry (assq key (fields table))))
+        (cond (entry (cdr entry))
               ((parent table) (get-field (parent table) key))
               (else #f))))
 
     (define (set-field! table key value)
-      (set-fields!
-        table
-        (cons (cons key value)
-              (fields table))))
+      (let ((entry (assq key (fields table))))
+        (if entry
+            (set-cdr! entry value)
+            (set-fields!
+              table
+              (cons (cons key value)
+                    (fields table))))))
 
     (define (call-method table key . args)
       (apply (get-field table key) table args)))
@@ -116,4 +119,40 @@
                                                    (get-field other 'value)))))
                          t)))
           (when (call-method t 'add t))
-          (then (= (get-field t 'value) 2)))))))
+          (then (= (get-field t 'value) 2)))
+
+        (testcase "big example"
+          (given (goblin <- (let ((goblin (make-table)))
+                              (set-field! goblin 'health 30)
+                              (set-field! goblin 'armor 10)
+                              (set-field! goblin 'alive?
+                                          (lambda (self)
+                                            (> (get-field self 'health) 0)))
+                              (set-field! goblin 'take-damage!
+                                          (lambda (self amount)
+                                            (if (> amount (get-field self 'armor))
+                                                (set-field! self 'health
+                                                  (- (get-field self 'health)
+                                                     (- amount
+                                                        (get-field self 'armor)))))))
+                              (set-field! goblin 'spawn
+                                          (lambda (self)
+                                            (clone self)))
+                              goblin))
+                 (goblin-wizard <- (let ((goblin-wizard (clone goblin)))
+                                     (set-field! goblin-wizard 'health 20)
+                                     (set-field! goblin-wizard 'armor 0)
+                                     goblin-wizard)))
+          (when (krog <- (call-method goblin 'spawn))
+                (kold <- (call-method goblin 'spawn))
+                (vard <- (call-method goblin 'spawn))
+                (dega <- (call-method goblin-wizard 'spawn))
+
+                (call-method krog 'take-damage! 15)
+                (call-method kold 'take-damage! 30)
+                (call-method vard 'take-damage! 45)
+                (call-method dega 'take-damage! 20))
+          (then (call-method krog 'alive?)
+                (call-method kold 'alive?)
+                (not (call-method vard 'alive?))
+                (not (call-method dega 'alive?))))))))
