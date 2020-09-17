@@ -49,7 +49,7 @@
     (define (reverse seq)
       (fold-left (lambda (acc x) (cons x acc)) '() seq))
 
-    (define (list-copy obj)
+    (define (list-copy seq)
       (fold-right cons '() seq))
 
     (define (assq obj seq)
