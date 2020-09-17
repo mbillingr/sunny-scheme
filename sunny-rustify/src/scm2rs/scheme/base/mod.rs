@@ -62,7 +62,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static symbol_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL symbol=?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static seq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL seq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_right: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-right"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static reverse: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reverse"))}
@@ -232,14 +231,14 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (list-copy obj) (fold-right cons (quote ()) seq))
+        // (define (list-copy seq) (fold-right cons (quote ()) seq))
         globals::list_minus_copy.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
                     if args.len() != 1 {
                         panic!("invalid arity")
                     }
-                    let obj = args[0].clone();
+                    let seq = args[0].clone();
                     // (letrec () (fold-right cons (quote ()) seq))
                     {
                         // (fold-right cons (quote ()) seq)
@@ -248,7 +247,7 @@ pub fn initialize() {
                             .invoke(&[
                                 imports::cons.with(|value| value.get()),
                                 Scm::Nil,
-                                globals::seq.with(|value| value.get()),
+                                seq.clone(),
                             ])
                     }
                 })

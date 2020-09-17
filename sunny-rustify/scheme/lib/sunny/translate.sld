@@ -735,7 +735,7 @@
                    (next 'free-vars)))
       (define (gen-rust module)
         (arg 'gen-rust module)
-        (print module ", ")
+        (print module ",")
         (next 'gen-rust module))
 
       (define (self msg . args)
@@ -1363,7 +1363,7 @@
         (body module)
         (close-module module)))
 
-    
+
     (define (rust-block module code)
       (print module "{")
       (code)

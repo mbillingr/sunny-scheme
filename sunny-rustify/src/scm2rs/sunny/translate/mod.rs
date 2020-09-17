@@ -242,7 +242,7 @@ global_minus_env.set(
 globals::make_minus_global_minus_env.with(|value| value.get()).invoke(&[]));
 library_minus_env.set(
 // (list (quote ()))
-imports::list.with(|value| value.get()).invoke(&[Scm::Nil, ]));
+imports::list.with(|value| value.get()).invoke(&[Scm::Nil,]));
 process_minus_imports.set({let library_minus_env = library_minus_env.clone();let process_minus_imports = process_minus_imports.clone();let global_minus_env = global_minus_env.clone();Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp_star_ = args[0].clone();let imports = args[1].clone();let init = args[2].clone();
 // (letrec () (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((main (boxify (sexpr->sequence exp* global-env #f))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))
 {
@@ -251,35 +251,35 @@ if (
 // (import? (car exp*))
 globals::import_p.with(|value| value.get()).invoke(&[
 // (car exp*)
-imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ])).is_true() {{
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(),]),])).is_true() {{
 // (register-libraries (import-libnames (car exp*)) library-env)
 globals::register_minus_libraries.with(|value| value.get()).invoke(&[
 // (import-libnames (car exp*))
 globals::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
-imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), library_minus_env.get(), ]);
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(),]),]),library_minus_env.get(),]);
 // (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))
 process_minus_imports.get().invoke(&[
 // (cdr exp*)
-imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), 
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone(),]),
 // (append imports (sexpr->import (cdar exp*) global-env))
-globals::append.with(|value| value.get()).invoke(&[imports.clone(), 
+globals::append.with(|value| value.get()).invoke(&[imports.clone(),
 // (sexpr->import (cdar exp*) global-env)
 globals::sexpr_minus__g_import.with(|value| value.get()).invoke(&[
 // (cdar exp*)
-imports::cdar.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), global_minus_env.get(), ]), ]), 
+imports::cdar.with(|value| value.get()).invoke(&[exp_star_.clone(),]),global_minus_env.get(),]),]),
 // (set-add* init (import-libnames (car exp*)))
-globals::set_minus_add_star_.with(|value| value.get()).invoke(&[init.clone(), 
+globals::set_minus_add_star_.with(|value| value.get()).invoke(&[init.clone(),
 // (import-libnames (car exp*))
 globals::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
-imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(), ]), ]), ]), ])}} else {
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(),]),]),]),])}} else {
 // (let* ((main (boxify (sexpr->sequence exp* global-env #f))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {let [main, ] = [
 // (boxify (sexpr->sequence exp* global-env #f))
 globals::boxify.with(|value| value.get()).invoke(&[
 // (sexpr->sequence exp* global-env #f)
-globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(), global_minus_env.get(), Scm::False, ]), ]), ];
+globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(),global_minus_env.get(),Scm::False,]),]),];
 // (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {let [globals, ] = [
 // (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env))
@@ -291,26 +291,26 @@ imports::string_l__p.with(|value| value.get()).invoke(&[
 // (symbol->string (car a))
 imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[
 // (car a)
-imports::car.with(|value| value.get()).invoke(&[a.clone(), ]), ]), 
+imports::car.with(|value| value.get()).invoke(&[a.clone(),]),]),
 // (symbol->string (car b))
 imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[
 // (car b)
-imports::car.with(|value| value.get()).invoke(&[b.clone(), ]), ]), ])}})}, 
+imports::car.with(|value| value.get()).invoke(&[b.clone(),]),]),])}})},
 // (cdr global-env)
-imports::cdr.with(|value| value.get()).invoke(&[global_minus_env.get(), ]), ]), ];
+imports::cdr.with(|value| value.get()).invoke(&[global_minus_env.get(),]),]),];
 // (let* () (make-program globals imports init main (filter cdr (car library-env))))
 
 // (make-program globals imports init main (filter cdr (car library-env)))
-globals::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(), imports.clone(), init.clone(), main.clone(), 
+globals::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(),imports.clone(),init.clone(),main.clone(),
 // (filter cdr (car library-env))
-imports::filter.with(|value| value.get()).invoke(&[imports::cdr.with(|value| value.get()), 
+imports::filter.with(|value| value.get()).invoke(&[imports::cdr.with(|value| value.get()),
 // (car library-env)
-imports::car.with(|value| value.get()).invoke(&[library_minus_env.get(), ]), ]), ])}}}}})});
+imports::car.with(|value| value.get()).invoke(&[library_minus_env.get(),]),]),])}}}}})});
 
 // (process-imports exp* (quote ()) (make-set))
-process_minus_imports.get().invoke(&[exp_star_.clone(), Scm::Nil, 
+process_minus_imports.get().invoke(&[exp_star_.clone(),Scm::Nil,
 // (make-set)
-globals::make_minus_set.with(|value| value.get()).invoke(&[]), ])}})}));
+globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
         // (define (library->ast name exp* library-env) (library-decls->ast name exp* (make-set) (make-nop) (make-global-env) library-env (quote ()) (quote ())))
         globals::library_minus__g_ast.with(|value| {
             value.set({
@@ -735,165 +735,165 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]), ])}})}));
 // (letrec () (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
 {if (
 // (atom? exp)
-globals::atom_p.with(|value| value.get()).invoke(&[exp.clone(), ])).is_true() {if (
+globals::atom_p.with(|value| value.get()).invoke(&[exp.clone(),])).is_true() {if (
 // (symbol? exp)
-imports::symbol_p.with(|value| value.get()).invoke(&[exp.clone(), ])).is_true() {
+imports::symbol_p.with(|value| value.get()).invoke(&[exp.clone(),])).is_true() {
 // (sexpr->reference exp env)
-globals::sexpr_minus__g_reference.with(|value| value.get()).invoke(&[exp.clone(), env.clone(), ])} else {
+globals::sexpr_minus__g_reference.with(|value| value.get()).invoke(&[exp.clone(),env.clone(),])} else {
 // (sexpr->constant exp env)
-globals::sexpr_minus__g_constant.with(|value| value.get()).invoke(&[exp.clone(), env.clone(), ])}} else {
+globals::sexpr_minus__g_constant.with(|value| value.get()).invoke(&[exp.clone(),env.clone(),])}} else {
 // (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))
 if (
 // (eq? (quote quote) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("quote"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("quote"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (sexpr->constant (cadr exp) env)
 globals::sexpr_minus__g_constant.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ])} else {if (
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
 // (eq? (quote set!) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("set!"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("set!"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (sexpr->assignment (cadr exp) (caddr exp) env)
 globals::sexpr_minus__g_assignment.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (caddr exp)
-imports::caddr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ])} else {if (
+imports::caddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
 // (eq? (quote define) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("define"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("define"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (wrap-sexpr exp (sexpr->definition exp env))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->definition exp env)
-globals::sexpr_minus__g_definition.with(|value| value.get()).invoke(&[exp.clone(), env.clone(), ]), ])} else {if (
+globals::sexpr_minus__g_definition.with(|value| value.get()).invoke(&[exp.clone(),env.clone(),]),])} else {if (
 // (eq? (quote lambda) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("lambda"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("lambda"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (sexpr->abstraction (cadr exp) (cddr exp) env)
 globals::sexpr_minus__g_abstraction.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ])} else {if (
+imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
 // (eq? (quote begin) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("begin"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("begin"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (sexpr->sequence (cdr exp) env tail?)
 globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[
 // (cdr exp)
-imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ])} else {if (
+imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),])} else {if (
 // (eq? (quote let) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("let"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("let"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->scope-let (cadr exp) (cddr exp) env tail?)
 globals::sexpr_minus__g_scope_minus_let.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
+imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
 // (eq? (quote let*) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("let*"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("let*"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->scope-seq (cadr exp) (cddr exp) env tail?)
 globals::sexpr_minus__g_scope_minus_seq.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
+imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
 // (eq? (quote letrec) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("letrec"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("letrec"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->scope-rec (cadr exp) (cddr exp) env tail?)
 globals::sexpr_minus__g_scope_minus_rec.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
+imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
 // (eq? (quote if) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("if"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("if"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)
 globals::sexpr_minus__g_alternative.with(|value| value.get()).invoke(&[
 // (if-condition exp)
-globals::if_minus_condition.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+globals::if_minus_condition.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (if-consequence exp)
-globals::if_minus_consequence.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+globals::if_minus_consequence.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (if-alternative exp)
-globals::if_minus_alternative.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ])} else {if (
+globals::if_minus_alternative.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),])} else {if (
 // (eq? (quote cond) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("cond"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("cond"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->cond (cond-clauses exp) env tail?)
 globals::sexpr_minus__g_cond.with(|value| value.get()).invoke(&[
 // (cond-clauses exp)
-globals::cond_minus_clauses.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
+globals::cond_minus_clauses.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
 // (eq? (quote and) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("and"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("and"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->and (cdr exp) env tail?)
 globals::sexpr_minus__g_and.with(|value| value.get()).invoke(&[
 // (cdr exp)
-imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])} else {if (
+imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
 // (and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env)))
 if (
 // (eq? (quote testsuite) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("testsuite"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("testsuite"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (not (lookup (quote testsuite) env))
 imports::not.with(|value| value.get()).invoke(&[
 // (lookup (quote testsuite) env)
-globals::lookup.with(|value| value.get()).invoke(&[Scm::symbol("testsuite"), env.clone(), ]), ])} else {Scm::False}).is_true() {
+globals::lookup.with(|value| value.get()).invoke(&[Scm::symbol("testsuite"),env.clone(),]),])} else {Scm::False}).is_true() {
 // (sexpr->testsuite (cadr exp) (cddr exp) env)
 globals::sexpr_minus__g_testsuite.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ])} else {if (
+imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
 // (and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env)))
 if (
 // (eq? (quote assert) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("assert"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("assert"),
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), ])).is_true() {
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
 // (not (lookup (quote assert) env))
 imports::not.with(|value| value.get()).invoke(&[
 // (lookup (quote assert) env)
-globals::lookup.with(|value| value.get()).invoke(&[Scm::symbol("assert"), env.clone(), ]), ])} else {Scm::False}).is_true() {
+globals::lookup.with(|value| value.get()).invoke(&[Scm::symbol("assert"),env.clone(),]),])} else {Scm::False}).is_true() {
 // (sexpr->assert (cadr exp) env)
 globals::sexpr_minus__g_assert.with(|value| value.get()).invoke(&[
 // (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ])} else {
+imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {
 // (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(), 
+globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
 // (sexpr->application (car exp) (cdr exp) env tail?)
 globals::sexpr_minus__g_application.with(|value| value.get()).invoke(&[
 // (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(), ]), 
+imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),
 // (cdr exp)
-imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), tail_p.clone(), ]), ])}}}}}}}}}}}}}}}})}));
+imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])}}}}}}}}}}}}}}}})}));
         // (define (wrap-sexpr exp node) (make-comment exp node))
         globals::wrap_minus_sexpr.with(|value| {
             value.set({
@@ -5830,7 +5830,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                 })
             })
         });
-        // (define (make-args arg next) (define (repr) (cons (quote ARG) (cons arg next))) (define (transform fnc) (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc))))) (define (free-vars) (set-union (arg (quote free-vars)) (next (quote free-vars)))) (define (gen-rust module) (arg (quote gen-rust) module) (print module ", ") (next (quote gen-rust) module)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))) self)
+        // (define (make-args arg next) (define (repr) (cons (quote ARG) (cons arg next))) (define (transform fnc) (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc))))) (define (free-vars) (set-union (arg (quote free-vars)) (next (quote free-vars)))) (define (gen-rust module) (arg (quote gen-rust) module) (print module ",") (next (quote gen-rust) module)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))) self)
         globals::make_minus_args.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -5839,7 +5839,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                     }
                     let arg = args[0].clone();
                     let next = args[1].clone();
-                    // (letrec ((repr (lambda () (cons (quote ARG) (cons arg next)))) (transform (lambda (fnc) (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc)))))) (free-vars (lambda () (set-union (arg (quote free-vars)) (next (quote free-vars))))) (gen-rust (lambda (module) (arg (quote gen-rust) module) (print module ", ") (next (quote gen-rust) module))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))))) self)
+                    // (letrec ((repr (lambda () (cons (quote ARG) (cons arg next)))) (transform (lambda (fnc) (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc)))))) (free-vars (lambda () (set-union (arg (quote free-vars)) (next (quote free-vars))))) (gen-rust (lambda (module) (arg (quote gen-rust) module) (print module ",") (next (quote gen-rust) module))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))))) self)
                     {
                         let repr = Scm::uninitialized().into_boxed();
                         let transform = Scm::uninitialized().into_boxed();
@@ -5936,16 +5936,16 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(), ]), env.clone(), ta
                                     panic!("invalid arity")
                                 }
                                 let module = args[0].clone();
-                                // (letrec () (arg (quote gen-rust) module) (print module ", ") (next (quote gen-rust) module))
+                                // (letrec () (arg (quote gen-rust) module) (print module ",") (next (quote gen-rust) module))
                                 {
                                     {
                                         // (arg (quote gen-rust) module)
                                         arg.clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
-                                        // (print module ", ")
+                                        // (print module ",")
                                         globals::print
                                             .with(|value| value.get())
-                                            .invoke(&[module.clone(), Scm::from(", ")]);
+                                            .invoke(&[module.clone(), Scm::from(",")]);
                                         // (next (quote gen-rust) module)
                                         next.clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()])
@@ -6409,37 +6409,37 @@ repr.set({let params = params.clone();let args_ = args_.clone();let body = body.
 // (letrec () (cons (quote SCOPE) (cons params (cons (args (quote repr)) (body (quote repr))))))
 {
 // (cons (quote SCOPE) (cons params (cons (args (quote repr)) (body (quote repr)))))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("SCOPE"), 
+imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("SCOPE"),
 // (cons params (cons (args (quote repr)) (body (quote repr))))
-imports::cons.with(|value| value.get()).invoke(&[params.clone(), 
+imports::cons.with(|value| value.get()).invoke(&[params.clone(),
 // (cons (args (quote repr)) (body (quote repr)))
 imports::cons.with(|value| value.get()).invoke(&[
 // (args (quote repr))
-args_.clone().invoke(&[Scm::symbol("repr"), ]), 
+args_.clone().invoke(&[Scm::symbol("repr"),]),
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr"), ]), ]), ]), ])}})});
+body.clone().invoke(&[Scm::symbol("repr"),]),]),]),])}})});
 transform.set({let self_ = self_.clone();let params = params.clone();let body = body.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();
 // (letrec () (fnc self (lambda () (make-scope params (body (quote transform) fnc) (map (lambda (a) (a (quote transform) fnc)) args)))))
 {
 // (fnc self (lambda () (make-scope params (body (quote transform) fnc) (map (lambda (a) (a (quote transform) fnc)) args))))
-fnc.clone().invoke(&[self_.get(), {let params = params.clone();let body = body.clone();let fnc = fnc.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+fnc.clone().invoke(&[self_.get(),{let params = params.clone();let body = body.clone();let fnc = fnc.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (make-scope params (body (quote transform) fnc) (map (lambda (a) (a (quote transform) fnc)) args)))
 {
 // (make-scope params (body (quote transform) fnc) (map (lambda (a) (a (quote transform) fnc)) args))
-globals::make_minus_scope.with(|value| value.get()).invoke(&[params.clone(), 
+globals::make_minus_scope.with(|value| value.get()).invoke(&[params.clone(),
 // (body (quote transform) fnc)
-body.clone().invoke(&[Scm::symbol("transform"), fnc.clone(), ]), 
+body.clone().invoke(&[Scm::symbol("transform"),fnc.clone(),]),
 // (map (lambda (a) (a (quote transform) fnc)) args)
 imports::map.with(|value| value.get()).invoke(&[{let fnc = fnc.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let a = args[0].clone();
 // (letrec () (a (quote transform) fnc))
 {
 // (a (quote transform) fnc)
-a.clone().invoke(&[Scm::symbol("transform"), fnc.clone(), ])}})}, args_.clone(), ]), ])}})}, ])}})});
+a.clone().invoke(&[Scm::symbol("transform"),fnc.clone(),])}})},args_.clone(),]),])}})},])}})});
 free_minus_vars_minus_args.set({let free_minus_vars_minus_args = free_minus_vars_minus_args.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let args_ = args[0].clone();
 // (letrec () (if (null? args) (make-set) (set-union ((car args) (quote free-vars)) (free-vars-args (cdr args)))))
 {if (
 // (null? args)
-imports::null_p.with(|value| value.get()).invoke(&[args_.clone(), ])).is_true() {
+imports::null_p.with(|value| value.get()).invoke(&[args_.clone(),])).is_true() {
 // (make-set)
 globals::make_minus_set.with(|value| value.get()).invoke(&[])} else {
 // (set-union ((car args) (quote free-vars)) (free-vars-args (cdr args)))
@@ -6447,11 +6447,11 @@ globals::set_minus_union.with(|value| value.get()).invoke(&[
 // ((car args) (quote free-vars))
 
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]).invoke(&[Scm::symbol("free-vars"), ]), 
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]).invoke(&[Scm::symbol("free-vars"),]),
 // (free-vars-args (cdr args))
 free_minus_vars_minus_args.get().invoke(&[
 // (cdr args)
-imports::cdr.with(|value| value.get()).invoke(&[args_.clone(), ]), ]), ])}}})});
+imports::cdr.with(|value| value.get()).invoke(&[args_.clone(),]),]),])}}})});
 free_minus_vars.set({let body = body.clone();let free_minus_vars_minus_args = free_minus_vars_minus_args.clone();let args_ = args_.clone();let params = params.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (set-remove* (set-union (body (quote free-vars)) (free-vars-args args)) params))
 {
@@ -6460,14 +6460,14 @@ globals::set_minus_remove_star_.with(|value| value.get()).invoke(&[
 // (set-union (body (quote free-vars)) (free-vars-args args))
 globals::set_minus_union.with(|value| value.get()).invoke(&[
 // (body (quote free-vars))
-body.clone().invoke(&[Scm::symbol("free-vars"), ]), 
+body.clone().invoke(&[Scm::symbol("free-vars"),]),
 // (free-vars-args args)
-free_minus_vars_minus_args.get().invoke(&[args_.clone(), ]), ]), params.clone(), ])}})});
+free_minus_vars_minus_args.get().invoke(&[args_.clone(),]),]),params.clone(),])}})});
 gen_minus_rust.set({let params = params.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();
 // (letrec () (rust-block module (lambda () (for-each (lambda (p) (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();")) params) (for-each (lambda (p a) (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");")) params args) (body (quote gen-rust) module))))
 {
 // (rust-block module (lambda () (for-each (lambda (p) (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();")) params) (for-each (lambda (p a) (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");")) params args) (body (quote gen-rust) module)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let module = module.clone();let params = params.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let params = params.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (for-each (lambda (p) (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();")) params) (for-each (lambda (p a) (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");")) params args) (body (quote gen-rust) module))
 {{
 // (for-each (lambda (p) (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();")) params)
@@ -6475,52 +6475,52 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (letrec () (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();"))
 {
 // (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("let "), 
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
 // (rustify-identifier p)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[p.clone(), ]), Scm::from(" = Scm::uninitialized().into_boxed();"), ])}})}, params.clone(), ]);
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[p.clone(),]),Scm::from(" = Scm::uninitialized().into_boxed();"),])}})},params.clone(),]);
 // (for-each (lambda (p a) (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");")) params args)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let p = args[0].clone();let a = args[1].clone();
 // (letrec () (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");"))
 {{
 // (print module (rustify-identifier p) ".set(")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier p)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[p.clone(), ]), Scm::from(".set("), ]);
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[p.clone(),]),Scm::from(".set("),]);
 // (a (quote gen-rust) module)
-a.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ]);
+a.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),]);
 // (println module ");")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from(");"), ])}}})}, params.clone(), args_.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(");"),])}}})},params.clone(),args_.clone(),]);
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}}})}, ])}})});
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}}})},])}})});
 self_.set({let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote SCOPE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message SCOPE" msg))))
 {
 // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote SCOPE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message SCOPE" msg)))
 if (
 // (eq? (quote repr) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
 globals::print.with(|value| value.get()).invoke(&[])} else {if (
 // (eq? (quote transform) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote free-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"),msg.clone(),])).is_true() {
 // (free-vars)
 free_minus_vars.get().invoke(&[])} else {if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("SCOPE")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("SCOPE")} else {if (
 // (eq? (quote gen-rust) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message SCOPE" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message SCOPE"), msg.clone(), ])}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message SCOPE"),msg.clone(),])}}}}}}})});
 self_.get()}})}));
         // (define (make-sequence first next) (define (repr) (list (quote SEQUENCE) (first (quote repr)) (next (quote repr)))) (define (transform func) (func self (lambda () (make-sequence (first (quote transform) func) (next (quote transform) func))))) (define (free-vars) (set-union (first (quote free-vars)) (next (quote free-vars)))) (define (gen-rust-inner module) (first (quote gen-rust) module) (print module ";") (if (eq? (quote SEQUENCE) (next (quote kind))) (next (quote gen-rust-inner) module) (next (quote gen-rust) module))) (define (gen-rust module) (print module "{") (gen-rust-inner module) (print module "}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote SEQUENCE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote gen-rust-inner) msg) (gen-rust-inner (car args))) (else (error "Unknown message SEQUENCE" msg)))) self)
         globals::make_minus_sequence.with(|value| {
@@ -6827,56 +6827,56 @@ repr.set({let params = params.clone();let body = body.clone();Scm::func(move |ar
 // (letrec () (cons (quote ABSTRACTION) (cons params (body (quote repr)))))
 {
 // (cons (quote ABSTRACTION) (cons params (body (quote repr))))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("ABSTRACTION"), 
+imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("ABSTRACTION"),
 // (cons params (body (quote repr)))
-imports::cons.with(|value| value.get()).invoke(&[params.clone(), 
+imports::cons.with(|value| value.get()).invoke(&[params.clone(),
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr"), ]), ]), ])}})});
+body.clone().invoke(&[Scm::symbol("repr"),]),]),])}})});
 transform.set({let self_ = self_.clone();let params = params.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();
 // (letrec () (func self (lambda () (make-abstraction params vars (body (quote transform) func)))))
 {
 // (func self (lambda () (make-abstraction params vars (body (quote transform) func))))
-func.clone().invoke(&[self_.get(), {let params = params.clone();let vars = vars.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+func.clone().invoke(&[self_.get(),{let params = params.clone();let vars = vars.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (make-abstraction params vars (body (quote transform) func)))
 {
 // (make-abstraction params vars (body (quote transform) func))
-globals::make_minus_abstraction.with(|value| value.get()).invoke(&[params.clone(), vars.clone(), 
+globals::make_minus_abstraction.with(|value| value.get()).invoke(&[params.clone(),vars.clone(),
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"), func.clone(), ]), ])}})}, ])}})});
+body.clone().invoke(&[Scm::symbol("transform"),func.clone(),]),])}})},])}})});
 free_minus_vars.set({let body = body.clone();let params = params.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (set-remove* (body (quote free-vars)) params))
 {
 // (set-remove* (body (quote free-vars)) params)
 globals::set_minus_remove_star_.with(|value| value.get()).invoke(&[
 // (body (quote free-vars))
-body.clone().invoke(&[Scm::symbol("free-vars"), ]), params.clone(), ])}})});
+body.clone().invoke(&[Scm::symbol("free-vars"),]),params.clone(),])}})});
 prepare_minus_closure.set({let prepare_minus_closure = prepare_minus_closure.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let free_minus_vars = args[1].clone();
 // (letrec () (if (pair? free-vars) (let ((name (car free-vars))) (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".clone();") (prepare-closure module (cdr free-vars)))))
 {if (
 // (pair? free-vars)
-imports::pair_p.with(|value| value.get()).invoke(&[free_minus_vars.clone(), ])).is_true() {
+imports::pair_p.with(|value| value.get()).invoke(&[free_minus_vars.clone(),])).is_true() {
 // (let ((name (car free-vars))) (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".clone();") (prepare-closure module (cdr free-vars)))
 {let [name, ] = [
 // (car free-vars)
-imports::car.with(|value| value.get()).invoke(&[free_minus_vars.clone(), ]), ];{
+imports::car.with(|value| value.get()).invoke(&[free_minus_vars.clone(),]),];{
 // (print module "let ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("let "), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(), ]), ]);
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module " = ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(" = "), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(), ]), ]);
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module ".clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(".clone();"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".clone();"),]);
 // (prepare-closure module (cdr free-vars))
-prepare_minus_closure.get().invoke(&[module.clone(), 
+prepare_minus_closure.get().invoke(&[module.clone(),
 // (cdr free-vars)
-imports::cdr.with(|value| value.get()).invoke(&[free_minus_vars.clone(), ]), ])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});
+imports::cdr.with(|value| value.get()).invoke(&[free_minus_vars.clone(),]),])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});
 gen_minus_rust.set({let prepare_minus_closure = prepare_minus_closure.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();
 // (letrec ((gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (car p*))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))))) (rust-block module (lambda () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")"))))
 {let gen_minus_params = Scm::uninitialized().into_boxed();
@@ -6884,91 +6884,91 @@ gen_minus_params.set({let module = module.clone();let gen_minus_params = gen_min
 // (letrec () (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (car p*))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1)))))
 {if (
 // (pair? p*)
-imports::pair_p.with(|value| value.get()).invoke(&[p_star_.clone(), ])).is_true() {{
+imports::pair_p.with(|value| value.get()).invoke(&[p_star_.clone(),])).is_true() {{
 // (print module "let ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("let "), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
 // (print module (rustify-identifier (car p*)))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier (car p*))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[
 // (car p*)
-imports::car.with(|value| value.get()).invoke(&[p_star_.clone(), ]), ]), ]);
+imports::car.with(|value| value.get()).invoke(&[p_star_.clone(),]),]),]);
 // (print module " = args[")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(" = args["), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = args["),]);
 // (print module k)
-globals::print.with(|value| value.get()).invoke(&[module.clone(), k.clone(), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),k.clone(),]);
 // (print module "].clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("].clone();"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("].clone();"),]);
 // (gen-params (cdr p*) (+ k 1))
 gen_minus_params.get().invoke(&[
 // (cdr p*)
-imports::cdr.with(|value| value.get()).invoke(&[p_star_.clone(), ]), 
+imports::cdr.with(|value| value.get()).invoke(&[p_star_.clone(),]),
 // (+ k 1)
-imports::_plus_.with(|value| value.get()).invoke(&[k.clone(), Scm::from(1), ]), ])}} else {Scm::symbol("*UNSPECIFIED*")}}})});
+imports::_plus_.with(|value| value.get()).invoke(&[k.clone(),Scm::from(1),]),])}} else {Scm::symbol("*UNSPECIFIED*")}}})});
 
 // (rust-block module (lambda () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")")))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let prepare_minus_closure = prepare_minus_closure.clone();let module = module.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let prepare_minus_closure = prepare_minus_closure.clone();let module = module.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")"))
 {{
 // (prepare-closure module (free-vars))
-prepare_minus_closure.get().invoke(&[module.clone(), 
+prepare_minus_closure.get().invoke(&[module.clone(),
 // (free-vars)
-free_minus_vars.get().invoke(&[]), ]);
+free_minus_vars.get().invoke(&[]),]);
 // (print module "Scm::func(move |args: &[Scm]|")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("Scm::func(move |args: &[Scm]|"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|"),]);
 // (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))
 {{
 // (print module "if args.len() != ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("if args.len() != "), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if args.len() != "),]);
 // (print module (length params))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (length params)
-imports::length.with(|value| value.get()).invoke(&[params.clone(), ]), ]);
+imports::length.with(|value| value.get()).invoke(&[params.clone(),]),]);
 // (print module "{panic!(\"invalid arity\")}")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("{panic!(\"invalid arity\")}"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("{panic!(\"invalid arity\")}"),]);
 // (gen-params params 0)
-gen_minus_params.get().invoke(&[params.clone(), Scm::from(0), ]);
+gen_minus_params.get().invoke(&[params.clone(),Scm::from(0),]);
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}}})}, ]);
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}}})},]);
 // (print module ")")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(")"), ])}}})}, ])}})});
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(")"),])}}})},])}})});
 self_.set({let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let params = params.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg))))
 {
 // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg)))
 if (
 // (eq? (quote repr) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
 globals::print.with(|value| value.get()).invoke(&[])} else {if (
 // (eq? (quote transform) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote free-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"),msg.clone(),])).is_true() {
 // (free-vars)
 free_minus_vars.get().invoke(&[])} else {if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("ABSTRACTION")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("ABSTRACTION")} else {if (
 // (eq? (quote gen-rust) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote get-params) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"), msg.clone(), ])).is_true() {params.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"),msg.clone(),])).is_true() {params.clone()} else {if (
 // (eq? (quote get-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"), msg.clone(), ])).is_true() {vars.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"),msg.clone(),])).is_true() {vars.clone()} else {if (
 // (eq? (quote get-body) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-body"), msg.clone(), ])).is_true() {body.clone()} else {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-body"),msg.clone(),])).is_true() {body.clone()} else {
 // (error "Unknown message ABSTRACTION" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message ABSTRACTION"), msg.clone(), ])}}}}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message ABSTRACTION"),msg.clone(),])}}}}}}}}}})});
 self_.get()}})}));
         // (define (make-vararg-abstraction params vararg vars varvar body) (define (repr) (cons (quote VARARG-ABSTRACTION) (cons params (body (quote repr))))) (define (transform func) (func self (lambda () (make-vararg-abstraction params vararg vars varvar (body (quote transform) func))))) (define (free-vars) (set-remove* (body (quote free-vars)) (cons vararg params))) (define (prepare-closure module free-vars) (if (pair? free-vars) (let ((name (car free-vars))) (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".clone();") (prepare-closure module (cdr free-vars))))) (define (gen-rust module) (define (gen-params p* k) (if (pair? p*) (begin (print module "let " (rustify-identifier (car p*)) " = args[" k "].clone();") (gen-params (cdr p*) (+ k 1))) (begin (print module "let " (rustify-identifier vararg) " = Scm::list(&args[" k "..]);")))) (rust-block module (lambda () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")")))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote VARARG-ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vararg) msg) vararg) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-varvar) msg) varvar) ((eq? (quote get-body) msg) body) (else (error "Unknown message VARARG-ABSTRACTION" msg)))) self)
         globals::make_minus_vararg_minus_abstraction.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 5{panic!("invalid arity")}let params = args[0].clone();let vararg = args[1].clone();let vars = args[2].clone();let varvar = args[3].clone();let body = args[4].clone();
@@ -6983,58 +6983,58 @@ repr.set({let params = params.clone();let body = body.clone();Scm::func(move |ar
 // (letrec () (cons (quote VARARG-ABSTRACTION) (cons params (body (quote repr)))))
 {
 // (cons (quote VARARG-ABSTRACTION) (cons params (body (quote repr))))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("VARARG-ABSTRACTION"), 
+imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("VARARG-ABSTRACTION"),
 // (cons params (body (quote repr)))
-imports::cons.with(|value| value.get()).invoke(&[params.clone(), 
+imports::cons.with(|value| value.get()).invoke(&[params.clone(),
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr"), ]), ]), ])}})});
+body.clone().invoke(&[Scm::symbol("repr"),]),]),])}})});
 transform.set({let self_ = self_.clone();let params = params.clone();let vararg = vararg.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();
 // (letrec () (func self (lambda () (make-vararg-abstraction params vararg vars varvar (body (quote transform) func)))))
 {
 // (func self (lambda () (make-vararg-abstraction params vararg vars varvar (body (quote transform) func))))
-func.clone().invoke(&[self_.get(), {let params = params.clone();let vararg = vararg.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+func.clone().invoke(&[self_.get(),{let params = params.clone();let vararg = vararg.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (make-vararg-abstraction params vararg vars varvar (body (quote transform) func)))
 {
 // (make-vararg-abstraction params vararg vars varvar (body (quote transform) func))
-globals::make_minus_vararg_minus_abstraction.with(|value| value.get()).invoke(&[params.clone(), vararg.clone(), vars.clone(), varvar.clone(), 
+globals::make_minus_vararg_minus_abstraction.with(|value| value.get()).invoke(&[params.clone(),vararg.clone(),vars.clone(),varvar.clone(),
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"), func.clone(), ]), ])}})}, ])}})});
+body.clone().invoke(&[Scm::symbol("transform"),func.clone(),]),])}})},])}})});
 free_minus_vars.set({let body = body.clone();let vararg = vararg.clone();let params = params.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (set-remove* (body (quote free-vars)) (cons vararg params)))
 {
 // (set-remove* (body (quote free-vars)) (cons vararg params))
 globals::set_minus_remove_star_.with(|value| value.get()).invoke(&[
 // (body (quote free-vars))
-body.clone().invoke(&[Scm::symbol("free-vars"), ]), 
+body.clone().invoke(&[Scm::symbol("free-vars"),]),
 // (cons vararg params)
-imports::cons.with(|value| value.get()).invoke(&[vararg.clone(), params.clone(), ]), ])}})});
+imports::cons.with(|value| value.get()).invoke(&[vararg.clone(),params.clone(),]),])}})});
 prepare_minus_closure.set({let prepare_minus_closure = prepare_minus_closure.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let free_minus_vars = args[1].clone();
 // (letrec () (if (pair? free-vars) (let ((name (car free-vars))) (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".clone();") (prepare-closure module (cdr free-vars)))))
 {if (
 // (pair? free-vars)
-imports::pair_p.with(|value| value.get()).invoke(&[free_minus_vars.clone(), ])).is_true() {
+imports::pair_p.with(|value| value.get()).invoke(&[free_minus_vars.clone(),])).is_true() {
 // (let ((name (car free-vars))) (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".clone();") (prepare-closure module (cdr free-vars)))
 {let [name, ] = [
 // (car free-vars)
-imports::car.with(|value| value.get()).invoke(&[free_minus_vars.clone(), ]), ];{
+imports::car.with(|value| value.get()).invoke(&[free_minus_vars.clone(),]),];{
 // (print module "let ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("let "), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(), ]), ]);
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module " = ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(" = "), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(), ]), ]);
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module ".clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(".clone();"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".clone();"),]);
 // (prepare-closure module (cdr free-vars))
-prepare_minus_closure.get().invoke(&[module.clone(), 
+prepare_minus_closure.get().invoke(&[module.clone(),
 // (cdr free-vars)
-imports::cdr.with(|value| value.get()).invoke(&[free_minus_vars.clone(), ]), ])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});
+imports::cdr.with(|value| value.get()).invoke(&[free_minus_vars.clone(),]),])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});
 gen_minus_rust.set({let prepare_minus_closure = prepare_minus_closure.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let body = body.clone();let vararg = vararg.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();
 // (letrec ((gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let " (rustify-identifier (car p*)) " = args[" k "].clone();") (gen-params (cdr p*) (+ k 1))) (begin (print module "let " (rustify-identifier vararg) " = Scm::list(&args[" k "..]);")))))) (rust-block module (lambda () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")"))))
 {let gen_minus_params = Scm::uninitialized().into_boxed();
@@ -7042,87 +7042,87 @@ gen_minus_params.set({let module = module.clone();let gen_minus_params = gen_min
 // (letrec () (if (pair? p*) (begin (print module "let " (rustify-identifier (car p*)) " = args[" k "].clone();") (gen-params (cdr p*) (+ k 1))) (begin (print module "let " (rustify-identifier vararg) " = Scm::list(&args[" k "..]);"))))
 {if (
 // (pair? p*)
-imports::pair_p.with(|value| value.get()).invoke(&[p_star_.clone(), ])).is_true() {{
+imports::pair_p.with(|value| value.get()).invoke(&[p_star_.clone(),])).is_true() {{
 // (print module "let " (rustify-identifier (car p*)) " = args[" k "].clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("let "), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
 // (rustify-identifier (car p*))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[
 // (car p*)
-imports::car.with(|value| value.get()).invoke(&[p_star_.clone(), ]), ]), Scm::from(" = args["), k.clone(), Scm::from("].clone();"), ]);
+imports::car.with(|value| value.get()).invoke(&[p_star_.clone(),]),]),Scm::from(" = args["),k.clone(),Scm::from("].clone();"),]);
 // (gen-params (cdr p*) (+ k 1))
 gen_minus_params.get().invoke(&[
 // (cdr p*)
-imports::cdr.with(|value| value.get()).invoke(&[p_star_.clone(), ]), 
+imports::cdr.with(|value| value.get()).invoke(&[p_star_.clone(),]),
 // (+ k 1)
-imports::_plus_.with(|value| value.get()).invoke(&[k.clone(), Scm::from(1), ]), ])}} else {
+imports::_plus_.with(|value| value.get()).invoke(&[k.clone(),Scm::from(1),]),])}} else {
 // (print module "let " (rustify-identifier vararg) " = Scm::list(&args[" k "..]);")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("let "), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
 // (rustify-identifier vararg)
-imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[vararg.clone(), ]), Scm::from(" = Scm::list(&args["), k.clone(), Scm::from("..]);"), ])}}})});
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[vararg.clone(),]),Scm::from(" = Scm::list(&args["),k.clone(),Scm::from("..]);"),])}}})});
 
 // (rust-block module (lambda () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")")))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let prepare_minus_closure = prepare_minus_closure.clone();let module = module.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let prepare_minus_closure = prepare_minus_closure.clone();let module = module.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")"))
 {{
 // (prepare-closure module (free-vars))
-prepare_minus_closure.get().invoke(&[module.clone(), 
+prepare_minus_closure.get().invoke(&[module.clone(),
 // (free-vars)
-free_minus_vars.get().invoke(&[]), ]);
+free_minus_vars.get().invoke(&[]),]);
 // (print module "Scm::func(move |args: &[Scm]|")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("Scm::func(move |args: &[Scm]|"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|"),]);
 // (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))
 {{
 // (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("if args.len() < "), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if args.len() < "),
 // (length params)
-imports::length.with(|value| value.get()).invoke(&[params.clone(), ]), Scm::from("{panic!(\"not enough args\")}"), ]);
+imports::length.with(|value| value.get()).invoke(&[params.clone(),]),Scm::from("{panic!(\"not enough args\")}"),]);
 // (gen-params params 0)
-gen_minus_params.get().invoke(&[params.clone(), Scm::from(0), ]);
+gen_minus_params.get().invoke(&[params.clone(),Scm::from(0),]);
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}}})}, ]);
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}}})},]);
 // (print module ")")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from(")"), ])}}})}, ])}})});
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(")"),])}}})},])}})});
 self_.set({let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let params = params.clone();let vararg = vararg.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote VARARG-ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vararg) msg) vararg) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-varvar) msg) varvar) ((eq? (quote get-body) msg) body) (else (error "Unknown message VARARG-ABSTRACTION" msg))))
 {
 // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote VARARG-ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vararg) msg) vararg) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-varvar) msg) varvar) ((eq? (quote get-body) msg) body) (else (error "Unknown message VARARG-ABSTRACTION" msg)))
 if (
 // (eq? (quote repr) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
 globals::print.with(|value| value.get()).invoke(&[])} else {if (
 // (eq? (quote transform) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote free-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"),msg.clone(),])).is_true() {
 // (free-vars)
 free_minus_vars.get().invoke(&[])} else {if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("VARARG-ABSTRACTION")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("VARARG-ABSTRACTION")} else {if (
 // (eq? (quote gen-rust) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote get-params) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"), msg.clone(), ])).is_true() {params.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"),msg.clone(),])).is_true() {params.clone()} else {if (
 // (eq? (quote get-vararg) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vararg"), msg.clone(), ])).is_true() {vararg.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vararg"),msg.clone(),])).is_true() {vararg.clone()} else {if (
 // (eq? (quote get-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"), msg.clone(), ])).is_true() {vars.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"),msg.clone(),])).is_true() {vars.clone()} else {if (
 // (eq? (quote get-varvar) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-varvar"), msg.clone(), ])).is_true() {varvar.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-varvar"),msg.clone(),])).is_true() {varvar.clone()} else {if (
 // (eq? (quote get-body) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-body"), msg.clone(), ])).is_true() {body.clone()} else {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-body"),msg.clone(),])).is_true() {body.clone()} else {
 // (error "Unknown message VARARG-ABSTRACTION" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message VARARG-ABSTRACTION"), msg.clone(), ])}}}}}}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message VARARG-ABSTRACTION"),msg.clone(),])}}}}}}}}}}}})});
 self_.get()}})}));
         // (define (make-program globals imports init body libraries) (define (repr) (cons (quote PROGRAM) (cons globals (cons imports (body (quote repr)))))) (define (transform func) (func self (lambda () (make-program globals imports init (body (quote transform) func))))) (define (gen-imports module) (for-each (lambda (i) (i (quote gen-rust) module)) imports)) (define (gen-rust module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};") (print module "mod imports") (rust-block module (lambda () (gen-imports module))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (print module "pub fn main()") (rust-block module (lambda () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";"))) (println module) (rust-gen-modules module libraries)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote PROGRAM)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message PROGRAM" msg)))) self)
         globals::make_minus_program.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 5{panic!("invalid arity")}let globals = args[0].clone();let imports = args[1].clone();let init = args[2].clone();let body = args[3].clone();let libraries = args[4].clone();
@@ -7136,24 +7136,24 @@ repr.set({let globals = globals.clone();let imports = imports.clone();let body =
 // (letrec () (cons (quote PROGRAM) (cons globals (cons imports (body (quote repr))))))
 {
 // (cons (quote PROGRAM) (cons globals (cons imports (body (quote repr)))))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("PROGRAM"), 
+imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("PROGRAM"),
 // (cons globals (cons imports (body (quote repr))))
-imports::cons.with(|value| value.get()).invoke(&[globals.clone(), 
+imports::cons.with(|value| value.get()).invoke(&[globals.clone(),
 // (cons imports (body (quote repr)))
-imports::cons.with(|value| value.get()).invoke(&[imports.clone(), 
+imports::cons.with(|value| value.get()).invoke(&[imports.clone(),
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr"), ]), ]), ]), ])}})});
+body.clone().invoke(&[Scm::symbol("repr"),]),]),]),])}})});
 transform.set({let self_ = self_.clone();let globals = globals.clone();let imports = imports.clone();let init = init.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();
 // (letrec () (func self (lambda () (make-program globals imports init (body (quote transform) func)))))
 {
 // (func self (lambda () (make-program globals imports init (body (quote transform) func))))
-func.clone().invoke(&[self_.get(), {let globals = globals.clone();let imports = imports.clone();let init = init.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+func.clone().invoke(&[self_.get(),{let globals = globals.clone();let imports = imports.clone();let init = init.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (make-program globals imports init (body (quote transform) func)))
 {
 // (make-program globals imports init (body (quote transform) func))
-globals::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(), imports.clone(), init.clone(), 
+globals::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(),imports.clone(),init.clone(),
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"), func.clone(), ]), ])}})}, ])}})});
+body.clone().invoke(&[Scm::symbol("transform"),func.clone(),]),])}})},])}})});
 gen_minus_imports.set({let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();
 // (letrec () (for-each (lambda (i) (i (quote gen-rust) module)) imports))
 {
@@ -7162,28 +7162,28 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (letrec () (i (quote gen-rust) module))
 {
 // (i (quote gen-rust) module)
-i.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}})}, imports.clone(), ])}})});
+i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}})},imports.clone(),])}})});
 gen_minus_rust.set({let gen_minus_imports = gen_minus_imports.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let libraries = libraries.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();
 // (letrec () (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};") (print module "mod imports") (rust-block module (lambda () (gen-imports module))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (print module "pub fn main()") (rust-block module (lambda () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";"))) (println module) (rust-gen-modules module libraries))
 {{
 // (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};"),]);
 // (print module "mod imports")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("mod imports"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod imports"),]);
 // (rust-block module (lambda () (gen-imports module)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let gen_minus_imports = gen_minus_imports.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let gen_minus_imports = gen_minus_imports.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (gen-imports module))
 {
 // (gen-imports module)
-gen_minus_imports.get().invoke(&[module.clone(), ])}})}, ]);
+gen_minus_imports.get().invoke(&[module.clone(),])}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "mod globals")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("mod globals"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod globals"),]);
 // (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let globals = globals.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let globals = globals.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))
 {{if (
 // (any (lambda (g) (global-regular? (cdr g))) globals)
@@ -7193,82 +7193,82 @@ globals::any.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{i
 // (global-regular? (cdr g))
 globals::global_minus_regular_p.with(|value| value.get()).invoke(&[
 // (cdr g)
-imports::cdr.with(|value| value.get()).invoke(&[g.clone(), ]), ])}})}, globals.clone(), ])).is_true() {
+imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}})},globals.clone(),])).is_true() {
 // (println module "use sunny_core::{Mut, Scm};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("use sunny_core::{Mut, Scm};"), ])} else {Scm::symbol("*UNSPECIFIED*")};
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("use sunny_core::{Mut, Scm};"),])} else {Scm::symbol("*UNSPECIFIED*")};
 // (rust-gen-global-defs module globals)
-globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(), globals.clone(), ])}}})}, ]);
+globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),globals.clone(),])}}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "pub fn main()")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("pub fn main()"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn main()"),]);
 // (rust-block module (lambda () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";")))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let module = module.clone();let init = init.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let init = init.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";"))
 {{
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module "eprintln!(\"built with\");")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("eprintln!(\"built with\");"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("eprintln!(\"built with\");"),]);
 // (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();
 // (letrec () (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module))
 {{
 // (print module "crate::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("crate::"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("crate::"),]);
 // (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let l = args[0].clone();
 // (letrec () (print module (rustify-libname l)) (print module "::"))
 {{
 // (print module (rustify-libname l))
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-libname l)
-imports::rustify_minus_libname.with(|value| value.get()).invoke(&[l.clone(), ]), ]);
+imports::rustify_minus_libname.with(|value| value.get()).invoke(&[l.clone(),]),]);
 // (print module "::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("::"), ])}}})}, lib.clone(), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("::"),])}}})},lib.clone(),]);
 // (print module "initialize();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("initialize();"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("initialize();"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ])}}})}, init.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),])}}})},init.clone(),]);
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ]);
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),]);
 // (println module ";")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from(";"), ])}}})}, ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(";"),])}}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (rust-gen-modules module libraries)
-globals::rust_minus_gen_minus_modules.with(|value| value.get()).invoke(&[module.clone(), libraries.clone(), ])}}})});
+globals::rust_minus_gen_minus_modules.with(|value| value.get()).invoke(&[module.clone(),libraries.clone(),])}}})});
 self_.set({let transform = transform.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote PROGRAM)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message PROGRAM" msg))))
 {
 // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote PROGRAM)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message PROGRAM" msg)))
 if (
 // (eq? (quote repr) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
 globals::print.with(|value| value.get()).invoke(&[])} else {if (
 // (eq? (quote transform) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("PROGRAM")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("PROGRAM")} else {if (
 // (eq? (quote gen-rust) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message PROGRAM" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message PROGRAM"), msg.clone(), ])}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message PROGRAM"),msg.clone(),])}}}}}})});
 self_.get()}})}));
         // (define (make-library name globals init body imports exports) (define (repr) (append (quote LIBRARY) name exports imports globals (body (quote repr)))) (define (transform func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports)))) (define (gen-exports module exports) (for-each (lambda (expo) (expo (quote gen-rust) module)) exports)) (define (gen-rust module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests)))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))) self)
         globals::make_minus_library.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 6{panic!("invalid arity")}let name = args[0].clone();let globals = args[1].clone();let init = args[2].clone();let body = args[3].clone();let imports = args[4].clone();let exports = args[5].clone();
@@ -7282,20 +7282,20 @@ repr.set({let name = name.clone();let exports = exports.clone();let imports = im
 // (letrec () (append (quote LIBRARY) name exports imports globals (body (quote repr))))
 {
 // (append (quote LIBRARY) name exports imports globals (body (quote repr)))
-globals::append.with(|value| value.get()).invoke(&[Scm::symbol("LIBRARY"), name.clone(), exports.clone(), imports.clone(), globals.clone(), 
+globals::append.with(|value| value.get()).invoke(&[Scm::symbol("LIBRARY"),name.clone(),exports.clone(),imports.clone(),globals.clone(),
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr"), ]), ])}})});
+body.clone().invoke(&[Scm::symbol("repr"),]),])}})});
 transform.set({let self_ = self_.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let imports = imports.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();
 // (letrec () (func self (lambda () (make-library globals init (body (quote transform) func) imports exports))))
 {
 // (func self (lambda () (make-library globals init (body (quote transform) func) imports exports)))
-func.clone().invoke(&[self_.get(), {let globals = globals.clone();let init = init.clone();let body = body.clone();let func = func.clone();let imports = imports.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+func.clone().invoke(&[self_.get(),{let globals = globals.clone();let init = init.clone();let body = body.clone();let func = func.clone();let imports = imports.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (make-library globals init (body (quote transform) func) imports exports))
 {
 // (make-library globals init (body (quote transform) func) imports exports)
-globals::make_minus_library.with(|value| value.get()).invoke(&[globals.clone(), init.clone(), 
+globals::make_minus_library.with(|value| value.get()).invoke(&[globals.clone(),init.clone(),
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"), func.clone(), ]), imports.clone(), exports.clone(), ])}})}, ])}})});
+body.clone().invoke(&[Scm::symbol("transform"),func.clone(),]),imports.clone(),exports.clone(),])}})},])}})});
 gen_minus_exports.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let exports = args[1].clone();
 // (letrec () (for-each (lambda (expo) (expo (quote gen-rust) module)) exports))
 {
@@ -7304,16 +7304,16 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (letrec () (expo (quote gen-rust) module))
 {
 // (expo (quote gen-rust) module)
-expo.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}})}, exports.clone(), ])}})});
+expo.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}})},exports.clone(),])}})});
 gen_minus_rust.set({let imports = imports.clone();let gen_minus_exports = gen_minus_exports.clone();let exports = exports.clone();let globals = globals.clone();let body = body.clone();let init = init.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();
 // (letrec () (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))))
 {{
 // (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};"),]);
 // (print module "mod imports")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("mod imports"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod imports"),]);
 // (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let module = module.clone();let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (for-each (lambda (i) (i (quote gen-rust) module)) imports))
 {
 // (for-each (lambda (i) (i (quote gen-rust) module)) imports)
@@ -7321,27 +7321,27 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (letrec () (i (quote gen-rust) module))
 {
 // (i (quote gen-rust) module)
-i.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}})}, imports.clone(), ])}})}, ]);
+i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}})},imports.clone(),])}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "pub mod exports")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("pub mod exports"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod exports"),]);
 // (rust-block module (lambda () (gen-exports module exports)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let gen_minus_exports = gen_minus_exports.clone();let module = module.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let gen_minus_exports = gen_minus_exports.clone();let module = module.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (gen-exports module exports))
 {
 // (gen-exports module exports)
-gen_minus_exports.get().invoke(&[module.clone(), exports.clone(), ])}})}, ]);
+gen_minus_exports.get().invoke(&[module.clone(),exports.clone(),])}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "mod globals")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("mod globals"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod globals"),]);
 // (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals)))
-globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(), {let globals = globals.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
+globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let globals = globals.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))
 {{if (
 // (any (lambda (g) (global-regular? (cdr g))) globals)
@@ -7351,110 +7351,110 @@ globals::any.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{i
 // (global-regular? (cdr g))
 globals::global_minus_regular_p.with(|value| value.get()).invoke(&[
 // (cdr g)
-imports::cdr.with(|value| value.get()).invoke(&[g.clone(), ]), ])}})}, globals.clone(), ])).is_true() {
+imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}})},globals.clone(),])).is_true() {
 // (println module "use sunny_core::{Mut, Scm};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("use sunny_core::{Mut, Scm};"), ])} else {Scm::symbol("*UNSPECIFIED*")};
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("use sunny_core::{Mut, Scm};"),])} else {Scm::symbol("*UNSPECIFIED*")};
 // (rust-gen-global-defs module globals)
-globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(), globals.clone(), ])}}})}, ]);
+globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),globals.clone(),])}}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);if (
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);if (
 // (eq? (quote NOP) (body (quote kind)))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("NOP"), 
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("NOP"),
 // (body (quote kind))
-body.clone().invoke(&[Scm::symbol("kind"), ]), ])).is_true() {
+body.clone().invoke(&[Scm::symbol("kind"),]),])).is_true() {
 // (println module "pub fn initialize() {")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("pub fn initialize() {"), ])} else {{
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn initialize() {"),])} else {{
 // (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module "pub fn initialize() {")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("pub fn initialize() {"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn initialize() {"),]);
 // (println module "if INITIALIZED.with(|x| x.get()) { return }")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("if INITIALIZED.with(|x| x.get()) { return }"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if INITIALIZED.with(|x| x.get()) { return }"),]);
 // (println module "INITIALIZED.with(|x| x.set(true));")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("INITIALIZED.with(|x| x.set(true));"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("INITIALIZED.with(|x| x.set(true));"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ])}};
+globals::println.with(|value| value.get()).invoke(&[module.clone(),])}};
 // (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();
 // (letrec () (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();"))
 {{
 // (print module "crate::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), Scm::from("crate::"), ]);
+globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("crate::"),]);
 // (for-each (lambda (l) (print module (rustify-libname l) "::")) lib)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let l = args[0].clone();
 // (letrec () (print module (rustify-libname l) "::"))
 {
 // (print module (rustify-libname l) "::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(), 
+globals::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-libname l)
-imports::rustify_minus_libname.with(|value| value.get()).invoke(&[l.clone(), ]), Scm::from("::"), ])}})}, lib.clone(), ]);
+imports::rustify_minus_libname.with(|value| value.get()).invoke(&[l.clone(),]),Scm::from("::"),])}})},lib.clone(),]);
 // (println module "initialize();")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("initialize();"), ])}}})}, init.clone(), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("initialize();"),])}}})},init.clone(),]);
 // (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests)))
 {let [tests, ] = [
 // (list (quote dummy))
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("dummy"), ]), ];{
+imports::list.with(|value| value.get()).invoke(&[Scm::symbol("dummy"),]),];{
 // ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module)
 
 // (body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore))))
-body.clone().invoke(&[Scm::symbol("transform"), {let tests = tests.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let node = args[0].clone();let ignore = args[1].clone();
+body.clone().invoke(&[Scm::symbol("transform"),{let tests = tests.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let node = args[0].clone();let ignore = args[1].clone();
 // (letrec () (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))
 {if (
 // (eq? (node (quote kind)) (quote TESTSUITE))
 imports::eq_p.with(|value| value.get()).invoke(&[
 // (node (quote kind))
-node.clone().invoke(&[Scm::symbol("kind"), ]), Scm::symbol("TESTSUITE"), ])).is_true() {{
+node.clone().invoke(&[Scm::symbol("kind"),]),Scm::symbol("TESTSUITE"),])).is_true() {{
 // (set-cdr! tests (cons node (cdr tests)))
-imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[tests.clone(), 
+imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[tests.clone(),
 // (cons node (cdr tests))
-imports::cons.with(|value| value.get()).invoke(&[node.clone(), 
+imports::cons.with(|value| value.get()).invoke(&[node.clone(),
 // (cdr tests)
-imports::cdr.with(|value| value.get()).invoke(&[tests.clone(), ]), ]), ]);
+imports::cdr.with(|value| value.get()).invoke(&[tests.clone(),]),]),]);
 // (make-constant (quote *UNSPECIFIED*))
-globals::make_minus_constant.with(|value| value.get()).invoke(&[Scm::symbol("*UNSPECIFIED*"), ])}} else {
+globals::make_minus_constant.with(|value| value.get()).invoke(&[Scm::symbol("*UNSPECIFIED*"),])}} else {
 // (ignore)
-ignore.clone().invoke(&[])}}})}, ]).invoke(&[Scm::symbol("gen-rust"), module.clone(), ]);
+ignore.clone().invoke(&[])}}})},]).invoke(&[Scm::symbol("gen-rust"),module.clone(),]);
 // (println module ";}")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from(";}"), ]);
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(";}"),]);
 // (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let test = args[0].clone();
 // (letrec () (test (quote gen-rust) module))
 {
 // (test (quote gen-rust) module)
-test.clone().invoke(&[Scm::symbol("gen-rust"), module.clone(), ])}})}, 
+test.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}})},
 // (cdr tests)
-imports::cdr.with(|value| value.get()).invoke(&[tests.clone(), ]), ])}}}}})});
+imports::cdr.with(|value| value.get()).invoke(&[tests.clone(),]),])}}}}})});
 self_.set({let transform = transform.clone();let name = name.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg))))
 {
 // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))
 if (
 // (eq? (quote repr) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
 globals::print.with(|value| value.get()).invoke(&[])} else {if (
 // (eq? (quote transform) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"), msg.clone(), ])).is_true() {Scm::symbol("LIBRARY")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("LIBRARY")} else {if (
 // (eq? (quote libname) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("libname"), msg.clone(), ])).is_true() {name.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("libname"),msg.clone(),])).is_true() {name.clone()} else {if (
 // (eq? (quote gen-rust) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"), msg.clone(), ])).is_true() {
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(), ]), ])} else {
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message LIBRARY" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message LIBRARY"), msg.clone(), ])}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message LIBRARY"),msg.clone(),])}}}}}}})});
 self_.get()}})}));
         // (define (make-boxify name body) (define (repr) (cons (quote BOXIFY) (cons name (body (quote repr))))) (define (transform func) (func self (lambda () (make-boxify name (body (quote transform) func))))) (define (free-vars) (body (quote free-vars))) (define (gen-rust module) (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module)))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg)))) self)
         globals::make_minus_boxify.with(|value| {
@@ -9384,29 +9384,29 @@ self_.get()}})}));
 // (letrec () (if (null? g) (println module) (if (global-imported? (cdar g)) (rust-gen-global-defs module (cdr g)) (begin (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))))))
 {if (
 // (null? g)
-imports::null_p.with(|value| value.get()).invoke(&[g.clone(), ])).is_true() {
+imports::null_p.with(|value| value.get()).invoke(&[g.clone(),])).is_true() {
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(), ])} else {if (
+globals::println.with(|value| value.get()).invoke(&[module.clone(),])} else {if (
 // (global-imported? (cdar g))
 globals::global_minus_imported_p.with(|value| value.get()).invoke(&[
 // (cdar g)
-imports::cdar.with(|value| value.get()).invoke(&[g.clone(), ]), ])).is_true() {
+imports::cdar.with(|value| value.get()).invoke(&[g.clone(),]),])).is_true() {
 // (rust-gen-global-defs module (cdr g))
-globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(), 
+globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),
 // (cdr g)
-imports::cdr.with(|value| value.get()).invoke(&[g.clone(), ]), ])} else {{
+imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])} else {{
 // (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "), 
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),
 // (rustify-identifier (caar g))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[
 // (caar g)
-imports::caar.with(|value| value.get()).invoke(&[g.clone(), ]), ]), Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "), 
+imports::caar.with(|value| value.get()).invoke(&[g.clone(),]),]),Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "),
 // (caar g)
-imports::caar.with(|value| value.get()).invoke(&[g.clone(), ]), Scm::from("\"))}"), ]);
+imports::caar.with(|value| value.get()).invoke(&[g.clone(),]),Scm::from("\"))}"),]);
 // (rust-gen-global-defs module (cdr g))
-globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(), 
+globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),
 // (cdr g)
-imports::cdr.with(|value| value.get()).invoke(&[g.clone(), ]), ])}}}}})}));
+imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}}}}})}));
         // (define (rust-gen-modules module libs) (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list module (module-tree-children module-tree))))
         globals::rust_minus_gen_minus_modules.with(|value| {
             value.set({
@@ -9478,33 +9478,33 @@ imports::cdr.with(|value| value.get()).invoke(&[g.clone(), ]), ])}}}}})}));
 // (letrec () (println module "pub mod " (rustify-libname (module-tree-name node)) ";") (if (module-tree-leaf? node) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod))) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))))
 {{
 // (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
-globals::println.with(|value| value.get()).invoke(&[module.clone(), Scm::from("pub mod "), 
+globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod "),
 // (rustify-libname (module-tree-name node))
 imports::rustify_minus_libname.with(|value| value.get()).invoke(&[
 // (module-tree-name node)
-imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(), ]), ]), Scm::from(";"), ]);if (
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(),]),]),Scm::from(";"),]);if (
 // (module-tree-leaf? node)
-imports::module_minus_tree_minus_leaf_p.with(|value| value.get()).invoke(&[node.clone(), ])).is_true() {
+imports::module_minus_tree_minus_leaf_p.with(|value| value.get()).invoke(&[node.clone(),])).is_true() {
 // (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod)))
 globals::rust_minus_gen_minus_in_minus_submodule.with(|value| value.get()).invoke(&[
 // (module-tree-name node)
-imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(), ]), module.clone(), {let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(),]),module.clone(),{let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();
 // (letrec () ((module-tree-libobj node) (quote gen-rust) submod))
 {
 // ((module-tree-libobj node) (quote gen-rust) submod)
 
 // (module-tree-libobj node)
-imports::module_minus_tree_minus_libobj.with(|value| value.get()).invoke(&[node.clone(), ]).invoke(&[Scm::symbol("gen-rust"), submod.clone(), ])}})}, ])} else {
+imports::module_minus_tree_minus_libobj.with(|value| value.get()).invoke(&[node.clone(),]).invoke(&[Scm::symbol("gen-rust"),submod.clone(),])}})},])} else {
 // (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))
 globals::rust_minus_gen_minus_in_minus_submodule.with(|value| value.get()).invoke(&[
 // (module-tree-name node)
-imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(), ]), module.clone(), {let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone(),]),module.clone(),{let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();
 // (letrec () (rust-gen-module-tree-list submod (module-tree-children node)))
 {
 // (rust-gen-module-tree-list submod (module-tree-children node))
-globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[submod.clone(), 
+globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[submod.clone(),
 // (module-tree-children node)
-imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[node.clone(), ]), ])}})}, ])}}}})}));
+imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[node.clone(),]),])}})},])}}}})}));
         // (define (rust-gen-module-tree-list module nodes) (for-each (lambda (child) (rust-gen-module-tree module child)) nodes))
         globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| {
             value.set({
