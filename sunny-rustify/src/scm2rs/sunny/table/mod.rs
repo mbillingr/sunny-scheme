@@ -211,28 +211,24 @@ pub fn initialize() {
                                     imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[entry.clone()])
-                                } else {
-                                    if (
+                                } else if (
+                                    // (parent table)
+                                    globals::parent
+                                        .with(|value| value.get())
+                                        .invoke(&[table.clone()])
+                                )
+                                .is_true()
+                                {
+                                    // (get-field (parent table) key)
+                                    globals::get_minus_field.with(|value| value.get()).invoke(&[
                                         // (parent table)
                                         globals::parent
                                             .with(|value| value.get())
-                                            .invoke(&[table.clone()])
-                                    )
-                                    .is_true()
-                                    {
-                                        // (get-field (parent table) key)
-                                        globals::get_minus_field.with(|value| value.get()).invoke(
-                                            &[
-                                                // (parent table)
-                                                globals::parent
-                                                    .with(|value| value.get())
-                                                    .invoke(&[table.clone()]),
-                                                key.clone(),
-                                            ],
-                                        )
-                                    } else {
-                                        Scm::False
-                                    }
+                                            .invoke(&[table.clone()]),
+                                        key.clone(),
+                                    ])
+                                } else {
+                                    Scm::False
                                 }
                             }
                         }

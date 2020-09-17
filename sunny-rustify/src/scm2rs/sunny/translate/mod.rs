@@ -389,20 +389,75 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     imports.clone(),
                                     exports.clone(),
                                 ])
-                        } else {
-                            if (
-                                // (eq? (quote export) (caar exp*))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("export"),
-                                    // (caar exp*)
-                                    imports::caar
+                        } else if (
+                            // (eq? (quote export) (caar exp*))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("export"),
+                                // (caar exp*)
+                                imports::caar
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (library-decls->ast name (cdr exp*) init body global-env library-env imports (append exports (sexpr->export (cdar exp*) global-env)))
+                            globals::library_minus_decls_minus__g_ast
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    name.clone(),
+                                    // (cdr exp*)
+                                    imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[exp_star_.clone()]),
+                                    init.clone(),
+                                    body.clone(),
+                                    global_minus_env.clone(),
+                                    library_minus_env.clone(),
+                                    imports.clone(),
+                                    // (append exports (sexpr->export (cdar exp*) global-env))
+                                    globals::append.with(|value| value.get()).invoke(&[
+                                        exports.clone(),
+                                        // (sexpr->export (cdar exp*) global-env)
+                                        globals::sexpr_minus__g_export
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cdar exp*)
+                                                imports::cdar
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp_star_.clone()]),
+                                                global_minus_env.clone(),
+                                            ]),
+                                    ]),
                                 ])
-                            )
-                            .is_true()
+                        } else if (
+                            // (import? (car exp*))
+                            globals::import_p.with(|value| value.get()).invoke(&[
+                                // (car exp*)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
                             {
-                                // (library-decls->ast name (cdr exp*) init body global-env library-env imports (append exports (sexpr->export (cdar exp*) global-env)))
+                                // (register-libraries (import-libnames (car exp*)) library-env)
+                                globals::register_minus_libraries
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (import-libnames (car exp*))
+                                        globals::import_minus_libnames
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (car exp*)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp_star_.clone()]),
+                                            ]),
+                                        library_minus_env.clone(),
+                                    ]);
+                                // (library-decls->ast name (cdr exp*) (set-add* init (import-libnames (car exp*))) body global-env library-env (append imports (sexpr->import (cdar exp*) global-env)) exports)
                                 globals::library_minus_decls_minus__g_ast
                                     .with(|value| value.get())
                                     .invoke(&[
@@ -411,43 +466,11 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         imports::cdr
                                             .with(|value| value.get())
                                             .invoke(&[exp_star_.clone()]),
-                                        init.clone(),
-                                        body.clone(),
-                                        global_minus_env.clone(),
-                                        library_minus_env.clone(),
-                                        imports.clone(),
-                                        // (append exports (sexpr->export (cdar exp*) global-env))
-                                        globals::append.with(|value| value.get()).invoke(&[
-                                            exports.clone(),
-                                            // (sexpr->export (cdar exp*) global-env)
-                                            globals::sexpr_minus__g_export
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (cdar exp*)
-                                                    imports::cdar
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                    global_minus_env.clone(),
-                                                ]),
-                                        ]),
-                                    ])
-                            } else {
-                                if (
-                                    // (import? (car exp*))
-                                    globals::import_p.with(|value| value.get()).invoke(&[
-                                        // (car exp*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[exp_star_.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    {
-                                        // (register-libraries (import-libnames (car exp*)) library-env)
-                                        globals::register_minus_libraries
+                                        // (set-add* init (import-libnames (car exp*)))
+                                        globals::set_minus_add_star_
                                             .with(|value| value.get())
                                             .invoke(&[
+                                                init.clone(),
                                                 // (import-libnames (car exp*))
                                                 globals::import_minus_libnames
                                                     .with(|value| value.get())
@@ -457,104 +480,73 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                             .with(|value| value.get())
                                                             .invoke(&[exp_star_.clone()]),
                                                     ]),
-                                                library_minus_env.clone(),
-                                            ]);
-                                        // (library-decls->ast name (cdr exp*) (set-add* init (import-libnames (car exp*))) body global-env library-env (append imports (sexpr->import (cdar exp*) global-env)) exports)
-                                        globals::library_minus_decls_minus__g_ast
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                name.clone(),
-                                                // (cdr exp*)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[exp_star_.clone()]),
-                                                // (set-add* init (import-libnames (car exp*)))
-                                                globals::set_minus_add_star_
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        init.clone(),
-                                                        // (import-libnames (car exp*))
-                                                        globals::import_minus_libnames
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                // (car exp*)
-                                                                imports::car
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[exp_star_.clone()]),
-                                                            ]),
-                                                    ]),
-                                                body.clone(),
-                                                global_minus_env.clone(),
-                                                library_minus_env.clone(),
-                                                // (append imports (sexpr->import (cdar exp*) global-env))
-                                                globals::append.with(|value| value.get()).invoke(
-                                                    &[
-                                                        imports.clone(),
-                                                        // (sexpr->import (cdar exp*) global-env)
-                                                        globals::sexpr_minus__g_import
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                // (cdar exp*)
-                                                                imports::cdar
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[exp_star_.clone()]),
-                                                                global_minus_env.clone(),
-                                                            ]),
-                                                    ],
-                                                ),
-                                                exports.clone(),
-                                            ])
-                                    }
-                                } else {
-                                    if (
-                                        // (eq? (quote begin) (caar exp*))
-                                        imports::eq_p.with(|value| value.get()).invoke(&[
-                                            Scm::symbol("begin"),
-                                            // (caar exp*)
-                                            imports::caar
+                                            ]),
+                                        body.clone(),
+                                        global_minus_env.clone(),
+                                        library_minus_env.clone(),
+                                        // (append imports (sexpr->import (cdar exp*) global-env))
+                                        globals::append.with(|value| value.get()).invoke(&[
+                                            imports.clone(),
+                                            // (sexpr->import (cdar exp*) global-env)
+                                            globals::sexpr_minus__g_import
                                                 .with(|value| value.get())
-                                                .invoke(&[exp_star_.clone()]),
-                                        ])
-                                    )
-                                    .is_true()
-                                    {
-                                        // (library-decls->ast name (cdr exp*) init (make-sequence body (sexpr->sequence (cdar exp*) global-env #f)) global-env library-env imports exports)
-                                        globals::library_minus_decls_minus__g_ast
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                name.clone(),
-                                                // (cdr exp*)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[exp_star_.clone()]),
-                                                init.clone(),
-                                                // (make-sequence body (sexpr->sequence (cdar exp*) global-env #f))
-                                                globals::make_minus_sequence
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        body.clone(),
-                                                        // (sexpr->sequence (cdar exp*) global-env #f)
-                                                        globals::sexpr_minus__g_sequence
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                // (cdar exp*)
-                                                                imports::cdar
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[exp_star_.clone()]),
-                                                                global_minus_env.clone(),
-                                                                Scm::False,
-                                                            ]),
-                                                    ]),
-                                                global_minus_env.clone(),
-                                                library_minus_env.clone(),
-                                                imports.clone(),
-                                                exports.clone(),
-                                            ])
-                                    } else {
-                                        Scm::symbol("*UNSPECIFIED*")
-                                    }
-                                }
+                                                .invoke(&[
+                                                    // (cdar exp*)
+                                                    imports::cdar
+                                                        .with(|value| value.get())
+                                                        .invoke(&[exp_star_.clone()]),
+                                                    global_minus_env.clone(),
+                                                ]),
+                                        ]),
+                                        exports.clone(),
+                                    ])
                             }
+                        } else if (
+                            // (eq? (quote begin) (caar exp*))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("begin"),
+                                // (caar exp*)
+                                imports::caar
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (library-decls->ast name (cdr exp*) init (make-sequence body (sexpr->sequence (cdar exp*) global-env #f)) global-env library-env imports exports)
+                            globals::library_minus_decls_minus__g_ast
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    name.clone(),
+                                    // (cdr exp*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[exp_star_.clone()]),
+                                    init.clone(),
+                                    // (make-sequence body (sexpr->sequence (cdar exp*) global-env #f))
+                                    globals::make_minus_sequence
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            body.clone(),
+                                            // (sexpr->sequence (cdar exp*) global-env #f)
+                                            globals::sexpr_minus__g_sequence
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    // (cdar exp*)
+                                                    imports::cdar
+                                                        .with(|value| value.get())
+                                                        .invoke(&[exp_star_.clone()]),
+                                                    global_minus_env.clone(),
+                                                    Scm::False,
+                                                ]),
+                                        ]),
+                                    global_minus_env.clone(),
+                                    library_minus_env.clone(),
+                                    imports.clone(),
+                                    exports.clone(),
+                                ])
+                        } else {
+                            Scm::symbol("*UNSPECIFIED*")
                         }
                     }
                 })
@@ -581,22 +573,125 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                         .is_true()
                         {
                             Scm::symbol("DONE")
-                        } else {
-                            if (
-                                // (equal? (quote (sunny testing)) (car libs))
-                                imports::equal_p.with(|value| value.get()).invoke(&[
-                                    Scm::pair(
-                                        Scm::symbol("sunny"),
-                                        Scm::pair(Scm::symbol("testing"), Scm::Nil),
-                                    ),
-                                    // (car libs)
-                                    imports::car
+                        } else if (
+                            // (equal? (quote (sunny testing)) (car libs))
+                            imports::equal_p.with(|value| value.get()).invoke(&[
+                                Scm::pair(
+                                    Scm::symbol("sunny"),
+                                    Scm::pair(Scm::symbol("testing"), Scm::Nil),
+                                ),
+                                // (car libs)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[libs.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (register-libraries (cdr libs) library-env)
+                            globals::register_minus_libraries
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr libs)
+                                    imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[libs.clone()]),
+                                    library_minus_env.clone(),
                                 ])
-                            )
-                            .is_true()
+                        } else if (
+                            // (assoc (car libs) (car library-env))
+                            globals::assoc.with(|value| value.get()).invoke(&[
+                                // (car libs)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[libs.clone()]),
+                                // (car library-env)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[library_minus_env.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (register-libraries (cdr libs) library-env)
+                            globals::register_minus_libraries
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr libs)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[libs.clone()]),
+                                    library_minus_env.clone(),
+                                ])
+                        } else {
                             {
+                                // (let* ((lib (get-lib (car libs))) (libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+                                {
+                                    let [lib] = [
+                                        // (get-lib (car libs))
+                                        globals::get_minus_lib.with(|value| value.get()).invoke(&[
+                                            // (car libs)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[libs.clone()]),
+                                        ]),
+                                    ];
+                                    // (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+                                    {
+                                        let [libast] = [
+                                            if (
+                                                // (library? lib)
+                                                globals::library_p
+                                                    .with(|value| value.get())
+                                                    .invoke(&[lib.clone()])
+                                            )
+                                            .is_true()
+                                            {
+                                                // (library->ast (library-name lib) (library-decls lib) library-env)
+                                                globals::library_minus__g_ast
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (library-name lib)
+                                                        globals::library_minus_name
+                                                            .with(|value| value.get())
+                                                            .invoke(&[lib.clone()]),
+                                                        // (library-decls lib)
+                                                        globals::library_minus_decls
+                                                            .with(|value| value.get())
+                                                            .invoke(&[lib.clone()]),
+                                                        library_minus_env.clone(),
+                                                    ])
+                                            } else {
+                                                Scm::False
+                                            },
+                                        ];
+                                        // (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+
+                                        // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
+                                        imports::set_minus_car_i.with(|value| value.get()).invoke(
+                                            &[
+                                                library_minus_env.clone(),
+                                                // (cons (cons (car libs) libast) (car library-env))
+                                                imports::cons.with(|value| value.get()).invoke(&[
+                                                    // (cons (car libs) libast)
+                                                    imports::cons.with(|value| value.get()).invoke(
+                                                        &[
+                                                            // (car libs)
+                                                            imports::car
+                                                                .with(|value| value.get())
+                                                                .invoke(&[libs.clone()]),
+                                                            libast.clone(),
+                                                        ],
+                                                    ),
+                                                    // (car library-env)
+                                                    imports::car
+                                                        .with(|value| value.get())
+                                                        .invoke(&[library_minus_env.clone()]),
+                                                ]),
+                                            ],
+                                        )
+                                    }
+                                };
                                 // (register-libraries (cdr libs) library-env)
                                 globals::register_minus_libraries
                                     .with(|value| value.get())
@@ -607,123 +702,6 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .invoke(&[libs.clone()]),
                                         library_minus_env.clone(),
                                     ])
-                            } else {
-                                if (
-                                    // (assoc (car libs) (car library-env))
-                                    globals::assoc.with(|value| value.get()).invoke(&[
-                                        // (car libs)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[libs.clone()]),
-                                        // (car library-env)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[library_minus_env.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    // (register-libraries (cdr libs) library-env)
-                                    globals::register_minus_libraries
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (cdr libs)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[libs.clone()]),
-                                            library_minus_env.clone(),
-                                        ])
-                                } else {
-                                    {
-                                        // (let* ((lib (get-lib (car libs))) (libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
-                                        {
-                                            let [lib] = [
-                                                // (get-lib (car libs))
-                                                globals::get_minus_lib
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        // (car libs)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[libs.clone()]),
-                                                    ]),
-                                            ];
-                                            // (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
-                                            {
-                                                let [libast] = [
-                                                    if (
-                                                        // (library? lib)
-                                                        globals::library_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[lib.clone()])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (library->ast (library-name lib) (library-decls lib) library-env)
-                                                        globals::library_minus__g_ast
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                // (library-name lib)
-                                                                globals::library_minus_name
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[lib.clone()]),
-                                                                // (library-decls lib)
-                                                                globals::library_minus_decls
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[lib.clone()]),
-                                                                library_minus_env.clone(),
-                                                            ])
-                                                    } else {
-                                                        Scm::False
-                                                    },
-                                                ];
-                                                // (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
-
-                                                // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
-                                                imports::set_minus_car_i
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        library_minus_env.clone(),
-                                                        // (cons (cons (car libs) libast) (car library-env))
-                                                        imports::cons
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                // (cons (car libs) libast)
-                                                                imports::cons
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        // (car libs)
-                                                                        imports::car
-                                                                            .with(|value| {
-                                                                                value.get()
-                                                                            })
-                                                                            .invoke(
-                                                                                &[libs.clone()],
-                                                                            ),
-                                                                        libast.clone(),
-                                                                    ]),
-                                                                // (car library-env)
-                                                                imports::car
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        library_minus_env.clone()
-                                                                    ]),
-                                                            ]),
-                                                    ])
-                                            }
-                                        };
-                                        // (register-libraries (cdr libs) library-env)
-                                        globals::register_minus_libraries
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cdr libs)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[libs.clone()]),
-                                                library_minus_env.clone(),
-                                            ])
-                                    }
-                                }
                             }
                         }
                     }
@@ -731,169 +709,458 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
             })
         });
         // (define (sexpr->ast exp env tail?) (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
-        globals::sexpr_minus__g_ast.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp = args[0].clone();let env = args[1].clone();let tail_p = args[2].clone();
-// (letrec () (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
-{if (
-// (atom? exp)
-globals::atom_p.with(|value| value.get()).invoke(&[exp.clone(),])).is_true() {if (
-// (symbol? exp)
-imports::symbol_p.with(|value| value.get()).invoke(&[exp.clone(),])).is_true() {
-// (sexpr->reference exp env)
-globals::sexpr_minus__g_reference.with(|value| value.get()).invoke(&[exp.clone(),env.clone(),])} else {
-// (sexpr->constant exp env)
-globals::sexpr_minus__g_constant.with(|value| value.get()).invoke(&[exp.clone(),env.clone(),])}} else {
-// (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))
-if (
-// (eq? (quote quote) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("quote"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (sexpr->constant (cadr exp) env)
-globals::sexpr_minus__g_constant.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
-// (eq? (quote set!) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("set!"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (sexpr->assignment (cadr exp) (caddr exp) env)
-globals::sexpr_minus__g_assignment.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (caddr exp)
-imports::caddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
-// (eq? (quote define) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("define"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (wrap-sexpr exp (sexpr->definition exp env))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->definition exp env)
-globals::sexpr_minus__g_definition.with(|value| value.get()).invoke(&[exp.clone(),env.clone(),]),])} else {if (
-// (eq? (quote lambda) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("lambda"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (sexpr->abstraction (cadr exp) (cddr exp) env)
-globals::sexpr_minus__g_abstraction.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
-// (eq? (quote begin) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("begin"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (sexpr->sequence (cdr exp) env tail?)
-globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[
-// (cdr exp)
-imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),])} else {if (
-// (eq? (quote let) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("let"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->scope-let (cadr exp) (cddr exp) env tail?)
-globals::sexpr_minus__g_scope_minus_let.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
-// (eq? (quote let*) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("let*"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->scope-seq (cadr exp) (cddr exp) env tail?)
-globals::sexpr_minus__g_scope_minus_seq.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
-// (eq? (quote letrec) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("letrec"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->scope-rec (cadr exp) (cddr exp) env tail?)
-globals::sexpr_minus__g_scope_minus_rec.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
-// (eq? (quote if) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("if"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)
-globals::sexpr_minus__g_alternative.with(|value| value.get()).invoke(&[
-// (if-condition exp)
-globals::if_minus_condition.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (if-consequence exp)
-globals::if_minus_consequence.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (if-alternative exp)
-globals::if_minus_alternative.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),])} else {if (
-// (eq? (quote cond) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("cond"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->cond (cond-clauses exp) env tail?)
-globals::sexpr_minus__g_cond.with(|value| value.get()).invoke(&[
-// (cond-clauses exp)
-globals::cond_minus_clauses.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
-// (eq? (quote and) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("and"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->and (cdr exp) env tail?)
-globals::sexpr_minus__g_and.with(|value| value.get()).invoke(&[
-// (cdr exp)
-imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])} else {if (
-// (and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env)))
-if (
-// (eq? (quote testsuite) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("testsuite"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (not (lookup (quote testsuite) env))
-imports::not.with(|value| value.get()).invoke(&[
-// (lookup (quote testsuite) env)
-globals::lookup.with(|value| value.get()).invoke(&[Scm::symbol("testsuite"),env.clone(),]),])} else {Scm::False}).is_true() {
-// (sexpr->testsuite (cadr exp) (cddr exp) env)
-globals::sexpr_minus__g_testsuite.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (cddr exp)
-imports::cddr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {if (
-// (and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env)))
-if (
-// (eq? (quote assert) (car exp))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("assert"),
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),])).is_true() {
-// (not (lookup (quote assert) env))
-imports::not.with(|value| value.get()).invoke(&[
-// (lookup (quote assert) env)
-globals::lookup.with(|value| value.get()).invoke(&[Scm::symbol("assert"),env.clone(),]),])} else {Scm::False}).is_true() {
-// (sexpr->assert (cadr exp) env)
-globals::sexpr_minus__g_assert.with(|value| value.get()).invoke(&[
-// (cadr exp)
-imports::cadr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),])} else {
-// (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))
-globals::wrap_minus_sexpr.with(|value| value.get()).invoke(&[exp.clone(),
-// (sexpr->application (car exp) (cdr exp) env tail?)
-globals::sexpr_minus__g_application.with(|value| value.get()).invoke(&[
-// (car exp)
-imports::car.with(|value| value.get()).invoke(&[exp.clone(),]),
-// (cdr exp)
-imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_p.clone(),]),])}}}}}}}}}}}}}}}})}));
+        globals::sexpr_minus__g_ast.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
+                    {
+                        if (
+                            // (atom? exp)
+                            globals::atom_p
+                                .with(|value| value.get())
+                                .invoke(&[exp.clone()])
+                        )
+                        .is_true()
+                        {
+                            if (
+                                // (symbol? exp)
+                                imports::symbol_p
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()])
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->reference exp env)
+                                globals::sexpr_minus__g_reference
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone(), env.clone()])
+                            } else {
+                                // (sexpr->constant exp env)
+                                globals::sexpr_minus__g_constant
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone(), env.clone()])
+                            }
+                        } else {
+                            // (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))
+                            if (
+                                // (eq? (quote quote) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("quote"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->constant (cadr exp) env)
+                                globals::sexpr_minus__g_constant
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadr exp)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                    ])
+                            } else if (
+                                // (eq? (quote set!) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("set!"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->assignment (cadr exp) (caddr exp) env)
+                                globals::sexpr_minus__g_assignment
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadr exp)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        // (caddr exp)
+                                        imports::caddr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                    ])
+                            } else if (
+                                // (eq? (quote define) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("define"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (wrap-sexpr exp (sexpr->definition exp env))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->definition exp env)
+                                        globals::sexpr_minus__g_definition
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone(), env.clone()]),
+                                    ])
+                            } else if (
+                                // (eq? (quote lambda) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("lambda"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->abstraction (cadr exp) (cddr exp) env)
+                                globals::sexpr_minus__g_abstraction
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadr exp)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        // (cddr exp)
+                                        imports::cddr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                    ])
+                            } else if (
+                                // (eq? (quote begin) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("begin"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->sequence (cdr exp) env tail?)
+                                globals::sexpr_minus__g_sequence
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cdr exp)
+                                        imports::cdr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                        tail_p.clone(),
+                                    ])
+                            } else if (
+                                // (eq? (quote let) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("let"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->scope-let (cadr exp) (cddr exp) env tail?)
+                                        globals::sexpr_minus__g_scope_minus_let
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cadr exp)
+                                                imports::cadr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                // (cddr exp)
+                                                imports::cddr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ])
+                            } else if (
+                                // (eq? (quote let*) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("let*"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->scope-seq (cadr exp) (cddr exp) env tail?)
+                                        globals::sexpr_minus__g_scope_minus_seq
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cadr exp)
+                                                imports::cadr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                // (cddr exp)
+                                                imports::cddr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ])
+                            } else if (
+                                // (eq? (quote letrec) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("letrec"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->scope-rec (cadr exp) (cddr exp) env tail?)
+                                        globals::sexpr_minus__g_scope_minus_rec
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cadr exp)
+                                                imports::cadr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                // (cddr exp)
+                                                imports::cddr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ])
+                            } else if (
+                                // (eq? (quote if) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("if"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)
+                                globals::sexpr_minus__g_alternative
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (if-condition exp)
+                                        globals::if_minus_condition
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        // (if-consequence exp)
+                                        globals::if_minus_consequence
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        // (if-alternative exp)
+                                        globals::if_minus_alternative
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                        tail_p.clone(),
+                                    ])
+                            } else if (
+                                // (eq? (quote cond) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("cond"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->cond (cond-clauses exp) env tail?)
+                                        globals::sexpr_minus__g_cond
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cond-clauses exp)
+                                                globals::cond_minus_clauses
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ])
+                            } else if (
+                                // (eq? (quote and) (car exp))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("and"),
+                                    // (car exp)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->and (cdr exp) env tail?)
+                                        globals::sexpr_minus__g_and
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cdr exp)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ])
+                            } else if (
+                                // (and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env)))
+                                if (
+                                    // (eq? (quote testsuite) (car exp))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("testsuite"),
+                                        // (car exp)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                    ])
+                                )
+                                .is_true()
+                                {
+                                    // (not (lookup (quote testsuite) env))
+                                    imports::not.with(|value| value.get()).invoke(&[
+                                        // (lookup (quote testsuite) env)
+                                        globals::lookup
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("testsuite"), env.clone()]),
+                                    ])
+                                } else {
+                                    Scm::False
+                                }
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->testsuite (cadr exp) (cddr exp) env)
+                                globals::sexpr_minus__g_testsuite
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadr exp)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        // (cddr exp)
+                                        imports::cddr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                    ])
+                            } else if (
+                                // (and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env)))
+                                if (
+                                    // (eq? (quote assert) (car exp))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("assert"),
+                                        // (car exp)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                    ])
+                                )
+                                .is_true()
+                                {
+                                    // (not (lookup (quote assert) env))
+                                    imports::not.with(|value| value.get()).invoke(&[
+                                        // (lookup (quote assert) env)
+                                        globals::lookup
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("assert"), env.clone()]),
+                                    ])
+                                } else {
+                                    Scm::False
+                                }
+                            )
+                            .is_true()
+                            {
+                                // (sexpr->assert (cadr exp) env)
+                                globals::sexpr_minus__g_assert
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadr exp)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                    ])
+                            } else {
+                                // (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))
+                                globals::wrap_minus_sexpr
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        exp.clone(),
+                                        // (sexpr->application (car exp) (cdr exp) env tail?)
+                                        globals::sexpr_minus__g_application
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (car exp)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                // (cdr exp)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ])
+                            }
+                        }
+                    }
+                })
+            })
+        });
         // (define (wrap-sexpr exp node) (make-comment exp node))
         globals::wrap_minus_sexpr.with(|value| {
             value.set({
@@ -1812,13 +2079,29 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                             globals::make_minus_constant
                                 .with(|value| value.get())
                                 .invoke(&[Scm::symbol("*UNSPECIFIED*")])
-                        } else {
-                            if (
-                                // (eq? (quote else) (cond-clause-condition (car clauses)))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("else"),
-                                    // (cond-clause-condition (car clauses))
-                                    globals::cond_minus_clause_minus_condition
+                        } else if (
+                            // (eq? (quote else) (cond-clause-condition (car clauses)))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("else"),
+                                // (cond-clause-condition (car clauses))
+                                globals::cond_minus_clause_minus_condition
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (car clauses)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[clauses.clone()]),
+                                    ]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
+                            globals::sexpr_minus__g_sequence
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cond-clause-sequence (car clauses))
+                                    globals::cond_minus_clause_minus_sequence
                                         .with(|value| value.get())
                                         .invoke(&[
                                             // (car clauses)
@@ -1826,107 +2109,87 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                                 .with(|value| value.get())
                                                 .invoke(&[clauses.clone()]),
                                         ]),
+                                    env.clone(),
+                                    tail_p.clone(),
                                 ])
-                            )
-                            .is_true()
+                        } else if (
+                            // (pair? clauses)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[clauses.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f)) (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
                             {
-                                // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
-                                globals::sexpr_minus__g_sequence
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (cond-clause-sequence (car clauses))
-                                        globals::cond_minus_clause_minus_sequence
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car clauses)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[clauses.clone()]),
-                                            ]),
-                                        env.clone(),
-                                        tail_p.clone(),
-                                    ])
-                            } else {
-                                if (
-                                    // (pair? clauses)
-                                    imports::pair_p
+                                let [condition] = [
+                                    // (sexpr->ast (cond-clause-condition (car clauses)) env #f)
+                                    globals::sexpr_minus__g_ast
                                         .with(|value| value.get())
-                                        .invoke(&[clauses.clone()])
-                                )
-                                .is_true()
-                                {
-                                    // (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f)) (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
-                                    {
-                                        let [condition] = [
-                                            // (sexpr->ast (cond-clause-condition (car clauses)) env #f)
-                                            globals::sexpr_minus__g_ast
+                                        .invoke(&[
+                                            // (cond-clause-condition (car clauses))
+                                            globals::cond_minus_clause_minus_condition
                                                 .with(|value| value.get())
                                                 .invoke(&[
-                                                    // (cond-clause-condition (car clauses))
-                                                    globals::cond_minus_clause_minus_condition
+                                                    // (car clauses)
+                                                    imports::car
                                                         .with(|value| value.get())
-                                                        .invoke(&[
-                                                            // (car clauses)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[clauses.clone()]),
-                                                        ]),
+                                                        .invoke(&[clauses.clone()]),
+                                                ]),
+                                            env.clone(),
+                                            Scm::False,
+                                        ]),
+                                ];
+                                // (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
+                                {
+                                    let [sequence] = [
+                                        // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
+                                        globals::sexpr_minus__g_sequence
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (cond-clause-sequence (car clauses))
+                                                globals::cond_minus_clause_minus_sequence
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (car clauses)
+                                                        imports::car
+                                                            .with(|value| value.get())
+                                                            .invoke(&[clauses.clone()]),
+                                                    ]),
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ]),
+                                    ];
+                                    // (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
+                                    {
+                                        let [rest] = [
+                                            // (sexpr->cond (cdr clauses) env tail?)
+                                            globals::sexpr_minus__g_cond
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    // (cdr clauses)
+                                                    imports::cdr
+                                                        .with(|value| value.get())
+                                                        .invoke(&[clauses.clone()]),
                                                     env.clone(),
-                                                    Scm::False,
+                                                    tail_p.clone(),
                                                 ]),
                                         ];
-                                        // (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
-                                        {
-                                            let [sequence] = [
-                                                // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
-                                                globals::sexpr_minus__g_sequence
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        // (cond-clause-sequence (car clauses))
-                                                        globals::cond_minus_clause_minus_sequence
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                // (car clauses)
-                                                                imports::car
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[clauses.clone()]),
-                                                            ]),
-                                                        env.clone(),
-                                                        tail_p.clone(),
-                                                    ]),
-                                            ];
-                                            // (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
-                                            {
-                                                let [rest] = [
-                                                    // (sexpr->cond (cdr clauses) env tail?)
-                                                    globals::sexpr_minus__g_cond
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            // (cdr clauses)
-                                                            imports::cdr
-                                                                .with(|value| value.get())
-                                                                .invoke(&[clauses.clone()]),
-                                                            env.clone(),
-                                                            tail_p.clone(),
-                                                        ]),
-                                                ];
-                                                // (let* () (make-alternative condition sequence rest))
+                                        // (let* () (make-alternative condition sequence rest))
 
-                                                // (make-alternative condition sequence rest)
-                                                globals::make_minus_alternative
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        condition.clone(),
-                                                        sequence.clone(),
-                                                        rest.clone(),
-                                                    ])
-                                            }
-                                        }
+                                        // (make-alternative condition sequence rest)
+                                        globals::make_minus_alternative
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                condition.clone(),
+                                                sequence.clone(),
+                                                rest.clone(),
+                                            ])
                                     }
-                                } else {
-                                    Scm::symbol("*UNSPECIFIED*")
                                 }
                             }
+                        } else {
+                            Scm::symbol("*UNSPECIFIED*")
                         }
                     }
                 })
@@ -1957,62 +2220,60 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                             globals::make_minus_constant
                                 .with(|value| value.get())
                                 .invoke(&[Scm::True])
-                        } else {
-                            if (
-                                // (null? (cdr args))
-                                imports::null_p.with(|value| value.get()).invoke(&[
-                                    // (cdr args)
-                                    imports::cdr
+                        } else if (
+                            // (null? (cdr args))
+                            imports::null_p.with(|value| value.get()).invoke(&[
+                                // (cdr args)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[args_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (sexpr->ast (car args) env tail?)
+                            globals::sexpr_minus__g_ast
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (car args)
+                                    imports::car
                                         .with(|value| value.get())
                                         .invoke(&[args_.clone()]),
+                                    env.clone(),
+                                    tail_p.clone(),
                                 ])
-                            )
-                            .is_true()
-                            {
-                                // (sexpr->ast (car args) env tail?)
-                                globals::sexpr_minus__g_ast
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (car args)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[args_.clone()]),
-                                        env.clone(),
-                                        tail_p.clone(),
-                                    ])
-                            } else {
-                                // (make-alternative (sexpr->ast (car args) env #f) (sexpr->and (cdr args) env tail?) (make-constant #f))
-                                globals::make_minus_alternative
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (sexpr->ast (car args) env #f)
-                                        globals::sexpr_minus__g_ast
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                                env.clone(),
-                                                Scm::False,
-                                            ]),
-                                        // (sexpr->and (cdr args) env tail?)
-                                        globals::sexpr_minus__g_and
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cdr args)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                                env.clone(),
-                                                tail_p.clone(),
-                                            ]),
-                                        // (make-constant #f)
-                                        globals::make_minus_constant
-                                            .with(|value| value.get())
-                                            .invoke(&[Scm::False]),
-                                    ])
-                            }
+                        } else {
+                            // (make-alternative (sexpr->ast (car args) env #f) (sexpr->and (cdr args) env tail?) (make-constant #f))
+                            globals::make_minus_alternative
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (sexpr->ast (car args) env #f)
+                                    globals::sexpr_minus__g_ast
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                            env.clone(),
+                                            Scm::False,
+                                        ]),
+                                    // (sexpr->and (cdr args) env tail?)
+                                    globals::sexpr_minus__g_and
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (cdr args)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                            env.clone(),
+                                            tail_p.clone(),
+                                        ]),
+                                    // (make-constant #f)
+                                    globals::make_minus_constant
+                                        .with(|value| value.get())
+                                        .invoke(&[Scm::False]),
+                                ])
                         }
                     }
                 })
@@ -2039,22 +2300,59 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                         .is_true()
                         {
                             Scm::Nil
-                        } else {
-                            if (
-                                // (equal? (quote (sunny testing)) (car stmt*))
-                                imports::equal_p.with(|value| value.get()).invoke(&[
-                                    Scm::pair(
-                                        Scm::symbol("sunny"),
-                                        Scm::pair(Scm::symbol("testing"), Scm::Nil),
-                                    ),
-                                    // (car stmt*)
-                                    imports::car
+                        } else if (
+                            // (equal? (quote (sunny testing)) (car stmt*))
+                            imports::equal_p.with(|value| value.get()).invoke(&[
+                                Scm::pair(
+                                    Scm::symbol("sunny"),
+                                    Scm::pair(Scm::symbol("testing"), Scm::Nil),
+                                ),
+                                // (car stmt*)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[stmt_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (sexpr->import (cdr stmt*) env)
+                            globals::sexpr_minus__g_import
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr stmt*)
+                                    imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[stmt_star_.clone()]),
+                                    env.clone(),
                                 ])
-                            )
-                            .is_true()
-                            {
+                        } else if (
+                            // (eq? (quote only) (caar stmt*))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("only"),
+                                // (caar stmt*)
+                                imports::caar
+                                    .with(|value| value.get())
+                                    .invoke(&[stmt_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (cons (import-only (cadar stmt*) (cddar stmt*) env) (sexpr->import (cdr stmt*) env))
+                            imports::cons.with(|value| value.get()).invoke(&[
+                                // (import-only (cadar stmt*) (cddar stmt*) env)
+                                globals::import_minus_only
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadar stmt*)
+                                        imports::cadar
+                                            .with(|value| value.get())
+                                            .invoke(&[stmt_star_.clone()]),
+                                        // (cddar stmt*)
+                                        imports::cddar
+                                            .with(|value| value.get())
+                                            .invoke(&[stmt_star_.clone()]),
+                                        env.clone(),
+                                    ]),
                                 // (sexpr->import (cdr stmt*) env)
                                 globals::sexpr_minus__g_import
                                     .with(|value| value.get())
@@ -2064,73 +2362,32 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                             .with(|value| value.get())
                                             .invoke(&[stmt_star_.clone()]),
                                         env.clone(),
-                                    ])
-                            } else {
-                                if (
-                                    // (eq? (quote only) (caar stmt*))
-                                    imports::eq_p.with(|value| value.get()).invoke(&[
-                                        Scm::symbol("only"),
-                                        // (caar stmt*)
-                                        imports::caar
+                                    ]),
+                            ])
+                        } else {
+                            // (cons (import-all (car stmt*) env) (sexpr->import (cdr stmt*) env))
+                            imports::cons.with(|value| value.get()).invoke(&[
+                                // (import-all (car stmt*) env)
+                                globals::import_minus_all
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (car stmt*)
+                                        imports::car
                                             .with(|value| value.get())
                                             .invoke(&[stmt_star_.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    // (cons (import-only (cadar stmt*) (cddar stmt*) env) (sexpr->import (cdr stmt*) env))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        // (import-only (cadar stmt*) (cddar stmt*) env)
-                                        globals::import_minus_only
+                                        env.clone(),
+                                    ]),
+                                // (sexpr->import (cdr stmt*) env)
+                                globals::sexpr_minus__g_import
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cdr stmt*)
+                                        imports::cdr
                                             .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cadar stmt*)
-                                                imports::cadar
-                                                    .with(|value| value.get())
-                                                    .invoke(&[stmt_star_.clone()]),
-                                                // (cddar stmt*)
-                                                imports::cddar
-                                                    .with(|value| value.get())
-                                                    .invoke(&[stmt_star_.clone()]),
-                                                env.clone(),
-                                            ]),
-                                        // (sexpr->import (cdr stmt*) env)
-                                        globals::sexpr_minus__g_import
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cdr stmt*)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[stmt_star_.clone()]),
-                                                env.clone(),
-                                            ]),
-                                    ])
-                                } else {
-                                    // (cons (import-all (car stmt*) env) (sexpr->import (cdr stmt*) env))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        // (import-all (car stmt*) env)
-                                        globals::import_minus_all.with(|value| value.get()).invoke(
-                                            &[
-                                                // (car stmt*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[stmt_star_.clone()]),
-                                                env.clone(),
-                                            ],
-                                        ),
-                                        // (sexpr->import (cdr stmt*) env)
-                                        globals::sexpr_minus__g_import
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cdr stmt*)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[stmt_star_.clone()]),
-                                                env.clone(),
-                                            ]),
-                                    ])
-                                }
-                            }
+                                            .invoke(&[stmt_star_.clone()]),
+                                        env.clone(),
+                                    ]),
+                            ])
                         }
                     }
                 })
@@ -2541,41 +2798,39 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                         .is_true()
                         {
                             Scm::True
-                        } else {
-                            if (
-                                // (memq (car imports) exports)
-                                imports::memq.with(|value| value.get()).invoke(&[
-                                    // (car imports)
-                                    imports::car
+                        } else if (
+                            // (memq (car imports) exports)
+                            imports::memq.with(|value| value.get()).invoke(&[
+                                // (car imports)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[imports.clone()]),
+                                exports.clone(),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (check-imports (cdr imports) exports lib)
+                            globals::check_minus_imports
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr imports)
+                                    imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[imports.clone()]),
                                     exports.clone(),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                // (check-imports (cdr imports) exports lib)
-                                globals::check_minus_imports
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (cdr imports)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[imports.clone()]),
-                                        exports.clone(),
-                                        lib.clone(),
-                                    ])
-                            } else {
-                                // (error "Invalid import" (car imports) lib)
-                                imports::error.with(|value| value.get()).invoke(&[
-                                    Scm::from("Invalid import"),
-                                    // (car imports)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[imports.clone()]),
                                     lib.clone(),
                                 ])
-                            }
+                        } else {
+                            // (error "Invalid import" (car imports) lib)
+                            imports::error.with(|value| value.get()).invoke(&[
+                                Scm::from("Invalid import"),
+                                // (car imports)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[imports.clone()]),
+                                lib.clone(),
+                            ])
                         }
                     }
                 })
@@ -2716,89 +2971,79 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                                 .is_true()
                                                 {
                                                     body.clone()
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote <-) (cadar stmt*))
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("<-"),
-                                                                // (cadar stmt*)
-                                                                imports::cadar
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[stmt_star_.clone()]),
-                                                            ])
+                                                } else if (
+                                                    // (eq? (quote <-) (cadar stmt*))
+                                                    imports::eq_p.with(|value| value.get()).invoke(
+                                                        &[
+                                                            Scm::symbol("<-"),
+                                                            // (cadar stmt*)
+                                                            imports::cadar
+                                                                .with(|value| value.get())
+                                                                .invoke(&[stmt_star_.clone()]),
+                                                        ],
                                                     )
-                                                    .is_true()
-                                                    {
-                                                        // (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))
-                                                        imports::list
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("let"),
-                                                                // (list (list (caar stmt*) (caddar stmt*)))
-                                                                imports::list
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        // (list (caar stmt*) (caddar stmt*))
-                                                                        imports::list
-                                                                            .with(|value| {
-                                                                                value.get()
-                                                                            })
-                                                                            .invoke(&[
-                                                                                // (caar stmt*)
-                                                                                imports::caar
-                                                                                    .with(|value| {
-                                                                                        value.get()
-                                                                                    })
-                                                                                    .invoke(&[
-                                                                                        stmt_star_
-                                                                                            .clone(
-                                                                                            ),
-                                                                                    ]),
-                                                                                // (caddar stmt*)
-                                                                                imports::caddar
-                                                                                    .with(|value| {
-                                                                                        value.get()
-                                                                                    })
-                                                                                    .invoke(&[
-                                                                                        stmt_star_
-                                                                                            .clone(
-                                                                                            ),
-                                                                                    ]),
-                                                                            ]),
-                                                                    ]),
-                                                                // (loop (cdr stmt*))
-                                                                loop_.get().invoke(&[
-                                                                    // (cdr stmt*)
-                                                                    imports::cdr
+                                                )
+                                                .is_true()
+                                                {
+                                                    // (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))
+                                                    imports::list.with(|value| value.get()).invoke(
+                                                        &[
+                                                            Scm::symbol("let"),
+                                                            // (list (list (caar stmt*) (caddar stmt*)))
+                                                            imports::list
+                                                                .with(|value| value.get())
+                                                                .invoke(&[
+                                                                    // (list (caar stmt*) (caddar stmt*))
+                                                                    imports::list
                                                                         .with(|value| value.get())
                                                                         .invoke(&[
-                                                                            stmt_star_.clone()
+                                                                            // (caar stmt*)
+                                                                            imports::caar
+                                                                                .with(|value| {
+                                                                                    value.get()
+                                                                                })
+                                                                                .invoke(&[
+                                                                                    stmt_star_
+                                                                                        .clone(),
+                                                                                ]),
+                                                                            // (caddar stmt*)
+                                                                            imports::caddar
+                                                                                .with(|value| {
+                                                                                    value.get()
+                                                                                })
+                                                                                .invoke(&[
+                                                                                    stmt_star_
+                                                                                        .clone(),
+                                                                                ]),
                                                                         ]),
                                                                 ]),
-                                                            ])
-                                                    } else {
-                                                        // (list (quote begin) (car stmt*) (loop (cdr stmt*)))
-                                                        imports::list
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("begin"),
-                                                                // (car stmt*)
-                                                                imports::car
+                                                            // (loop (cdr stmt*))
+                                                            loop_.get().invoke(&[
+                                                                // (cdr stmt*)
+                                                                imports::cdr
                                                                     .with(|value| value.get())
                                                                     .invoke(&[stmt_star_.clone()]),
-                                                                // (loop (cdr stmt*))
-                                                                loop_.get().invoke(&[
-                                                                    // (cdr stmt*)
-                                                                    imports::cdr
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            stmt_star_.clone()
-                                                                        ]),
-                                                                ]),
-                                                            ])
-                                                    }
+                                                            ]),
+                                                        ],
+                                                    )
+                                                } else {
+                                                    // (list (quote begin) (car stmt*) (loop (cdr stmt*)))
+                                                    imports::list.with(|value| value.get()).invoke(
+                                                        &[
+                                                            Scm::symbol("begin"),
+                                                            // (car stmt*)
+                                                            imports::car
+                                                                .with(|value| value.get())
+                                                                .invoke(&[stmt_star_.clone()]),
+                                                            // (loop (cdr stmt*))
+                                                            loop_.get().invoke(&[
+                                                                // (cdr stmt*)
+                                                                imports::cdr
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[stmt_star_.clone()]),
+                                                            ]),
+                                                        ],
+                                                    )
                                                 }
                                             }
                                         })
@@ -2882,100 +3127,92 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     .is_true()
                                     {
                                         body.clone()
+                                    } else if (
+                                        // (eq? (quote given) (caar section*))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            Scm::symbol("given"),
+                                            // (caar section*)
+                                            imports::caar
+                                                .with(|value| value.get())
+                                                .invoke(&[section_star_.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (given (car section*) (dispatch (cdr section*) body))
+                                        given.get().invoke(&[
+                                            // (car section*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[section_star_.clone()]),
+                                            // (dispatch (cdr section*) body)
+                                            dispatch.get().invoke(&[
+                                                // (cdr section*)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[section_star_.clone()]),
+                                                body.clone(),
+                                            ]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote when) (caar section*))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            Scm::symbol("when"),
+                                            // (caar section*)
+                                            imports::caar
+                                                .with(|value| value.get())
+                                                .invoke(&[section_star_.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (when (car section*) (dispatch (cdr section*) body))
+                                        when.get().invoke(&[
+                                            // (car section*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[section_star_.clone()]),
+                                            // (dispatch (cdr section*) body)
+                                            dispatch.get().invoke(&[
+                                                // (cdr section*)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[section_star_.clone()]),
+                                                body.clone(),
+                                            ]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote then) (caar section*))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            Scm::symbol("then"),
+                                            // (caar section*)
+                                            imports::caar
+                                                .with(|value| value.get())
+                                                .invoke(&[section_star_.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (then (car section*) (dispatch (cdr section*) body))
+                                        then.get().invoke(&[
+                                            // (car section*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[section_star_.clone()]),
+                                            // (dispatch (cdr section*) body)
+                                            dispatch.get().invoke(&[
+                                                // (cdr section*)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[section_star_.clone()]),
+                                                body.clone(),
+                                            ]),
+                                        ])
                                     } else {
-                                        if (
-                                            // (eq? (quote given) (caar section*))
-                                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                                Scm::symbol("given"),
-                                                // (caar section*)
-                                                imports::caar
-                                                    .with(|value| value.get())
-                                                    .invoke(&[section_star_.clone()]),
-                                            ])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (given (car section*) (dispatch (cdr section*) body))
-                                            given.get().invoke(&[
-                                                // (car section*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[section_star_.clone()]),
-                                                // (dispatch (cdr section*) body)
-                                                dispatch.get().invoke(&[
-                                                    // (cdr section*)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[section_star_.clone()]),
-                                                    body.clone(),
-                                                ]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote when) (caar section*))
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("when"),
-                                                    // (caar section*)
-                                                    imports::caar
-                                                        .with(|value| value.get())
-                                                        .invoke(&[section_star_.clone()]),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (when (car section*) (dispatch (cdr section*) body))
-                                                when.get().invoke(&[
-                                                    // (car section*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[section_star_.clone()]),
-                                                    // (dispatch (cdr section*) body)
-                                                    dispatch.get().invoke(&[
-                                                        // (cdr section*)
-                                                        imports::cdr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[section_star_.clone()]),
-                                                        body.clone(),
-                                                    ]),
-                                                ])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote then) (caar section*))
-                                                    imports::eq_p.with(|value| value.get()).invoke(
-                                                        &[
-                                                            Scm::symbol("then"),
-                                                            // (caar section*)
-                                                            imports::caar
-                                                                .with(|value| value.get())
-                                                                .invoke(&[section_star_.clone()]),
-                                                        ],
-                                                    )
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (then (car section*) (dispatch (cdr section*) body))
-                                                    then.get().invoke(&[
-                                                        // (car section*)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[section_star_.clone()]),
-                                                        // (dispatch (cdr section*) body)
-                                                        dispatch.get().invoke(&[
-                                                            // (cdr section*)
-                                                            imports::cdr
-                                                                .with(|value| value.get())
-                                                                .invoke(&[section_star_.clone()]),
-                                                            body.clone(),
-                                                        ]),
-                                                    ])
-                                                } else {
-                                                    // (error "invalid testcase")
-                                                    imports::error
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::from("invalid testcase")])
-                                                }
-                                            }
-                                        }
+                                        // (error "invalid testcase")
+                                        imports::error
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::from("invalid testcase")])
                                     }
                                 }
                             })
@@ -3422,31 +3659,29 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                         .with(|value| value.get())
                                         .invoke(&[expr.clone()]),
                                 ])
-                        } else {
-                            if (
-                                // (eq? (quote except) (car expr))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("except"),
-                                    // (car expr)
-                                    imports::car
+                        } else if (
+                            // (eq? (quote except) (car expr))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("except"),
+                                // (car expr)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (importset-libname (cadr expr))
+                            globals::importset_minus_libname
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cadr expr)
+                                    imports::cadr
                                         .with(|value| value.get())
                                         .invoke(&[expr.clone()]),
                                 ])
-                            )
-                            .is_true()
-                            {
-                                // (importset-libname (cadr expr))
-                                globals::importset_minus_libname
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (cadr expr)
-                                        imports::cadr
-                                            .with(|value| value.get())
-                                            .invoke(&[expr.clone()]),
-                                    ])
-                            } else {
-                                expr.clone()
-                            }
+                        } else {
+                            expr.clone()
                         }
                     }
                 })
@@ -3508,36 +3743,24 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                         .is_true()
                         {
                             Scm::Nil
-                        } else {
-                            if (
-                                // (eq? (quote export) (caar lib-decl*))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("export"),
-                                    // (caar lib-decl*)
-                                    imports::caar
-                                        .with(|value| value.get())
-                                        .invoke(&[lib_minus_decl_star_.clone()]),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                // (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))
-                                globals::append.with(|value| value.get()).invoke(&[
-                                    // (cdar lib-decl*)
-                                    imports::cdar
-                                        .with(|value| value.get())
-                                        .invoke(&[lib_minus_decl_star_.clone()]),
-                                    // (library-exports (cdr lib-decl*))
-                                    globals::library_minus_exports
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (cdr lib-decl*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[lib_minus_decl_star_.clone()]),
-                                        ]),
-                                ])
-                            } else {
+                        } else if (
+                            // (eq? (quote export) (caar lib-decl*))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("export"),
+                                // (caar lib-decl*)
+                                imports::caar
+                                    .with(|value| value.get())
+                                    .invoke(&[lib_minus_decl_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))
+                            globals::append.with(|value| value.get()).invoke(&[
+                                // (cdar lib-decl*)
+                                imports::cdar
+                                    .with(|value| value.get())
+                                    .invoke(&[lib_minus_decl_star_.clone()]),
                                 // (library-exports (cdr lib-decl*))
                                 globals::library_minus_exports
                                     .with(|value| value.get())
@@ -3546,8 +3769,18 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                         imports::cdr
                                             .with(|value| value.get())
                                             .invoke(&[lib_minus_decl_star_.clone()]),
-                                    ])
-                            }
+                                    ]),
+                            ])
+                        } else {
+                            // (library-exports (cdr lib-decl*))
+                            globals::library_minus_exports
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr lib-decl*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[lib_minus_decl_star_.clone()]),
+                                ])
                         }
                     }
                 })
@@ -3584,60 +3817,56 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     .is_true()
                                     {
                                         Scm::Nil
-                                    } else {
-                                        if (
-                                            // (definition? (car exp*))
-                                            globals::definition_p.with(|value| value.get()).invoke(
-                                                &[
-                                                    // (car exp*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                ],
-                                            )
-                                        )
-                                        .is_true()
-                                        {
-                                            // (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))
-                                            imports::cons.with(|value| value.get()).invoke(&[
-                                                // (list (definition-variable (car exp*)) (definition-value (car exp*)))
-                                                imports::list.with(|value| value.get()).invoke(&[
-                                                    // (definition-variable (car exp*))
-                                                    globals::definition_minus_variable
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            // (car exp*)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[exp_star_.clone()]),
-                                                        ]),
-                                                    // (definition-value (car exp*))
-                                                    globals::definition_minus_value
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            // (car exp*)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[exp_star_.clone()]),
-                                                        ]),
-                                                ]),
-                                                // (initializations (cdr exp*))
-                                                initializations.get().invoke(&[
-                                                    // (cdr exp*)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                ]),
-                                            ])
-                                        } else {
+                                    } else if (
+                                        // (definition? (car exp*))
+                                        globals::definition_p.with(|value| value.get()).invoke(&[
+                                            // (car exp*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            // (list (definition-variable (car exp*)) (definition-value (car exp*)))
+                                            imports::list.with(|value| value.get()).invoke(&[
+                                                // (definition-variable (car exp*))
+                                                globals::definition_minus_variable
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (car exp*)
+                                                        imports::car
+                                                            .with(|value| value.get())
+                                                            .invoke(&[exp_star_.clone()]),
+                                                    ]),
+                                                // (definition-value (car exp*))
+                                                globals::definition_minus_value
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (car exp*)
+                                                        imports::car
+                                                            .with(|value| value.get())
+                                                            .invoke(&[exp_star_.clone()]),
+                                                    ]),
+                                            ]),
                                             // (initializations (cdr exp*))
                                             initializations.get().invoke(&[
                                                 // (cdr exp*)
                                                 imports::cdr
                                                     .with(|value| value.get())
                                                     .invoke(&[exp_star_.clone()]),
-                                            ])
-                                        }
+                                            ]),
+                                        ])
+                                    } else {
+                                        // (initializations (cdr exp*))
+                                        initializations.get().invoke(&[
+                                            // (cdr exp*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()]),
+                                        ])
                                     }
                                 }
                             })
@@ -3661,43 +3890,39 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     .is_true()
                                     {
                                         Scm::Nil
+                                    } else if (
+                                        // (definition? (car exp*))
+                                        globals::definition_p.with(|value| value.get()).invoke(&[
+                                            // (car exp*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()]),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (cdr exp*))
+                                        transform.get().invoke(&[
+                                            // (cdr exp*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()]),
+                                        ])
                                     } else {
-                                        if (
-                                            // (definition? (car exp*))
-                                            globals::definition_p.with(|value| value.get()).invoke(
-                                                &[
-                                                    // (car exp*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                ],
-                                            )
-                                        )
-                                        .is_true()
-                                        {
+                                        // (cons (car exp*) (transform (cdr exp*)))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            // (car exp*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()]),
                                             // (transform (cdr exp*))
                                             transform.get().invoke(&[
                                                 // (cdr exp*)
                                                 imports::cdr
                                                     .with(|value| value.get())
                                                     .invoke(&[exp_star_.clone()]),
-                                            ])
-                                        } else {
-                                            // (cons (car exp*) (transform (cdr exp*)))
-                                            imports::cons.with(|value| value.get()).invoke(&[
-                                                // (car exp*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[exp_star_.clone()]),
-                                                // (transform (cdr exp*))
-                                                transform.get().invoke(&[
-                                                    // (cdr exp*)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                ]),
-                                            ])
-                                        }
+                                            ]),
+                                        ])
                                     }
                                 }
                             })
@@ -3864,77 +4089,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("COMMENT")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message COMMENT" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message COMMENT",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("COMMENT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message COMMENT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message COMMENT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -4046,75 +4255,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("NOP")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message NOP" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message NOP"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("NOP")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message NOP" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message NOP"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -4217,174 +4412,124 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                         globals::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("Scm::Nil")])
-                                    } else {
-                                        if (
-                                            // (eq? val #t)
-                                            imports::eq_p
-                                                .with(|value| value.get())
-                                                .invoke(&[val.clone(), Scm::True])
-                                        )
-                                        .is_true()
+                                    } else if (
+                                        // (eq? val #t)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[val.clone(), Scm::True])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print module "Scm::True")
+                                        globals::print
+                                            .with(|value| value.get())
+                                            .invoke(&[module.clone(), Scm::from("Scm::True")])
+                                    } else if (
+                                        // (eq? val #f)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[val.clone(), Scm::False])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print module "Scm::False")
+                                        globals::print
+                                            .with(|value| value.get())
+                                            .invoke(&[module.clone(), Scm::from("Scm::False")])
+                                    } else if (
+                                        // (symbol? val)
+                                        imports::symbol_p
+                                            .with(|value| value.get())
+                                            .invoke(&[val.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print module "Scm::symbol(\"" val "\")")
+                                        globals::print.with(|value| value.get()).invoke(&[
+                                            module.clone(),
+                                            Scm::from("Scm::symbol(\""),
+                                            val.clone(),
+                                            Scm::from("\")"),
+                                        ])
+                                    } else if (
+                                        // (eq? val #\')
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[val.clone(), Scm::char('\'')])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print module "Scm::char('\'')")
+                                        globals::print
+                                            .with(|value| value.get())
+                                            .invoke(&[module.clone(), Scm::from("Scm::char('\'')")])
+                                    } else if (
+                                        // (char? val)
+                                        imports::char_p
+                                            .with(|value| value.get())
+                                            .invoke(&[val.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print module "Scm::char('" val "')")
+                                        globals::print.with(|value| value.get()).invoke(&[
+                                            module.clone(),
+                                            Scm::from("Scm::char('"),
+                                            val.clone(),
+                                            Scm::from("')"),
+                                        ])
+                                    } else if (
+                                        // (pair? val)
+                                        imports::pair_p
+                                            .with(|value| value.get())
+                                            .invoke(&[val.clone()])
+                                    )
+                                    .is_true()
+                                    {
                                         {
-                                            // (print module "Scm::True")
+                                            // (print module "Scm::pair(")
                                             globals::print
                                                 .with(|value| value.get())
-                                                .invoke(&[module.clone(), Scm::from("Scm::True")])
-                                        } else {
-                                            if (
-                                                // (eq? val #f)
-                                                imports::eq_p
+                                                .invoke(&[module.clone(), Scm::from("Scm::pair(")]);
+                                            // (gen-constant module (car val))
+                                            gen_minus_constant.get().invoke(&[
+                                                module.clone(),
+                                                // (car val)
+                                                imports::car
                                                     .with(|value| value.get())
-                                                    .invoke(&[val.clone(), Scm::False])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (print module "Scm::False")
-                                                globals::print.with(|value| value.get()).invoke(&[
-                                                    module.clone(),
-                                                    Scm::from("Scm::False"),
-                                                ])
-                                            } else {
-                                                if (
-                                                    // (symbol? val)
-                                                    imports::symbol_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[val.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (print module "Scm::symbol(\"" val "\")")
-                                                    globals::print.with(|value| value.get()).invoke(
-                                                        &[
-                                                            module.clone(),
-                                                            Scm::from("Scm::symbol(\""),
-                                                            val.clone(),
-                                                            Scm::from("\")"),
-                                                        ],
-                                                    )
-                                                } else {
-                                                    if (
-                                                        // (eq? val #\')
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[val.clone(), Scm::char('\'')])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (print module "Scm::char('\'')")
-                                                        globals::print
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                module.clone(),
-                                                                Scm::from("Scm::char('\'')"),
-                                                            ])
-                                                    } else {
-                                                        if (
-                                                            // (char? val)
-                                                            imports::char_p
-                                                                .with(|value| value.get())
-                                                                .invoke(&[val.clone()])
-                                                        )
-                                                        .is_true()
-                                                        {
-                                                            // (print module "Scm::char('" val "')")
-                                                            globals::print
-                                                                .with(|value| value.get())
-                                                                .invoke(&[
-                                                                    module.clone(),
-                                                                    Scm::from("Scm::char('"),
-                                                                    val.clone(),
-                                                                    Scm::from("')"),
-                                                                ])
-                                                        } else {
-                                                            if (
-                                                                // (pair? val)
-                                                                imports::pair_p
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[val.clone()])
-                                                            )
-                                                            .is_true()
-                                                            {
-                                                                {
-                                                                    // (print module "Scm::pair(")
-                                                                    globals::print
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            Scm::from("Scm::pair("),
-                                                                        ]);
-                                                                    // (gen-constant module (car val))
-                                                                    gen_minus_constant
-                                                                        .get()
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            // (car val)
-                                                                            imports::car
-                                                                                .with(|value| {
-                                                                                    value.get()
-                                                                                })
-                                                                                .invoke(&[
-                                                                                    val.clone()
-                                                                                ]),
-                                                                        ]);
-                                                                    // (print module ", ")
-                                                                    globals::print
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            Scm::from(", "),
-                                                                        ]);
-                                                                    // (gen-constant module (cdr val))
-                                                                    gen_minus_constant
-                                                                        .get()
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            // (cdr val)
-                                                                            imports::cdr
-                                                                                .with(|value| {
-                                                                                    value.get()
-                                                                                })
-                                                                                .invoke(&[
-                                                                                    val.clone()
-                                                                                ]),
-                                                                        ]);
-                                                                    // (print module ")")
-                                                                    globals::print
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            Scm::from(")"),
-                                                                        ])
-                                                                }
-                                                            } else {
-                                                                {
-                                                                    // (print module "Scm::from(")
-                                                                    globals::print
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            Scm::from("Scm::from("),
-                                                                        ]);
-                                                                    // (show module val)
-                                                                    globals::show
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            val.clone(),
-                                                                        ]);
-                                                                    // (print module ")")
-                                                                    globals::print
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            module.clone(),
-                                                                            Scm::from(")"),
-                                                                        ])
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                                    .invoke(&[val.clone()]),
+                                            ]);
+                                            // (print module ", ")
+                                            globals::print
+                                                .with(|value| value.get())
+                                                .invoke(&[module.clone(), Scm::from(", ")]);
+                                            // (gen-constant module (cdr val))
+                                            gen_minus_constant.get().invoke(&[
+                                                module.clone(),
+                                                // (cdr val)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[val.clone()]),
+                                            ]);
+                                            // (print module ")")
+                                            globals::print
+                                                .with(|value| value.get())
+                                                .invoke(&[module.clone(), Scm::from(")")])
+                                        }
+                                    } else {
+                                        {
+                                            // (print module "Scm::from(")
+                                            globals::print
+                                                .with(|value| value.get())
+                                                .invoke(&[module.clone(), Scm::from("Scm::from(")]);
+                                            // (show module val)
+                                            globals::show
+                                                .with(|value| value.get())
+                                                .invoke(&[module.clone(), val.clone()]);
+                                            // (print module ")")
+                                            globals::print
+                                                .with(|value| value.get())
+                                                .invoke(&[module.clone(), Scm::from(")")])
                                         }
                                     }
                                 }
@@ -4430,77 +4575,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("CONSTANT")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message CONSTANT" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message CONSTANT",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("CONSTANT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message CONSTANT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message CONSTANT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -4676,60 +4805,52 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                                     .invoke(&[name.clone()]),
                                                 Scm::from(".with(|value| value.get())"),
                                             ])
+                                        } else if (
+                                            // (eq? (quote IMPORT-REF) getter)
+                                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                                Scm::symbol("IMPORT-REF"),
+                                                getter.clone(),
+                                            ])
+                                        )
+                                        .is_true()
+                                        {
+                                            // (print module "imports::" (rustify-identifier name) ".with(|value| value.get())")
+                                            globals::print.with(|value| value.get()).invoke(&[
+                                                module.clone(),
+                                                Scm::from("imports::"),
+                                                // (rustify-identifier name)
+                                                imports::rustify_minus_identifier
+                                                    .with(|value| value.get())
+                                                    .invoke(&[name.clone()]),
+                                                Scm::from(".with(|value| value.get())"),
+                                            ])
+                                        } else if (
+                                            // (eq? (quote BOXED-REF) getter)
+                                            imports::eq_p
+                                                .with(|value| value.get())
+                                                .invoke(&[Scm::symbol("BOXED-REF"), getter.clone()])
+                                        )
+                                        .is_true()
+                                        {
+                                            // (print module (rustify-identifier name) ".get()")
+                                            globals::print.with(|value| value.get()).invoke(&[
+                                                module.clone(),
+                                                // (rustify-identifier name)
+                                                imports::rustify_minus_identifier
+                                                    .with(|value| value.get())
+                                                    .invoke(&[name.clone()]),
+                                                Scm::from(".get()"),
+                                            ])
                                         } else {
-                                            if (
-                                                // (eq? (quote IMPORT-REF) getter)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("IMPORT-REF"),
-                                                    getter.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (print module "imports::" (rustify-identifier name) ".with(|value| value.get())")
-                                                globals::print.with(|value| value.get()).invoke(&[
-                                                    module.clone(),
-                                                    Scm::from("imports::"),
-                                                    // (rustify-identifier name)
-                                                    imports::rustify_minus_identifier
-                                                        .with(|value| value.get())
-                                                        .invoke(&[name.clone()]),
-                                                    Scm::from(".with(|value| value.get())"),
-                                                ])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote BOXED-REF) getter)
-                                                    imports::eq_p.with(|value| value.get()).invoke(
-                                                        &[Scm::symbol("BOXED-REF"), getter.clone()],
-                                                    )
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (print module (rustify-identifier name) ".get()")
-                                                    globals::print.with(|value| value.get()).invoke(
-                                                        &[
-                                                            module.clone(),
-                                                            // (rustify-identifier name)
-                                                            imports::rustify_minus_identifier
-                                                                .with(|value| value.get())
-                                                                .invoke(&[name.clone()]),
-                                                            Scm::from(".get()"),
-                                                        ],
-                                                    )
-                                                } else {
-                                                    // (print module (rustify-identifier name) ".clone()")
-                                                    globals::print.with(|value| value.get()).invoke(
-                                                        &[
-                                                            module.clone(),
-                                                            // (rustify-identifier name)
-                                                            imports::rustify_minus_identifier
-                                                                .with(|value| value.get())
-                                                                .invoke(&[name.clone()]),
-                                                            Scm::from(".clone()"),
-                                                        ],
-                                                    )
-                                                }
-                                            }
+                                            // (print module (rustify-identifier name) ".clone()")
+                                            globals::print.with(|value| value.get()).invoke(&[
+                                                module.clone(),
+                                                // (rustify-identifier name)
+                                                imports::rustify_minus_identifier
+                                                    .with(|value| value.get())
+                                                    .invoke(&[name.clone()]),
+                                                Scm::from(".clone()"),
+                                            ])
                                         }
                                     }
                                 }
@@ -4758,77 +4879,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("REFERENCE")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message REFERENCE" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message REFERENCE",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("REFERENCE")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message REFERENCE" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message REFERENCE"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -4988,44 +5093,39 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("))")])
                                             }
-                                        } else {
-                                            if (
-                                                // (eq? (quote BOXED-SET) setter)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("BOXED-SET"),
-                                                    setter.clone(),
-                                                ])
-                                            )
-                                            .is_true()
+                                        } else if (
+                                            // (eq? (quote BOXED-SET) setter)
+                                            imports::eq_p
+                                                .with(|value| value.get())
+                                                .invoke(&[Scm::symbol("BOXED-SET"), setter.clone()])
+                                        )
+                                        .is_true()
+                                        {
                                             {
-                                                {
-                                                    // (print module (rustify-identifier name) ".set(")
-                                                    globals::print
+                                                // (print module (rustify-identifier name) ".set(")
+                                                globals::print.with(|value| value.get()).invoke(&[
+                                                    module.clone(),
+                                                    // (rustify-identifier name)
+                                                    imports::rustify_minus_identifier
                                                         .with(|value| value.get())
-                                                        .invoke(&[
-                                                            module.clone(),
-                                                            // (rustify-identifier name)
-                                                            imports::rustify_minus_identifier
-                                                                .with(|value| value.get())
-                                                                .invoke(&[name.clone()]),
-                                                            Scm::from(".set("),
-                                                        ]);
-                                                    // (val (quote gen-rust) module)
-                                                    val.clone().invoke(&[
-                                                        Scm::symbol("gen-rust"),
-                                                        module.clone(),
-                                                    ]);
-                                                    // (print module ")")
-                                                    globals::print
-                                                        .with(|value| value.get())
-                                                        .invoke(&[module.clone(), Scm::from(")")])
-                                                }
-                                            } else {
-                                                // (error "set! on unboxed variable")
-                                                imports::error.with(|value| value.get()).invoke(&[
-                                                    Scm::from("set! on unboxed variable"),
-                                                ])
+                                                        .invoke(&[name.clone()]),
+                                                    Scm::from(".set("),
+                                                ]);
+                                                // (val (quote gen-rust) module)
+                                                val.clone().invoke(&[
+                                                    Scm::symbol("gen-rust"),
+                                                    module.clone(),
+                                                ]);
+                                                // (print module ")")
+                                                globals::print
+                                                    .with(|value| value.get())
+                                                    .invoke(&[module.clone(), Scm::from(")")])
                                             }
+                                        } else {
+                                            // (error "set! on unboxed variable")
+                                            imports::error
+                                                .with(|value| value.get())
+                                                .invoke(&[Scm::from("set! on unboxed variable")])
                                         }
                                     }
                                 }
@@ -5054,77 +5154,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("ASSIGNMENT")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message ASSIGNMENT" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message ASSIGNMENT",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("ASSIGNMENT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message ASSIGNMENT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message ASSIGNMENT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -5134,7 +5218,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                 })
             })
         });
-        // (define (make-alternative condition consequent alternative) (define (repr) (list (quote IF) (condition (quote repr)) (consequent (quote repr)) (alternative (quote repr)))) (define (transform func) (func self (lambda () (make-alternative (condition (quote transform) func) (consequent (quote transform) func) (alternative (quote transform) func))))) (define (free-vars) (set-union (set-union (condition (quote free-vars)) (consequent (quote free-vars))) (alternative (quote free-vars)))) (define (gen-rust module) (print module "if (") (condition (quote gen-rust) module) (print module ").is_true() {") (consequent (quote gen-rust) module) (print module "} else {") (alternative (quote gen-rust) module) (print module "}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ALTERNATIVE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ALTERNATIVE" msg)))) self)
+        // (define (make-alternative condition consequent alternative) (define (repr) (list (quote IF) (condition (quote repr)) (consequent (quote repr)) (alternative (quote repr)))) (define (transform func) (func self (lambda () (make-alternative (condition (quote transform) func) (consequent (quote transform) func) (alternative (quote transform) func))))) (define (free-vars) (set-union (set-union (condition (quote free-vars)) (consequent (quote free-vars))) (alternative (quote free-vars)))) (define (gen-rust module) (print module "if (") (condition (quote gen-rust) module) (print module ").is_true() {") (consequent (quote gen-rust) module) (print module "} else ") (if (eq? (alternative (quote kind)) (quote ALTERNATIVE)) (alternative (quote gen-rust) module) (begin (print module "{") (alternative (quote gen-rust) module) (print module "}")))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ALTERNATIVE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ALTERNATIVE" msg)))) self)
         globals::make_minus_alternative.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -5144,7 +5228,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                     let condition = args[0].clone();
                     let consequent = args[1].clone();
                     let alternative = args[2].clone();
-                    // (letrec ((repr (lambda () (list (quote IF) (condition (quote repr)) (consequent (quote repr)) (alternative (quote repr))))) (transform (lambda (func) (func self (lambda () (make-alternative (condition (quote transform) func) (consequent (quote transform) func) (alternative (quote transform) func)))))) (free-vars (lambda () (set-union (set-union (condition (quote free-vars)) (consequent (quote free-vars))) (alternative (quote free-vars))))) (gen-rust (lambda (module) (print module "if (") (condition (quote gen-rust) module) (print module ").is_true() {") (consequent (quote gen-rust) module) (print module "} else {") (alternative (quote gen-rust) module) (print module "}"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ALTERNATIVE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ALTERNATIVE" msg)))))) self)
+                    // (letrec ((repr (lambda () (list (quote IF) (condition (quote repr)) (consequent (quote repr)) (alternative (quote repr))))) (transform (lambda (func) (func self (lambda () (make-alternative (condition (quote transform) func) (consequent (quote transform) func) (alternative (quote transform) func)))))) (free-vars (lambda () (set-union (set-union (condition (quote free-vars)) (consequent (quote free-vars))) (alternative (quote free-vars))))) (gen-rust (lambda (module) (print module "if (") (condition (quote gen-rust) module) (print module ").is_true() {") (consequent (quote gen-rust) module) (print module "} else ") (if (eq? (alternative (quote kind)) (quote ALTERNATIVE)) (alternative (quote gen-rust) module) (begin (print module "{") (alternative (quote gen-rust) module) (print module "}"))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ALTERNATIVE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ALTERNATIVE" msg)))))) self)
                     {
                         let repr = Scm::uninitialized().into_boxed();
                         let transform = Scm::uninitialized().into_boxed();
@@ -5264,7 +5348,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     panic!("invalid arity")
                                 }
                                 let module = args[0].clone();
-                                // (letrec () (print module "if (") (condition (quote gen-rust) module) (print module ").is_true() {") (consequent (quote gen-rust) module) (print module "} else {") (alternative (quote gen-rust) module) (print module "}"))
+                                // (letrec () (print module "if (") (condition (quote gen-rust) module) (print module ").is_true() {") (consequent (quote gen-rust) module) (print module "} else ") (if (eq? (alternative (quote kind)) (quote ALTERNATIVE)) (alternative (quote gen-rust) module) (begin (print module "{") (alternative (quote gen-rust) module) (print module "}"))))
                                 {
                                     {
                                         // (print module "if (")
@@ -5283,18 +5367,41 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                         consequent
                                             .clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
-                                        // (print module "} else {")
+                                        // (print module "} else ")
                                         globals::print
                                             .with(|value| value.get())
-                                            .invoke(&[module.clone(), Scm::from("} else {")]);
-                                        // (alternative (quote gen-rust) module)
-                                        alternative
-                                            .clone()
-                                            .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
-                                        // (print module "}")
-                                        globals::print
-                                            .with(|value| value.get())
-                                            .invoke(&[module.clone(), Scm::from("}")])
+                                            .invoke(&[module.clone(), Scm::from("} else ")]);
+                                        if (
+                                            // (eq? (alternative (quote kind)) (quote ALTERNATIVE))
+                                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                                // (alternative (quote kind))
+                                                alternative.clone().invoke(&[Scm::symbol("kind")]),
+                                                Scm::symbol("ALTERNATIVE"),
+                                            ])
+                                        )
+                                        .is_true()
+                                        {
+                                            // (alternative (quote gen-rust) module)
+                                            alternative
+                                                .clone()
+                                                .invoke(&[Scm::symbol("gen-rust"), module.clone()])
+                                        } else {
+                                            {
+                                                // (print module "{")
+                                                globals::print
+                                                    .with(|value| value.get())
+                                                    .invoke(&[module.clone(), Scm::from("{")]);
+                                                // (alternative (quote gen-rust) module)
+                                                alternative.clone().invoke(&[
+                                                    Scm::symbol("gen-rust"),
+                                                    module.clone(),
+                                                ]);
+                                                // (print module "}")
+                                                globals::print
+                                                    .with(|value| value.get())
+                                                    .invoke(&[module.clone(), Scm::from("}")])
+                                            }
+                                        }
                                     }
                                 }
                             })
@@ -5322,77 +5429,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("ALTERNATIVE")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message ALTERNATIVE" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message ALTERNATIVE",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("ALTERNATIVE")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message ALTERNATIVE" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message ALTERNATIVE"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -5565,77 +5656,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("APPLICATION")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message APPLICATION" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message APPLICATION",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("APPLICATION")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message APPLICATION" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message APPLICATION"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -5750,77 +5825,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("NULL-ARG")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message NULL-ARG" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "Unknown message NULL-ARG",
-                                                                ),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("NULL-ARG")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message NULL-ARG" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message NULL-ARG"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -5976,75 +6035,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("ARG")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message ARG" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message ARG"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("ARG")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message ARG" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message ARG"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -6318,75 +6363,61 @@ imports::cdr.with(|value| value.get()).invoke(&[exp.clone(),]),env.clone(),tail_
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("FIXLET")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message FIXLET" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message FIXLET"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("FIXLET")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message FIXLET" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message FIXLET"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -6500,19 +6531,19 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else {if (
+globals::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote free-vars) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"),msg.clone(),])).is_true() {
 // (free-vars)
-free_minus_vars.get().invoke(&[])} else {if (
+free_minus_vars.get().invoke(&[])} else if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("SCOPE")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("SCOPE")} else if (
 // (eq? (quote gen-rust) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
@@ -6520,7 +6551,7 @@ gen_minus_rust.get().invoke(&[
 // (car args)
 imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message SCOPE" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message SCOPE"),msg.clone(),])}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message SCOPE"),msg.clone(),])}}})});
 self_.get()}})}));
         // (define (make-sequence first next) (define (repr) (list (quote SEQUENCE) (first (quote repr)) (next (quote repr)))) (define (transform func) (func self (lambda () (make-sequence (first (quote transform) func) (next (quote transform) func))))) (define (free-vars) (set-union (first (quote free-vars)) (next (quote free-vars)))) (define (gen-rust-inner module) (first (quote gen-rust) module) (print module ";") (if (eq? (quote SEQUENCE) (next (quote kind))) (next (quote gen-rust-inner) module) (next (quote gen-rust) module))) (define (gen-rust module) (print module "{") (gen-rust-inner module) (print module "}")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote SEQUENCE)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote gen-rust-inner) msg) (gen-rust-inner (car args))) (else (error "Unknown message SEQUENCE" msg)))) self)
         globals::make_minus_sequence.with(|value| {
@@ -6712,99 +6743,76 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("SEQUENCE")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        if (
-                                                            // (eq? (quote gen-rust-inner) msg)
-                                                            imports::eq_p
-                                                                .with(|value| value.get())
-                                                                .invoke(&[
-                                                                    Scm::symbol("gen-rust-inner"),
-                                                                    msg.clone(),
-                                                                ])
-                                                        )
-                                                        .is_true()
-                                                        {
-                                                            // (gen-rust-inner (car args))
-                                                            gen_minus_rust_minus_inner.get().invoke(
-                                                                &[
-                                                                    // (car args)
-                                                                    imports::car
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[args_.clone()]),
-                                                                ],
-                                                            )
-                                                        } else {
-                                                            // (error "Unknown message SEQUENCE" msg)
-                                                            imports::error
-                                                                .with(|value| value.get())
-                                                                .invoke(&[
-                                                                    Scm::from(
-                                                                        "Unknown message SEQUENCE",
-                                                                    ),
-                                                                    msg.clone(),
-                                                                ])
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("SEQUENCE")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote gen-rust-inner) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust-inner"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust-inner (car args))
+                                        gen_minus_rust_minus_inner.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message SEQUENCE" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message SEQUENCE"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -6942,33 +6950,33 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else {if (
+globals::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote free-vars) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"),msg.clone(),])).is_true() {
 // (free-vars)
-free_minus_vars.get().invoke(&[])} else {if (
+free_minus_vars.get().invoke(&[])} else if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("ABSTRACTION")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("ABSTRACTION")} else if (
 // (eq? (quote gen-rust) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote get-params) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"),msg.clone(),])).is_true() {params.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"),msg.clone(),])).is_true() {params.clone()} else if (
 // (eq? (quote get-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"),msg.clone(),])).is_true() {vars.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"),msg.clone(),])).is_true() {vars.clone()} else if (
 // (eq? (quote get-body) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-body"),msg.clone(),])).is_true() {body.clone()} else {
 // (error "Unknown message ABSTRACTION" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message ABSTRACTION"),msg.clone(),])}}}}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message ABSTRACTION"),msg.clone(),])}}})});
 self_.get()}})}));
         // (define (make-vararg-abstraction params vararg vars varvar body) (define (repr) (cons (quote VARARG-ABSTRACTION) (cons params (body (quote repr))))) (define (transform func) (func self (lambda () (make-vararg-abstraction params vararg vars varvar (body (quote transform) func))))) (define (free-vars) (set-remove* (body (quote free-vars)) (cons vararg params))) (define (prepare-closure module free-vars) (if (pair? free-vars) (let ((name (car free-vars))) (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".clone();") (prepare-closure module (cdr free-vars))))) (define (gen-rust module) (define (gen-params p* k) (if (pair? p*) (begin (print module "let " (rustify-identifier (car p*)) " = args[" k "].clone();") (gen-params (cdr p*) (+ k 1))) (begin (print module "let " (rustify-identifier vararg) " = Scm::list(&args[" k "..]);")))) (rust-block module (lambda () (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))) (print module ")")))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote VARARG-ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vararg) msg) vararg) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-varvar) msg) varvar) ((eq? (quote get-body) msg) body) (else (error "Unknown message VARARG-ABSTRACTION" msg)))) self)
         globals::make_minus_vararg_minus_abstraction.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 5{panic!("invalid arity")}let params = args[0].clone();let vararg = args[1].clone();let vars = args[2].clone();let varvar = args[3].clone();let body = args[4].clone();
@@ -7092,37 +7100,37 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else {if (
+globals::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote free-vars) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("free-vars"),msg.clone(),])).is_true() {
 // (free-vars)
-free_minus_vars.get().invoke(&[])} else {if (
+free_minus_vars.get().invoke(&[])} else if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("VARARG-ABSTRACTION")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("VARARG-ABSTRACTION")} else if (
 // (eq? (quote gen-rust) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
 gen_minus_rust.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote get-params) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"),msg.clone(),])).is_true() {params.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-params"),msg.clone(),])).is_true() {params.clone()} else if (
 // (eq? (quote get-vararg) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vararg"),msg.clone(),])).is_true() {vararg.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vararg"),msg.clone(),])).is_true() {vararg.clone()} else if (
 // (eq? (quote get-vars) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"),msg.clone(),])).is_true() {vars.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-vars"),msg.clone(),])).is_true() {vars.clone()} else if (
 // (eq? (quote get-varvar) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-varvar"),msg.clone(),])).is_true() {varvar.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-varvar"),msg.clone(),])).is_true() {varvar.clone()} else if (
 // (eq? (quote get-body) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("get-body"),msg.clone(),])).is_true() {body.clone()} else {
 // (error "Unknown message VARARG-ABSTRACTION" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message VARARG-ABSTRACTION"),msg.clone(),])}}}}}}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message VARARG-ABSTRACTION"),msg.clone(),])}}})});
 self_.get()}})}));
         // (define (make-program globals imports init body libraries) (define (repr) (cons (quote PROGRAM) (cons globals (cons imports (body (quote repr)))))) (define (transform func) (func self (lambda () (make-program globals imports init (body (quote transform) func))))) (define (gen-imports module) (for-each (lambda (i) (i (quote gen-rust) module)) imports)) (define (gen-rust module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};") (print module "mod imports") (rust-block module (lambda () (gen-imports module))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (print module "pub fn main()") (rust-block module (lambda () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";"))) (println module) (rust-gen-modules module libraries)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote PROGRAM)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message PROGRAM" msg)))) self)
         globals::make_minus_program.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 5{panic!("invalid arity")}let globals = args[0].clone();let imports = args[1].clone();let init = args[2].clone();let body = args[3].clone();let libraries = args[4].clone();
@@ -7252,15 +7260,15 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else {if (
+globals::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("PROGRAM")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("PROGRAM")} else if (
 // (eq? (quote gen-rust) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
@@ -7268,7 +7276,7 @@ gen_minus_rust.get().invoke(&[
 // (car args)
 imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message PROGRAM" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message PROGRAM"),msg.clone(),])}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message PROGRAM"),msg.clone(),])}}})});
 self_.get()}})}));
         // (define (make-library name globals init body imports exports) (define (repr) (append (quote LIBRARY) name exports imports globals (body (quote repr)))) (define (transform func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports)))) (define (gen-exports module exports) (for-each (lambda (expo) (expo (quote gen-rust) module)) exports)) (define (gen-rust module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests)))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))) self)
         globals::make_minus_library.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 6{panic!("invalid arity")}let name = args[0].clone();let globals = args[1].clone();let init = args[2].clone();let body = args[3].clone();let imports = args[4].clone();let exports = args[5].clone();
@@ -7436,17 +7444,17 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else {if (
+globals::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
 transform.get().invoke(&[
 // (car args)
-imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {if (
+imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else if (
 // (eq? (quote kind) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("LIBRARY")} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("kind"),msg.clone(),])).is_true() {Scm::symbol("LIBRARY")} else if (
 // (eq? (quote libname) msg)
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("libname"),msg.clone(),])).is_true() {name.clone()} else {if (
+imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("libname"),msg.clone(),])).is_true() {name.clone()} else if (
 // (eq? (quote gen-rust) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("gen-rust"),msg.clone(),])).is_true() {
 // (gen-rust (car args))
@@ -7454,7 +7462,7 @@ gen_minus_rust.get().invoke(&[
 // (car args)
 imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message LIBRARY" msg)
-imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message LIBRARY"),msg.clone(),])}}}}}}})});
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message LIBRARY"),msg.clone(),])}}})});
 self_.get()}})}));
         // (define (make-boxify name body) (define (repr) (cons (quote BOXIFY) (cons name (body (quote repr))))) (define (transform func) (func self (lambda () (make-boxify name (body (quote transform) func))))) (define (free-vars) (body (quote free-vars))) (define (gen-rust module) (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module)))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg)))) self)
         globals::make_minus_boxify.with(|value| {
@@ -7646,75 +7654,61 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("BOXIFY")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message BOXIFY" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message BOXIFY"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("BOXIFY")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message BOXIFY" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message BOXIFY"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -7823,60 +7817,47 @@ self_.get()}})}));
                                                     Scm::from("undefined export"),
                                                     name.clone(),
                                                 ])
+                                            } else if (
+                                                // (eq? (quote GLOBAL-REF) (variable-getter var))
+                                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                                    Scm::symbol("GLOBAL-REF"),
+                                                    // (variable-getter var)
+                                                    globals::variable_minus_getter
+                                                        .with(|value| value.get())
+                                                        .invoke(&[var.clone()]),
+                                                ])
+                                            )
+                                            .is_true()
+                                            {
+                                                // (print module "globals::")
+                                                globals::print.with(|value| value.get()).invoke(&[
+                                                    module.clone(),
+                                                    Scm::from("globals::"),
+                                                ])
+                                            } else if (
+                                                // (eq? (quote IMPORT-REF) (variable-getter var))
+                                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                                    Scm::symbol("IMPORT-REF"),
+                                                    // (variable-getter var)
+                                                    globals::variable_minus_getter
+                                                        .with(|value| value.get())
+                                                        .invoke(&[var.clone()]),
+                                                ])
+                                            )
+                                            .is_true()
+                                            {
+                                                // (print module "imports::")
+                                                globals::print.with(|value| value.get()).invoke(&[
+                                                    module.clone(),
+                                                    Scm::from("imports::"),
+                                                ])
                                             } else {
-                                                if (
-                                                    // (eq? (quote GLOBAL-REF) (variable-getter var))
-                                                    imports::eq_p.with(|value| value.get()).invoke(
-                                                        &[
-                                                            Scm::symbol("GLOBAL-REF"),
-                                                            // (variable-getter var)
-                                                            globals::variable_minus_getter
-                                                                .with(|value| value.get())
-                                                                .invoke(&[var.clone()]),
-                                                        ],
-                                                    )
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (print module "globals::")
-                                                    globals::print.with(|value| value.get()).invoke(
-                                                        &[module.clone(), Scm::from("globals::")],
-                                                    )
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote IMPORT-REF) (variable-getter var))
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("IMPORT-REF"),
-                                                                // (variable-getter var)
-                                                                globals::variable_minus_getter
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[var.clone()]),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (print module "imports::")
-                                                        globals::print
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                module.clone(),
-                                                                Scm::from("imports::"),
-                                                            ])
-                                                    } else {
-                                                        // (error "invalid export variable" var name)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from(
-                                                                    "invalid export variable",
-                                                                ),
-                                                                var.clone(),
-                                                                name.clone(),
-                                                            ])
-                                                    }
-                                                }
+                                                // (error "invalid export variable" var name)
+                                                imports::error.with(|value| value.get()).invoke(&[
+                                                    Scm::from("invalid export variable"),
+                                                    var.clone(),
+                                                    name.clone(),
+                                                ])
                                             }
                                         };
                                         // (println module (rustify-identifier name) " as " (rustify-identifier exname) ";")
@@ -7919,59 +7900,51 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote kind) msg)
-                                                imports::eq_p
-                                                    .with(|value| value.get())
-                                                    .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                            )
-                                            .is_true()
-                                            {
-                                                Scm::symbol("EXPORT")
-                                            } else {
-                                                if (
-                                                    // (eq? (quote gen-rust) msg)
-                                                    imports::eq_p.with(|value| value.get()).invoke(
-                                                        &[Scm::symbol("gen-rust"), msg.clone()],
-                                                    )
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (gen-rust (car args))
-                                                    gen_minus_rust.get().invoke(&[
-                                                        // (car args)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[args_.clone()]),
-                                                    ])
-                                                } else {
-                                                    // (error "Unknown message EXPORT" msg)
-                                                    imports::error.with(|value| value.get()).invoke(
-                                                        &[
-                                                            Scm::from("Unknown message EXPORT"),
-                                                            msg.clone(),
-                                                        ],
-                                                    )
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("EXPORT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message EXPORT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message EXPORT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -8181,75 +8154,61 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("IMPORT")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message IMPORT" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message IMPORT"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("IMPORT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message IMPORT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message IMPORT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -8529,75 +8488,61 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("IMPORT")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message IMPORT" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message IMPORT"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("IMPORT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message IMPORT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message IMPORT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -8742,59 +8687,51 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote kind) msg)
-                                                imports::eq_p
-                                                    .with(|value| value.get())
-                                                    .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                            )
-                                            .is_true()
-                                            {
-                                                Scm::symbol("TESTCASE")
-                                            } else {
-                                                if (
-                                                    // (eq? (quote gen-rust) msg)
-                                                    imports::eq_p.with(|value| value.get()).invoke(
-                                                        &[Scm::symbol("gen-rust"), msg.clone()],
-                                                    )
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (gen-rust (car args))
-                                                    gen_minus_rust.get().invoke(&[
-                                                        // (car args)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[args_.clone()]),
-                                                    ])
-                                                } else {
-                                                    // (error "Unknown message TESTCASE" msg)
-                                                    imports::error.with(|value| value.get()).invoke(
-                                                        &[
-                                                            Scm::from("Unknown message TESTCASE"),
-                                                            msg.clone(),
-                                                        ],
-                                                    )
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("TESTCASE")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message TESTCASE" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message TESTCASE"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -8975,59 +8912,51 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote kind) msg)
-                                                imports::eq_p
-                                                    .with(|value| value.get())
-                                                    .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                            )
-                                            .is_true()
-                                            {
-                                                Scm::symbol("TESTSUITE")
-                                            } else {
-                                                if (
-                                                    // (eq? (quote gen-rust) msg)
-                                                    imports::eq_p.with(|value| value.get()).invoke(
-                                                        &[Scm::symbol("gen-rust"), msg.clone()],
-                                                    )
-                                                )
-                                                .is_true()
-                                                {
-                                                    // (gen-rust (car args))
-                                                    gen_minus_rust.get().invoke(&[
-                                                        // (car args)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[args_.clone()]),
-                                                    ])
-                                                } else {
-                                                    // (error "Unknown message TESTSUITE" msg)
-                                                    imports::error.with(|value| value.get()).invoke(
-                                                        &[
-                                                            Scm::from("Unknown message TESTSUITE"),
-                                                            msg.clone(),
-                                                        ],
-                                                    )
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("TESTSUITE")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message TESTSUITE" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message TESTSUITE"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -9165,75 +9094,61 @@ self_.get()}})}));
                                     {
                                         // (print)
                                         globals::print.with(|value| value.get()).invoke(&[])
-                                    } else {
-                                        if (
-                                            // (eq? (quote transform) msg)
-                                            imports::eq_p
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
                                                 .with(|value| value.get())
-                                                .invoke(&[Scm::symbol("transform"), msg.clone()])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (transform (car args))
-                                            transform.get().invoke(&[
-                                                // (car args)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[args_.clone()]),
-                                            ])
-                                        } else {
-                                            if (
-                                                // (eq? (quote free-vars) msg)
-                                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                                    Scm::symbol("free-vars"),
-                                                    msg.clone(),
-                                                ])
-                                            )
-                                            .is_true()
-                                            {
-                                                // (free-vars)
-                                                free_minus_vars.get().invoke(&[])
-                                            } else {
-                                                if (
-                                                    // (eq? (quote kind) msg)
-                                                    imports::eq_p
-                                                        .with(|value| value.get())
-                                                        .invoke(&[Scm::symbol("kind"), msg.clone()])
-                                                )
-                                                .is_true()
-                                                {
-                                                    Scm::symbol("ASSERT")
-                                                } else {
-                                                    if (
-                                                        // (eq? (quote gen-rust) msg)
-                                                        imports::eq_p
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::symbol("gen-rust"),
-                                                                msg.clone(),
-                                                            ])
-                                                    )
-                                                    .is_true()
-                                                    {
-                                                        // (gen-rust (car args))
-                                                        gen_minus_rust.get().invoke(&[
-                                                            // (car args)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[args_.clone()]),
-                                                        ])
-                                                    } else {
-                                                        // (error "Unknown message ASSERT" msg)
-                                                        imports::error
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                Scm::from("Unknown message ASSERT"),
-                                                                msg.clone(),
-                                                            ])
-                                                    }
-                                                }
-                                            }
-                                        }
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("ASSERT")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message ASSERT" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message ASSERT"),
+                                            msg.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -9386,7 +9301,7 @@ self_.get()}})}));
 // (null? g)
 imports::null_p.with(|value| value.get()).invoke(&[g.clone(),])).is_true() {
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),])} else {if (
+globals::println.with(|value| value.get()).invoke(&[module.clone(),])} else if (
 // (global-imported? (cdar g))
 globals::global_minus_imported_p.with(|value| value.get()).invoke(&[
 // (cdar g)
@@ -9406,7 +9321,7 @@ imports::caar.with(|value| value.get()).invoke(&[g.clone(),]),Scm::from("\"))}")
 // (rust-gen-global-defs module (cdr g))
 globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),
 // (cdr g)
-imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}}}}})}));
+imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}}}})}));
         // (define (rust-gen-modules module libs) (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list module (module-tree-children module-tree))))
         globals::rust_minus_gen_minus_modules.with(|value| {
             value.set({
@@ -9711,55 +9626,51 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         .is_true()
                         {
                             Scm::False
+                        } else if (
+                            // (eq? (quote GLOBAL-MARKER) (car env))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("GLOBAL-MARKER"),
+                                // (car env)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[env.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (lookup name (cdr env))
+                            globals::lookup.with(|value| value.get()).invoke(&[
+                                name.clone(),
+                                // (cdr env)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[env.clone()]),
+                            ])
+                        } else if (
+                            // (eq? name (caar env))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                name.clone(),
+                                // (caar env)
+                                imports::caar
+                                    .with(|value| value.get())
+                                    .invoke(&[env.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (cdar env)
+                            imports::cdar
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()])
                         } else {
-                            if (
-                                // (eq? (quote GLOBAL-MARKER) (car env))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("GLOBAL-MARKER"),
-                                    // (car env)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[env.clone()]),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                // (lookup name (cdr env))
-                                globals::lookup.with(|value| value.get()).invoke(&[
-                                    name.clone(),
-                                    // (cdr env)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[env.clone()]),
-                                ])
-                            } else {
-                                if (
-                                    // (eq? name (caar env))
-                                    imports::eq_p.with(|value| value.get()).invoke(&[
-                                        name.clone(),
-                                        // (caar env)
-                                        imports::caar
-                                            .with(|value| value.get())
-                                            .invoke(&[env.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    // (cdar env)
-                                    imports::cdar
-                                        .with(|value| value.get())
-                                        .invoke(&[env.clone()])
-                                } else {
-                                    // (lookup name (cdr env))
-                                    globals::lookup.with(|value| value.get()).invoke(&[
-                                        name.clone(),
-                                        // (cdr env)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[env.clone()]),
-                                    ])
-                                }
-                            }
+                            // (lookup name (cdr env))
+                            globals::lookup.with(|value| value.get()).invoke(&[
+                                name.clone(),
+                                // (cdr env)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[env.clone()]),
+                            ])
                         }
                     }
                 })
@@ -9939,40 +9850,38 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         .is_true()
                         {
                             env.clone()
+                        } else if (
+                            // (pair? name*)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[name_star_.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))
+                            globals::adjoin_minus_local_minus_env
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr name*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[name_star_.clone()]),
+                                    // (adjoin-local (car name*) env)
+                                    globals::adjoin_minus_local
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car name*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[name_star_.clone()]),
+                                            env.clone(),
+                                        ]),
+                                ])
                         } else {
-                            if (
-                                // (pair? name*)
-                                imports::pair_p
-                                    .with(|value| value.get())
-                                    .invoke(&[name_star_.clone()])
-                            )
-                            .is_true()
-                            {
-                                // (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))
-                                globals::adjoin_minus_local_minus_env
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (cdr name*)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[name_star_.clone()]),
-                                        // (adjoin-local (car name*) env)
-                                        globals::adjoin_minus_local
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car name*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[name_star_.clone()]),
-                                                env.clone(),
-                                            ]),
-                                    ])
-                            } else {
-                                // (adjoin-local name* env)
-                                globals::adjoin_minus_local
-                                    .with(|value| value.get())
-                                    .invoke(&[name_star_.clone(), env.clone()])
-                            }
+                            // (adjoin-local name* env)
+                            globals::adjoin_minus_local
+                                .with(|value| value.get())
+                                .invoke(&[name_star_.clone(), env.clone()])
                         }
                     }
                 })
@@ -10107,40 +10016,38 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         .is_true()
                         {
                             env.clone()
+                        } else if (
+                            // (pair? name*)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[name_star_.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))
+                            globals::adjoin_minus_boxed_minus_env
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr name*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[name_star_.clone()]),
+                                    // (adjoin-boxed (car name*) env)
+                                    globals::adjoin_minus_boxed
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car name*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[name_star_.clone()]),
+                                            env.clone(),
+                                        ]),
+                                ])
                         } else {
-                            if (
-                                // (pair? name*)
-                                imports::pair_p
-                                    .with(|value| value.get())
-                                    .invoke(&[name_star_.clone()])
-                            )
-                            .is_true()
-                            {
-                                // (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))
-                                globals::adjoin_minus_boxed_minus_env
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (cdr name*)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[name_star_.clone()]),
-                                        // (adjoin-boxed (car name*) env)
-                                        globals::adjoin_minus_boxed
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car name*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[name_star_.clone()]),
-                                                env.clone(),
-                                            ]),
-                                    ])
-                            } else {
-                                // (adjoin-boxed name* env)
-                                globals::adjoin_minus_boxed
-                                    .with(|value| value.get())
-                                    .invoke(&[name_star_.clone(), env.clone()])
-                            }
+                            // (adjoin-boxed name* env)
+                            globals::adjoin_minus_boxed
+                                .with(|value| value.get())
+                                .invoke(&[name_star_.clone(), env.clone()])
                         }
                     }
                 })
@@ -10498,64 +10405,51 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                                 // (node (quote get-body))
                                                 node.clone().invoke(&[Scm::symbol("get-body")]),
                                             ])
-                                    } else {
-                                        if (
-                                            // (eq? (node (quote kind)) (quote VARARG-ABSTRACTION))
-                                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                                // (node (quote kind))
-                                                node.clone().invoke(&[Scm::symbol("kind")]),
-                                                Scm::symbol("VARARG-ABSTRACTION"),
-                                            ])
-                                        )
-                                        .is_true()
-                                        {
-                                            // (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))
-                                            globals::boxify_minus_vararg_minus_abstraction
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (node (quote get-params))
-                                                    node.clone()
-                                                        .invoke(&[Scm::symbol("get-params")]),
+                                    } else if (
+                                        // (eq? (node (quote kind)) (quote VARARG-ABSTRACTION))
+                                        imports::eq_p.with(|value| value.get()).invoke(&[
+                                            // (node (quote kind))
+                                            node.clone().invoke(&[Scm::symbol("kind")]),
+                                            Scm::symbol("VARARG-ABSTRACTION"),
+                                        ])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))
+                                        globals::boxify_minus_vararg_minus_abstraction
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (node (quote get-params))
+                                                node.clone().invoke(&[Scm::symbol("get-params")]),
+                                                // (node (quote get-vararg))
+                                                node.clone().invoke(&[Scm::symbol("get-vararg")]),
+                                                // (node (quote get-vars))
+                                                node.clone().invoke(&[Scm::symbol("get-vars")]),
+                                                // (node (quote get-varvar))
+                                                node.clone().invoke(&[Scm::symbol("get-varvar")]),
+                                                // (cons (node (quote get-vararg)) (node (quote get-params)))
+                                                imports::cons.with(|value| value.get()).invoke(&[
                                                     // (node (quote get-vararg))
                                                     node.clone()
                                                         .invoke(&[Scm::symbol("get-vararg")]),
-                                                    // (node (quote get-vars))
-                                                    node.clone().invoke(&[Scm::symbol("get-vars")]),
+                                                    // (node (quote get-params))
+                                                    node.clone()
+                                                        .invoke(&[Scm::symbol("get-params")]),
+                                                ]),
+                                                // (cons (node (quote get-varvar)) (node (quote get-vars)))
+                                                imports::cons.with(|value| value.get()).invoke(&[
                                                     // (node (quote get-varvar))
                                                     node.clone()
                                                         .invoke(&[Scm::symbol("get-varvar")]),
-                                                    // (cons (node (quote get-vararg)) (node (quote get-params)))
-                                                    imports::cons.with(|value| value.get()).invoke(
-                                                        &[
-                                                            // (node (quote get-vararg))
-                                                            node.clone().invoke(&[Scm::symbol(
-                                                                "get-vararg",
-                                                            )]),
-                                                            // (node (quote get-params))
-                                                            node.clone().invoke(&[Scm::symbol(
-                                                                "get-params",
-                                                            )]),
-                                                        ],
-                                                    ),
-                                                    // (cons (node (quote get-varvar)) (node (quote get-vars)))
-                                                    imports::cons.with(|value| value.get()).invoke(
-                                                        &[
-                                                            // (node (quote get-varvar))
-                                                            node.clone().invoke(&[Scm::symbol(
-                                                                "get-varvar",
-                                                            )]),
-                                                            // (node (quote get-vars))
-                                                            node.clone()
-                                                                .invoke(&[Scm::symbol("get-vars")]),
-                                                        ],
-                                                    ),
-                                                    // (node (quote get-body))
-                                                    node.clone().invoke(&[Scm::symbol("get-body")]),
-                                                ])
-                                        } else {
-                                            // (ignore)
-                                            ignore.clone().invoke(&[])
-                                        }
+                                                    // (node (quote get-vars))
+                                                    node.clone().invoke(&[Scm::symbol("get-vars")]),
+                                                ]),
+                                                // (node (quote get-body))
+                                                node.clone().invoke(&[Scm::symbol("get-body")]),
+                                            ])
+                                    } else {
+                                        // (ignore)
+                                        ignore.clone().invoke(&[])
                                     }
                                 }
                             })
@@ -10594,69 +10488,41 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                             globals::make_minus_abstraction
                                 .with(|value| value.get())
                                 .invoke(&[params.clone(), vars.clone(), body.clone()])
-                        } else {
-                            if (
-                                // (variable-mut? (car var*))
-                                globals::variable_minus_mut_p
+                        } else if (
+                            // (variable-mut? (car var*))
+                            globals::variable_minus_mut_p
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (car var*)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[var_star_.clone()]),
+                                ])
+                        )
+                        .is_true()
+                        {
+                            {
+                                // (variable-set-setter! (car var*) (quote BOXED-SET))
+                                globals::variable_minus_set_minus_setter_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
                                         imports::car
                                             .with(|value| value.get())
                                             .invoke(&[var_star_.clone()]),
-                                    ])
-                            )
-                            .is_true()
-                            {
-                                {
-                                    // (variable-set-setter! (car var*) (quote BOXED-SET))
-                                    globals::variable_minus_set_minus_setter_i
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car var*)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[var_star_.clone()]),
-                                            Scm::symbol("BOXED-SET"),
-                                        ]);
-                                    // (variable-set-getter! (car var*) (quote BOXED-REF))
-                                    globals::variable_minus_set_minus_getter_i
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car var*)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[var_star_.clone()]),
-                                            Scm::symbol("BOXED-REF"),
-                                        ]);
-                                    // (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))
-                                    globals::boxify_minus_abstraction
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            params.clone(),
-                                            vars.clone(),
-                                            // (cdr param*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[param_star_.clone()]),
-                                            // (cdr var*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[var_star_.clone()]),
-                                            // (make-boxify (car param*) body)
-                                            globals::make_minus_boxify
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (car param*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[param_star_.clone()]),
-                                                    body.clone(),
-                                                ]),
-                                        ])
-                                }
-                            } else {
-                                // (boxify-abstraction params vars (cdr param*) (cdr var*) body)
+                                        Scm::symbol("BOXED-SET"),
+                                    ]);
+                                // (variable-set-getter! (car var*) (quote BOXED-REF))
+                                globals::variable_minus_set_minus_getter_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (car var*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[var_star_.clone()]),
+                                        Scm::symbol("BOXED-REF"),
+                                    ]);
+                                // (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))
                                 globals::boxify_minus_abstraction
                                     .with(|value| value.get())
                                     .invoke(&[
@@ -10670,9 +10536,35 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                         imports::cdr
                                             .with(|value| value.get())
                                             .invoke(&[var_star_.clone()]),
-                                        body.clone(),
+                                        // (make-boxify (car param*) body)
+                                        globals::make_minus_boxify
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (car param*)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[param_star_.clone()]),
+                                                body.clone(),
+                                            ]),
                                     ])
                             }
+                        } else {
+                            // (boxify-abstraction params vars (cdr param*) (cdr var*) body)
+                            globals::boxify_minus_abstraction
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    params.clone(),
+                                    vars.clone(),
+                                    // (cdr param*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[param_star_.clone()]),
+                                    // (cdr var*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[var_star_.clone()]),
+                                    body.clone(),
+                                ])
                         }
                     }
                 })
@@ -10712,71 +10604,41 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                     varvar.clone(),
                                     body.clone(),
                                 ])
-                        } else {
-                            if (
-                                // (variable-mut? (car var*))
-                                globals::variable_minus_mut_p
+                        } else if (
+                            // (variable-mut? (car var*))
+                            globals::variable_minus_mut_p
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (car var*)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[var_star_.clone()]),
+                                ])
+                        )
+                        .is_true()
+                        {
+                            {
+                                // (variable-set-setter! (car var*) (quote BOXED-SET))
+                                globals::variable_minus_set_minus_setter_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
                                         imports::car
                                             .with(|value| value.get())
                                             .invoke(&[var_star_.clone()]),
-                                    ])
-                            )
-                            .is_true()
-                            {
-                                {
-                                    // (variable-set-setter! (car var*) (quote BOXED-SET))
-                                    globals::variable_minus_set_minus_setter_i
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car var*)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[var_star_.clone()]),
-                                            Scm::symbol("BOXED-SET"),
-                                        ]);
-                                    // (variable-set-getter! (car var*) (quote BOXED-REF))
-                                    globals::variable_minus_set_minus_getter_i
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car var*)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[var_star_.clone()]),
-                                            Scm::symbol("BOXED-REF"),
-                                        ]);
-                                    // (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))
-                                    globals::boxify_minus_vararg_minus_abstraction
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            params.clone(),
-                                            vararg.clone(),
-                                            vars.clone(),
-                                            varvar.clone(),
-                                            // (cdr param*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[param_star_.clone()]),
-                                            // (cdr var*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[var_star_.clone()]),
-                                            // (make-boxify (car param*) body)
-                                            globals::make_minus_boxify
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (car param*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[param_star_.clone()]),
-                                                    body.clone(),
-                                                ]),
-                                        ])
-                                }
-                            } else {
-                                // (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body)
+                                        Scm::symbol("BOXED-SET"),
+                                    ]);
+                                // (variable-set-getter! (car var*) (quote BOXED-REF))
+                                globals::variable_minus_set_minus_getter_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (car var*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[var_star_.clone()]),
+                                        Scm::symbol("BOXED-REF"),
+                                    ]);
+                                // (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))
                                 globals::boxify_minus_vararg_minus_abstraction
                                     .with(|value| value.get())
                                     .invoke(&[
@@ -10792,9 +10654,37 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                         imports::cdr
                                             .with(|value| value.get())
                                             .invoke(&[var_star_.clone()]),
-                                        body.clone(),
+                                        // (make-boxify (car param*) body)
+                                        globals::make_minus_boxify
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (car param*)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[param_star_.clone()]),
+                                                body.clone(),
+                                            ]),
                                     ])
                             }
+                        } else {
+                            // (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body)
+                            globals::boxify_minus_vararg_minus_abstraction
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    params.clone(),
+                                    vararg.clone(),
+                                    vars.clone(),
+                                    varvar.clone(),
+                                    // (cdr param*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[param_star_.clone()]),
+                                    // (cdr var*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[var_star_.clone()]),
+                                    body.clone(),
+                                ])
                         }
                     }
                 })
@@ -10838,37 +10728,35 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                             imports::cons
                                 .with(|value| value.get())
                                 .invoke(&[item.clone(), Scm::Nil])
+                        } else if (
+                            // (equal? (car set) item)
+                            imports::equal_p.with(|value| value.get()).invoke(&[
+                                // (car set)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[set.clone()]),
+                                item.clone(),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            set.clone()
                         } else {
-                            if (
-                                // (equal? (car set) item)
-                                imports::equal_p.with(|value| value.get()).invoke(&[
-                                    // (car set)
-                                    imports::car
+                            // (cons (car set) (set-add (cdr set) item))
+                            imports::cons.with(|value| value.get()).invoke(&[
+                                // (car set)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[set.clone()]),
+                                // (set-add (cdr set) item)
+                                globals::set_minus_add.with(|value| value.get()).invoke(&[
+                                    // (cdr set)
+                                    imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[set.clone()]),
                                     item.clone(),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                set.clone()
-                            } else {
-                                // (cons (car set) (set-add (cdr set) item))
-                                imports::cons.with(|value| value.get()).invoke(&[
-                                    // (car set)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[set.clone()]),
-                                    // (set-add (cdr set) item)
-                                    globals::set_minus_add.with(|value| value.get()).invoke(&[
-                                        // (cdr set)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[set.clone()]),
-                                        item.clone(),
-                                    ]),
-                                ])
-                            }
+                                ]),
+                            ])
                         }
                     }
                 })
@@ -10895,42 +10783,40 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         .is_true()
                         {
                             Scm::Nil
-                        } else {
-                            if (
-                                // (equal? (car set) item)
-                                imports::equal_p.with(|value| value.get()).invoke(&[
-                                    // (car set)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[set.clone()]),
-                                    item.clone(),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                // (cdr set)
-                                imports::cdr
+                        } else if (
+                            // (equal? (car set) item)
+                            imports::equal_p.with(|value| value.get()).invoke(&[
+                                // (car set)
+                                imports::car
                                     .with(|value| value.get())
-                                    .invoke(&[set.clone()])
-                            } else {
-                                // (cons (car set) (set-remove (cdr set) item))
-                                imports::cons.with(|value| value.get()).invoke(&[
-                                    // (car set)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[set.clone()]),
-                                    // (set-remove (cdr set) item)
-                                    globals::set_minus_remove
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (cdr set)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[set.clone()]),
-                                            item.clone(),
-                                        ]),
-                                ])
-                            }
+                                    .invoke(&[set.clone()]),
+                                item.clone(),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (cdr set)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[set.clone()])
+                        } else {
+                            // (cons (car set) (set-remove (cdr set) item))
+                            imports::cons.with(|value| value.get()).invoke(&[
+                                // (car set)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[set.clone()]),
+                                // (set-remove (cdr set) item)
+                                globals::set_minus_remove
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cdr set)
+                                        imports::cdr
+                                            .with(|value| value.get())
+                                            .invoke(&[set.clone()]),
+                                        item.clone(),
+                                    ]),
+                            ])
                         }
                     }
                 })
@@ -11048,22 +10934,20 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         .is_true()
                         {
                             set2.clone()
+                        } else if (
+                            // (null? set2)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[set2.clone()])
+                        )
+                        .is_true()
+                        {
+                            set1.clone()
                         } else {
-                            if (
-                                // (null? set2)
-                                imports::null_p
-                                    .with(|value| value.get())
-                                    .invoke(&[set2.clone()])
-                            )
-                            .is_true()
-                            {
-                                set1.clone()
-                            } else {
-                                // (set-add* set1 set2)
-                                globals::set_minus_add_star_
-                                    .with(|value| value.get())
-                                    .invoke(&[set1.clone(), set2.clone()])
-                            }
+                            // (set-add* set1 set2)
+                            globals::set_minus_add_star_
+                                .with(|value| value.get())
+                                .invoke(&[set1.clone(), set2.clone()])
                         }
                     }
                 })
