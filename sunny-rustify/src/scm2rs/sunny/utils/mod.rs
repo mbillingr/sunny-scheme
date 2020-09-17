@@ -6,12 +6,14 @@ mod imports {
 
 pub mod exports {
     pub use super::globals::dotted_minus_list_p;
+    pub use super::globals::filter;
     pub use super::globals::last_minus_cdr;
     pub use super::globals::proper_minus_list_minus_part;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static filter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL filter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static dotted_minus_list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL dotted-list?"))}
@@ -118,6 +120,68 @@ pub fn initialize() {
                                             .invoke(&[seq.clone()]),
                                     ]),
                             ])
+                        } else {
+                            Scm::Nil
+                        }
+                    }
+                })
+            })
+        });
+        // (define (filter f seq) (if (pair? seq) (if (f (car seq)) (cons (car seq) (filter f (cdr seq))) (filter f (cdr seq))) (quote ())))
+        globals::filter.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let f = args[0].clone();
+                    let seq = args[1].clone();
+                    // (letrec () (if (pair? seq) (if (f (car seq)) (cons (car seq) (filter f (cdr seq))) (filter f (cdr seq))) (quote ())))
+                    {
+                        if (
+                            // (pair? seq)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        )
+                        .is_true()
+                        {
+                            if (
+                                // (f (car seq))
+                                f.clone().invoke(&[
+                                    // (car seq)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                // (cons (car seq) (filter f (cdr seq)))
+                                imports::cons.with(|value| value.get()).invoke(&[
+                                    // (car seq)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                    // (filter f (cdr seq))
+                                    globals::filter.with(|value| value.get()).invoke(&[
+                                        f.clone(),
+                                        // (cdr seq)
+                                        imports::cdr
+                                            .with(|value| value.get())
+                                            .invoke(&[seq.clone()]),
+                                    ]),
+                                ])
+                            } else {
+                                // (filter f (cdr seq))
+                                globals::filter.with(|value| value.get()).invoke(&[
+                                    f.clone(),
+                                    // (cdr seq)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                ])
+                            }
                         } else {
                             Scm::Nil
                         }

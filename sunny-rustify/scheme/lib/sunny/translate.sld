@@ -11,7 +11,10 @@
                               open-input-file
                               open-output-file)
           (chibi filesystem)
-          (sunny utils))
+          (sunny utils)
+          (sunny rust module)
+          (sunny rust module-tree)
+          (sunny rust rustify))
 
   (begin
     (define (scm->ast exp*)
@@ -1360,140 +1363,11 @@
         (body module)
         (close-module module)))
 
-    (define (open-module name base-path)
-      (let ((path (string-append
-                    base-path "/" (rustify-libname name))))
-        (create-directory* path)
-        (list 'module
-              (open-output-file (string-append path "/mod.rs"))
-              path)))
-
-    (define (open-submodule name module)
-      (open-module name (module-path module)))
-
-    (define (module? obj)
-      (and (pair? obj)
-           (eq? 'module (car obj))))
-
-    (define (close-module module)
-      (close-port (module-port module)))
-
-    (define (module-port module)
-      (cadr module))
-
-    (define (module-path module)
-      (caddr module))
-
-
-
-    (define (make-module-tree-node name)
-      (cons name '()))
-
-    (define (make-module-tree-leaf name lib)
-      (cons name lib))
-
-    (define (module-tree-leaf? node)
-      (and (pair? node)
-           (symbol? (car node))
-           (not (null? (cdr node)))
-           (not (pair? (cdr node)))))
-
-    (define (module-tree-name node)
-      (car node))
-
-    (define (module-tree-children node)
-      (cdr node))
-
-    (define (module-tree-libobj node)
-      (cdr node))
-
-    (define (module-tree-set-children! node children)
-      (set-cdr! node children))
-
-    (define (module-tree-find-child node name)
-      (if (module-tree-leaf? node)
-          (error "called (module-tree-find-child) on leaf node" name node))
-      (assq name (module-tree-children node)))
-
-    (define (module-tree-append-child! node child)
-      (module-tree-set-children!
-        node
-        (cons child (module-tree-children node))))
-
-    (define (module-tree-insert! tree libname libobj)
-      (if (null? libname)
-          (error "invalid insert"))
-      (let ((child (module-tree-find-child tree (car libname))))
-        (if child
-            (module-tree-insert! child (cdr libname) libobj)
-            (if (null? (cdr libname))
-                (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj))
-                (let ((new-node (make-module-tree-node (car libname))))
-                  (module-tree-insert! new-node (cdr libname) libobj)
-                  (module-tree-append-child! tree new-node))))))
-
-
-
-
-
+    
     (define (rust-block module code)
       (print module "{")
       (code)
       (print module "}"))
-
-
-    (define (rustify-identifier name)
-      (define (char-map ch)
-        (cond ((eq? ch #\_) "__")
-              ((eq? ch #\?) "_p")
-              ((eq? ch #\!) "_i")
-              ((eq? ch #\<) "_l_")
-              ((eq? ch #\>) "_g_")
-              ((eq? ch #\=) "_e_")
-              ((eq? ch #\-) "_minus_")
-              ((eq? ch #\+) "_plus_")
-              ((eq? ch #\*) "_star_")
-              ((eq? ch #\/) "_slash_")
-              (else (list->string (list ch)))))
-      (define (append-all strs)
-        (if (null? strs)
-            ""
-            (string-append (car strs) (append-all (cdr strs)))))
-      (cond ((eq? name 'args) "args_")
-            ((eq? name 'fn) "fn_")
-            ((eq? name 'loop) "loop_")
-            ((eq? name 'let) "let_")
-            ((eq? name 'mut) "mut_")
-            ((eq? name 'ref) "ref_")
-            ((eq? name 'self) "self_")
-            (else (append-all (map char-map (string->list (symbol->string name)))))))
-
-    (define (rustify-libname name)
-      (define (char-map ch)
-        (cond ((eq? ch #\_) "__")
-              ((eq? ch #\-) "_")
-              (else (list->string (list ch)))))
-      (define (append-all strs)
-        (if (null? strs)
-            ""
-            (string-append (car strs) (append-all (cdr strs)))))
-      (let ((name (if (symbol? name)
-                      (symbol->string name)
-                      name)))
-        (cond ((eq? name 'fn) "fn_")
-              (else (append-all (map char-map (string->list name)))))))
-
-    (define (rustify-testname name)
-      (define (char-map ch)
-        (cond ((eq? ch #\space) "_")
-              ((eq? ch #\') #f)
-              (else (list->string (list ch)))))
-      (define (append-all strs)
-        (if (null? strs)
-            ""
-            (string-append (car strs) (append-all (cdr strs)))))
-      (append-all (filter (lambda (x) x)
-                          (map char-map (string->list name)))))
 
     (define (make-global-env)
       (list 'GLOBAL-MARKER
@@ -1722,14 +1596,6 @@
 
     ;--------------------------------------------------
     ; std library stand-ins
-
-    (define (filter f seq)
-      (if (pair? seq)
-          (if (f (car seq))
-              (cons (car seq)
-                    (filter f (cdr seq)))
-              (filter f (cdr seq)))
-          '()))
 
     (define (any f seq)
       (if (pair? seq)
