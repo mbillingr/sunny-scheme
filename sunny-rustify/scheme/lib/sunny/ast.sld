@@ -7,6 +7,7 @@
           make-comment
           make-constant
           make-fixlet
+          make-library
           make-nop
           make-null-arg
           make-program
@@ -560,4 +561,78 @@
               ((eq? 'kind msg) 'PROGRAM)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message PROGRAM" msg))))
+      self)
+
+    (define (make-library name globals init body imports exports)
+      (define (repr)
+        (append 'LIBRARY name exports imports globals (body 'repr)))
+      (define (transform func)
+        (func self
+              (lambda ()
+                (make-library globals
+                              init
+                              (body 'transform func)
+                              imports
+                              exports))))
+      (define (gen-exports module exports)
+        (for-each (lambda (expo) (expo 'gen-rust module))
+                  exports))
+      (define (gen-rust module)
+        (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};")
+        (print module "mod imports")
+        (rust-block module
+          (lambda ()
+            (for-each (lambda (i) (i 'gen-rust module))
+                      imports)))
+        (println module)
+        (println module)
+        (print module "pub mod exports")
+        (rust-block module
+          (lambda ()
+            (gen-exports module exports)))
+        (println module)
+        (println module)
+        (print module "mod globals")
+        (rust-block module
+          (lambda ()
+            (if (any (lambda (g) (global-regular? (cdr g)))
+                     globals)
+                (println module "use sunny_core::{Mut, Scm};"))
+            (rust-gen-global-defs module globals)))
+        (println module)
+        (println module)
+        (if (eq? 'NOP (body 'kind))
+            (println module "pub fn initialize() {")
+            (begin
+              (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")
+              (println module)
+              (println module "pub fn initialize() {")
+              (println module "if INITIALIZED.with(|x| x.get()) { return }")
+              (println module "INITIALIZED.with(|x| x.set(true));")
+              (println module)))
+        (for-each (lambda (lib)
+                    (print module "crate::")
+                    (for-each (lambda (l) (print module (rustify-libname l) "::"))
+                              lib)
+                    (println module "initialize();"))
+                  init)
+        (let ((tests (list 'dummy)))
+          ((body 'transform (lambda (node ignore)
+                              (if (eq? (node 'kind) 'TESTSUITE)
+                                  (begin
+                                    (set-cdr! tests (cons node (cdr tests)))
+                                    (make-constant '*UNSPECIFIED*))
+                                  (ignore))))
+           'gen-rust module)
+          (println module ";}")
+
+          (for-each (lambda (test) (test 'gen-rust module))
+                    (cdr tests))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'kind msg) 'LIBRARY)
+              ((eq? 'libname msg) name)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message LIBRARY" msg))))
       self)))
