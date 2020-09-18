@@ -18,6 +18,7 @@ pub mod exports {
     pub use super::globals::open_minus_submodule;
     pub use super::globals::print;
     pub use super::globals::println;
+    pub use super::globals::rust_minus_block;
     pub use super::globals::show;
     pub use super::globals::showln;
 }
@@ -26,9 +27,10 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static show: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL show"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static showln: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL showln"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static as_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL as-port"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static println: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL println"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_block: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-block"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-port"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static close_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL close-module"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-path"))}
@@ -218,6 +220,33 @@ pub fn initialize() {
                         imports::caddr
                             .with(|value| value.get())
                             .invoke(&[module.clone()])
+                    }
+                })
+            })
+        });
+        // (define (rust-block module code) (print module "{") (code) (print module "}"))
+        globals::rust_minus_block.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let module = args[0].clone();
+                    let code = args[1].clone();
+                    // (letrec () (print module "{") (code) (print module "}"))
+                    {
+                        {
+                            // (print module "{")
+                            globals::print
+                                .with(|value| value.get())
+                                .invoke(&[module.clone(), Scm::from("{")]);
+                            // (code)
+                            code.clone().invoke(&[]);
+                            // (print module "}")
+                            globals::print
+                                .with(|value| value.get())
+                                .invoke(&[module.clone(), Scm::from("}")])
+                        }
                     }
                 })
             })

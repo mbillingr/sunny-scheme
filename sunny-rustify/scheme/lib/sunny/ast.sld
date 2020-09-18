@@ -5,9 +5,11 @@
           make-assignment
           make-comment
           make-constant
+          make-fixlet
           make-nop
           make-null-arg
-          make-reference)
+          make-reference
+          make-scope)
 
   (import (scheme base)
           (sunny sets)
@@ -262,4 +264,89 @@
               ((eq? 'kind msg) 'ARG)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message ARG" msg))))
+      self)
+
+    (define (make-fixlet params body args)
+      (define (repr)
+        (cons 'FIXLET
+              (cons params
+                    (cons (args 'repr)
+                          (body 'repr)))))
+      (define (transform fnc)
+        (fnc self
+             (lambda () (make-fixlet
+                          params
+                          (body 'transform fnc)
+                          (args 'transform fnc)))))
+      (define (free-vars)
+        (set-union (set-remove* (body 'free-vars)
+                                params)
+                   (args 'free-vars)))
+
+      (define (gen-rust module)
+        (define (gen-params p*)
+          (if (pair? p*)
+              (begin (print module (rustify-identifier (car p*)) ", ")
+                     (gen-params (cdr p*)))))
+        (rust-block module
+          (lambda ()
+            (print module "let [")
+            (gen-params params)
+            (print module "] = [")
+            (args 'gen-rust module)
+            (print module "];")
+            (body 'gen-rust module))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'FIXLET)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message FIXLET" msg))))
+      self)
+
+    (define (make-scope params body args)
+      (define (repr)
+        (cons 'SCOPE
+              (cons params
+                    (cons (args 'repr)
+                          (body 'repr)))))
+      (define (transform fnc)
+        (fnc self
+             (lambda () (make-scope
+                          params
+                          (body 'transform fnc)
+                          (map (lambda (a) (a 'transform fnc)) args)))))
+      (define (free-vars-args args)
+        (if (null? args)
+            (make-set)
+            (set-union ((car args) 'free-vars)
+                       (free-vars-args (cdr args)))))
+      (define (free-vars)
+        (set-remove* (set-union (body 'free-vars)
+                                (free-vars-args args))
+                     params))
+      (define (gen-rust module)
+        (rust-block module
+          (lambda ()
+            (for-each (lambda (p) (println module
+                                    "let "
+                                    (rustify-identifier p)
+                                    " = Scm::uninitialized().into_boxed();"))
+                      params)
+            (for-each (lambda (p a) (print module
+                                           (rustify-identifier p)
+                                           ".set(")
+                                    (a 'gen-rust module)
+                                    (println module ");"))
+                      params
+                      args)
+            (body 'gen-rust module))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'SCOPE)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message SCOPE" msg))))
       self)))

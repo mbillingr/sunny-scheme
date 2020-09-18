@@ -6,6 +6,7 @@
           open-module
           open-submodule
           print println
+          rust-block
           show showln)
 
   (import (scheme base)
@@ -40,6 +41,11 @@
 
     (define (module-path module)
       (caddr module))
+
+    (define (rust-block module code)
+      (print module "{")
+      (code)
+      (print module "}"))
 
     (define (println f . args)
       (for-each (lambda (a) (display a (as-port f)))
