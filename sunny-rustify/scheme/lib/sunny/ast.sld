@@ -1,7 +1,9 @@
 (define-library (sunny ast)
-  (export make-comment)
+  (export make-comment
+          make-nop)
 
   (import (scheme base)
+          (sunny sets)
           (sunny rust module))
 
   (begin
@@ -27,4 +29,18 @@
               ((eq? 'kind msg) 'COMMENT)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message COMMENT" msg))))
+      self)
+
+    (define (make-nop)
+      (define (repr) '(NOP))
+      (define (transform func) (func self (lambda () self)))
+      (define (free-vars) (make-set))
+      (define (gen-rust module) (print module "(/*NOP*/)"))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'NOP)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message NOP" msg))))
       self)))

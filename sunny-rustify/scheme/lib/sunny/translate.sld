@@ -505,20 +505,6 @@
     ; ======================================================================
     ; AST
 
-    (define (make-nop)
-      (define (repr) '(NOP))
-      (define (transform func) (func self (lambda () self)))
-      (define (free-vars) (make-set))
-      (define (gen-rust module) (print module "(/*NOP*/)"))
-      (define (self msg . args)
-        (cond ((eq? 'repr msg) (print))
-              ((eq? 'transform msg) (transform (car args)))
-              ((eq? 'free-vars msg) (free-vars))
-              ((eq? 'kind msg) 'NOP)
-              ((eq? 'gen-rust msg) (gen-rust (car args)))
-              (else (error "Unknown message NOP" msg))))
-      self)
-
     (define (make-constant val)
       (define (repr)
         (cons 'CONSTANT
