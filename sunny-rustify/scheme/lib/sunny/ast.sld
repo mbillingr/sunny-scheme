@@ -9,6 +9,7 @@
           make-nop
           make-null-arg
           make-reference
+          make-sequence
           make-scope)
 
   (import (scheme base)
@@ -195,6 +196,37 @@
               ((eq? 'kind msg) 'ALTERNATIVE)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message ALTERNATIVE" msg))))
+      self)
+
+    (define (make-sequence first next)
+      (define (repr)
+        (list 'SEQUENCE (first 'repr) (next 'repr)))
+      (define (transform func)
+        (func self
+              (lambda ()
+                (make-sequence (first 'transform func)
+                               (next 'transform func)))))
+      (define (free-vars)
+        (set-union (first 'free-vars)
+                   (next 'free-vars)))
+      (define (gen-rust-inner module)
+        (first 'gen-rust module)
+        (print module ";")
+        (if (eq? 'SEQUENCE (next 'kind))
+            (next 'gen-rust-inner module)
+            (next 'gen-rust module)))
+      (define (gen-rust module)
+        (print module "{")
+        (gen-rust-inner module)
+        (print module "}"))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'SEQUENCE)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              ((eq? 'gen-rust-inner msg) (gen-rust-inner (car args)))
+              (else (error "Unknown message SEQUENCE" msg))))
       self)
 
     (define (make-application func args tail?)
