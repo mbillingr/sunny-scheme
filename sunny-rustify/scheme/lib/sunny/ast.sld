@@ -1,11 +1,15 @@
 (define-library (sunny ast)
-  (export make-comment
+  (export make-assignment
+          make-comment
           make-constant
-          make-nop)
+          make-nop
+          make-reference)
 
   (import (scheme base)
           (sunny sets)
-          (sunny rust module))
+          (sunny rust module)
+          (sunny rust rustify)
+          (sunny variable))
 
   (begin
     (define (make-comment comment node)
@@ -78,4 +82,77 @@
               ((eq? 'kind msg) 'CONSTANT)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message CONSTANT" msg))))
+      self)
+
+    (define (make-reference name var)
+      (define (global?)
+        (if (eq? 'GLOBAL-REF (variable-getter var))
+            #t
+            (eq? 'IMPORT-REF (variable-getter var))))
+      (define (repr)
+        (list (variable-getter var) name))
+      (define (transform func)
+        (func self (lambda () self)))
+      (define (free-vars)
+        (if (global?)
+            (make-set)
+            (set-add (make-set)
+                     name)))
+      (define (gen-rust module)
+        (let ((getter (variable-getter var)))
+          (cond ((eq? 'GLOBAL-REF getter)
+                 (print module
+                        "globals::"
+                        (rustify-identifier name)
+                        ".with(|value| value.get())"))
+                ((eq? 'IMPORT-REF getter)
+                 (print module
+                        "imports::"
+                        (rustify-identifier name)
+                        ".with(|value| value.get())"))
+                ((eq? 'BOXED-REF getter)
+                 (print module (rustify-identifier name) ".get()"))
+                (else
+                  (print module (rustify-identifier name) ".clone()")))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'REFERENCE)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message REFERENCE" msg))))
+      self)
+
+    (define (make-assignment name var val)
+      (define (repr)
+        (list (variable-setter var) name (val 'repr)))
+      (define (transform func)
+        (func self
+              (lambda () (make-assignment name
+                                          var
+                                          (val 'transform func)))))
+      (define (free-vars)
+        (set-add (val 'free-vars)
+                 name))
+      (define (gen-rust module)
+        (let ((setter (variable-setter var)))
+          (cond ((eq? 'GLOBAL-SET setter)
+                 (print module
+                        "globals::"
+                        (rustify-identifier name)
+                        ".with(|value| value.set(")
+                 (val 'gen-rust module)
+                 (print module "))"))
+                ((eq? 'BOXED-SET setter)
+                 (print module (rustify-identifier name) ".set(")
+                 (val 'gen-rust module)
+                 (print module ")"))
+                (else (error "set! on unboxed variable")))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'ASSIGNMENT)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message ASSIGNMENT" msg))))
       self)))
