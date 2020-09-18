@@ -505,30 +505,6 @@
                   (cons (initializations body)
                         (transform body)))))
 
-    ; ======================================================================
-    ; AST
-
-    
-
-    (define (print-list seq)
-      (if (pair? seq)
-          (cons ((car seq) 'repr)
-                (print-list (cdr seq)))
-          '()))
-
-    (define (transform-list seq func)
-      (if (pair? seq)
-          (cons ((car seq) 'transform func)
-                (transform-list (cdr seq) func))
-          '()))
-
-    (define (list-find-free-vars seq local-env)
-      (if (pair? seq)
-          (append ((car seq) 'free-vars local-env)
-                  (list-find-free-vars (cdr seq) local-env))
-          '()))
-
-
     ;--------------------------------------------------------------
     ; AST transformations
 
