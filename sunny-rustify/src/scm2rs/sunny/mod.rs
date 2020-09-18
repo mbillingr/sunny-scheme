@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod env;
 pub mod rust;
 pub mod sets;
 pub mod table;

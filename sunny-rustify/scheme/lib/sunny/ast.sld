@@ -21,6 +21,7 @@
           make-vararg-abstraction)
 
   (import (scheme base)
+          (sunny env)
           (sunny sets)
           (sunny rust codegen)
           (sunny rust module)

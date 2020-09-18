@@ -1,6 +1,10 @@
 (define-library (sunny variable)
   (export global-imported?
           global-regular?
+          new-boxed
+          new-global
+          new-import
+          new-local
           variable
           variable-getter
           variable-mut?
@@ -40,4 +44,16 @@
 
     (define (global-regular? var)
       (eq? 'GLOBAL-REF
-           (car var)))))
+           (car var)))
+
+    (define (new-import name)
+      (cons name (variable 'IMPORT-REF 'IMPORT-SET #f)))
+
+    (define (new-global name)
+      (cons name (variable 'GLOBAL-REF 'GLOBAL-SET #f)))
+
+    (define (new-local name)
+      (cons name (variable 'LOCAL-REF 'LOCAL-SET #f)))
+
+    (define (new-boxed name)
+      (cons name (variable 'BOXED-REF 'BOXED-SET #f)))))

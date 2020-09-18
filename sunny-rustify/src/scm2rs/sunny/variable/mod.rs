@@ -8,6 +8,10 @@ mod imports {
 pub mod exports {
     pub use super::globals::global_minus_imported_p;
     pub use super::globals::global_minus_regular_p;
+    pub use super::globals::new_minus_boxed;
+    pub use super::globals::new_minus_global;
+    pub use super::globals::new_minus_import;
+    pub use super::globals::new_minus_local;
     pub use super::globals::variable;
     pub use super::globals::variable_minus_getter;
     pub use super::globals::variable_minus_mut_p;
@@ -19,6 +23,10 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-boxed"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_global: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-global"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-import"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_regular_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-regular?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_imported_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-imported?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_setter_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-setter!"))}
@@ -221,6 +229,102 @@ pub fn initialize() {
                             imports::car
                                 .with(|value| value.get())
                                 .invoke(&[var.clone()]),
+                        ])
+                    }
+                })
+            })
+        });
+        // (define (new-import name) (cons name (variable (quote IMPORT-REF) (quote IMPORT-SET) #f)))
+        globals::new_minus_import.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    // (letrec () (cons name (variable (quote IMPORT-REF) (quote IMPORT-SET) #f)))
+                    {
+                        // (cons name (variable (quote IMPORT-REF) (quote IMPORT-SET) #f))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (variable (quote IMPORT-REF) (quote IMPORT-SET) #f)
+                            globals::variable.with(|value| value.get()).invoke(&[
+                                Scm::symbol("IMPORT-REF"),
+                                Scm::symbol("IMPORT-SET"),
+                                Scm::False,
+                            ]),
+                        ])
+                    }
+                })
+            })
+        });
+        // (define (new-global name) (cons name (variable (quote GLOBAL-REF) (quote GLOBAL-SET) #f)))
+        globals::new_minus_global.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    // (letrec () (cons name (variable (quote GLOBAL-REF) (quote GLOBAL-SET) #f)))
+                    {
+                        // (cons name (variable (quote GLOBAL-REF) (quote GLOBAL-SET) #f))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (variable (quote GLOBAL-REF) (quote GLOBAL-SET) #f)
+                            globals::variable.with(|value| value.get()).invoke(&[
+                                Scm::symbol("GLOBAL-REF"),
+                                Scm::symbol("GLOBAL-SET"),
+                                Scm::False,
+                            ]),
+                        ])
+                    }
+                })
+            })
+        });
+        // (define (new-local name) (cons name (variable (quote LOCAL-REF) (quote LOCAL-SET) #f)))
+        globals::new_minus_local.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    // (letrec () (cons name (variable (quote LOCAL-REF) (quote LOCAL-SET) #f)))
+                    {
+                        // (cons name (variable (quote LOCAL-REF) (quote LOCAL-SET) #f))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (variable (quote LOCAL-REF) (quote LOCAL-SET) #f)
+                            globals::variable.with(|value| value.get()).invoke(&[
+                                Scm::symbol("LOCAL-REF"),
+                                Scm::symbol("LOCAL-SET"),
+                                Scm::False,
+                            ]),
+                        ])
+                    }
+                })
+            })
+        });
+        // (define (new-boxed name) (cons name (variable (quote BOXED-REF) (quote BOXED-SET) #f)))
+        globals::new_minus_boxed.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    // (letrec () (cons name (variable (quote BOXED-REF) (quote BOXED-SET) #f)))
+                    {
+                        // (cons name (variable (quote BOXED-REF) (quote BOXED-SET) #f))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (variable (quote BOXED-REF) (quote BOXED-SET) #f)
+                            globals::variable.with(|value| value.get()).invoke(&[
+                                Scm::symbol("BOXED-REF"),
+                                Scm::symbol("BOXED-SET"),
+                                Scm::False,
+                            ]),
                         ])
                     }
                 })
