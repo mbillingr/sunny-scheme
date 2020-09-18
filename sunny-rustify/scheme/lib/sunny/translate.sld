@@ -11,12 +11,13 @@
                               open-input-file
                               open-output-file)
           (chibi filesystem)
-          (sunny utils)
-          (sunny sets)
           (sunny ast)
           (sunny rust module)
           (sunny rust module-tree)
-          (sunny rust rustify))
+          (sunny rust rustify)
+          (sunny sets)
+          (sunny utils)
+          (sunny variable))
 
   (begin
     (define (scm->ast exp*)
@@ -1379,35 +1380,6 @@
 
     (define (new-boxed name)
       (cons name (variable 'BOXED-REF 'BOXED-SET #f)))
-
-    (define (variable getter setter mut?)
-      (list getter setter mut?))
-
-    (define (variable-getter var)
-      (car var))
-
-    (define (variable-setter var)
-      (cadr var))
-
-    (define (variable-mut? var)
-      (caddr var))
-
-    (define (variable-set-mutable! var)
-      (set-car! (cddr var) #t))
-
-    (define (variable-set-getter! var getter)
-      (set-car! var getter))
-
-    (define (variable-set-setter! var setter)
-      (set-car! (cdr var) setter))
-
-    (define (global-imported? var)
-      (eq? 'IMPORT-REF
-           (car var)))
-
-    (define (global-regular? var)
-      (eq? 'GLOBAL-REF
-           (car var)))
 
     ;--------------------------------------------------------------
     ; AST transformations

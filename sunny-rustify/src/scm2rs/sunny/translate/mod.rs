@@ -15,6 +15,7 @@ mod imports {
     pub use crate::sunny::rust::rustify::exports::*;
     pub use crate::sunny::sets::exports::*;
     pub use crate::sunny::utils::exports::*;
+    pub use crate::sunny::variable::exports::*;
 }
 
 pub mod exports {
@@ -26,10 +27,6 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static boxify_minus_vararg_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxify-vararg-abstraction"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static boxify_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxify-abstraction"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_setter_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-setter!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_getter_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-getter!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_mut_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-mut?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-boxed"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-boxed"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
@@ -44,18 +41,14 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-in-submodule"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree-list"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_imported_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-imported?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_find_minus_free_minus_vars: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-find-free-vars"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static transform_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL transform-list"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static print_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print-list"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_boxify: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-boxify"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_modules: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-modules"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_global_minus_defs: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-global-defs"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_regular_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-regular?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static any: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_block: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-block"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_setter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-setter"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_getter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-getter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-assert"))}
@@ -93,7 +86,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-value"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-assignment"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_mutable_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-mutable!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_reference: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-reference"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ensure_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ensure-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->application"))}
@@ -155,12 +147,13 @@ pub fn initialize() {
     crate::scheme::read::initialize();
     crate::scheme::file::initialize();
     crate::chibi::filesystem::initialize();
-    crate::sunny::utils::initialize();
-    crate::sunny::sets::initialize();
     crate::sunny::ast::initialize();
     crate::sunny::rust::module::initialize();
     crate::sunny::rust::module_tree::initialize();
     crate::sunny::rust::rustify::initialize();
+    crate::sunny::sets::initialize();
+    crate::sunny::utils::initialize();
+    crate::sunny::variable::initialize();
     {
         (/*NOP*/);
         // (define (scm->ast exp*) (if (library? (car exp*)) (library->ast (library-name (car exp*)) (library-decls (car exp*)) (list (quote ()))) (program->ast exp*)))
@@ -1241,7 +1234,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                             ];
                             {
                                 // (variable-set-mutable! var)
-                                globals::variable_minus_set_minus_mutable_i
+                                imports::variable_minus_set_minus_mutable_i
                                     .with(|value| value.get())
                                     .invoke(&[var.clone()]);
                                 // (make-assignment name var val)
@@ -3964,7 +3957,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         imports::eq_p.with(|value| value.get()).invoke(&[
                                             Scm::symbol("GLOBAL-REF"),
                                             // (variable-getter var)
-                                            globals::variable_minus_getter
+                                            imports::variable_minus_getter
                                                 .with(|value| value.get())
                                                 .invoke(&[var.clone()]),
                                         ])
@@ -3977,7 +3970,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         imports::eq_p.with(|value| value.get()).invoke(&[
                                             Scm::symbol("IMPORT-REF"),
                                             // (variable-getter var)
-                                            globals::variable_minus_getter
+                                            imports::variable_minus_getter
                                                 .with(|value| value.get())
                                                 .invoke(&[var.clone()]),
                                         ])
@@ -3997,7 +3990,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     // (list (variable-getter var) name)
                                     imports::list.with(|value| value.get()).invoke(&[
                                         // (variable-getter var)
-                                        globals::variable_minus_getter
+                                        imports::variable_minus_getter
                                             .with(|value| value.get())
                                             .invoke(&[var.clone()]),
                                         name.clone(),
@@ -4076,7 +4069,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     {
                                         let [getter] = [
                                             // (variable-getter var)
-                                            globals::variable_minus_getter
+                                            imports::variable_minus_getter
                                                 .with(|value| value.get())
                                                 .invoke(&[var.clone()]),
                                         ];
@@ -4268,7 +4261,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     // (list (variable-setter var) name (val (quote repr)))
                                     imports::list.with(|value| value.get()).invoke(&[
                                         // (variable-setter var)
-                                        globals::variable_minus_setter
+                                        imports::variable_minus_setter
                                             .with(|value| value.get())
                                             .invoke(&[var.clone()]),
                                         name.clone(),
@@ -4353,7 +4346,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     {
                                         let [setter] = [
                                             // (variable-setter var)
-                                            globals::variable_minus_setter
+                                            imports::variable_minus_setter
                                                 .with(|value| value.get())
                                                 .invoke(&[var.clone()]),
                                         ];
@@ -6494,7 +6487,7 @@ globals::any.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{i
 // (letrec () (global-regular? (cdr g)))
 {
 // (global-regular? (cdr g))
-globals::global_minus_regular_p.with(|value| value.get()).invoke(&[
+imports::global_minus_regular_p.with(|value| value.get()).invoke(&[
 // (cdr g)
 imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}})},globals.clone(),])).is_true() {
 // (println module "use sunny_core::{Mut, Scm};")
@@ -6652,7 +6645,7 @@ globals::any.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{i
 // (letrec () (global-regular? (cdr g)))
 {
 // (global-regular? (cdr g))
-globals::global_minus_regular_p.with(|value| value.get()).invoke(&[
+imports::global_minus_regular_p.with(|value| value.get()).invoke(&[
 // (cdr g)
 imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}})},globals.clone(),])).is_true() {
 // (println module "use sunny_core::{Mut, Scm};")
@@ -7117,7 +7110,7 @@ self_.get()}})}));
                                                 imports::eq_p.with(|value| value.get()).invoke(&[
                                                     Scm::symbol("GLOBAL-REF"),
                                                     // (variable-getter var)
-                                                    globals::variable_minus_getter
+                                                    imports::variable_minus_getter
                                                         .with(|value| value.get())
                                                         .invoke(&[var.clone()]),
                                                 ])
@@ -7134,7 +7127,7 @@ self_.get()}})}));
                                                 imports::eq_p.with(|value| value.get()).invoke(&[
                                                     Scm::symbol("IMPORT-REF"),
                                                     // (variable-getter var)
-                                                    globals::variable_minus_getter
+                                                    imports::variable_minus_getter
                                                         .with(|value| value.get())
                                                         .invoke(&[var.clone()]),
                                                 ])
@@ -8598,7 +8591,7 @@ imports::null_p.with(|value| value.get()).invoke(&[g.clone(),])).is_true() {
 // (println module)
 imports::println.with(|value| value.get()).invoke(&[module.clone(),])} else if (
 // (global-imported? (cdar g))
-globals::global_minus_imported_p.with(|value| value.get()).invoke(&[
+imports::global_minus_imported_p.with(|value| value.get()).invoke(&[
 // (cdar g)
 imports::cdar.with(|value| value.get()).invoke(&[g.clone(),]),])).is_true() {
 // (rust-gen-global-defs module (cdr g))
@@ -9362,7 +9355,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         imports::cons.with(|value| value.get()).invoke(&[
                             name.clone(),
                             // (variable (quote IMPORT-REF) (quote IMPORT-SET) #f)
-                            globals::variable.with(|value| value.get()).invoke(&[
+                            imports::variable.with(|value| value.get()).invoke(&[
                                 Scm::symbol("IMPORT-REF"),
                                 Scm::symbol("IMPORT-SET"),
                                 Scm::False,
@@ -9386,7 +9379,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         imports::cons.with(|value| value.get()).invoke(&[
                             name.clone(),
                             // (variable (quote GLOBAL-REF) (quote GLOBAL-SET) #f)
-                            globals::variable.with(|value| value.get()).invoke(&[
+                            imports::variable.with(|value| value.get()).invoke(&[
                                 Scm::symbol("GLOBAL-REF"),
                                 Scm::symbol("GLOBAL-SET"),
                                 Scm::False,
@@ -9410,7 +9403,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         imports::cons.with(|value| value.get()).invoke(&[
                             name.clone(),
                             // (variable (quote LOCAL-REF) (quote LOCAL-SET) #f)
-                            globals::variable.with(|value| value.get()).invoke(&[
+                            imports::variable.with(|value| value.get()).invoke(&[
                                 Scm::symbol("LOCAL-REF"),
                                 Scm::symbol("LOCAL-SET"),
                                 Scm::False,
@@ -9434,195 +9427,11 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         imports::cons.with(|value| value.get()).invoke(&[
                             name.clone(),
                             // (variable (quote BOXED-REF) (quote BOXED-SET) #f)
-                            globals::variable.with(|value| value.get()).invoke(&[
+                            imports::variable.with(|value| value.get()).invoke(&[
                                 Scm::symbol("BOXED-REF"),
                                 Scm::symbol("BOXED-SET"),
                                 Scm::False,
                             ]),
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (variable getter setter mut?) (list getter setter mut?))
-        globals::variable.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 3 {
-                        panic!("invalid arity")
-                    }
-                    let getter = args[0].clone();
-                    let setter = args[1].clone();
-                    let mut_p = args[2].clone();
-                    // (letrec () (list getter setter mut?))
-                    {
-                        // (list getter setter mut?)
-                        imports::list.with(|value| value.get()).invoke(&[
-                            getter.clone(),
-                            setter.clone(),
-                            mut_p.clone(),
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (variable-getter var) (car var))
-        globals::variable_minus_getter.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (letrec () (car var))
-                    {
-                        // (car var)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[var.clone()])
-                    }
-                })
-            })
-        });
-        // (define (variable-setter var) (cadr var))
-        globals::variable_minus_setter.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (letrec () (cadr var))
-                    {
-                        // (cadr var)
-                        imports::cadr
-                            .with(|value| value.get())
-                            .invoke(&[var.clone()])
-                    }
-                })
-            })
-        });
-        // (define (variable-mut? var) (caddr var))
-        globals::variable_minus_mut_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (letrec () (caddr var))
-                    {
-                        // (caddr var)
-                        imports::caddr
-                            .with(|value| value.get())
-                            .invoke(&[var.clone()])
-                    }
-                })
-            })
-        });
-        // (define (variable-set-mutable! var) (set-car! (cddr var) #t))
-        globals::variable_minus_set_minus_mutable_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (letrec () (set-car! (cddr var) #t))
-                    {
-                        // (set-car! (cddr var) #t)
-                        imports::set_minus_car_i.with(|value| value.get()).invoke(&[
-                            // (cddr var)
-                            imports::cddr
-                                .with(|value| value.get())
-                                .invoke(&[var.clone()]),
-                            Scm::True,
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (variable-set-getter! var getter) (set-car! var getter))
-        globals::variable_minus_set_minus_getter_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    let getter = args[1].clone();
-                    // (letrec () (set-car! var getter))
-                    {
-                        // (set-car! var getter)
-                        imports::set_minus_car_i
-                            .with(|value| value.get())
-                            .invoke(&[var.clone(), getter.clone()])
-                    }
-                })
-            })
-        });
-        // (define (variable-set-setter! var setter) (set-car! (cdr var) setter))
-        globals::variable_minus_set_minus_setter_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    let setter = args[1].clone();
-                    // (letrec () (set-car! (cdr var) setter))
-                    {
-                        // (set-car! (cdr var) setter)
-                        imports::set_minus_car_i.with(|value| value.get()).invoke(&[
-                            // (cdr var)
-                            imports::cdr
-                                .with(|value| value.get())
-                                .invoke(&[var.clone()]),
-                            setter.clone(),
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (global-imported? var) (eq? (quote IMPORT-REF) (car var)))
-        globals::global_minus_imported_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (letrec () (eq? (quote IMPORT-REF) (car var)))
-                    {
-                        // (eq? (quote IMPORT-REF) (car var))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("IMPORT-REF"),
-                            // (car var)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[var.clone()]),
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (global-regular? var) (eq? (quote GLOBAL-REF) (car var)))
-        globals::global_minus_regular_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (letrec () (eq? (quote GLOBAL-REF) (car var)))
-                    {
-                        // (eq? (quote GLOBAL-REF) (car var))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("GLOBAL-REF"),
-                            // (car var)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[var.clone()]),
                         ])
                     }
                 })
@@ -9759,7 +9568,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                 .invoke(&[params.clone(), vars.clone(), body.clone()])
                         } else if (
                             // (variable-mut? (car var*))
-                            globals::variable_minus_mut_p
+                            imports::variable_minus_mut_p
                                 .with(|value| value.get())
                                 .invoke(&[
                                     // (car var*)
@@ -9772,7 +9581,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         {
                             {
                                 // (variable-set-setter! (car var*) (quote BOXED-SET))
-                                globals::variable_minus_set_minus_setter_i
+                                imports::variable_minus_set_minus_setter_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
@@ -9782,7 +9591,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                         Scm::symbol("BOXED-SET"),
                                     ]);
                                 // (variable-set-getter! (car var*) (quote BOXED-REF))
-                                globals::variable_minus_set_minus_getter_i
+                                imports::variable_minus_set_minus_getter_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
@@ -9875,7 +9684,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                 ])
                         } else if (
                             // (variable-mut? (car var*))
-                            globals::variable_minus_mut_p
+                            imports::variable_minus_mut_p
                                 .with(|value| value.get())
                                 .invoke(&[
                                     // (car var*)
@@ -9888,7 +9697,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         {
                             {
                                 // (variable-set-setter! (car var*) (quote BOXED-SET))
-                                globals::variable_minus_set_minus_setter_i
+                                imports::variable_minus_set_minus_setter_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
@@ -9898,7 +9707,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                         Scm::symbol("BOXED-SET"),
                                     ]);
                                 // (variable-set-getter! (car var*) (quote BOXED-REF))
-                                globals::variable_minus_set_minus_getter_i
+                                imports::variable_minus_set_minus_getter_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
