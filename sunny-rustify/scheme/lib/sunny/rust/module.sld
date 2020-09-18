@@ -4,11 +4,14 @@
           module-path
           module-port
           open-module
-          open-submodule)
+          open-submodule
+          print println
+          show showln)
 
   (import (scheme base)
           (scheme cxr)
           (scheme file)
+          (scheme write)
           (chibi filesystem)
           (sunny rust rustify))
 
@@ -36,4 +39,27 @@
       (cadr module))
 
     (define (module-path module)
-      (caddr module))))
+      (caddr module))
+
+    (define (println f . args)
+      (for-each (lambda (a) (display a (as-port f)))
+                args)
+      (newline (as-port f)))
+
+    (define (print f . args)
+      (for-each (lambda (a) (display a (as-port f)))
+                args))
+
+    (define (showln f . args)
+      (for-each (lambda (a) (write a (as-port f)))
+                args)
+      (newline (as-port f)))
+
+    (define (show f . args)
+      (for-each (lambda (a) (write a (as-port f)))
+                args))
+
+    (define (as-port port-or-module)
+      (if (module? port-or-module)
+          (module-port port-or-module)
+          port-or-module))))

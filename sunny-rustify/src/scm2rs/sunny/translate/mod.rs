@@ -22,7 +22,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static as_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL as-port"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_do_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-do*"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static boxify_minus_vararg_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxify-vararg-abstraction"))}
@@ -60,10 +59,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_setter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-setter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_getter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-getter"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static show: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL show"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static showln: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL showln"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static println: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL println"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-assert"))}
@@ -4048,15 +4043,15 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                 {
                                     {
                                         // (println module)
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone()]);
                                         // (print module "// ")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("// ")]);
                                         // (showln module comment)
-                                        globals::showln
+                                        imports::showln
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), comment.clone()]);
                                         // (node (quote gen-rust) module)
@@ -4088,7 +4083,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -4226,7 +4221,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                 // (letrec () (print module "(/*NOP*/)"))
                                 {
                                     // (print module "(/*NOP*/)")
-                                    globals::print
+                                    imports::print
                                         .with(|value| value.get())
                                         .invoke(&[module.clone(), Scm::from("(/*NOP*/)")])
                                 }
@@ -4254,7 +4249,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -4409,7 +4404,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print module "Scm::Nil")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("Scm::Nil")])
                                     } else if (
@@ -4421,7 +4416,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print module "Scm::True")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("Scm::True")])
                                     } else if (
@@ -4433,7 +4428,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print module "Scm::False")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("Scm::False")])
                                     } else if (
@@ -4445,7 +4440,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print module "Scm::symbol(\"" val "\")")
-                                        globals::print.with(|value| value.get()).invoke(&[
+                                        imports::print.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("Scm::symbol(\""),
                                             val.clone(),
@@ -4460,7 +4455,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print module "Scm::char('\'')")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("Scm::char('\'')")])
                                     } else if (
@@ -4472,7 +4467,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print module "Scm::char('" val "')")
-                                        globals::print.with(|value| value.get()).invoke(&[
+                                        imports::print.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("Scm::char('"),
                                             val.clone(),
@@ -4488,7 +4483,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     {
                                         {
                                             // (print module "Scm::pair(")
-                                            globals::print
+                                            imports::print
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), Scm::from("Scm::pair(")]);
                                             // (gen-constant module (car val))
@@ -4500,7 +4495,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     .invoke(&[val.clone()]),
                                             ]);
                                             // (print module ", ")
-                                            globals::print
+                                            imports::print
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), Scm::from(", ")]);
                                             // (gen-constant module (cdr val))
@@ -4512,22 +4507,22 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     .invoke(&[val.clone()]),
                                             ]);
                                             // (print module ")")
-                                            globals::print
+                                            imports::print
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), Scm::from(")")])
                                         }
                                     } else {
                                         {
                                             // (print module "Scm::from(")
-                                            globals::print
+                                            imports::print
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), Scm::from("Scm::from(")]);
                                             // (show module val)
-                                            globals::show
+                                            imports::show
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), val.clone()]);
                                             // (print module ")")
-                                            globals::print
+                                            imports::print
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), Scm::from(")")])
                                         }
@@ -4574,7 +4569,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -4796,7 +4791,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .is_true()
                                         {
                                             // (print module "globals::" (rustify-identifier name) ".with(|value| value.get())")
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 Scm::from("globals::"),
                                                 // (rustify-identifier name)
@@ -4815,7 +4810,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .is_true()
                                         {
                                             // (print module "imports::" (rustify-identifier name) ".with(|value| value.get())")
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 Scm::from("imports::"),
                                                 // (rustify-identifier name)
@@ -4833,7 +4828,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .is_true()
                                         {
                                             // (print module (rustify-identifier name) ".get()")
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 // (rustify-identifier name)
                                                 imports::rustify_minus_identifier
@@ -4843,7 +4838,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             ])
                                         } else {
                                             // (print module (rustify-identifier name) ".clone()")
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 // (rustify-identifier name)
                                                 imports::rustify_minus_identifier
@@ -4878,7 +4873,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -5074,7 +5069,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         {
                                             {
                                                 // (print module "globals::" (rustify-identifier name) ".with(|value| value.set(")
-                                                globals::print.with(|value| value.get()).invoke(&[
+                                                imports::print.with(|value| value.get()).invoke(&[
                                                     module.clone(),
                                                     Scm::from("globals::"),
                                                     // (rustify-identifier name)
@@ -5089,7 +5084,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     module.clone(),
                                                 ]);
                                                 // (print module "))")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("))")])
                                             }
@@ -5103,7 +5098,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         {
                                             {
                                                 // (print module (rustify-identifier name) ".set(")
-                                                globals::print.with(|value| value.get()).invoke(&[
+                                                imports::print.with(|value| value.get()).invoke(&[
                                                     module.clone(),
                                                     // (rustify-identifier name)
                                                     imports::rustify_minus_identifier
@@ -5117,7 +5112,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     module.clone(),
                                                 ]);
                                                 // (print module ")")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from(")")])
                                             }
@@ -5153,7 +5148,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -5352,7 +5347,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                 {
                                     {
                                         // (print module "if (")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("if (")]);
                                         // (condition (quote gen-rust) module)
@@ -5360,7 +5355,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (print module ").is_true() {")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from(").is_true() {")]);
                                         // (consequent (quote gen-rust) module)
@@ -5368,7 +5363,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (print module "} else ")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("} else ")]);
                                         if (
@@ -5388,7 +5383,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         } else {
                                             {
                                                 // (print module "{")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("{")]);
                                                 // (alternative (quote gen-rust) module)
@@ -5397,7 +5392,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     module.clone(),
                                                 ]);
                                                 // (print module "}")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("}")])
                                             }
@@ -5428,7 +5423,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -5618,7 +5613,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         func.clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (print module ".invoke(&[")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from(".invoke(&[")]);
                                         // (args (quote gen-rust) module)
@@ -5626,7 +5621,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (print module "])")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("])")])
                                     }
@@ -5655,7 +5650,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -5796,7 +5791,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                 // (letrec () (print module ""))
                                 {
                                     // (print module "")
-                                    globals::print
+                                    imports::print
                                         .with(|value| value.get())
                                         .invoke(&[module.clone(), Scm::from("")])
                                 }
@@ -5824,7 +5819,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -6002,7 +5997,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         arg.clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (print module ",")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from(",")]);
                                         // (next (quote gen-rust) module)
@@ -6034,7 +6029,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -6248,7 +6243,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 {
                                                     {
                                                         // (print module (rustify-identifier (car p*)) ", ")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -6299,7 +6294,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 {
                                                     {
                                                         // (print module "let [")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -6310,7 +6305,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                             .get()
                                                             .invoke(&[params.clone()]);
                                                         // (print module "] = [")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -6322,7 +6317,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                             module.clone(),
                                                         ]);
                                                         // (print module "];")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -6362,7 +6357,7 @@ globals::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -6506,7 +6501,7 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (letrec () (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();"))
 {
 // (println module "let " (rustify-identifier p) " = Scm::uninitialized().into_boxed();")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
 // (rustify-identifier p)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[p.clone(),]),Scm::from(" = Scm::uninitialized().into_boxed();"),])}})},params.clone(),]);
 // (for-each (lambda (p a) (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");")) params args)
@@ -6514,13 +6509,13 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (letrec () (print module (rustify-identifier p) ".set(") (a (quote gen-rust) module) (println module ");"))
 {{
 // (print module (rustify-identifier p) ".set(")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier p)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[p.clone(),]),Scm::from(".set("),]);
 // (a (quote gen-rust) module)
 a.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),]);
 // (println module ");")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(");"),])}}})},params.clone(),args_.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(");"),])}}})},params.clone(),args_.clone(),]);
 // (body (quote gen-rust) module)
 body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}}})},])}})});
 self_.set({let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
@@ -6531,7 +6526,7 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else if (
+imports::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
@@ -6668,7 +6663,7 @@ self_.get()}})}));
                                             .clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (print module ";")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from(";")]);
                                         if (
@@ -6706,13 +6701,13 @@ self_.get()}})}));
                                 {
                                     {
                                         // (print module "{")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("{")]);
                                         // (gen-rust-inner module)
                                         gen_minus_rust_minus_inner.get().invoke(&[module.clone()]);
                                         // (print module "}")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("}")])
                                     }
@@ -6742,7 +6737,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -6868,19 +6863,19 @@ imports::pair_p.with(|value| value.get()).invoke(&[free_minus_vars.clone(),])).i
 // (car free-vars)
 imports::car.with(|value| value.get()).invoke(&[free_minus_vars.clone(),]),];{
 // (print module "let ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module " = ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = "),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module ".clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".clone();"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".clone();"),]);
 // (prepare-closure module (cdr free-vars))
 prepare_minus_closure.get().invoke(&[module.clone(),
 // (cdr free-vars)
@@ -6894,19 +6889,19 @@ gen_minus_params.set({let module = module.clone();let gen_minus_params = gen_min
 // (pair? p*)
 imports::pair_p.with(|value| value.get()).invoke(&[p_star_.clone(),])).is_true() {{
 // (print module "let ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
 // (print module (rustify-identifier (car p*)))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier (car p*))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[
 // (car p*)
 imports::car.with(|value| value.get()).invoke(&[p_star_.clone(),]),]),]);
 // (print module " = args[")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = args["),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = args["),]);
 // (print module k)
-globals::print.with(|value| value.get()).invoke(&[module.clone(),k.clone(),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),k.clone(),]);
 // (print module "].clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("].clone();"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("].clone();"),]);
 // (gen-params (cdr p*) (+ k 1))
 gen_minus_params.get().invoke(&[
 // (cdr p*)
@@ -6923,25 +6918,25 @@ prepare_minus_closure.get().invoke(&[module.clone(),
 // (free-vars)
 free_minus_vars.get().invoke(&[]),]);
 // (print module "Scm::func(move |args: &[Scm]|")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|"),]);
 // (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))
 {{
 // (print module "if args.len() != ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if args.len() != "),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if args.len() != "),]);
 // (print module (length params))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (length params)
 imports::length.with(|value| value.get()).invoke(&[params.clone(),]),]);
 // (print module "{panic!(\"invalid arity\")}")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("{panic!(\"invalid arity\")}"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("{panic!(\"invalid arity\")}"),]);
 // (gen-params params 0)
 gen_minus_params.get().invoke(&[params.clone(),Scm::from(0),]);
 // (body (quote gen-rust) module)
 body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}}})},]);
 // (print module ")")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(")"),])}}})},])}})});
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(")"),])}}})},])}})});
 self_.set({let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let params = params.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg))))
 {
@@ -6950,7 +6945,7 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else if (
+imports::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
@@ -7026,19 +7021,19 @@ imports::pair_p.with(|value| value.get()).invoke(&[free_minus_vars.clone(),])).i
 // (car free-vars)
 imports::car.with(|value| value.get()).invoke(&[free_minus_vars.clone(),]),];{
 // (print module "let ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module " = ")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = "),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(" = "),]);
 // (print module (rustify-identifier name))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-identifier name)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[name.clone(),]),]);
 // (print module ".clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".clone();"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".clone();"),]);
 // (prepare-closure module (cdr free-vars))
 prepare_minus_closure.get().invoke(&[module.clone(),
 // (cdr free-vars)
@@ -7052,7 +7047,7 @@ gen_minus_params.set({let module = module.clone();let gen_minus_params = gen_min
 // (pair? p*)
 imports::pair_p.with(|value| value.get()).invoke(&[p_star_.clone(),])).is_true() {{
 // (print module "let " (rustify-identifier (car p*)) " = args[" k "].clone();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
 // (rustify-identifier (car p*))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[
 // (car p*)
@@ -7064,7 +7059,7 @@ imports::cdr.with(|value| value.get()).invoke(&[p_star_.clone(),]),
 // (+ k 1)
 imports::_plus_.with(|value| value.get()).invoke(&[k.clone(),Scm::from(1),]),])}} else {
 // (print module "let " (rustify-identifier vararg) " = Scm::list(&args[" k "..]);")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("let "),
 // (rustify-identifier vararg)
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[vararg.clone(),]),Scm::from(" = Scm::list(&args["),k.clone(),Scm::from("..]);"),])}}})});
 
@@ -7077,13 +7072,13 @@ prepare_minus_closure.get().invoke(&[module.clone(),
 // (free-vars)
 free_minus_vars.get().invoke(&[]),]);
 // (print module "Scm::func(move |args: &[Scm]|")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|"),]);
 // (rust-block module (lambda () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}") (gen-params params 0) (body (quote gen-rust) module))
 {{
 // (print module "if args.len() < " (length params) "{panic!(\"not enough args\")}")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if args.len() < "),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if args.len() < "),
 // (length params)
 imports::length.with(|value| value.get()).invoke(&[params.clone(),]),Scm::from("{panic!(\"not enough args\")}"),]);
 // (gen-params params 0)
@@ -7091,7 +7086,7 @@ gen_minus_params.get().invoke(&[params.clone(),Scm::from(0),]);
 // (body (quote gen-rust) module)
 body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}}})},]);
 // (print module ")")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(")"),])}}})},])}})});
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from(")"),])}}})},])}})});
 self_.set({let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let params = params.clone();let vararg = vararg.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
 // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote VARARG-ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vararg) msg) vararg) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-varvar) msg) varvar) ((eq? (quote get-body) msg) body) (else (error "Unknown message VARARG-ABSTRACTION" msg))))
 {
@@ -7100,7 +7095,7 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else if (
+imports::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
@@ -7175,9 +7170,9 @@ gen_minus_rust.set({let gen_minus_imports = gen_minus_imports.clone();let global
 // (letrec () (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};") (print module "mod imports") (rust-block module (lambda () (gen-imports module))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (print module "pub fn main()") (rust-block module (lambda () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";"))) (println module) (rust-gen-modules module libraries))
 {{
 // (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};"),]);
 // (print module "mod imports")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod imports"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod imports"),]);
 // (rust-block module (lambda () (gen-imports module)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let gen_minus_imports = gen_minus_imports.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (gen-imports module))
@@ -7185,11 +7180,11 @@ globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let
 // (gen-imports module)
 gen_minus_imports.get().invoke(&[module.clone(),])}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "mod globals")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod globals"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod globals"),]);
 // (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let globals = globals.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))
@@ -7203,53 +7198,53 @@ globals::global_minus_regular_p.with(|value| value.get()).invoke(&[
 // (cdr g)
 imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}})},globals.clone(),])).is_true() {
 // (println module "use sunny_core::{Mut, Scm};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("use sunny_core::{Mut, Scm};"),])} else {Scm::symbol("*UNSPECIFIED*")};
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("use sunny_core::{Mut, Scm};"),])} else {Scm::symbol("*UNSPECIFIED*")};
 // (rust-gen-global-defs module globals)
 globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),globals.clone(),])}}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "pub fn main()")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn main()"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn main()"),]);
 // (rust-block module (lambda () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";")))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let init = init.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (println module) (println module "eprintln!(\"built with\");") (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);") (println module) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init) (body (quote gen-rust) module) (println module ";"))
 {{
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module "eprintln!(\"built with\");")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("eprintln!(\"built with\");"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("eprintln!(\"built with\");"),]);
 // (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module)) init)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();
 // (letrec () (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib) (print module "initialize();") (println module))
 {{
 // (print module "crate::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("crate::"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("crate::"),]);
 // (for-each (lambda (l) (print module (rustify-libname l)) (print module "::")) lib)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let l = args[0].clone();
 // (letrec () (print module (rustify-libname l)) (print module "::"))
 {{
 // (print module (rustify-libname l))
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-libname l)
 imports::rustify_minus_libname.with(|value| value.get()).invoke(&[l.clone(),]),]);
 // (print module "::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("::"),])}}})},lib.clone(),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("::"),])}}})},lib.clone(),]);
 // (print module "initialize();")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("initialize();"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("initialize();"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),])}}})},init.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),])}}})},init.clone(),]);
 // (body (quote gen-rust) module)
 body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),]);
 // (println module ";")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(";"),])}}})},]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(";"),])}}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (rust-gen-modules module libraries)
 globals::rust_minus_gen_minus_modules.with(|value| value.get()).invoke(&[module.clone(),libraries.clone(),])}}})});
 self_.set({let transform = transform.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);
@@ -7260,7 +7255,7 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else if (
+imports::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
@@ -7317,9 +7312,9 @@ gen_minus_rust.set({let imports = imports.clone();let gen_minus_exports = gen_mi
 // (letrec () (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (print module "mod globals") (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))))
 {{
 // (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};"),]);
 // (print module "mod imports")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod imports"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod imports"),]);
 // (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let module = module.clone();let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (for-each (lambda (i) (i (quote gen-rust) module)) imports))
@@ -7331,11 +7326,11 @@ imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.
 // (i (quote gen-rust) module)
 i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone(),])}})},imports.clone(),])}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "pub mod exports")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod exports"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod exports"),]);
 // (rust-block module (lambda () (gen-exports module exports)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let gen_minus_exports = gen_minus_exports.clone();let module = module.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (gen-exports module exports))
@@ -7343,11 +7338,11 @@ globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let
 // (gen-exports module exports)
 gen_minus_exports.get().invoke(&[module.clone(),exports.clone(),])}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (print module "mod globals")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod globals"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("mod globals"),]);
 // (rust-block module (lambda () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals)))
 globals::rust_minus_block.with(|value| value.get()).invoke(&[module.clone(),{let globals = globals.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}
 // (letrec () (if (any (lambda (g) (global-regular? (cdr g))) globals) (println module "use sunny_core::{Mut, Scm};")) (rust-gen-global-defs module globals))
@@ -7361,47 +7356,47 @@ globals::global_minus_regular_p.with(|value| value.get()).invoke(&[
 // (cdr g)
 imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}})},globals.clone(),])).is_true() {
 // (println module "use sunny_core::{Mut, Scm};")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("use sunny_core::{Mut, Scm};"),])} else {Scm::symbol("*UNSPECIFIED*")};
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("use sunny_core::{Mut, Scm};"),])} else {Scm::symbol("*UNSPECIFIED*")};
 // (rust-gen-global-defs module globals)
 globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),globals.clone(),])}}})},]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);if (
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);if (
 // (eq? (quote NOP) (body (quote kind)))
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("NOP"),
 // (body (quote kind))
 body.clone().invoke(&[Scm::symbol("kind"),]),])).is_true() {
 // (println module "pub fn initialize() {")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn initialize() {"),])} else {{
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn initialize() {"),])} else {{
 // (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),]);
 // (println module "pub fn initialize() {")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn initialize() {"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn initialize() {"),]);
 // (println module "if INITIALIZED.with(|x| x.get()) { return }")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if INITIALIZED.with(|x| x.get()) { return }"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("if INITIALIZED.with(|x| x.get()) { return }"),]);
 // (println module "INITIALIZED.with(|x| x.set(true));")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("INITIALIZED.with(|x| x.set(true));"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("INITIALIZED.with(|x| x.set(true));"),]);
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),])}};
+imports::println.with(|value| value.get()).invoke(&[module.clone(),])}};
 // (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();
 // (letrec () (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();"))
 {{
 // (print module "crate::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("crate::"),]);
+imports::print.with(|value| value.get()).invoke(&[module.clone(),Scm::from("crate::"),]);
 // (for-each (lambda (l) (print module (rustify-libname l) "::")) lib)
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let l = args[0].clone();
 // (letrec () (print module (rustify-libname l) "::"))
 {
 // (print module (rustify-libname l) "::")
-globals::print.with(|value| value.get()).invoke(&[module.clone(),
+imports::print.with(|value| value.get()).invoke(&[module.clone(),
 // (rustify-libname l)
 imports::rustify_minus_libname.with(|value| value.get()).invoke(&[l.clone(),]),Scm::from("::"),])}})},lib.clone(),]);
 // (println module "initialize();")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("initialize();"),])}}})},init.clone(),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("initialize();"),])}}})},init.clone(),]);
 // (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests)))
 {let [tests, ] = [
 // (list (quote dummy))
@@ -7427,7 +7422,7 @@ globals::make_minus_constant.with(|value| value.get()).invoke(&[Scm::symbol("*UN
 // (ignore)
 ignore.clone().invoke(&[])}}})},]).invoke(&[Scm::symbol("gen-rust"),module.clone(),]);
 // (println module ";}")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(";}"),]);
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(";}"),]);
 // (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))
 imports::for_minus_each.with(|value| value.get()).invoke(&[{let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let test = args[0].clone();
 // (letrec () (test (quote gen-rust) module))
@@ -7444,7 +7439,7 @@ if (
 // (eq? (quote repr) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("repr"),msg.clone(),])).is_true() {
 // (print)
-globals::print.with(|value| value.get()).invoke(&[])} else if (
+imports::print.with(|value| value.get()).invoke(&[])} else if (
 // (eq? (quote transform) msg)
 imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("transform"),msg.clone(),])).is_true() {
 // (transform (car args))
@@ -7579,14 +7574,14 @@ self_.get()}})}));
                                                 {
                                                     {
                                                         // (print module "let ")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
                                                                 Scm::from("let "),
                                                             ]);
                                                         // (print module (rustify-identifier name))
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -7596,14 +7591,14 @@ self_.get()}})}));
                                                                     .invoke(&[name.clone()]),
                                                             ]);
                                                         // (print module " = ")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
                                                                 Scm::from(" = "),
                                                             ]);
                                                         // (print module (rustify-identifier name))
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -7613,7 +7608,7 @@ self_.get()}})}));
                                                                     .invoke(&[name.clone()]),
                                                             ]);
                                                         // (print module ".into_boxed();")
-                                                        globals::print
+                                                        imports::print
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 module.clone(),
@@ -7653,7 +7648,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -7791,7 +7786,7 @@ self_.get()}})}));
                                 {
                                     {
                                         // (print module "pub use super::")
-                                        globals::print.with(|value| value.get()).invoke(&[
+                                        imports::print.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("pub use super::"),
                                         ]);
@@ -7830,7 +7825,7 @@ self_.get()}})}));
                                             .is_true()
                                             {
                                                 // (print module "globals::")
-                                                globals::print.with(|value| value.get()).invoke(&[
+                                                imports::print.with(|value| value.get()).invoke(&[
                                                     module.clone(),
                                                     Scm::from("globals::"),
                                                 ])
@@ -7847,7 +7842,7 @@ self_.get()}})}));
                                             .is_true()
                                             {
                                                 // (print module "imports::")
-                                                globals::print.with(|value| value.get()).invoke(&[
+                                                imports::print.with(|value| value.get()).invoke(&[
                                                     module.clone(),
                                                     Scm::from("imports::"),
                                                 ])
@@ -7861,7 +7856,7 @@ self_.get()}})}));
                                             }
                                         };
                                         // (println module (rustify-identifier name) " as " (rustify-identifier exname) ";")
-                                        globals::println.with(|value| value.get()).invoke(&[
+                                        imports::println.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             // (rustify-identifier name)
                                             imports::rustify_minus_identifier
@@ -7899,7 +7894,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -8047,13 +8042,13 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print module "")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("")])
                                     } else {
                                         {
                                             // (print module (rustify-libname (car lib)))
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 // (rustify-libname (car lib))
                                                 imports::rustify_minus_libname
@@ -8077,12 +8072,12 @@ self_.get()}})}));
                                             .is_true()
                                             {
                                                 // (print module "")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("")])
                                             } else {
                                                 // (print module "::")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("::")])
                                             };
@@ -8111,7 +8106,7 @@ self_.get()}})}));
                                 {
                                     {
                                         // (print module "pub use crate::")
-                                        globals::print.with(|value| value.get()).invoke(&[
+                                        imports::print.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("pub use crate::"),
                                         ]);
@@ -8120,11 +8115,11 @@ self_.get()}})}));
                                             .get()
                                             .invoke(&[module.clone(), lib.clone()]);
                                         // (print module "::exports::*;")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("::exports::*;")]);
                                         // (println module)
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone()])
                                     }
@@ -8153,7 +8148,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -8320,13 +8315,13 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print module "")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("")])
                                     } else {
                                         {
                                             // (print module (rustify-libname (car lib)))
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 // (rustify-libname (car lib))
                                                 imports::rustify_minus_libname
@@ -8350,12 +8345,12 @@ self_.get()}})}));
                                             .is_true()
                                             {
                                                 // (print module "")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("")])
                                             } else {
                                                 // (print module "::")
-                                                globals::print
+                                                imports::print
                                                     .with(|value| value.get())
                                                     .invoke(&[module.clone(), Scm::from("::")])
                                             };
@@ -8394,7 +8389,7 @@ self_.get()}})}));
                                     } else {
                                         {
                                             // (print module (rustify-identifier (car names)))
-                                            globals::print.with(|value| value.get()).invoke(&[
+                                            imports::print.with(|value| value.get()).invoke(&[
                                                 module.clone(),
                                                 // (rustify-identifier (car names))
                                                 imports::rustify_minus_identifier
@@ -8407,7 +8402,7 @@ self_.get()}})}));
                                                     ]),
                                             ]);
                                             // (print module ", ")
-                                            globals::print
+                                            imports::print
                                                 .with(|value| value.get())
                                                 .invoke(&[module.clone(), Scm::from(", ")]);
                                             // (gen-imports module (cdr names))
@@ -8437,7 +8432,7 @@ self_.get()}})}));
                                 {
                                     {
                                         // (print module "pub use crate::")
-                                        globals::print.with(|value| value.get()).invoke(&[
+                                        imports::print.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("pub use crate::"),
                                         ]);
@@ -8446,7 +8441,7 @@ self_.get()}})}));
                                             .get()
                                             .invoke(&[module.clone(), lib.clone()]);
                                         // (print module "::exports::{")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("::exports::{")]);
                                         // (gen-imports module names)
@@ -8454,11 +8449,11 @@ self_.get()}})}));
                                             .get()
                                             .invoke(&[module.clone(), names.clone()]);
                                         // (print module "};")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("};")]);
                                         // (println module)
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone()])
                                     }
@@ -8487,7 +8482,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -8636,11 +8631,11 @@ self_.get()}})}));
                                 {
                                     {
                                         // (println module "#[test]")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("#[test]")]);
                                         // (println module "fn " (rustify-testname description) "() {")
-                                        globals::println.with(|value| value.get()).invoke(&[
+                                        imports::println.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("fn "),
                                             // (rustify-testname description)
@@ -8650,7 +8645,7 @@ self_.get()}})}));
                                             Scm::from("() {"),
                                         ]);
                                         // (println module "super::initialize();")
-                                        globals::println.with(|value| value.get()).invoke(&[
+                                        imports::println.with(|value| value.get()).invoke(&[
                                             module.clone(),
                                             Scm::from("super::initialize();"),
                                         ]);
@@ -8658,7 +8653,7 @@ self_.get()}})}));
                                         body.clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (println module "}")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("}")])
                                     }
@@ -8686,7 +8681,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -8848,15 +8843,15 @@ self_.get()}})}));
                                 {
                                     {
                                         // (println module "#[cfg(test)]")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("#[cfg(test)]")]);
                                         // (println module "mod tests {")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("mod tests {")]);
                                         // (println module "use super::*;")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("use super::*;")]);
                                         // (for-each (lambda (c) (c (quote gen-rust) module)) cases)
@@ -8883,7 +8878,7 @@ self_.get()}})}));
                                             ],
                                         );
                                         // (println module "}")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("}")])
                                     }
@@ -8911,7 +8906,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -9056,7 +9051,7 @@ self_.get()}})}));
                                 {
                                     {
                                         // (print module "assert!(")
-                                        globals::print
+                                        imports::print
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from("assert!(")]);
                                         // (condition (quote gen-rust) module)
@@ -9064,7 +9059,7 @@ self_.get()}})}));
                                             .clone()
                                             .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
                                         // (println module ".is_true());")
-                                        globals::println
+                                        imports::println
                                             .with(|value| value.get())
                                             .invoke(&[module.clone(), Scm::from(".is_true());")])
                                     }
@@ -9093,7 +9088,7 @@ self_.get()}})}));
                                     .is_true()
                                     {
                                         // (print)
-                                        globals::print.with(|value| value.get()).invoke(&[])
+                                        imports::print.with(|value| value.get()).invoke(&[])
                                     } else if (
                                         // (eq? (quote transform) msg)
                                         imports::eq_p
@@ -9301,7 +9296,7 @@ self_.get()}})}));
 // (null? g)
 imports::null_p.with(|value| value.get()).invoke(&[g.clone(),])).is_true() {
 // (println module)
-globals::println.with(|value| value.get()).invoke(&[module.clone(),])} else if (
+imports::println.with(|value| value.get()).invoke(&[module.clone(),])} else if (
 // (global-imported? (cdar g))
 globals::global_minus_imported_p.with(|value| value.get()).invoke(&[
 // (cdar g)
@@ -9311,7 +9306,7 @@ globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke
 // (cdr g)
 imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])} else {{
 // (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),
 // (rustify-identifier (caar g))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[
 // (caar g)
@@ -9393,7 +9388,7 @@ imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}}}})}));
 // (letrec () (println module "pub mod " (rustify-libname (module-tree-name node)) ";") (if (module-tree-leaf? node) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod))) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))))
 {{
 // (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
-globals::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod "),
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod "),
 // (rustify-libname (module-tree-name node))
 imports::rustify_minus_libname.with(|value| value.get()).invoke(&[
 // (module-tree-name node)
@@ -9534,13 +9529,13 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                     {
                         {
                             // (print module "{")
-                            globals::print
+                            imports::print
                                 .with(|value| value.get())
                                 .invoke(&[module.clone(), Scm::from("{")]);
                             // (code)
                             code.clone().invoke(&[]);
                             // (print module "}")
-                            globals::print
+                            imports::print
                                 .with(|value| value.get())
                                 .invoke(&[module.clone(), Scm::from("}")])
                         }
@@ -10948,209 +10943,6 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                             globals::set_minus_add_star_
                                 .with(|value| value.get())
                                 .invoke(&[set1.clone(), set2.clone()])
-                        }
-                    }
-                })
-            })
-        });
-        // (define (println f . args) (for-each (lambda (a) (display a (as-port f))) args) (newline (as-port f)))
-        globals::println.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() < 1 {
-                        panic!("not enough args")
-                    }
-                    let f = args[0].clone();
-                    let args_ = Scm::list(&args[1..]);
-                    // (letrec () (for-each (lambda (a) (display a (as-port f))) args) (newline (as-port f)))
-                    {
-                        {
-                            // (for-each (lambda (a) (display a (as-port f))) args)
-                            imports::for_minus_each.with(|value| value.get()).invoke(&[
-                                {
-                                    let f = f.clone();
-                                    Scm::func(move |args: &[Scm]| {
-                                        if args.len() != 1 {
-                                            panic!("invalid arity")
-                                        }
-                                        let a = args[0].clone();
-                                        // (letrec () (display a (as-port f)))
-                                        {
-                                            // (display a (as-port f))
-                                            imports::display.with(|value| value.get()).invoke(&[
-                                                a.clone(),
-                                                // (as-port f)
-                                                globals::as_minus_port
-                                                    .with(|value| value.get())
-                                                    .invoke(&[f.clone()]),
-                                            ])
-                                        }
-                                    })
-                                },
-                                args_.clone(),
-                            ]);
-                            // (newline (as-port f))
-                            imports::newline.with(|value| value.get()).invoke(&[
-                                // (as-port f)
-                                globals::as_minus_port
-                                    .with(|value| value.get())
-                                    .invoke(&[f.clone()]),
-                            ])
-                        }
-                    }
-                })
-            })
-        });
-        // (define (print f . args) (for-each (lambda (a) (display a (as-port f))) args))
-        globals::print.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() < 1 {
-                        panic!("not enough args")
-                    }
-                    let f = args[0].clone();
-                    let args_ = Scm::list(&args[1..]);
-                    // (letrec () (for-each (lambda (a) (display a (as-port f))) args))
-                    {
-                        // (for-each (lambda (a) (display a (as-port f))) args)
-                        imports::for_minus_each.with(|value| value.get()).invoke(&[
-                            {
-                                let f = f.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let a = args[0].clone();
-                                    // (letrec () (display a (as-port f)))
-                                    {
-                                        // (display a (as-port f))
-                                        imports::display.with(|value| value.get()).invoke(&[
-                                            a.clone(),
-                                            // (as-port f)
-                                            globals::as_minus_port
-                                                .with(|value| value.get())
-                                                .invoke(&[f.clone()]),
-                                        ])
-                                    }
-                                })
-                            },
-                            args_.clone(),
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (showln f . args) (for-each (lambda (a) (write a (as-port f))) args) (newline (as-port f)))
-        globals::showln.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() < 1 {
-                        panic!("not enough args")
-                    }
-                    let f = args[0].clone();
-                    let args_ = Scm::list(&args[1..]);
-                    // (letrec () (for-each (lambda (a) (write a (as-port f))) args) (newline (as-port f)))
-                    {
-                        {
-                            // (for-each (lambda (a) (write a (as-port f))) args)
-                            imports::for_minus_each.with(|value| value.get()).invoke(&[
-                                {
-                                    let f = f.clone();
-                                    Scm::func(move |args: &[Scm]| {
-                                        if args.len() != 1 {
-                                            panic!("invalid arity")
-                                        }
-                                        let a = args[0].clone();
-                                        // (letrec () (write a (as-port f)))
-                                        {
-                                            // (write a (as-port f))
-                                            imports::write.with(|value| value.get()).invoke(&[
-                                                a.clone(),
-                                                // (as-port f)
-                                                globals::as_minus_port
-                                                    .with(|value| value.get())
-                                                    .invoke(&[f.clone()]),
-                                            ])
-                                        }
-                                    })
-                                },
-                                args_.clone(),
-                            ]);
-                            // (newline (as-port f))
-                            imports::newline.with(|value| value.get()).invoke(&[
-                                // (as-port f)
-                                globals::as_minus_port
-                                    .with(|value| value.get())
-                                    .invoke(&[f.clone()]),
-                            ])
-                        }
-                    }
-                })
-            })
-        });
-        // (define (show f . args) (for-each (lambda (a) (write a (as-port f))) args))
-        globals::show.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() < 1 {
-                        panic!("not enough args")
-                    }
-                    let f = args[0].clone();
-                    let args_ = Scm::list(&args[1..]);
-                    // (letrec () (for-each (lambda (a) (write a (as-port f))) args))
-                    {
-                        // (for-each (lambda (a) (write a (as-port f))) args)
-                        imports::for_minus_each.with(|value| value.get()).invoke(&[
-                            {
-                                let f = f.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let a = args[0].clone();
-                                    // (letrec () (write a (as-port f)))
-                                    {
-                                        // (write a (as-port f))
-                                        imports::write.with(|value| value.get()).invoke(&[
-                                            a.clone(),
-                                            // (as-port f)
-                                            globals::as_minus_port
-                                                .with(|value| value.get())
-                                                .invoke(&[f.clone()]),
-                                        ])
-                                    }
-                                })
-                            },
-                            args_.clone(),
-                        ])
-                    }
-                })
-            })
-        });
-        // (define (as-port port-or-module) (if (module? port-or-module) (module-port port-or-module) port-or-module))
-        globals::as_minus_port.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let port_minus_or_minus_module = args[0].clone();
-                    // (letrec () (if (module? port-or-module) (module-port port-or-module) port-or-module))
-                    {
-                        if (
-                            // (module? port-or-module)
-                            imports::module_p
-                                .with(|value| value.get())
-                                .invoke(&[port_minus_or_minus_module.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (module-port port-or-module)
-                            imports::module_minus_port
-                                .with(|value| value.get())
-                                .invoke(&[port_minus_or_minus_module.clone()])
-                        } else {
-                            port_minus_or_minus_module.clone()
                         }
                     }
                 })

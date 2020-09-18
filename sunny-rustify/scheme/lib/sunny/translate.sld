@@ -1572,32 +1572,6 @@
             ((null? set2) set1)
             (else (set-add* set1 set2))))
 
-    ;------------------------------------------------------------
-    ; Utils
-
-    (define (println f . args)
-      (for-each (lambda (a) (display a (as-port f)))
-                args)
-      (newline (as-port f)))
-
-    (define (print f . args)
-      (for-each (lambda (a) (display a (as-port f)))
-                args))
-
-    (define (showln f . args)
-      (for-each (lambda (a) (write a (as-port f)))
-                args)
-      (newline (as-port f)))
-
-    (define (show f . args)
-      (for-each (lambda (a) (write a (as-port f)))
-                args))
-
-    (define (as-port port-or-module)
-      (if (module? port-or-module)
-          (module-port port-or-module)
-          port-or-module))
-
     ;--------------------------------------------------
     ; std library stand-ins
 
