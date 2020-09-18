@@ -1409,13 +1409,6 @@
       (eq? 'GLOBAL-REF
            (car var)))
 
-
-    (define (atom? x)
-      (if (pair? x)
-          #f
-          #t))
-
-
     ;--------------------------------------------------------------
     ; AST transformations
 

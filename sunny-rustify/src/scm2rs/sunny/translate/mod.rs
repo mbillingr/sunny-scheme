@@ -116,7 +116,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->assignment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_reference: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->reference"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static atom_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL atom?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_lib: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-lib"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
@@ -711,7 +710,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     {
                         if (
                             // (atom? exp)
-                            globals::atom_p
+                            imports::atom_p
                                 .with(|value| value.get())
                                 .invoke(&[exp.clone()])
                         )
@@ -9625,32 +9624,6 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                 .with(|value| value.get())
                                 .invoke(&[var.clone()]),
                         ])
-                    }
-                })
-            })
-        });
-        // (define (atom? x) (if (pair? x) #f #t))
-        globals::atom_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (letrec () (if (pair? x) #f #t))
-                    {
-                        if (
-                            // (pair? x)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[x.clone()])
-                        )
-                        .is_true()
-                        {
-                            Scm::False
-                        } else {
-                            Scm::True
-                        }
                     }
                 })
             })

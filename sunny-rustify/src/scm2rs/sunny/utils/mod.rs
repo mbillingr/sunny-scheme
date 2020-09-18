@@ -5,6 +5,7 @@ mod imports {
 }
 
 pub mod exports {
+    pub use super::globals::atom_p;
     pub use super::globals::dotted_minus_list_p;
     pub use super::globals::filter;
     pub use super::globals::last_minus_cdr;
@@ -17,6 +18,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static dotted_minus_list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL dotted-list?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static atom_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL atom?"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -30,6 +32,32 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
+        // (define (atom? x) (if (pair? x) #f #t))
+        globals::atom_p.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let x = args[0].clone();
+                    // (letrec () (if (pair? x) #f #t))
+                    {
+                        if (
+                            // (pair? x)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[x.clone()])
+                        )
+                        .is_true()
+                        {
+                            Scm::False
+                        } else {
+                            Scm::True
+                        }
+                    }
+                })
+            })
+        });
         // (define (dotted-list? seq) (not (null? (last-cdr seq))))
         globals::dotted_minus_list_p.with(|value| {
             value.set({

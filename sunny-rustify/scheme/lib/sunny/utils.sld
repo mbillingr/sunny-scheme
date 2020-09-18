@@ -1,6 +1,7 @@
 (define-library (sunny utils)
 
-  (export dotted-list?
+  (export atom?
+          dotted-list?
           filter
           last-cdr
           proper-list-part)
@@ -8,6 +9,11 @@
   (import (scheme base))
 
   (begin
+    (define (atom? x)
+      (if (pair? x)
+          #f
+          #t))
+
     (define (dotted-list? seq)
       (not (null? (last-cdr seq))))
 
