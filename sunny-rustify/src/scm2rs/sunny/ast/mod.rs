@@ -10,15 +10,21 @@ mod imports {
 
 pub mod exports {
     pub use super::globals::make_minus_alternative;
+    pub use super::globals::make_minus_application;
+    pub use super::globals::make_minus_args;
     pub use super::globals::make_minus_assignment;
     pub use super::globals::make_minus_comment;
     pub use super::globals::make_minus_constant;
     pub use super::globals::make_minus_nop;
+    pub use super::globals::make_minus_null_minus_arg;
     pub use super::globals::make_minus_reference;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-args"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_null_minus_arg: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-null-arg"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-alternative"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-assignment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_reference: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-reference"))}
@@ -1579,6 +1585,612 @@ pub fn initialize() {
                                         // (error "Unknown message ALTERNATIVE" msg)
                                         imports::error.with(|value| value.get()).invoke(&[
                                             Scm::from("Unknown message ALTERNATIVE"),
+                                            msg.clone(),
+                                        ])
+                                    }
+                                }
+                            })
+                        });
+                        self_.get()
+                    }
+                })
+            })
+        });
+        // (define (make-application func args tail?) (define (repr) (cons (if tail? (quote APPLY-TC) (quote APPLY)) (cons (func (quote repr)) (args (quote repr))))) (define (transform fnc) (fnc self (lambda () (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?)))) (define (free-vars) (set-union (func (quote free-vars)) (args (quote free-vars)))) (define (gen-rust module) (func (quote gen-rust) module) (print module ".invoke(&[") (args (quote gen-rust) module) (print module "])")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message APPLICATION" msg)))) self)
+        globals::make_minus_application.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let func = args[0].clone();
+                    let args_ = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec ((repr (lambda () (cons (if tail? (quote APPLY-TC) (quote APPLY)) (cons (func (quote repr)) (args (quote repr)))))) (transform (lambda (fnc) (fnc self (lambda () (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?))))) (free-vars (lambda () (set-union (func (quote free-vars)) (args (quote free-vars))))) (gen-rust (lambda (module) (func (quote gen-rust) module) (print module ".invoke(&[") (args (quote gen-rust) module) (print module "])"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message APPLICATION" msg)))))) self)
+                    {
+                        let repr = Scm::uninitialized().into_boxed();
+                        let transform = Scm::uninitialized().into_boxed();
+                        let free_minus_vars = Scm::uninitialized().into_boxed();
+                        let gen_minus_rust = Scm::uninitialized().into_boxed();
+                        let self_ = Scm::uninitialized().into_boxed();
+                        repr.set({
+                            let tail_p = tail_p.clone();
+                            let func = func.clone();
+                            let args_ = args_.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (cons (if tail? (quote APPLY-TC) (quote APPLY)) (cons (func (quote repr)) (args (quote repr)))))
+                                {
+                                    // (cons (if tail? (quote APPLY-TC) (quote APPLY)) (cons (func (quote repr)) (args (quote repr))))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        if (tail_p.clone()).is_true() {
+                                            Scm::symbol("APPLY-TC")
+                                        } else {
+                                            Scm::symbol("APPLY")
+                                        },
+                                        // (cons (func (quote repr)) (args (quote repr)))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            // (func (quote repr))
+                                            func.clone().invoke(&[Scm::symbol("repr")]),
+                                            // (args (quote repr))
+                                            args_.clone().invoke(&[Scm::symbol("repr")]),
+                                        ]),
+                                    ])
+                                }
+                            })
+                        });
+                        transform.set({
+                            let self_ = self_.clone();
+                            let func = func.clone();
+                            let args_ = args_.clone();
+                            let tail_p = tail_p.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let fnc = args[0].clone();
+                                // (letrec () (fnc self (lambda () (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?))))
+                                {
+                                    // (fnc self (lambda () (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?)))
+                                    fnc.clone().invoke(&[self_.get(), {
+                                        let func = func.clone();
+                                        let fnc = fnc.clone();
+                                        let args_ = args_.clone();
+                                        let tail_p = tail_p.clone();
+                                        Scm::func(move |args: &[Scm]| {
+                                            if args.len() != 0 {
+                                                panic!("invalid arity")
+                                            }
+                                            // (letrec () (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?))
+                                            {
+                                                // (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?)
+                                                globals::make_minus_application
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (func (quote transform) fnc)
+                                                        func.clone().invoke(&[
+                                                            Scm::symbol("transform"),
+                                                            fnc.clone(),
+                                                        ]),
+                                                        // (args (quote transform) fnc)
+                                                        args_.clone().invoke(&[
+                                                            Scm::symbol("transform"),
+                                                            fnc.clone(),
+                                                        ]),
+                                                        tail_p.clone(),
+                                                    ])
+                                            }
+                                        })
+                                    }])
+                                }
+                            })
+                        });
+                        free_minus_vars.set({
+                            let func = func.clone();
+                            let args_ = args_.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (set-union (func (quote free-vars)) (args (quote free-vars))))
+                                {
+                                    // (set-union (func (quote free-vars)) (args (quote free-vars)))
+                                    imports::set_minus_union.with(|value| value.get()).invoke(&[
+                                        // (func (quote free-vars))
+                                        func.clone().invoke(&[Scm::symbol("free-vars")]),
+                                        // (args (quote free-vars))
+                                        args_.clone().invoke(&[Scm::symbol("free-vars")]),
+                                    ])
+                                }
+                            })
+                        });
+                        gen_minus_rust.set({
+                            let func = func.clone();
+                            let args_ = args_.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let module = args[0].clone();
+                                // (letrec () (func (quote gen-rust) module) (print module ".invoke(&[") (args (quote gen-rust) module) (print module "])"))
+                                {
+                                    {
+                                        // (func (quote gen-rust) module)
+                                        func.clone()
+                                            .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
+                                        // (print module ".invoke(&[")
+                                        imports::print
+                                            .with(|value| value.get())
+                                            .invoke(&[module.clone(), Scm::from(".invoke(&[")]);
+                                        // (args (quote gen-rust) module)
+                                        args_
+                                            .clone()
+                                            .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
+                                        // (print module "])")
+                                        imports::print
+                                            .with(|value| value.get())
+                                            .invoke(&[module.clone(), Scm::from("])")])
+                                    }
+                                }
+                            })
+                        });
+                        self_.set({
+                            let transform = transform.clone();
+                            let free_minus_vars = free_minus_vars.clone();
+                            let gen_minus_rust = gen_minus_rust.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() < 1 {
+                                    panic!("not enough args")
+                                }
+                                let msg = args[0].clone();
+                                let args_ = Scm::list(&args[1..]);
+                                // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message APPLICATION" msg))))
+                                {
+                                    // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message APPLICATION" msg)))
+                                    if (
+                                        // (eq? (quote repr) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("repr"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print)
+                                        imports::print.with(|value| value.get()).invoke(&[])
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("APPLICATION")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message APPLICATION" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message APPLICATION"),
+                                            msg.clone(),
+                                        ])
+                                    }
+                                }
+                            })
+                        });
+                        self_.get()
+                    }
+                })
+            })
+        });
+        // (define (make-null-arg) (define (repr) (list (quote NULL-ARG))) (define (transform fnc) (fnc self (lambda () self))) (define (free-vars) (make-set)) (define (gen-rust module) (print module "")) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote NULL-ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NULL-ARG" msg)))) self)
+        globals::make_minus_null_minus_arg.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 0 {
+                        panic!("invalid arity")
+                    }
+                    // (letrec ((repr (lambda () (list (quote NULL-ARG)))) (transform (lambda (fnc) (fnc self (lambda () self)))) (free-vars (lambda () (make-set))) (gen-rust (lambda (module) (print module ""))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote NULL-ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NULL-ARG" msg)))))) self)
+                    {
+                        let repr = Scm::uninitialized().into_boxed();
+                        let transform = Scm::uninitialized().into_boxed();
+                        let free_minus_vars = Scm::uninitialized().into_boxed();
+                        let gen_minus_rust = Scm::uninitialized().into_boxed();
+                        let self_ = Scm::uninitialized().into_boxed();
+                        repr.set({
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (list (quote NULL-ARG)))
+                                {
+                                    // (list (quote NULL-ARG))
+                                    imports::list
+                                        .with(|value| value.get())
+                                        .invoke(&[Scm::symbol("NULL-ARG")])
+                                }
+                            })
+                        });
+                        transform.set({
+                            let self_ = self_.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let fnc = args[0].clone();
+                                // (letrec () (fnc self (lambda () self)))
+                                {
+                                    // (fnc self (lambda () self))
+                                    fnc.clone().invoke(&[self_.get(), {
+                                        let self_ = self_.clone();
+                                        Scm::func(move |args: &[Scm]| {
+                                            if args.len() != 0 {
+                                                panic!("invalid arity")
+                                            }
+                                            // (letrec () self)
+                                            {
+                                                self_.get()
+                                            }
+                                        })
+                                    }])
+                                }
+                            })
+                        });
+                        free_minus_vars.set({
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (make-set))
+                                {
+                                    // (make-set)
+                                    imports::make_minus_set
+                                        .with(|value| value.get())
+                                        .invoke(&[])
+                                }
+                            })
+                        });
+                        gen_minus_rust.set({
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let module = args[0].clone();
+                                // (letrec () (print module ""))
+                                {
+                                    // (print module "")
+                                    imports::print
+                                        .with(|value| value.get())
+                                        .invoke(&[module.clone(), Scm::from("")])
+                                }
+                            })
+                        });
+                        self_.set({
+                            let transform = transform.clone();
+                            let free_minus_vars = free_minus_vars.clone();
+                            let gen_minus_rust = gen_minus_rust.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() < 1 {
+                                    panic!("not enough args")
+                                }
+                                let msg = args[0].clone();
+                                let args_ = Scm::list(&args[1..]);
+                                // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote NULL-ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NULL-ARG" msg))))
+                                {
+                                    // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote NULL-ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message NULL-ARG" msg)))
+                                    if (
+                                        // (eq? (quote repr) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("repr"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print)
+                                        imports::print.with(|value| value.get()).invoke(&[])
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("NULL-ARG")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message NULL-ARG" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message NULL-ARG"),
+                                            msg.clone(),
+                                        ])
+                                    }
+                                }
+                            })
+                        });
+                        self_.get()
+                    }
+                })
+            })
+        });
+        // (define (make-args arg next) (define (repr) (cons (quote ARG) (cons arg next))) (define (transform fnc) (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc))))) (define (free-vars) (set-union (arg (quote free-vars)) (next (quote free-vars)))) (define (gen-rust module) (arg (quote gen-rust) module) (print module ",") (next (quote gen-rust) module)) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))) self)
+        globals::make_minus_args.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let arg = args[0].clone();
+                    let next = args[1].clone();
+                    // (letrec ((repr (lambda () (cons (quote ARG) (cons arg next)))) (transform (lambda (fnc) (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc)))))) (free-vars (lambda () (set-union (arg (quote free-vars)) (next (quote free-vars))))) (gen-rust (lambda (module) (arg (quote gen-rust) module) (print module ",") (next (quote gen-rust) module))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))))) self)
+                    {
+                        let repr = Scm::uninitialized().into_boxed();
+                        let transform = Scm::uninitialized().into_boxed();
+                        let free_minus_vars = Scm::uninitialized().into_boxed();
+                        let gen_minus_rust = Scm::uninitialized().into_boxed();
+                        let self_ = Scm::uninitialized().into_boxed();
+                        repr.set({
+                            let arg = arg.clone();
+                            let next = next.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (cons (quote ARG) (cons arg next)))
+                                {
+                                    // (cons (quote ARG) (cons arg next))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("ARG"),
+                                        // (cons arg next)
+                                        imports::cons
+                                            .with(|value| value.get())
+                                            .invoke(&[arg.clone(), next.clone()]),
+                                    ])
+                                }
+                            })
+                        });
+                        transform.set({
+                            let self_ = self_.clone();
+                            let arg = arg.clone();
+                            let next = next.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let fnc = args[0].clone();
+                                // (letrec () (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc)))))
+                                {
+                                    // (fnc self (lambda () (make-args (arg (quote transform) fnc) (next (quote transform) fnc))))
+                                    fnc.clone().invoke(&[self_.get(), {
+                                        let arg = arg.clone();
+                                        let fnc = fnc.clone();
+                                        let next = next.clone();
+                                        Scm::func(move |args: &[Scm]| {
+                                            if args.len() != 0 {
+                                                panic!("invalid arity")
+                                            }
+                                            // (letrec () (make-args (arg (quote transform) fnc) (next (quote transform) fnc)))
+                                            {
+                                                // (make-args (arg (quote transform) fnc) (next (quote transform) fnc))
+                                                globals::make_minus_args
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (arg (quote transform) fnc)
+                                                        arg.clone().invoke(&[
+                                                            Scm::symbol("transform"),
+                                                            fnc.clone(),
+                                                        ]),
+                                                        // (next (quote transform) fnc)
+                                                        next.clone().invoke(&[
+                                                            Scm::symbol("transform"),
+                                                            fnc.clone(),
+                                                        ]),
+                                                    ])
+                                            }
+                                        })
+                                    }])
+                                }
+                            })
+                        });
+                        free_minus_vars.set({
+                            let arg = arg.clone();
+                            let next = next.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (set-union (arg (quote free-vars)) (next (quote free-vars))))
+                                {
+                                    // (set-union (arg (quote free-vars)) (next (quote free-vars)))
+                                    imports::set_minus_union.with(|value| value.get()).invoke(&[
+                                        // (arg (quote free-vars))
+                                        arg.clone().invoke(&[Scm::symbol("free-vars")]),
+                                        // (next (quote free-vars))
+                                        next.clone().invoke(&[Scm::symbol("free-vars")]),
+                                    ])
+                                }
+                            })
+                        });
+                        gen_minus_rust.set({
+                            let arg = arg.clone();
+                            let next = next.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let module = args[0].clone();
+                                // (letrec () (arg (quote gen-rust) module) (print module ",") (next (quote gen-rust) module))
+                                {
+                                    {
+                                        // (arg (quote gen-rust) module)
+                                        arg.clone()
+                                            .invoke(&[Scm::symbol("gen-rust"), module.clone()]);
+                                        // (print module ",")
+                                        imports::print
+                                            .with(|value| value.get())
+                                            .invoke(&[module.clone(), Scm::from(",")]);
+                                        // (next (quote gen-rust) module)
+                                        next.clone()
+                                            .invoke(&[Scm::symbol("gen-rust"), module.clone()])
+                                    }
+                                }
+                            })
+                        });
+                        self_.set({
+                            let transform = transform.clone();
+                            let free_minus_vars = free_minus_vars.clone();
+                            let gen_minus_rust = gen_minus_rust.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() < 1 {
+                                    panic!("not enough args")
+                                }
+                                let msg = args[0].clone();
+                                let args_ = Scm::list(&args[1..]);
+                                // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg))))
+                                {
+                                    // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ARG)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ARG" msg)))
+                                    if (
+                                        // (eq? (quote repr) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("repr"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print)
+                                        imports::print.with(|value| value.get()).invoke(&[])
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("ARG")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message ARG" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message ARG"),
                                             msg.clone(),
                                         ])
                                     }
