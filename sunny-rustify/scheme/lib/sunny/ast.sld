@@ -4,6 +4,7 @@
           make-application
           make-args
           make-assignment
+          make-boxify
           make-comment
           make-constant
           make-fixlet
@@ -635,4 +636,29 @@
               ((eq? 'libname msg) name)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message LIBRARY" msg))))
+      self)
+
+    (define (make-boxify name body)
+      (define (repr)
+        (cons 'BOXIFY (cons name (body 'repr))))
+      (define (transform func)
+        (func self (lambda () (make-boxify name (body 'transform func)))))
+      (define (free-vars)
+        (body 'free-vars))
+      (define (gen-rust module)
+        (rust-block module
+          (lambda ()
+            (print module "let ")
+            (print module (rustify-identifier name))
+            (print module " = ")
+            (print module (rustify-identifier name))
+            (print module ".into_boxed();")
+            (body 'gen-rust module))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'BOXIFY)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message BOXIFY" msg))))
       self)))

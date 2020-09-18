@@ -16,6 +16,7 @@ pub mod exports {
     pub use super::globals::make_minus_application;
     pub use super::globals::make_minus_args;
     pub use super::globals::make_minus_assignment;
+    pub use super::globals::make_minus_boxify;
     pub use super::globals::make_minus_comment;
     pub use super::globals::make_minus_constant;
     pub use super::globals::make_minus_fixlet;
@@ -31,6 +32,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_boxify: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-boxify"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_library: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-library"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-program"))}
@@ -3585,6 +3587,260 @@ gen_minus_rust.get().invoke(&[
 imports::car.with(|value| value.get()).invoke(&[args_.clone(),]),])} else {
 // (error "Unknown message LIBRARY" msg)
 imports::error.with(|value| value.get()).invoke(&[Scm::from("Unknown message LIBRARY"),msg.clone(),])}}})});
-self_.get()}})}))
+self_.get()}})}));
+        // (define (make-boxify name body) (define (repr) (cons (quote BOXIFY) (cons name (body (quote repr))))) (define (transform func) (func self (lambda () (make-boxify name (body (quote transform) func))))) (define (free-vars) (body (quote free-vars))) (define (gen-rust module) (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module)))) (define (self msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg)))) self)
+        globals::make_minus_boxify.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    let body = args[1].clone();
+                    // (letrec ((repr (lambda () (cons (quote BOXIFY) (cons name (body (quote repr)))))) (transform (lambda (func) (func self (lambda () (make-boxify name (body (quote transform) func)))))) (free-vars (lambda () (body (quote free-vars)))) (gen-rust (lambda (module) (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg)))))) self)
+                    {
+                        let repr = Scm::uninitialized().into_boxed();
+                        let transform = Scm::uninitialized().into_boxed();
+                        let free_minus_vars = Scm::uninitialized().into_boxed();
+                        let gen_minus_rust = Scm::uninitialized().into_boxed();
+                        let self_ = Scm::uninitialized().into_boxed();
+                        repr.set({
+                            let name = name.clone();
+                            let body = body.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (cons (quote BOXIFY) (cons name (body (quote repr)))))
+                                {
+                                    // (cons (quote BOXIFY) (cons name (body (quote repr))))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("BOXIFY"),
+                                        // (cons name (body (quote repr)))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            name.clone(),
+                                            // (body (quote repr))
+                                            body.clone().invoke(&[Scm::symbol("repr")]),
+                                        ]),
+                                    ])
+                                }
+                            })
+                        });
+                        transform.set({
+                            let self_ = self_.clone();
+                            let name = name.clone();
+                            let body = body.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let func = args[0].clone();
+                                // (letrec () (func self (lambda () (make-boxify name (body (quote transform) func)))))
+                                {
+                                    // (func self (lambda () (make-boxify name (body (quote transform) func))))
+                                    func.clone().invoke(&[self_.get(), {
+                                        let name = name.clone();
+                                        let body = body.clone();
+                                        let func = func.clone();
+                                        Scm::func(move |args: &[Scm]| {
+                                            if args.len() != 0 {
+                                                panic!("invalid arity")
+                                            }
+                                            // (letrec () (make-boxify name (body (quote transform) func)))
+                                            {
+                                                // (make-boxify name (body (quote transform) func))
+                                                globals::make_minus_boxify
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        name.clone(),
+                                                        // (body (quote transform) func)
+                                                        body.clone().invoke(&[
+                                                            Scm::symbol("transform"),
+                                                            func.clone(),
+                                                        ]),
+                                                    ])
+                                            }
+                                        })
+                                    }])
+                                }
+                            })
+                        });
+                        free_minus_vars.set({
+                            let body = body.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 0 {
+                                    panic!("invalid arity")
+                                }
+                                // (letrec () (body (quote free-vars)))
+                                {
+                                    // (body (quote free-vars))
+                                    body.clone().invoke(&[Scm::symbol("free-vars")])
+                                }
+                            })
+                        });
+                        gen_minus_rust.set({
+                            let name = name.clone();
+                            let body = body.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let module = args[0].clone();
+                                // (letrec () (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module))))
+                                {
+                                    // (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module)))
+                                    imports::rust_minus_block
+                                        .with(|value| value.get())
+                                        .invoke(&[module.clone(), {
+                                            let module = module.clone();
+                                            let name = name.clone();
+                                            let body = body.clone();
+                                            Scm::func(move |args: &[Scm]| {
+                                                if args.len() != 0 {
+                                                    panic!("invalid arity")
+                                                }
+                                                // (letrec () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module))
+                                                {
+                                                    {
+                                                        // (print module "let ")
+                                                        imports::print
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                module.clone(),
+                                                                Scm::from("let "),
+                                                            ]);
+                                                        // (print module (rustify-identifier name))
+                                                        imports::print
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                module.clone(),
+                                                                // (rustify-identifier name)
+                                                                imports::rustify_minus_identifier
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[name.clone()]),
+                                                            ]);
+                                                        // (print module " = ")
+                                                        imports::print
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                module.clone(),
+                                                                Scm::from(" = "),
+                                                            ]);
+                                                        // (print module (rustify-identifier name))
+                                                        imports::print
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                module.clone(),
+                                                                // (rustify-identifier name)
+                                                                imports::rustify_minus_identifier
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[name.clone()]),
+                                                            ]);
+                                                        // (print module ".into_boxed();")
+                                                        imports::print
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                module.clone(),
+                                                                Scm::from(".into_boxed();"),
+                                                            ]);
+                                                        // (body (quote gen-rust) module)
+                                                        body.clone().invoke(&[
+                                                            Scm::symbol("gen-rust"),
+                                                            module.clone(),
+                                                        ])
+                                                    }
+                                                }
+                                            })
+                                        }])
+                                }
+                            })
+                        });
+                        self_.set({
+                            let transform = transform.clone();
+                            let free_minus_vars = free_minus_vars.clone();
+                            let gen_minus_rust = gen_minus_rust.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() < 1 {
+                                    panic!("not enough args")
+                                }
+                                let msg = args[0].clone();
+                                let args_ = Scm::list(&args[1..]);
+                                // (letrec () (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg))))
+                                {
+                                    // (cond ((eq? (quote repr) msg) (print)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote BOXIFY)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message BOXIFY" msg)))
+                                    if (
+                                        // (eq? (quote repr) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("repr"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (print)
+                                        imports::print.with(|value| value.get()).invoke(&[])
+                                    } else if (
+                                        // (eq? (quote transform) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("transform"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (transform (car args))
+                                        transform.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else if (
+                                        // (eq? (quote free-vars) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("free-vars"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (free-vars)
+                                        free_minus_vars.get().invoke(&[])
+                                    } else if (
+                                        // (eq? (quote kind) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("kind"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        Scm::symbol("BOXIFY")
+                                    } else if (
+                                        // (eq? (quote gen-rust) msg)
+                                        imports::eq_p
+                                            .with(|value| value.get())
+                                            .invoke(&[Scm::symbol("gen-rust"), msg.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        // (gen-rust (car args))
+                                        gen_minus_rust.get().invoke(&[
+                                            // (car args)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[args_.clone()]),
+                                        ])
+                                    } else {
+                                        // (error "Unknown message BOXIFY" msg)
+                                        imports::error.with(|value| value.get()).invoke(&[
+                                            Scm::from("Unknown message BOXIFY"),
+                                            msg.clone(),
+                                        ])
+                                    }
+                                }
+                            })
+                        });
+                        self_.get()
+                    }
+                })
+            })
+        })
     };
 }
