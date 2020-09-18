@@ -12,6 +12,7 @@
                               open-output-file)
           (chibi filesystem)
           (sunny ast)
+          (sunny rust codegen)
           (sunny rust module)
           (sunny rust module-tree)
           (sunny rust rustify)
@@ -506,65 +507,6 @@
     ; ======================================================================
     ; AST
 
-    (define (make-program globals imports init body libraries)
-      (define (repr)
-        (cons 'PROGRAM
-              (cons globals
-                    (cons imports
-                          (body 'repr)))))
-      (define (transform func)
-        (func self
-              (lambda ()
-                (make-program globals imports init (body 'transform func)))))
-      (define (gen-imports module)
-        (for-each (lambda (i)
-                    (i 'gen-rust module))
-                  imports))
-      (define (gen-rust module)
-        (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};")
-        (print module "mod imports")
-        (rust-block module
-          (lambda ()
-            (gen-imports module)))
-        (println module)
-        (println module)
-        (print module "mod globals")
-        (rust-block module
-          (lambda ()
-            (if (any (lambda (g) (global-regular? (cdr g)))
-                     globals)
-                (println module "use sunny_core::{Mut, Scm};"))
-            (rust-gen-global-defs module globals)))
-        (println module)
-        (println module)
-        (print module "pub fn main()")
-        (rust-block module
-          (lambda ()
-            (println module)
-            (println module "eprintln!(\"built with\");")
-            (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);")
-            (println module)
-            (for-each (lambda (lib)
-                        (print module "crate::")
-                        (for-each (lambda (l)
-                                    (print module (rustify-libname l))
-                                    (print module "::"))
-                                  lib)
-                        (print module "initialize();")
-                        (println module))
-                      init)
-            (body 'gen-rust module)
-            (println module ";")))
-        (println module)
-        (rust-gen-modules module libraries))
-      (define (self msg . args)
-        (cond ((eq? 'repr msg) (print))
-              ((eq? 'transform msg) (transform (car args)))
-              ((eq? 'kind msg) 'PROGRAM)
-              ((eq? 'gen-rust msg) (gen-rust (car args)))
-              (else (error "Unknown message PROGRAM" msg))))
-      self)
-
     (define (make-library name globals init body imports exports)
       (define (repr)
         (append 'LIBRARY name exports imports globals (body 'repr)))
@@ -842,55 +784,6 @@
           '()))
 
 
-    (define (rust-gen-global-defs module g)
-      (if (null? g)
-          (println module)
-          (if (global-imported? (cdar g))
-              (rust-gen-global-defs module (cdr g))
-              (begin (println module
-                       "thread_local!{#[allow(non_upper_case_globals)] pub static "
-                       (rustify-identifier (caar g))
-                       ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "
-                       (caar g)
-                       "\"))}")
-                     (rust-gen-global-defs module (cdr g))))))
-
-
-    (define (rust-gen-modules module libs)
-      (let ((module-tree (make-module-tree-node 'root)))
-        (for-each (lambda (lib)
-                    (module-tree-insert! module-tree (car lib) (cdr lib)))
-                  libs)
-
-        (rust-gen-module-tree-list module (module-tree-children module-tree))))
-
-    (define (rust-gen-module-tree module node)
-      (println module
-        "pub mod " (rustify-libname (module-tree-name node)) ";")
-      (if (module-tree-leaf? node)
-          (rust-gen-in-submodule (module-tree-name node) module
-            (lambda (submod)
-              ((module-tree-libobj node) 'gen-rust submod)))
-          (rust-gen-in-submodule (module-tree-name node) module
-            (lambda (submod)
-              (rust-gen-module-tree-list submod (module-tree-children node))))))
-
-    (define (rust-gen-module-tree-list module nodes)
-      (for-each (lambda (child)
-                  (rust-gen-module-tree module child))
-                nodes))
-
-
-    (define (rust-gen-in-module name base-path body)
-      (let ((module (open-module name base-path)))
-        (body module)
-        (close-module module)))
-
-    (define (rust-gen-in-submodule name parent body)
-      (let ((module (open-submodule name parent)))
-        (body module)
-        (close-module module)))
-
 
     (define (make-global-env)
       (list 'GLOBAL-MARKER
@@ -1017,13 +910,6 @@
 
     ;--------------------------------------------------
     ; std library stand-ins
-
-    (define (any f seq)
-      (if (pair? seq)
-          (if (f (car seq))
-              #t
-              (any f (cdr seq)))
-          #f))
 
     (define (reduce f init seq)
       (if (pair? seq)

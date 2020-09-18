@@ -1,6 +1,7 @@
 (define-library (sunny utils)
 
-  (export atom?
+  (export any
+          atom?
           dotted-list?
           filter
           last-cdr
@@ -34,4 +35,11 @@
               (cons (car seq)
                     (filter f (cdr seq)))
               (filter f (cdr seq)))
-          '()))))
+          '()))
+
+    (define (any f seq)
+      (if (pair? seq)
+          (if (f (car seq))
+              #t
+              (any f (cdr seq)))
+          #f))))

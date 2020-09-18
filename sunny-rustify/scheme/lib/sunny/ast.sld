@@ -9,6 +9,7 @@
           make-fixlet
           make-nop
           make-null-arg
+          make-program
           make-reference
           make-sequence
           make-scope
@@ -16,8 +17,10 @@
 
   (import (scheme base)
           (sunny sets)
+          (sunny rust codegen)
           (sunny rust module)
           (sunny rust rustify)
+          (sunny utils)
           (sunny variable))
 
   (begin
@@ -498,4 +501,63 @@
               ((eq? 'get-varvar msg) varvar)
               ((eq? 'get-body msg) body)
               (else (error "Unknown message VARARG-ABSTRACTION" msg))))
+      self)
+
+    (define (make-program globals imports init body libraries)
+      (define (repr)
+        (cons 'PROGRAM
+              (cons globals
+                    (cons imports
+                          (body 'repr)))))
+      (define (transform func)
+        (func self
+              (lambda ()
+                (make-program globals imports init (body 'transform func)))))
+      (define (gen-imports module)
+        (for-each (lambda (i)
+                    (i 'gen-rust module))
+                  imports))
+      (define (gen-rust module)
+        (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};")
+        (print module "mod imports")
+        (rust-block module
+          (lambda ()
+            (gen-imports module)))
+        (println module)
+        (println module)
+        (print module "mod globals")
+        (rust-block module
+          (lambda ()
+            (if (any (lambda (g) (global-regular? (cdr g)))
+                     globals)
+                (println module "use sunny_core::{Mut, Scm};"))
+            (rust-gen-global-defs module globals)))
+        (println module)
+        (println module)
+        (print module "pub fn main()")
+        (rust-block module
+          (lambda ()
+            (println module)
+            (println module "eprintln!(\"built with\");")
+            (println module "eprintln!(\"    '{}' memory model\", MEMORY_MODEL_KIND);")
+            (println module)
+            (for-each (lambda (lib)
+                        (print module "crate::")
+                        (for-each (lambda (l)
+                                    (print module (rustify-libname l))
+                                    (print module "::"))
+                                  lib)
+                        (print module "initialize();")
+                        (println module))
+                      init)
+            (body 'gen-rust module)
+            (println module ";")))
+        (println module)
+        (rust-gen-modules module libraries))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'kind msg) 'PROGRAM)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message PROGRAM" msg))))
       self)))

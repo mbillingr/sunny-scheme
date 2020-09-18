@@ -5,6 +5,7 @@ mod imports {
 }
 
 pub mod exports {
+    pub use super::globals::any;
     pub use super::globals::atom_p;
     pub use super::globals::dotted_minus_list_p;
     pub use super::globals::filter;
@@ -14,6 +15,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static any: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static filter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL filter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
@@ -212,6 +214,54 @@ pub fn initialize() {
                             }
                         } else {
                             Scm::Nil
+                        }
+                    }
+                })
+            })
+        });
+        // (define (any f seq) (if (pair? seq) (if (f (car seq)) #t (any f (cdr seq))) #f))
+        globals::any.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let f = args[0].clone();
+                    let seq = args[1].clone();
+                    // (letrec () (if (pair? seq) (if (f (car seq)) #t (any f (cdr seq))) #f))
+                    {
+                        if (
+                            // (pair? seq)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        )
+                        .is_true()
+                        {
+                            if (
+                                // (f (car seq))
+                                f.clone().invoke(&[
+                                    // (car seq)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                ])
+                            )
+                            .is_true()
+                            {
+                                Scm::True
+                            } else {
+                                // (any f (cdr seq))
+                                globals::any.with(|value| value.get()).invoke(&[
+                                    f.clone(),
+                                    // (cdr seq)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                ])
+                            }
+                        } else {
+                            Scm::False
                         }
                     }
                 })
