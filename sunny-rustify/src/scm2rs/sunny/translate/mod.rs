@@ -29,7 +29,6 @@ pub mod exports {
 mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testcase: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testcase"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static reduce: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reduce"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_library_minus_ext: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-library-ext"))}
@@ -61,8 +60,10 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_scope_minus_seq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->scope-seq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_scope_minus_let: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->scope-let"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->abstraction"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static abstraction_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL abstraction?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_definition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->definition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static wrap_minus_sexpr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL wrap-sexpr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->assignment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_reference: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->reference"))}
@@ -645,7 +646,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->ast exp env tail?) (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
+        // (define (sexpr->ast exp env tail?) (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
         globals::sexpr_minus__g_ast.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -655,7 +656,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     let exp = args[0].clone();
                     let env = args[1].clone();
                     let tail_p = args[2].clone();
-                    // (letrec () (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
+                    // (letrec () (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
                     {
                         if (
                             // (atom? exp)
@@ -684,7 +685,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .invoke(&[exp.clone(), env.clone()])
                             }
                         } else {
-                            // (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((eq? (quote define) (car exp)) (wrap-sexpr exp (sexpr->definition exp env))) ((eq? (quote lambda) (car exp)) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))
+                            // (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))
                             if (
                                 // (eq? (quote quote) (car exp))
                                 imports::eq_p.with(|value| value.get()).invoke(&[
@@ -734,14 +735,10 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         env.clone(),
                                     ])
                             } else if (
-                                // (eq? (quote define) (car exp))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("define"),
-                                    // (car exp)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[exp.clone()]),
-                                ])
+                                // (definition? exp)
+                                globals::definition_p
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()])
                             )
                             .is_true()
                             {
@@ -756,14 +753,10 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .invoke(&[exp.clone(), env.clone()]),
                                     ])
                             } else if (
-                                // (eq? (quote lambda) (car exp))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("lambda"),
-                                    // (car exp)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[exp.clone()]),
-                                ])
+                                // (abstraction? exp)
+                                globals::abstraction_p
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()])
                             )
                             .is_true()
                             {
@@ -1203,7 +1196,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->definition exp env) (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val)))
+        // (define (sexpr->definition exp env) (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val)))
         globals::sexpr_minus__g_definition.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -1212,9 +1205,9 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     }
                     let exp = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val)))
+                    // (letrec () (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val)))
                     {
-                        // (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val))
+                        // (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
                         {
                             let [name] = [
                                 // (definition-variable exp)
@@ -1222,7 +1215,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[exp.clone()]),
                             ];
-                            // (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val))
+                            // (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
                             {
                                 let [value] = [
                                     // (definition-value exp)
@@ -1230,7 +1223,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .with(|value| value.get())
                                         .invoke(&[exp.clone()]),
                                 ];
-                                // (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (make-assignment name var val))
+                                // (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
                                 {
                                     let [var] = [
                                         // (ensure-var! name env)
@@ -1238,7 +1231,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .with(|value| value.get())
                                             .invoke(&[name.clone(), env.clone()]),
                                     ];
-                                    // (let* ((val (sexpr->ast value env #f))) (make-assignment name var val))
+                                    // (let* ((val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
                                     {
                                         let [val] = [
                                             // (sexpr->ast value env #f)
@@ -1246,12 +1239,23 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 .with(|value| value.get())
                                                 .invoke(&[value.clone(), env.clone(), Scm::False]),
                                         ];
-                                        // (let* () (make-assignment name var val))
-
-                                        // (make-assignment name var val)
-                                        imports::make_minus_assignment
-                                            .with(|value| value.get())
-                                            .invoke(&[name.clone(), var.clone(), val.clone()])
+                                        // (let* () (variable-add-definition var (abstraction? value)) (make-assignment name var val))
+                                        {
+                                            // (variable-add-definition var (abstraction? value))
+                                            imports::variable_minus_add_minus_definition
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    var.clone(),
+                                                    // (abstraction? value)
+                                                    globals::abstraction_p
+                                                        .with(|value| value.get())
+                                                        .invoke(&[value.clone()]),
+                                                ]);
+                                            // (make-assignment name var val)
+                                            imports::make_minus_assignment
+                                                .with(|value| value.get())
+                                                .invoke(&[name.clone(), var.clone(), val.clone()])
+                                        }
                                     }
                                 }
                             }
@@ -3269,6 +3273,40 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[expr.clone()]),
                                 Scm::symbol("define"),
+                            ])
+                        } else {
+                            Scm::False
+                        }
+                    }
+                })
+            })
+        });
+        // (define (abstraction? expr) (and (pair? expr) (eq? (quote lambda) (car expr))))
+        globals::abstraction_p.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (and (pair? expr) (eq? (quote lambda) (car expr))))
+                    {
+                        // (and (pair? expr) (eq? (quote lambda) (car expr)))
+                        if (
+                            // (pair? expr)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (eq? (quote lambda) (car expr))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("lambda"),
+                                // (car expr)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()]),
                             ])
                         } else {
                             Scm::False

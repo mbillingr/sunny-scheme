@@ -6,6 +6,7 @@
           new-import
           new-local
           variable
+          variable-add-definition
           variable-getter
           variable-mut?
           variable-set-getter!
@@ -45,6 +46,11 @@
     (define (global-regular? var)
       (eq? 'GLOBAL-REF
            (car var)))
+
+    (define (variable-add-definition var lambda?)
+      (if (variable-mut? var)
+          (variable-set-mutable! var)
+          (set-car! (cddr var) (if lambda? 'FUNCTION 'VALUE))))
 
     (define (new-import name)
       (cons name (variable 'IMPORT-REF 'IMPORT-SET #f)))

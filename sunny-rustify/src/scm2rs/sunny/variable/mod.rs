@@ -13,6 +13,7 @@ pub mod exports {
     pub use super::globals::new_minus_import;
     pub use super::globals::new_minus_local;
     pub use super::globals::variable;
+    pub use super::globals::variable_minus_add_minus_definition;
     pub use super::globals::variable_minus_getter;
     pub use super::globals::variable_minus_mut_p;
     pub use super::globals::variable_minus_set_minus_getter_i;
@@ -27,6 +28,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_global: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-global"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-import"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_add_minus_definition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-add-definition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_regular_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-regular?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_imported_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-imported?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_setter_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-setter!"))}
@@ -230,6 +232,47 @@ pub fn initialize() {
                                 .with(|value| value.get())
                                 .invoke(&[var.clone()]),
                         ])
+                    }
+                })
+            })
+        });
+        // (define (variable-add-definition var lambda?) (if (variable-mut? var) (variable-set-mutable! var) (set-car! (cddr var) (if lambda? (quote FUNCTION) (quote VALUE)))))
+        globals::variable_minus_add_minus_definition.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let var = args[0].clone();
+                    let lambda_p = args[1].clone();
+                    // (letrec () (if (variable-mut? var) (variable-set-mutable! var) (set-car! (cddr var) (if lambda? (quote FUNCTION) (quote VALUE)))))
+                    {
+                        if (
+                            // (variable-mut? var)
+                            globals::variable_minus_mut_p
+                                .with(|value| value.get())
+                                .invoke(&[var.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (variable-set-mutable! var)
+                            globals::variable_minus_set_minus_mutable_i
+                                .with(|value| value.get())
+                                .invoke(&[var.clone()])
+                        } else {
+                            // (set-car! (cddr var) (if lambda? (quote FUNCTION) (quote VALUE)))
+                            imports::set_minus_car_i.with(|value| value.get()).invoke(&[
+                                // (cddr var)
+                                imports::cddr
+                                    .with(|value| value.get())
+                                    .invoke(&[var.clone()]),
+                                if (lambda_p.clone()).is_true() {
+                                    Scm::symbol("FUNCTION")
+                                } else {
+                                    Scm::symbol("VALUE")
+                                },
+                            ])
+                        }
                     }
                 })
             })

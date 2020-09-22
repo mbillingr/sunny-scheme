@@ -127,11 +127,11 @@
                 ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp)
                                                           (caddr exp)
                                                           env))
-                ((eq? 'define (car exp)) (wrap-sexpr exp
-                                           (sexpr->definition exp env)))
-                ((eq? 'lambda (car exp)) (sexpr->abstraction (cadr exp)
-                                                             (cddr exp)
-                                                             env))
+                ((definition? exp) (wrap-sexpr exp
+                                     (sexpr->definition exp env)))
+                ((abstraction? exp) (sexpr->abstraction (cadr exp)
+                                                        (cddr exp)
+                                                        env))
                 ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp)
                                                          env tail?))
                 ((eq? 'let (car exp)) (wrap-sexpr exp
@@ -186,6 +186,7 @@
              (value (definition-value exp))
              (var (ensure-var! name env))
              (val (sexpr->ast value env #f)))
+        (variable-add-definition var (abstraction? value))
         (make-assignment name var val)))
 
     (define (sexpr->alternative condition consequent alternative env tail?)
@@ -419,6 +420,10 @@
     (define (definition? expr)
       (and (pair? expr)
            (eq? (car expr) 'define)))
+
+    (define (abstraction? expr)
+      (and (pair? expr)
+           (eq? 'lambda (car expr))))
 
     (define (definition-variable expr)
       (if (pair? (cadr expr))
