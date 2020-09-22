@@ -1196,7 +1196,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->definition exp env) (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val)))
+        // (define (sexpr->definition exp env) (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-definition name var val)))
         globals::sexpr_minus__g_definition.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -1205,9 +1205,9 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     }
                     let exp = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val)))
+                    // (letrec () (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-definition name var val)))
                     {
-                        // (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
+                        // (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-definition name var val))
                         {
                             let [name] = [
                                 // (definition-variable exp)
@@ -1215,7 +1215,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[exp.clone()]),
                             ];
-                            // (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
+                            // (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-definition name var val))
                             {
                                 let [value] = [
                                     // (definition-value exp)
@@ -1223,7 +1223,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .with(|value| value.get())
                                         .invoke(&[exp.clone()]),
                                 ];
-                                // (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
+                                // (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-definition name var val))
                                 {
                                     let [var] = [
                                         // (ensure-var! name env)
@@ -1231,7 +1231,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             .with(|value| value.get())
                                             .invoke(&[name.clone(), env.clone()]),
                                     ];
-                                    // (let* ((val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-assignment name var val))
+                                    // (let* ((val (sexpr->ast value env #f))) (variable-add-definition var (abstraction? value)) (make-definition name var val))
                                     {
                                         let [val] = [
                                             // (sexpr->ast value env #f)
@@ -1239,7 +1239,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 .with(|value| value.get())
                                                 .invoke(&[value.clone(), env.clone(), Scm::False]),
                                         ];
-                                        // (let* () (variable-add-definition var (abstraction? value)) (make-assignment name var val))
+                                        // (let* () (variable-add-definition var (abstraction? value)) (make-definition name var val))
                                         {
                                             // (variable-add-definition var (abstraction? value))
                                             imports::variable_minus_add_minus_definition
@@ -1251,8 +1251,8 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                         .with(|value| value.get())
                                                         .invoke(&[value.clone()]),
                                                 ]);
-                                            // (make-assignment name var val)
-                                            imports::make_minus_assignment
+                                            // (make-definition name var val)
+                                            imports::make_minus_definition
                                                 .with(|value| value.get())
                                                 .invoke(&[name.clone(), var.clone(), val.clone()])
                                         }

@@ -8,6 +8,7 @@
           make-boxify
           make-comment
           make-constant
+          make-definition
           make-export
           make-fixlet
           make-import
@@ -176,6 +177,36 @@
               ((eq? 'kind msg) 'ASSIGNMENT)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message ASSIGNMENT" msg))))
+      self)
+
+    (define (make-definition name var val)
+      (define (repr)
+        (list 'DEFINE name (val 'repr)))
+      (define (transform func)
+        (func self
+              (lambda () (make-definition name
+                                          var
+                                          (val 'transform func)))))
+      (define (free-vars)
+        (set-add (val 'free-vars)
+                 name))
+      (define (gen-rust module)
+        (let ((setter (variable-setter var)))
+          (cond ((eq? 'GLOBAL-SET setter)
+                 (print module
+                        "globals::"
+                        (rustify-identifier name)
+                        ".with(|value| value.set(")
+                 (val 'gen-rust module)
+                 (print module "))"))
+                (else (error "definition! of non-global variable")))))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (print))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'DEFINITION)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message DEFINITION" msg))))
       self)
 
     (define (make-alternative condition consequent alternative)
