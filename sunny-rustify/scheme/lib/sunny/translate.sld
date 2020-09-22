@@ -11,6 +11,7 @@
                               open-input-file
                               open-output-file)
           (chibi filesystem)
+          (sunny ast-transforms boxify)
           (sunny ast)
           (sunny env)
           (sunny rust codegen)
@@ -504,52 +505,6 @@
       (list (cons 'letrec
                   (cons (initializations body)
                         (transform body)))))
-
-    ;--------------------------------------------------------------
-    ; AST transformations
-
-    (define (boxify node)
-      (define (transform node ignore)
-        (cond ((eq? (node 'kind) 'ABSTRACTION)
-               (boxify-abstraction (node 'get-params)
-                                   (node 'get-vars)
-                                   (node 'get-params)
-                                   (node 'get-vars)
-                                   (node 'get-body)))
-              ((eq? (node 'kind) 'VARARG-ABSTRACTION)
-               (boxify-vararg-abstraction (node 'get-params)
-                                          (node 'get-vararg)
-                                          (node 'get-vars)
-                                          (node 'get-varvar)
-                                          (cons (node 'get-vararg)
-                                                (node 'get-params))
-                                          (cons (node 'get-varvar)
-                                                (node 'get-vars))
-                                          (node 'get-body)))
-              (else (ignore))))
-      (node 'transform transform))
-
-
-    (define (boxify-abstraction params vars param* var* body)
-      (if (null? var*)
-          (make-abstraction params vars body)
-          (if (variable-mut? (car var*))
-              (begin (variable-set-setter! (car var*) 'BOXED-SET)
-                     (variable-set-getter! (car var*) 'BOXED-REF)
-                     (boxify-abstraction params vars (cdr param*) (cdr var*)
-                                         (make-boxify (car param*) body)))
-              (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
-
-    (define (boxify-vararg-abstraction params vararg vars varvar param* var* body)
-      (if (null? var*)
-          (make-vararg-abstraction params vararg vars varvar body)
-          (if (variable-mut? (car var*))
-              (begin (variable-set-setter! (car var*) 'BOXED-SET)
-                     (variable-set-getter! (car var*) 'BOXED-REF)
-                     (boxify-vararg-abstraction params vararg vars varvar
-                                                (cdr param*) (cdr var*)
-                                                (make-boxify (car param*) body)))
-              (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
 
     ;--------------------------------------------------
     ; std library stand-ins
