@@ -1,5 +1,6 @@
 (define-library (sunny table)
   (export make-table
+          ancestor?
           table?
           clone
           parent
@@ -50,7 +51,13 @@
                     (fields table))))))
 
     (define (call-method table key . args)
-      (apply (get-field table key) table args)))
+      (apply (get-field table key) table args))
+
+    (define (ancestor? obj ancestor)
+      (and (table? obj)
+           (if (eq? (parent obj) ancestor)
+               #t
+               (ancestor? (parent obj) ancestor)))))
 
   (begin
     (define (run-tests)
@@ -156,4 +163,27 @@
           (then (call-method krog 'alive?)
                 (call-method kold 'alive?)
                 (not (call-method vard 'alive?))
-                (not (call-method dega 'alive?))))))))
+                (not (call-method dega 'alive?))))
+
+        (testcase "ancestor of untable"
+          (given (t0 <- (make-table))
+                 (obj <- 'not-a-table))
+          (then (not (ancestor? obj t0))))
+
+        (testcase "ancestor of unrelated table"
+          (given (t0 <- (make-table))
+                 (t1 <- (make-table)))
+          (then (not (ancestor? t1 t0))))
+
+        (testcase "ancestor of cloned table"
+          (given (t0 <- (make-table))
+                 (t1 <- (clone t0)))
+          (then (ancestor? t1 t0)
+                (not (ancestor? t0 t1))))
+
+        (testcase "ancestor across generations"
+          (given (t0 <- (make-table))
+                 (t1 <- (clone t0))
+                 (t2 <- (clone t1))
+                 (t3 <- (clone t2)))
+          (then (ancestor? t3 t0)))))))

@@ -5,6 +5,7 @@ mod imports {
 }
 
 pub mod exports {
+    pub use super::globals::ancestor_p;
     pub use super::globals::call_minus_method;
     pub use super::globals::clone;
     pub use super::globals::fields;
@@ -19,6 +20,7 @@ pub mod exports {
 mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static run_minus_tests: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL run-tests"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static ancestor_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ancestor?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static call_minus_method: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL call-method"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_field_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-field!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_field: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-field"))}
@@ -312,16 +314,66 @@ pub fn initialize() {
                         }
                     })
                 })
+            });
+            // (define (ancestor? obj ancestor) (and (table? obj) (if (eq? (parent obj) ancestor) #t (ancestor? (parent obj) ancestor))))
+            globals::ancestor_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        let ancestor = args[1].clone();
+                        // (letrec () (and (table? obj) (if (eq? (parent obj) ancestor) #t (ancestor? (parent obj) ancestor))))
+                        {
+                            // (and (table? obj) (if (eq? (parent obj) ancestor) #t (ancestor? (parent obj) ancestor)))
+                            if (
+                                // (table? obj)
+                                globals::table_p
+                                    .with(|value| value.get())
+                                    .invoke(&[obj.clone()])
+                            )
+                            .is_true()
+                            {
+                                if (
+                                    // (eq? (parent obj) ancestor)
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        // (parent obj)
+                                        globals::parent
+                                            .with(|value| value.get())
+                                            .invoke(&[obj.clone()]),
+                                        ancestor.clone(),
+                                    ])
+                                )
+                                .is_true()
+                                {
+                                    Scm::True
+                                } else {
+                                    // (ancestor? (parent obj) ancestor)
+                                    globals::ancestor_p.with(|value| value.get()).invoke(&[
+                                        // (parent obj)
+                                        globals::parent
+                                            .with(|value| value.get())
+                                            .invoke(&[obj.clone()]),
+                                        ancestor.clone(),
+                                    ])
+                                }
+                            } else {
+                                Scm::False
+                            }
+                        }
+                    })
+                })
             })
         };
-        // (define (run-tests) (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?)))))))
+        // (define (run-tests) (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?))))) (testcase "ancestor of untable" (given (t0 <- (make-table)) (obj <- (quote not-a-table))) (then (not (ancestor? obj t0)))) (testcase "ancestor of unrelated table" (given (t0 <- (make-table)) (t1 <- (make-table))) (then (not (ancestor? t1 t0)))) (testcase "ancestor of cloned table" (given (t0 <- (make-table)) (t1 <- (clone t0))) (then (ancestor? t1 t0) (not (ancestor? t0 t1)))) (testcase "ancestor across generations" (given (t0 <- (make-table)) (t1 <- (clone t0)) (t2 <- (clone t1)) (t3 <- (clone t2))) (then (ancestor? t3 t0)))))
         globals::run_minus_tests.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?)))))))
+                    // (letrec () (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?))))) (testcase "ancestor of untable" (given (t0 <- (make-table)) (obj <- (quote not-a-table))) (then (not (ancestor? obj t0)))) (testcase "ancestor of unrelated table" (given (t0 <- (make-table)) (t1 <- (make-table))) (then (not (ancestor? t1 t0)))) (testcase "ancestor of cloned table" (given (t0 <- (make-table)) (t1 <- (clone t0))) (then (ancestor? t1 t0) (not (ancestor? t0 t1)))) (testcase "ancestor across generations" (given (t0 <- (make-table)) (t1 <- (clone t0)) (t2 <- (clone t1)) (t3 <- (clone t2))) (then (ancestor? t3 t0)))))
                     {
                         Scm::symbol("*UNSPECIFIED*")
                     }
@@ -1084,6 +1136,167 @@ mod tests {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+    #[test]
+    fn ancestor_of_untable() {
+        super::initialize();
+
+        // (let* ((t0 (make-table)) (obj (quote not-a-table))) (begin (assert (not (ancestor? obj t0)))))
+        {
+            let [t0] = [
+                // (make-table)
+                globals::make_minus_table
+                    .with(|value| value.get())
+                    .invoke(&[]),
+            ];
+            // (let* ((obj (quote not-a-table))) (begin (assert (not (ancestor? obj t0)))))
+            {
+                let [obj] = [Scm::symbol("not-a-table")];
+                // (let* () (begin (assert (not (ancestor? obj t0)))))
+                assert!(
+                    // (not (ancestor? obj t0))
+                    imports::not
+                        .with(|value| value.get())
+                        .invoke(&[
+                            // (ancestor? obj t0)
+                            globals::ancestor_p
+                                .with(|value| value.get())
+                                .invoke(&[obj.clone(), t0.clone(),]),
+                        ])
+                        .is_true()
+                );
+            }
+        }
+    }
+    #[test]
+    fn ancestor_of_unrelated_table() {
+        super::initialize();
+
+        // (let* ((t0 (make-table)) (t1 (make-table))) (begin (assert (not (ancestor? t1 t0)))))
+        {
+            let [t0] = [
+                // (make-table)
+                globals::make_minus_table
+                    .with(|value| value.get())
+                    .invoke(&[]),
+            ];
+            // (let* ((t1 (make-table))) (begin (assert (not (ancestor? t1 t0)))))
+            {
+                let [t1] = [
+                    // (make-table)
+                    globals::make_minus_table
+                        .with(|value| value.get())
+                        .invoke(&[]),
+                ];
+                // (let* () (begin (assert (not (ancestor? t1 t0)))))
+                assert!(
+                    // (not (ancestor? t1 t0))
+                    imports::not
+                        .with(|value| value.get())
+                        .invoke(&[
+                            // (ancestor? t1 t0)
+                            globals::ancestor_p
+                                .with(|value| value.get())
+                                .invoke(&[t1.clone(), t0.clone(),]),
+                        ])
+                        .is_true()
+                );
+            }
+        }
+    }
+    #[test]
+    fn ancestor_of_cloned_table() {
+        super::initialize();
+
+        // (let* ((t0 (make-table)) (t1 (clone t0))) (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))
+        {
+            let [t0] = [
+                // (make-table)
+                globals::make_minus_table
+                    .with(|value| value.get())
+                    .invoke(&[]),
+            ];
+            // (let* ((t1 (clone t0))) (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))
+            {
+                let [t1] = [
+                    // (clone t0)
+                    globals::clone
+                        .with(|value| value.get())
+                        .invoke(&[t0.clone()]),
+                ];
+                // (let* () (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))
+                {
+                    assert!(
+                        // (ancestor? t1 t0)
+                        globals::ancestor_p
+                            .with(|value| value.get())
+                            .invoke(&[t1.clone(), t0.clone(),])
+                            .is_true()
+                    );
+                    assert!(
+                        // (not (ancestor? t0 t1))
+                        imports::not
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (ancestor? t0 t1)
+                                globals::ancestor_p
+                                    .with(|value| value.get())
+                                    .invoke(&[t0.clone(), t1.clone(),]),
+                            ])
+                            .is_true()
+                    );
+                }
+            }
+        }
+    }
+    #[test]
+    fn ancestor_across_generations() {
+        super::initialize();
+
+        // (let* ((t0 (make-table)) (t1 (clone t0)) (t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+        {
+            let [t0] = [
+                // (make-table)
+                globals::make_minus_table
+                    .with(|value| value.get())
+                    .invoke(&[]),
+            ];
+            // (let* ((t1 (clone t0)) (t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+            {
+                let [t1] = [
+                    // (clone t0)
+                    globals::clone
+                        .with(|value| value.get())
+                        .invoke(&[t0.clone()]),
+                ];
+                // (let* ((t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+                {
+                    let [t2] = [
+                        // (clone t1)
+                        globals::clone
+                            .with(|value| value.get())
+                            .invoke(&[t1.clone()]),
+                    ];
+                    // (let* ((t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+                    {
+                        let [t3] = [
+                            // (clone t2)
+                            globals::clone
+                                .with(|value| value.get())
+                                .invoke(&[t2.clone()]),
+                        ];
+                        // (let* () (begin (assert (ancestor? t3 t0))))
+                        assert!(
+                            // (ancestor? t3 t0)
+                            globals::ancestor_p
+                                .with(|value| value.get())
+                                .invoke(&[t3.clone(), t0.clone(),])
+                                .is_true()
+                        );
                     }
                 }
             }
