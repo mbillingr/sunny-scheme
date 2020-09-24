@@ -1,65 +1,80 @@
 (define-library (sunny variable)
-  (export global-imported?
-          global-regular?
-          new-boxed
+  (export new-boxed
           new-global
           new-import
           new-local
-          variable
-          variable-add-definition
-          variable-getter
-          variable-mut?
-          variable-set-getter!
-          variable-set-mutable!
-          variable-set-setter!
-          variable-setter)
+          variable?
+          global-variable?
+          import-variable?
+          local-variable?
+          boxed-variable?
+          global-add-definition!
+          local-boxify!
+          variable-mutable?
+          variable-set-mutable!)
 
   (import (scheme base)
-          (scheme cxr))
+          (scheme cxr)
+          (sunny table))
 
   (begin
-    (define (variable getter setter mut?)
-      (list getter setter mut?))
+    (define Variable (make-table))
+    (set-field! Variable 'mut #f)
+    (set-field! Variable 'mutable? (lambda (self) (get-field self 'mut)))
+    (set-field! Variable 'set-mutable! (lambda (self) (set-field! self 'mut #t)))
 
-    (define (variable-getter var)
-      (car var))
+    (define GlobalVariable (clone Variable))
+    (set-field! GlobalVariable 'status 'UNDEFINED)  ; 'PROC 'VAL 'MUTABLE
+    (set-field! GlobalVariable 'mutable? (lambda (self) (eq? 'MUTABLE (get-field self 'status))))
+    (set-field! GlobalVariable 'set-mutable! (lambda (self) (set-field! self 'status 'MUTABLE)))
+    (set-field! GlobalVariable 'add-definition!
+      (lambda (self proc?)
+        (if (eq? 'UNDEFINED (get-field self 'status))
+            (set-field! self 'status (if proc? 'PROC 'VAL))
+            (set-field! self 'status 'MUTABLE))))
 
-    (define (variable-setter var)
-      (cadr var))
+    (define ImportedVariable (clone Variable))
 
-    (define (variable-mut? var)
-      (caddr var))
+    (define LocalVariable (clone Variable))
+    (set-field! LocalVariable 'into-boxed! (lambda (self) (set-parent! self BoxedVariable)))
+
+    (define BoxedVariable (clone LocalVariable))
+
+    (define (variable? obj)
+      (ancestor? obj Variable))
+
+    (define (global-variable? obj)
+      (ancestor? obj GlobalVariable))
+
+    (define (import-variable? obj)
+      (ancestor? obj ImportedVariable))
+
+    (define (local-variable? obj)
+      (ancestor? obj LocalVariable))
+
+    (define (boxed-variable? obj)
+      (ancestor? obj BoxedVariable))
+
+    (define (variable-mutable? var)
+      (call-method var 'mutable?))
 
     (define (variable-set-mutable! var)
-      (set-car! (cddr var) #t))
+      (call-method var 'set-mutable!))
 
-    (define (variable-set-getter! var getter)
-      (set-car! var getter))
+    (define (global-add-definition! var lambda?)
+      (call-method var 'add-definition! lambda?))
 
-    (define (variable-set-setter! var setter)
-      (set-car! (cdr var) setter))
-
-    (define (global-imported? var)
-      (eq? 'IMPORT-REF
-           (car var)))
-
-    (define (global-regular? var)
-      (eq? 'GLOBAL-REF
-           (car var)))
-
-    (define (variable-add-definition var lambda?)
-      (if (variable-mut? var)
-          (variable-set-mutable! var)
-          (set-car! (cddr var) (if lambda? 'FUNCTION 'VALUE))))
+    (define (local-boxify! var)
+      (call-method var 'into-boxed!))
 
     (define (new-import name)
-      (cons name (variable 'IMPORT-REF 'IMPORT-SET #f)))
+      (cons name (clone ImportedVariable)))
 
     (define (new-global name)
-      (cons name (variable 'GLOBAL-REF 'GLOBAL-SET #f)))
+      (cons name (clone GlobalVariable)))
 
     (define (new-local name)
-      (cons name (variable 'LOCAL-REF 'LOCAL-SET #f)))
+      (cons name (clone LocalVariable)))
 
     (define (new-boxed name)
-      (cons name (variable 'BOXED-REF 'BOXED-SET #f)))))
+      (cons name (clone BoxedVariable)))))

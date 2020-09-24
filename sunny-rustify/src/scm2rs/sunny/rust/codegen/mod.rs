@@ -44,16 +44,16 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (rust-gen-global-defs module g) (if (null? g) (println module) (if (global-imported? (cdar g)) (rust-gen-global-defs module (cdr g)) (begin (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))))))
+        // (define (rust-gen-global-defs module g) (if (null? g) (println module) (if (import-variable? (cdar g)) (rust-gen-global-defs module (cdr g)) (begin (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))))))
         globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let g = args[1].clone();
-// (letrec () (if (null? g) (println module) (if (global-imported? (cdar g)) (rust-gen-global-defs module (cdr g)) (begin (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))))))
+// (letrec () (if (null? g) (println module) (if (import-variable? (cdar g)) (rust-gen-global-defs module (cdr g)) (begin (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))))))
 {if (
 // (null? g)
 imports::null_p.with(|value| value.get()).invoke(&[g.clone(),])).is_true() {
 // (println module)
 imports::println.with(|value| value.get()).invoke(&[module.clone(),])} else if (
-// (global-imported? (cdar g))
-imports::global_minus_imported_p.with(|value| value.get()).invoke(&[
+// (import-variable? (cdar g))
+imports::import_minus_variable_p.with(|value| value.get()).invoke(&[
 // (cdar g)
 imports::cdar.with(|value| value.get()).invoke(&[g.clone(),]),])).is_true() {
 // (rust-gen-global-defs module (cdr g))

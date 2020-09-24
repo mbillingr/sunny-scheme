@@ -17,7 +17,7 @@
     (define (rust-gen-global-defs module g)
       (if (null? g)
           (println module)
-          (if (global-imported? (cdar g))
+          (if (import-variable? (cdar g))
               (rust-gen-global-defs module (cdr g))
               (begin (println module
                        "thread_local!{#[allow(non_upper_case_globals)] pub static "

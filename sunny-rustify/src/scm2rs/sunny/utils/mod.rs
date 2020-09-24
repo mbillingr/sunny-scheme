@@ -7,6 +7,7 @@ mod imports {
 pub mod exports {
     pub use super::globals::any;
     pub use super::globals::atom_p;
+    pub use super::globals::bor;
     pub use super::globals::dotted_minus_list_p;
     pub use super::globals::filter;
     pub use super::globals::last_minus_cdr;
@@ -15,6 +16,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static bor: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL bor"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static any: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static filter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL filter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
@@ -262,6 +264,38 @@ pub fn initialize() {
                             }
                         } else {
                             Scm::False
+                        }
+                    }
+                })
+            })
+        });
+        // (define (bor first . args) (if first first (if (null? args) #f (apply bor args))))
+        globals::bor.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() < 1 {
+                        panic!("not enough args")
+                    }
+                    let first = args[0].clone();
+                    let args_ = Scm::list(&args[1..]);
+                    // (letrec () (if first first (if (null? args) #f (apply bor args))))
+                    {
+                        if (first.clone()).is_true() {
+                            first.clone()
+                        } else if (
+                            // (null? args)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[args_.clone()])
+                        )
+                        .is_true()
+                        {
+                            Scm::False
+                        } else {
+                            // (apply bor args)
+                            imports::apply
+                                .with(|value| value.get())
+                                .invoke(&[globals::bor.with(|value| value.get()), args_.clone()])
                         }
                     }
                 })

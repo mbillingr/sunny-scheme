@@ -6,6 +6,7 @@
           parent
           get-field
           set-field!
+          set-parent!
           fields
           call-method
           run-tests)
@@ -28,6 +29,9 @@
 
     (define (parent table)
       (cadr table))
+
+    (define (set-parent! table parent)
+      (set-car! (cdr table) parent))
 
     (define (fields table)
       (cddr table))

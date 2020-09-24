@@ -14,6 +14,7 @@ pub mod exports {
     pub use super::globals::parent;
     pub use super::globals::run_minus_tests;
     pub use super::globals::set_minus_field_i;
+    pub use super::globals::set_minus_parent_i;
     pub use super::globals::table_p;
 }
 
@@ -26,6 +27,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_field: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-field"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_fields_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-fields!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static fields: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fields"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_parent_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-parent!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static parent: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL parent"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static clone: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL clone"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_table: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-table"))}
@@ -139,6 +141,29 @@ pub fn initialize() {
                             imports::cadr
                                 .with(|value| value.get())
                                 .invoke(&[table.clone()])
+                        }
+                    })
+                })
+            });
+            // (define (set-parent! table parent) (set-car! (cdr table) parent))
+            globals::set_minus_parent_i.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let table = args[0].clone();
+                        let parent = args[1].clone();
+                        // (letrec () (set-car! (cdr table) parent))
+                        {
+                            // (set-car! (cdr table) parent)
+                            imports::set_minus_car_i.with(|value| value.get()).invoke(&[
+                                // (cdr table)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[table.clone()]),
+                                parent.clone(),
+                            ])
                         }
                     })
                 })

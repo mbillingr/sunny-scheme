@@ -133,7 +133,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (boxify-abstraction params vars param* var* body) (if (null? var*) (make-abstraction params vars body) (if (variable-mut? (car var*)) (begin (variable-set-setter! (car var*) (quote BOXED-SET)) (variable-set-getter! (car var*) (quote BOXED-REF)) (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
+        // (define (boxify-abstraction params vars param* var* body) (if (null? var*) (make-abstraction params vars body) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
         globals::boxify_minus_abstraction.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -145,7 +145,7 @@ pub fn initialize() {
                     let param_star_ = args[2].clone();
                     let var_star_ = args[3].clone();
                     let body = args[4].clone();
-                    // (letrec () (if (null? var*) (make-abstraction params vars body) (if (variable-mut? (car var*)) (begin (variable-set-setter! (car var*) (quote BOXED-SET)) (variable-set-getter! (car var*) (quote BOXED-REF)) (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
+                    // (letrec () (if (null? var*) (make-abstraction params vars body) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
                     {
                         if (
                             // (null? var*)
@@ -160,8 +160,8 @@ pub fn initialize() {
                                 .with(|value| value.get())
                                 .invoke(&[params.clone(), vars.clone(), body.clone()])
                         } else if (
-                            // (variable-mut? (car var*))
-                            imports::variable_minus_mut_p
+                            // (variable-mutable? (car var*))
+                            imports::variable_minus_mutable_p
                                 .with(|value| value.get())
                                 .invoke(&[
                                     // (car var*)
@@ -173,25 +173,14 @@ pub fn initialize() {
                         .is_true()
                         {
                             {
-                                // (variable-set-setter! (car var*) (quote BOXED-SET))
-                                imports::variable_minus_set_minus_setter_i
+                                // (local-boxify! (car var*))
+                                imports::local_minus_boxify_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
                                         imports::car
                                             .with(|value| value.get())
                                             .invoke(&[var_star_.clone()]),
-                                        Scm::symbol("BOXED-SET"),
-                                    ]);
-                                // (variable-set-getter! (car var*) (quote BOXED-REF))
-                                imports::variable_minus_set_minus_getter_i
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (car var*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[var_star_.clone()]),
-                                        Scm::symbol("BOXED-REF"),
                                     ]);
                                 // (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))
                                 globals::boxify_minus_abstraction
@@ -241,7 +230,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (boxify-vararg-abstraction params vararg vars varvar param* var* body) (if (null? var*) (make-vararg-abstraction params vararg vars varvar body) (if (variable-mut? (car var*)) (begin (variable-set-setter! (car var*) (quote BOXED-SET)) (variable-set-getter! (car var*) (quote BOXED-REF)) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
+        // (define (boxify-vararg-abstraction params vararg vars varvar param* var* body) (if (null? var*) (make-vararg-abstraction params vararg vars varvar body) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
         globals::boxify_minus_vararg_minus_abstraction.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -255,7 +244,7 @@ pub fn initialize() {
                     let param_star_ = args[4].clone();
                     let var_star_ = args[5].clone();
                     let body = args[6].clone();
-                    // (letrec () (if (null? var*) (make-vararg-abstraction params vararg vars varvar body) (if (variable-mut? (car var*)) (begin (variable-set-setter! (car var*) (quote BOXED-SET)) (variable-set-getter! (car var*) (quote BOXED-REF)) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
+                    // (letrec () (if (null? var*) (make-vararg-abstraction params vararg vars varvar body) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
                     {
                         if (
                             // (null? var*)
@@ -276,8 +265,8 @@ pub fn initialize() {
                                     body.clone(),
                                 ])
                         } else if (
-                            // (variable-mut? (car var*))
-                            imports::variable_minus_mut_p
+                            // (variable-mutable? (car var*))
+                            imports::variable_minus_mutable_p
                                 .with(|value| value.get())
                                 .invoke(&[
                                     // (car var*)
@@ -289,25 +278,14 @@ pub fn initialize() {
                         .is_true()
                         {
                             {
-                                // (variable-set-setter! (car var*) (quote BOXED-SET))
-                                imports::variable_minus_set_minus_setter_i
+                                // (local-boxify! (car var*))
+                                imports::local_minus_boxify_i
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (car var*)
                                         imports::car
                                             .with(|value| value.get())
                                             .invoke(&[var_star_.clone()]),
-                                        Scm::symbol("BOXED-SET"),
-                                    ]);
-                                // (variable-set-getter! (car var*) (quote BOXED-REF))
-                                imports::variable_minus_set_minus_getter_i
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (car var*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[var_star_.clone()]),
-                                        Scm::symbol("BOXED-REF"),
                                     ]);
                                 // (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))
                                 globals::boxify_minus_vararg_minus_abstraction

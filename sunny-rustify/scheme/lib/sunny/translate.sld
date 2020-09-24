@@ -186,7 +186,7 @@
              (value (definition-value exp))
              (var (ensure-var! name env))
              (val (sexpr->ast value env #f)))
-        (variable-add-definition var (abstraction? value))
+        (global-add-definition! var (abstraction? value))
         (make-definition name var val)))
 
     (define (sexpr->alternative condition consequent alternative env tail?)

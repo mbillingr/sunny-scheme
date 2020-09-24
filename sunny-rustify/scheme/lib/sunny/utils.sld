@@ -2,6 +2,7 @@
 
   (export any
           atom?
+          bor
           dotted-list?
           filter
           last-cdr
@@ -42,4 +43,11 @@
           (if (f (car seq))
               #t
               (any f (cdr seq)))
-          #f))))
+          #f))
+
+    (define (bor first . args)
+      (if first
+          first
+          (if (null? args)
+              #f
+              (apply bor args))))))

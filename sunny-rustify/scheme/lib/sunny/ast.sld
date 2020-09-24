@@ -107,35 +107,31 @@
       self)
 
     (define (make-reference name var)
-      (define (global?)
-        (if (eq? 'GLOBAL-REF (variable-getter var))
-            #t
-            (eq? 'IMPORT-REF (variable-getter var))))
       (define (repr)
-        (list (variable-getter var) name))
+        (list 'GET name))
       (define (transform func)
         (func self (lambda () self)))
       (define (free-vars)
-        (if (global?)
+        (if (bor (global-variable? var)
+                 (import-variable? var))
             (make-set)
             (set-add (make-set)
                      name)))
       (define (gen-rust module)
-        (let ((getter (variable-getter var)))
-          (cond ((eq? 'GLOBAL-REF getter)
-                 (print module
-                        "globals::"
-                        (rustify-identifier name)
-                        ".with(|value| value.get())"))
-                ((eq? 'IMPORT-REF getter)
-                 (print module
-                        "imports::"
-                        (rustify-identifier name)
-                        ".with(|value| value.get())"))
-                ((eq? 'BOXED-REF getter)
-                 (print module (rustify-identifier name) ".get()"))
-                (else
-                  (print module (rustify-identifier name) ".clone()")))))
+        (cond ((global-variable? var)
+               (print module
+                      "globals::"
+                      (rustify-identifier name)
+                      ".with(|value| value.get())"))
+              ((import-variable? var)
+               (print module
+                      "imports::"
+                      (rustify-identifier name)
+                      ".with(|value| value.get())"))
+              ((boxed-variable? var)
+               (print module (rustify-identifier name) ".get()"))
+              (else
+                (print module (rustify-identifier name) ".clone()"))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
@@ -147,7 +143,7 @@
 
     (define (make-assignment name var val)
       (define (repr)
-        (list (variable-setter var) name (val 'repr)))
+        (list 'SET! name (val 'repr)))
       (define (transform func)
         (func self
               (lambda () (make-assignment name
@@ -157,19 +153,18 @@
         (set-add (val 'free-vars)
                  name))
       (define (gen-rust module)
-        (let ((setter (variable-setter var)))
-          (cond ((eq? 'GLOBAL-SET setter)
-                 (print module
-                        "globals::"
-                        (rustify-identifier name)
-                        ".with(|value| value.set(")
-                 (val 'gen-rust module)
-                 (print module "))"))
-                ((eq? 'BOXED-SET setter)
-                 (print module (rustify-identifier name) ".set(")
-                 (val 'gen-rust module)
-                 (print module ")"))
-                (else (error "set! on unboxed variable")))))
+        (cond ((global-variable? var)
+               (print module
+                      "globals::"
+                      (rustify-identifier name)
+                      ".with(|value| value.set(")
+               (val 'gen-rust module)
+               (print module "))"))
+              ((boxed-variable? var)
+               (print module (rustify-identifier name) ".set(")
+               (val 'gen-rust module)
+               (print module ")"))
+              (else (error "set! on unboxed variable"))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
@@ -191,15 +186,14 @@
         (set-add (val 'free-vars)
                  name))
       (define (gen-rust module)
-        (let ((setter (variable-setter var)))
-          (cond ((eq? 'GLOBAL-SET setter)
-                 (print module
-                        "globals::"
-                        (rustify-identifier name)
-                        ".with(|value| value.set(")
-                 (val 'gen-rust module)
-                 (print module "))"))
-                (else (error "definition! of non-global variable")))))
+        (cond ((global-variable? var)
+               (print module
+                      "globals::"
+                      (rustify-identifier name)
+                      ".with(|value| value.set(")
+               (val 'gen-rust module)
+               (print module "))"))
+              (else (error "definition! of non-global variable"))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (print))
               ((eq? 'transform msg) (transform (car args)))
@@ -568,7 +562,7 @@
         (print module "mod globals")
         (rust-block module
           (lambda ()
-            (if (any (lambda (g) (global-regular? (cdr g)))
+            (if (any (lambda (g) (global-variable? (cdr g)))
                      globals)
                 (println module "use sunny_core::{Mut, Scm};"))
             (rust-gen-global-defs module globals)))
@@ -634,7 +628,7 @@
         (print module "mod globals")
         (rust-block module
           (lambda ()
-            (if (any (lambda (g) (global-regular? (cdr g)))
+            (if (any (lambda (g) (global-variable? (cdr g)))
                      globals)
                 (println module "use sunny_core::{Mut, Scm};"))
             (rust-gen-global-defs module globals)))
@@ -711,9 +705,9 @@
         (let ((var (lookup name env)))
           (cond ((not var)
                  (error "undefined export" name))
-                ((eq? 'GLOBAL-REF (variable-getter var))
+                ((global-variable? var)
                  (print module "globals::"))
-                ((eq? 'IMPORT-REF (variable-getter var))
+                ((import-variable? var)
                  (print module "imports::"))
                 (else (error "invalid export variable" var name))))
         (println module
