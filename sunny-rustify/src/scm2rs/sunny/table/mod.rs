@@ -12,6 +12,7 @@ pub mod exports {
     pub use super::globals::get_minus_field;
     pub use super::globals::make_minus_table;
     pub use super::globals::parent;
+    pub use super::globals::replace_minus_table_i;
     pub use super::globals::run_minus_tests;
     pub use super::globals::set_minus_field_i;
     pub use super::globals::set_minus_parent_i;
@@ -21,6 +22,7 @@ pub mod exports {
 mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static run_minus_tests: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL run-tests"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_table_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL replace-table!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ancestor_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ancestor?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static call_minus_method: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL call-method"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_field_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-field!"))}
@@ -385,6 +387,43 @@ pub fn initialize() {
                                 }
                             } else {
                                 Scm::False
+                            }
+                        }
+                    })
+                })
+            });
+            // (define (replace-table! table source) (set-parent! table (parent source)) (set-fields! table (fields source)))
+            globals::replace_minus_table_i.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let table = args[0].clone();
+                        let source = args[1].clone();
+                        // (letrec () (set-parent! table (parent source)) (set-fields! table (fields source)))
+                        {
+                            {
+                                // (set-parent! table (parent source))
+                                globals::set_minus_parent_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        table.clone(),
+                                        // (parent source)
+                                        globals::parent
+                                            .with(|value| value.get())
+                                            .invoke(&[source.clone()]),
+                                    ]);
+                                // (set-fields! table (fields source))
+                                globals::set_minus_fields_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        table.clone(),
+                                        // (fields source)
+                                        globals::fields
+                                            .with(|value| value.get())
+                                            .invoke(&[source.clone()]),
+                                    ])
                             }
                         }
                     })

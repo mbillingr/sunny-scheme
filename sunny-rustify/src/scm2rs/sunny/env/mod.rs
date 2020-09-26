@@ -11,12 +11,16 @@ pub mod exports {
     pub use super::globals::adjoin_minus_import_star__i;
     pub use super::globals::adjoin_minus_local_minus_env;
     pub use super::globals::ensure_minus_var_i;
+    pub use super::globals::env_minus_for_minus_each;
     pub use super::globals::lookup;
     pub use super::globals::make_minus_global_minus_env;
+    pub use super::globals::map_minus_env;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static env_minus_for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL env-for-each"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static map_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map-env"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_boxed_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-boxed-env"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-boxed"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_import_star__i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-import*!"))}
@@ -544,6 +548,96 @@ pub fn initialize() {
                                 .with(|value| value.get())
                                 .invoke(&[name_star_.clone(), env.clone()])
                         }
+                    }
+                })
+            })
+        });
+        // (define (map-env func env) (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
+        globals::map_minus_env.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let func = args[0].clone();
+                    let env = args[1].clone();
+                    // (letrec () (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
+                    {
+                        // (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
+                        imports::map.with(|value| value.get()).invoke(&[
+                            {
+                                let func = func.clone();
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 1 {
+                                        panic!("invalid arity")
+                                    }
+                                    let entry = args[0].clone();
+                                    // (letrec () (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry)))
+                                    {
+                                        if (
+                                            // (eq? (quote GLOBAL-MARKER) entry)
+                                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                                Scm::symbol("GLOBAL-MARKER"),
+                                                entry.clone(),
+                                            ])
+                                        )
+                                        .is_true()
+                                        {
+                                            entry.clone()
+                                        } else {
+                                            // (func entry)
+                                            func.clone().invoke(&[entry.clone()])
+                                        }
+                                    }
+                                })
+                            },
+                            env.clone(),
+                        ])
+                    }
+                })
+            })
+        });
+        // (define (env-for-each func env) (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
+        globals::env_minus_for_minus_each.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let func = args[0].clone();
+                    let env = args[1].clone();
+                    // (letrec () (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
+                    {
+                        // (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
+                        imports::for_minus_each.with(|value| value.get()).invoke(&[
+                            {
+                                let func = func.clone();
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 1 {
+                                        panic!("invalid arity")
+                                    }
+                                    let entry = args[0].clone();
+                                    // (letrec () (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry)))
+                                    {
+                                        if (
+                                            // (eq? (quote GLOBAL-MARKER) entry)
+                                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                                Scm::symbol("GLOBAL-MARKER"),
+                                                entry.clone(),
+                                            ])
+                                        )
+                                        .is_true()
+                                        {
+                                            entry.clone()
+                                        } else {
+                                            // (func entry)
+                                            func.clone().invoke(&[entry.clone()])
+                                        }
+                                    }
+                                })
+                            },
+                            env.clone(),
+                        ])
                     }
                 })
             })

@@ -43,7 +43,8 @@
                                         (sexpr->import (cdar exp*) global-env))
                                 (set-add* init (import-libnames (car exp*)))))
 
-              (else (let* ((main (boxify (sexpr->sequence exp* global-env #f)))
+              (else (let* ((ast (sexpr->sequence exp* global-env #f))
+                           (main (boxify ast))
                            (globals (sort (lambda (a b)
                                             (string<? (symbol->string (car a))
                                                       (symbol->string (car b))))
@@ -186,7 +187,7 @@
              (value (definition-value exp))
              (var (ensure-var! name env))
              (val (sexpr->ast value env #f)))
-        (global-add-definition! var (abstraction? value))
+        (global-add-definition! var val)
         (make-definition name var val)))
 
     (define (sexpr->alternative condition consequent alternative env tail?)
@@ -246,14 +247,16 @@
       (let ((local-env (adjoin-local-env param* env))
             (body (scan-out-defines body)))
         (if (dotted-list? param*)
-            (make-vararg-abstraction (proper-list-part param*)
-                                    (last-cdr param*)
-                                    (map (lambda (p) (lookup p local-env)) (proper-list-part param*))
-                                    (lookup (last-cdr param*) local-env)
-                                    (sexpr->sequence body local-env #t))
-            (make-abstraction param*
-                              (map (lambda (p) (lookup p local-env)) param*)
-                              (sexpr->sequence body local-env #t)))))
+            (make-closure
+              (make-vararg-abstraction (proper-list-part param*)
+                                       (last-cdr param*)
+                                       (map (lambda (p) (lookup p local-env)) (proper-list-part param*))
+                                       (lookup (last-cdr param*) local-env)
+                                       (sexpr->sequence body local-env #t)))
+            (make-closure
+              (make-abstraction param*
+                                (map (lambda (p) (lookup p local-env)) param*)
+                                (sexpr->sequence body local-env #t))))))
 
     (define (sexpr->sequence expr* env tail?)
       (if (null? expr*)

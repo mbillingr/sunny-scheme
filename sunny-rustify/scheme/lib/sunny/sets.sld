@@ -3,6 +3,7 @@
           set-add
           set-add*
           set-do*
+          set-empty?
           set-remove
           set-remove*
           set-union)
@@ -14,6 +15,9 @@
 
     (define (make-set)
       '())
+
+    (define (set-empty? set)
+      (null? set))
 
     (define (set-add set item)
       (cond ((null? set)

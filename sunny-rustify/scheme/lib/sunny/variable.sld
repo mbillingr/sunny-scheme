@@ -3,18 +3,21 @@
           new-global
           new-import
           new-local
+          replace-var!
           variable?
           global-variable?
           import-variable?
           local-variable?
           boxed-variable?
           global-add-definition!
+          global-kind
           local-boxify!
           variable-mutable?
           variable-set-mutable!)
 
   (import (scheme base)
           (scheme cxr)
+          (scheme write)
           (sunny table))
 
   (begin
@@ -24,13 +27,13 @@
     (set-field! Variable 'set-mutable! (lambda (self) (set-field! self 'mut #t)))
 
     (define GlobalVariable (clone Variable))
-    (set-field! GlobalVariable 'status 'UNDEFINED)  ; 'PROC 'VAL 'MUTABLE
+    (set-field! GlobalVariable 'status 'UNDEFINED)
     (set-field! GlobalVariable 'mutable? (lambda (self) (eq? 'MUTABLE (get-field self 'status))))
     (set-field! GlobalVariable 'set-mutable! (lambda (self) (set-field! self 'status 'MUTABLE)))
     (set-field! GlobalVariable 'add-definition!
-      (lambda (self proc?)
+      (lambda (self value)
         (if (eq? 'UNDEFINED (get-field self 'status))
-            (set-field! self 'status (if proc? 'PROC 'VAL))
+            (set-field! self 'status value)
             (set-field! self 'status 'MUTABLE))))
 
     (define ImportedVariable (clone Variable))
@@ -61,8 +64,11 @@
     (define (variable-set-mutable! var)
       (call-method var 'set-mutable!))
 
-    (define (global-add-definition! var lambda?)
-      (call-method var 'add-definition! lambda?))
+    (define (global-add-definition! var val)
+      (call-method var 'add-definition! val))
+
+    (define (global-kind var)
+      (get-field var 'status))
 
     (define (local-boxify! var)
       (call-method var 'into-boxed!))
@@ -77,4 +83,7 @@
       (cons name (clone LocalVariable)))
 
     (define (new-boxed name)
-      (cons name (clone BoxedVariable)))))
+      (cons name (clone BoxedVariable)))
+
+    (define (replace-var! var new-var)
+      (replace-table! var new-var))))

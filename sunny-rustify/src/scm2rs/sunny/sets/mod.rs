@@ -9,6 +9,7 @@ pub mod exports {
     pub use super::globals::set_minus_add;
     pub use super::globals::set_minus_add_star_;
     pub use super::globals::set_minus_do_star_;
+    pub use super::globals::set_minus_empty_p;
     pub use super::globals::set_minus_remove;
     pub use super::globals::set_minus_remove_star_;
     pub use super::globals::set_minus_union;
@@ -22,6 +23,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add*"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_empty_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-empty?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_set: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-set"))}
 }
 
@@ -46,6 +48,24 @@ pub fn initialize() {
                     // (letrec () (quote ()))
                     {
                         Scm::Nil
+                    }
+                })
+            })
+        });
+        // (define (set-empty? set) (null? set))
+        globals::set_minus_empty_p.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let set = args[0].clone();
+                    // (letrec () (null? set))
+                    {
+                        // (null? set)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[set.clone()])
                     }
                 })
             })

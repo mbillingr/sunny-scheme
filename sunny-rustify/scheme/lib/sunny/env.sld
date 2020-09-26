@@ -4,8 +4,10 @@
           adjoin-import*!
           adjoin-local-env
           ensure-var!
+          env-for-each
           lookup
-          make-global-env)
+          make-global-env
+          map-env)
 
   (import (scheme base)
           (sunny variable))
@@ -73,4 +75,18 @@
       (cond ((null? name*) env)
             ((pair? name*) (adjoin-boxed-env (cdr name*)
                                              (adjoin-boxed (car name*) env)))
-            (else (adjoin-boxed name* env))))))
+            (else (adjoin-boxed name* env))))
+
+    (define (map-env func env)
+      (map (lambda (entry)
+             (if (eq? 'GLOBAL-MARKER entry)
+                 entry
+                 (func entry)))
+           env))
+
+    (define (env-for-each func env)
+      (for-each (lambda (entry)
+                  (if (eq? 'GLOBAL-MARKER entry)
+                      entry
+                      (func entry)))
+                env))))

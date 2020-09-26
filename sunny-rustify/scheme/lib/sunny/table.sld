@@ -9,6 +9,7 @@
           set-parent!
           fields
           call-method
+          replace-table!
           run-tests)
 
   (import (scheme base)
@@ -61,7 +62,11 @@
       (and (table? obj)
            (if (eq? (parent obj) ancestor)
                #t
-               (ancestor? (parent obj) ancestor)))))
+               (ancestor? (parent obj) ancestor))))
+
+    (define (replace-table! table source)
+      (set-parent! table (parent source))
+      (set-fields! table (fields source))))
 
   (begin
     (define (run-tests)
