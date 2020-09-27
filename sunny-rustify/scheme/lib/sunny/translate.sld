@@ -120,57 +120,67 @@
 
 
     (define (sexpr->ast exp env tail?)
-      (if (atom? exp)
-          (if (symbol? exp)
-              (sexpr->reference exp env)
-              (sexpr->constant exp env))
-          (cond ((eq? 'quote (car exp)) (sexpr->constant (cadr exp) env))
-                ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp)
-                                                          (caddr exp)
-                                                          env))
-                ((definition? exp) (wrap-sexpr exp
-                                     (sexpr->definition exp env)))
-                ((abstraction? exp) (sexpr->abstraction (cadr exp)
-                                                        (cddr exp)
-                                                        env))
-                ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp)
-                                                         env tail?))
-                ((eq? 'let (car exp)) (wrap-sexpr exp
-                                        (sexpr->scope-let (cadr exp)
-                                                          (cddr exp)
-                                                          env tail?)))
-                ((eq? 'let* (car exp)) (wrap-sexpr exp
-                                         (sexpr->scope-seq (cadr exp)
+      (cond ((keyword? exp) exp)
+            ((ast-node? exp) exp)
+            ((pair? exp)
+             (cond ((eq? 'quote (car exp)) (sexpr->constant (cadr exp) env))
+                   ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp)
+                                                             (caddr exp)
+                                                             env))
+                   ((definition? exp) (wrap-sexpr exp
+                                        (sexpr->definition exp env)))
+                   ((abstraction? exp) (sexpr->abstraction (cadr exp)
                                                            (cddr exp)
-                                                           env tail?)))
-                ((eq? 'letrec (car exp)) (wrap-sexpr exp
-                                           (sexpr->scope-rec (cadr exp)
+                                                           env))
+                   ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp)
+                                                            env tail?))
+                   ((eq? 'let (car exp)) (wrap-sexpr exp
+                                           (sexpr->scope-let (cadr exp)
                                                              (cddr exp)
                                                              env tail?)))
-                ((eq? 'if (car exp)) (sexpr->alternative (if-condition exp)
-                                                         (if-consequence exp)
-                                                         (if-alternative exp)
-                                                         env tail?))
-                ((eq? 'cond (car exp)) (wrap-sexpr exp
-                                         (sexpr->cond (cond-clauses exp)
-                                                      env tail?)))
-                ((eq? 'and (car exp)) (wrap-sexpr exp
-                                        (sexpr->and (cdr exp) env tail?)))
-                ((and (eq? 'testsuite (car exp))
-                      (not (lookup 'testsuite env)))
-                 (sexpr->testsuite (cadr exp) (cddr exp) env))
-                ((and (eq? 'assert (car exp))
-                      (not (lookup 'assert env)))
-                 (sexpr->assert (cadr exp) env))
-                (else (wrap-sexpr exp (sexpr->application (car exp)
-                                                          (cdr exp)
-                                                          env tail?))))))
+                   ((eq? 'let* (car exp)) (wrap-sexpr exp
+                                            (sexpr->scope-seq (cadr exp)
+                                                              (cddr exp)
+                                                              env tail?)))
+                   ((eq? 'letrec (car exp)) (wrap-sexpr exp
+                                              (sexpr->scope-rec (cadr exp)
+                                                                (cddr exp)
+                                                                env tail?)))
+                   ((eq? 'if (car exp)) (sexpr->alternative (if-condition exp)
+                                                            (if-consequence exp)
+                                                            (if-alternative exp)
+                                                            env tail?))
+                   ((eq? 'cond (car exp)) (wrap-sexpr exp
+                                            (sexpr->cond (cond-clauses exp)
+                                                         env tail?)))
+                   ((eq? 'and (car exp)) (wrap-sexpr exp
+                                           (sexpr->and (cdr exp) env tail?)))
+                   ((and (eq? 'testsuite (car exp))
+                         (not (lookup 'testsuite env)))
+                    (sexpr->testsuite (cadr exp) (cddr exp) env))
+                   ((and (eq? 'assert (car exp))
+                         (not (lookup 'assert env)))
+                    (sexpr->assert (cadr exp) env))
+                   (else
+                     (let ((f-obj (sexpr->ast (car exp) env #f)))
+                       (if (keyword? f-obj)
+                           ((keyword-handler f-obj) exp env tail?)
+                           (wrap-sexpr exp
+                             (sexpr->application f-obj (cdr exp) env tail?)))))))
+            ((symbol? exp) (objectify-symbol exp env))
+            (else (sexpr->constant exp env))))
 
     (define (wrap-sexpr exp node)
       (make-comment exp node))
 
     (define (sexpr->constant exp env)
       (make-constant exp))
+
+    (define (objectify-symbol name env)
+      (let ((var (ensure-var! name env)))
+        (if (keyword? var)
+            var
+            (make-reference name var))))
 
     (define (sexpr->reference name env)
       (let ((var (ensure-var! name env)))
@@ -197,21 +207,18 @@
         (make-alternative x a b)))
 
     (define (sexpr->application func arg* env tail?)
-      (if (and (pair? func)
-               (eq? (car func) 'lambda))
-          (sexpr->fixlet (cadr func) (cddr func) arg* env tail?)
+      (if (eq? 'ABSTRACTION (func 'kind))
+          (sexpr->fixlet (sexpr->ast func env #f) arg* env tail?)
           (sexpr->regular-application func arg* env tail?)))
 
     (define (sexpr->regular-application func arg* env tail?)
-      (let ((func (sexpr->ast func env #f)))
-        (let ((args (sexpr->args arg* env)))
-          (make-application func args tail?))))
+      (let ((args (sexpr->args arg* env)))
+        (make-application func args tail?)))
 
-    (define (sexpr->fixlet param* body arg* env tail?)
-      (let* ((local-env (adjoin-local-env param* env))
-             (args      (sexpr->args arg* env))
-             (func-body (sexpr->sequence body local-env tail?)))
-        (make-fixlet param* func-body args)))
+    (define (sexpr->fixlet func arg* env tail?)
+      (let* ((args      (sexpr->args arg* env))
+             (func      (func 'inner-function)))
+        (make-fixlet (func 'get-params) (func 'get-body) args)))
 
     (define (sexpr->args arg* env)
       (if (null? arg*)
@@ -240,8 +247,9 @@
 
     (define (sexpr->scope-let bindings body env tail?)
       (let* ((param* (map (lambda (b) (car b)) bindings))
-             (arg* (map (lambda (b) (cadr b)) bindings)))
-        (sexpr->fixlet param* body arg* env tail?)))
+             (arg* (map (lambda (b) (cadr b)) bindings))
+             (func (sexpr->abstraction param* body env)))
+        (sexpr->fixlet func arg* env tail?)))
 
     (define (sexpr->abstraction param* body env)
       (let ((local-env (adjoin-local-env param* env))

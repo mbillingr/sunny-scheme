@@ -393,28 +393,31 @@ pub fn initialize() {
                                     name.clone()
                                 },
                             ];
-                            // (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))
-                            if (
-                                // (eq? name (quote fn))
-                                imports::eq_p
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone(), Scm::symbol("fn")])
-                            )
-                            .is_true()
+                            // (letrec () (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))
                             {
-                                Scm::from("fn_")
-                            } else {
-                                // (append-all (map char-map (string->list name)))
-                                append_minus_all.get().invoke(&[
-                                    // (map char-map (string->list name))
-                                    imports::map.with(|value| value.get()).invoke(&[
-                                        char_minus_map.get(),
-                                        // (string->list name)
-                                        imports::string_minus__g_list
-                                            .with(|value| value.get())
-                                            .invoke(&[name.clone()]),
-                                    ]),
-                                ])
+                                // (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))
+                                if (
+                                    // (eq? name (quote fn))
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone(), Scm::symbol("fn")])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("fn_")
+                                } else {
+                                    // (append-all (map char-map (string->list name)))
+                                    append_minus_all.get().invoke(&[
+                                        // (map char-map (string->list name))
+                                        imports::map.with(|value| value.get()).invoke(&[
+                                            char_minus_map.get(),
+                                            // (string->list name)
+                                            imports::string_minus__g_list
+                                                .with(|value| value.get())
+                                                .invoke(&[name.clone()]),
+                                        ]),
+                                    ])
+                                }
                             }
                         }
                     }

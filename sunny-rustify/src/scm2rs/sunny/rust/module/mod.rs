@@ -115,25 +115,28 @@ pub fn initialize() {
                                             .invoke(&[name.clone()]),
                                     ]),
                             ];
+                            // (letrec () (create-directory* path) (list (quote module) (open-output-file (string-append path "/mod.rs")) path))
                             {
-                                // (create-directory* path)
-                                imports::create_minus_directory_star_
-                                    .with(|value| value.get())
-                                    .invoke(&[path.clone()]);
-                                // (list (quote module) (open-output-file (string-append path "/mod.rs")) path)
-                                imports::list.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("module"),
-                                    // (open-output-file (string-append path "/mod.rs"))
-                                    imports::open_minus_output_minus_file
+                                {
+                                    // (create-directory* path)
+                                    imports::create_minus_directory_star_
                                         .with(|value| value.get())
-                                        .invoke(&[
-                                            // (string-append path "/mod.rs")
-                                            imports::string_minus_append
-                                                .with(|value| value.get())
-                                                .invoke(&[path.clone(), Scm::from("/mod.rs")]),
-                                        ]),
-                                    path.clone(),
-                                ])
+                                        .invoke(&[path.clone()]);
+                                    // (list (quote module) (open-output-file (string-append path "/mod.rs")) path)
+                                    imports::list.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("module"),
+                                        // (open-output-file (string-append path "/mod.rs"))
+                                        imports::open_minus_output_minus_file
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (string-append path "/mod.rs")
+                                                imports::string_minus_append
+                                                    .with(|value| value.get())
+                                                    .invoke(&[path.clone(), Scm::from("/mod.rs")]),
+                                            ]),
+                                        path.clone(),
+                                    ])
+                                }
                             }
                         }
                     }

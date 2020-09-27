@@ -13,7 +13,12 @@
           global-kind
           local-boxify!
           variable-mutable?
-          variable-set-mutable!)
+          variable-set-mutable!
+          new-keyword
+          make-keyword
+          keyword?
+          keyword-name
+          keyword-handler)
 
   (import (scheme base)
           (scheme cxr)
@@ -21,6 +26,8 @@
           (sunny table))
 
   (begin
+    (define Keyword (make-table))
+
     (define Variable (make-table))
     (set-field! Variable 'mut #f)
     (set-field! Variable 'mutable? (lambda (self) (get-field self 'mut)))
@@ -42,6 +49,22 @@
     (set-field! LocalVariable 'into-boxed! (lambda (self) (set-parent! self BoxedVariable)))
 
     (define BoxedVariable (clone LocalVariable))
+
+    (define (keyword? obj)
+      (and (table? obj)
+           (ancestor? obj Keyword)))
+
+    (define (make-keyword name handler)
+      (let ((keyword (clone Keyword)))
+        (set-field! keyword 'name name)
+        (set-field! keyword 'handler handler)
+        keyword))
+
+    (define (keyword-name kw)
+      (get-field kw 'name))
+
+    (define (keyword-handler kw)
+      (get-field kw 'handler))
 
     (define (variable? obj)
       (ancestor? obj Variable))
@@ -72,6 +95,9 @@
 
     (define (local-boxify! var)
       (call-method var 'into-boxed!))
+
+    (define (new-keyword name handler)
+      (cons name (make-keyword name handler)))
 
     (define (new-import name)
       (cons name (clone ImportedVariable)))

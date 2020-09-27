@@ -91,47 +91,50 @@ imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}}}})}));
                                     .with(|value| value.get())
                                     .invoke(&[Scm::symbol("root")]),
                             ];
+                            // (letrec () (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list module (module-tree-children module-tree)))
                             {
-                                // (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs)
-                                imports::for_minus_each.with(|value| value.get()).invoke(&[
-                                    {
-                                        let module_minus_tree = module_minus_tree.clone();
-                                        Scm::func(move |args: &[Scm]| {
-                                            if args.len() != 1 {
-                                                panic!("invalid arity")
-                                            }
-                                            let lib = args[0].clone();
-                                            // (letrec () (module-tree-insert! module-tree (car lib) (cdr lib)))
-                                            {
-                                                // (module-tree-insert! module-tree (car lib) (cdr lib))
-                                                imports::module_minus_tree_minus_insert_i
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        module_minus_tree.clone(),
-                                                        // (car lib)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[lib.clone()]),
-                                                        // (cdr lib)
-                                                        imports::cdr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[lib.clone()]),
-                                                    ])
-                                            }
-                                        })
-                                    },
-                                    libs.clone(),
-                                ]);
-                                // (rust-gen-module-tree-list module (module-tree-children module-tree))
-                                globals::rust_minus_gen_minus_module_minus_tree_minus_list
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        module.clone(),
-                                        // (module-tree-children module-tree)
-                                        imports::module_minus_tree_minus_children
-                                            .with(|value| value.get())
-                                            .invoke(&[module_minus_tree.clone()]),
-                                    ])
+                                {
+                                    // (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs)
+                                    imports::for_minus_each.with(|value| value.get()).invoke(&[
+                                        {
+                                            let module_minus_tree = module_minus_tree.clone();
+                                            Scm::func(move |args: &[Scm]| {
+                                                if args.len() != 1 {
+                                                    panic!("invalid arity")
+                                                }
+                                                let lib = args[0].clone();
+                                                // (letrec () (module-tree-insert! module-tree (car lib) (cdr lib)))
+                                                {
+                                                    // (module-tree-insert! module-tree (car lib) (cdr lib))
+                                                    imports::module_minus_tree_minus_insert_i
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            module_minus_tree.clone(),
+                                                            // (car lib)
+                                                            imports::car
+                                                                .with(|value| value.get())
+                                                                .invoke(&[lib.clone()]),
+                                                            // (cdr lib)
+                                                            imports::cdr
+                                                                .with(|value| value.get())
+                                                                .invoke(&[lib.clone()]),
+                                                        ])
+                                                }
+                                            })
+                                        },
+                                        libs.clone(),
+                                    ]);
+                                    // (rust-gen-module-tree-list module (module-tree-children module-tree))
+                                    globals::rust_minus_gen_minus_module_minus_tree_minus_list
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            module.clone(),
+                                            // (module-tree-children module-tree)
+                                            imports::module_minus_tree_minus_children
+                                                .with(|value| value.get())
+                                                .invoke(&[module_minus_tree.clone()]),
+                                        ])
+                                }
                             }
                         }
                     }
@@ -225,13 +228,16 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                     .with(|value| value.get())
                                     .invoke(&[name.clone(), base_minus_path.clone()]),
                             ];
+                            // (letrec () (body module) (close-module module))
                             {
-                                // (body module)
-                                body.clone().invoke(&[module.clone()]);
-                                // (close-module module)
-                                imports::close_minus_module
-                                    .with(|value| value.get())
-                                    .invoke(&[module.clone()])
+                                {
+                                    // (body module)
+                                    body.clone().invoke(&[module.clone()]);
+                                    // (close-module module)
+                                    imports::close_minus_module
+                                        .with(|value| value.get())
+                                        .invoke(&[module.clone()])
+                                }
                             }
                         }
                     }
@@ -258,13 +264,16 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                                     .with(|value| value.get())
                                     .invoke(&[name.clone(), parent.clone()]),
                             ];
+                            // (letrec () (body module) (close-module module))
                             {
-                                // (body module)
-                                body.clone().invoke(&[module.clone()]);
-                                // (close-module module)
-                                imports::close_minus_module
-                                    .with(|value| value.get())
-                                    .invoke(&[module.clone()])
+                                {
+                                    // (body module)
+                                    body.clone().invoke(&[module.clone()]);
+                                    // (close-module module)
+                                    imports::close_minus_module
+                                        .with(|value| value.get())
+                                        .invoke(&[module.clone()])
+                                }
                             }
                         }
                     }

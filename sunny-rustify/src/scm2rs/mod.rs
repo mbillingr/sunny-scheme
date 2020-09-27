@@ -140,24 +140,27 @@ pub fn main() {
                                     .with(|value| value.get())
                                     .invoke(&[globals::input_minus_file.with(|value| value.get())]),
                             ];
-                            if (
-                                // (eof-object? expr)
-                                imports::eof_minus_object_p
-                                    .with(|value| value.get())
-                                    .invoke(&[expr.clone()])
-                            )
-                            .is_true()
+                            // (letrec () (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
                             {
-                                Scm::Nil
-                            } else {
-                                // (cons expr (load-sexpr))
-                                imports::cons.with(|value| value.get()).invoke(&[
-                                    expr.clone(),
-                                    // (load-sexpr)
-                                    globals::load_minus_sexpr
+                                if (
+                                    // (eof-object? expr)
+                                    imports::eof_minus_object_p
                                         .with(|value| value.get())
-                                        .invoke(&[]),
-                                ])
+                                        .invoke(&[expr.clone()])
+                                )
+                                .is_true()
+                                {
+                                    Scm::Nil
+                                } else {
+                                    // (cons expr (load-sexpr))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        expr.clone(),
+                                        // (load-sexpr)
+                                        globals::load_minus_sexpr
+                                            .with(|value| value.get())
+                                            .invoke(&[]),
+                                    ])
+                                }
                             }
                         }
                     }

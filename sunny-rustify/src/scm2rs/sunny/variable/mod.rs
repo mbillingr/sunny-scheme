@@ -13,11 +13,16 @@ pub mod exports {
     pub use super::globals::global_minus_kind;
     pub use super::globals::global_minus_variable_p;
     pub use super::globals::import_minus_variable_p;
+    pub use super::globals::keyword_minus_handler;
+    pub use super::globals::keyword_minus_name;
+    pub use super::globals::keyword_p;
     pub use super::globals::local_minus_boxify_i;
     pub use super::globals::local_minus_variable_p;
+    pub use super::globals::make_minus_keyword;
     pub use super::globals::new_minus_boxed;
     pub use super::globals::new_minus_global;
     pub use super::globals::new_minus_import;
+    pub use super::globals::new_minus_keyword;
     pub use super::globals::new_minus_local;
     pub use super::globals::replace_minus_var_i;
     pub use super::globals::variable_minus_mutable_p;
@@ -32,6 +37,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_global: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-global"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-import"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-keyword"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_boxify_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-boxify!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_kind: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-kind"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_add_minus_definition_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-add-definition!"))}
@@ -42,11 +48,16 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-variable?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-variable?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_handler: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-handler"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-name"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-keyword"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static BoxedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL BoxedVariable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static LocalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL LocalVariable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ImportedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ImportedVariable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static GlobalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL GlobalVariable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Variable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static Keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Keyword"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -63,6 +74,15 @@ pub fn initialize() {
     crate::sunny::table::initialize();
     {
         (/*NOP*/);
+        // (define Keyword (make-table))
+        globals::Keyword.with(|value| {
+            value.set(
+                // (make-table)
+                imports::make_minus_table
+                    .with(|value| value.get())
+                    .invoke(&[]),
+            )
+        });
         // (define Variable (make-table))
         globals::Variable.with(|value| {
             value.set(
@@ -290,6 +310,118 @@ pub fn initialize() {
                     .invoke(&[globals::LocalVariable.with(|value| value.get())]),
             )
         });
+        // (define (keyword? obj) (and (table? obj) (ancestor? obj Keyword)))
+        globals::keyword_p.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let obj = args[0].clone();
+                    // (letrec () (and (table? obj) (ancestor? obj Keyword)))
+                    {
+                        // (and (table? obj) (ancestor? obj Keyword))
+                        if (
+                            // (table? obj)
+                            imports::table_p
+                                .with(|value| value.get())
+                                .invoke(&[obj.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (ancestor? obj Keyword)
+                            imports::ancestor_p
+                                .with(|value| value.get())
+                                .invoke(&[obj.clone(), globals::Keyword.with(|value| value.get())])
+                        } else {
+                            Scm::False
+                        }
+                    }
+                })
+            })
+        });
+        // (define (make-keyword name handler) (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword))
+        globals::make_minus_keyword.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    let handler = args[1].clone();
+                    // (letrec () (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword))
+                    {
+                        // (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword)
+                        {
+                            let [keyword] = [
+                                // (clone Keyword)
+                                imports::clone
+                                    .with(|value| value.get())
+                                    .invoke(&[globals::Keyword.with(|value| value.get())]),
+                            ];
+                            // (letrec () (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword)
+                            {
+                                {
+                                    // (set-field! keyword (quote name) name)
+                                    imports::set_minus_field_i
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            keyword.clone(),
+                                            Scm::symbol("name"),
+                                            name.clone(),
+                                        ]);
+                                    // (set-field! keyword (quote handler) handler)
+                                    imports::set_minus_field_i
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            keyword.clone(),
+                                            Scm::symbol("handler"),
+                                            handler.clone(),
+                                        ]);
+                                    keyword.clone()
+                                }
+                            }
+                        }
+                    }
+                })
+            })
+        });
+        // (define (keyword-name kw) (get-field kw (quote name)))
+        globals::keyword_minus_name.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let kw = args[0].clone();
+                    // (letrec () (get-field kw (quote name)))
+                    {
+                        // (get-field kw (quote name))
+                        imports::get_minus_field
+                            .with(|value| value.get())
+                            .invoke(&[kw.clone(), Scm::symbol("name")])
+                    }
+                })
+            })
+        });
+        // (define (keyword-handler kw) (get-field kw (quote handler)))
+        globals::keyword_minus_handler.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let kw = args[0].clone();
+                    // (letrec () (get-field kw (quote handler)))
+                    {
+                        // (get-field kw (quote handler))
+                        imports::get_minus_field
+                            .with(|value| value.get())
+                            .invoke(&[kw.clone(), Scm::symbol("handler")])
+                    }
+                })
+            })
+        });
         // (define (variable? obj) (ancestor? obj Variable))
         globals::variable_p.with(|value| {
             value.set({
@@ -471,6 +603,29 @@ pub fn initialize() {
                         imports::call_minus_method
                             .with(|value| value.get())
                             .invoke(&[var.clone(), Scm::symbol("into-boxed!")])
+                    }
+                })
+            })
+        });
+        // (define (new-keyword name handler) (cons name (make-keyword name handler)))
+        globals::new_minus_keyword.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    let handler = args[1].clone();
+                    // (letrec () (cons name (make-keyword name handler)))
+                    {
+                        // (cons name (make-keyword name handler))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (make-keyword name handler)
+                            globals::make_minus_keyword
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), handler.clone()]),
+                        ])
                     }
                 })
             })

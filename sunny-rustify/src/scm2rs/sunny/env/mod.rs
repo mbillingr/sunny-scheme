@@ -29,8 +29,8 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_import_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-import!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_globals: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-globals"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lookup: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lookup"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ensure_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ensure-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_global_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-global-env"))}
 }
@@ -91,13 +91,16 @@ pub fn initialize() {
                                     .with(|value| value.get())
                                     .invoke(&[name.clone(), env.clone()]),
                             ];
-                            if (var.clone()).is_true() {
-                                var.clone()
-                            } else {
-                                // (adjoin-global! name env)
-                                globals::adjoin_minus_global_i
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone(), env.clone()])
+                            // (letrec () (if var var (adjoin-global! name env)))
+                            {
+                                if (var.clone()).is_true() {
+                                    var.clone()
+                                } else {
+                                    // (adjoin-global! name env)
+                                    globals::adjoin_minus_global_i
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone(), env.clone()])
+                                }
                             }
                         }
                     }
@@ -282,23 +285,26 @@ pub fn initialize() {
                                     .with(|value| value.get())
                                     .invoke(&[env.clone()]),
                             ];
+                            // (letrec () (set-cdr! genv (cons var (cdr genv))) (cdr var))
                             {
-                                // (set-cdr! genv (cons var (cdr genv)))
-                                imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[
-                                    genv.clone(),
-                                    // (cons var (cdr genv))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        var.clone(),
-                                        // (cdr genv)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[genv.clone()]),
-                                    ]),
-                                ]);
-                                // (cdr var)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[var.clone()])
+                                {
+                                    // (set-cdr! genv (cons var (cdr genv)))
+                                    imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[
+                                        genv.clone(),
+                                        // (cons var (cdr genv))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            var.clone(),
+                                            // (cdr genv)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[genv.clone()]),
+                                        ]),
+                                    ]);
+                                    // (cdr var)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[var.clone()])
+                                }
                             }
                         }
                     }

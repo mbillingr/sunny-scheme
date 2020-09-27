@@ -50,14 +50,17 @@ mod tests {
         // (let* ((x (quote ()))) (begin (assert (null? x))))
         {
             let [x] = [Scm::Nil];
-            // (let* () (begin (assert (null? x))))
-            assert!(
-                // (null? x)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[x.clone(),])
-                    .is_true()
-            );
+            // (letrec () (let* () (begin (assert (null? x)))))
+            {
+                // (let* () (begin (assert (null? x))))
+                assert!(
+                    // (null? x)
+                    imports::null_p
+                        .with(|value| value.get())
+                        .invoke(&[x.clone(),])
+                        .is_true()
+                );
+            }
         }
     }
     #[test]
@@ -67,17 +70,23 @@ mod tests {
         // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
         {
             let [x] = [Scm::from(1)];
-            // (let* ((y (quote 1))) (begin (assert (= x y))))
+            // (letrec () (let* ((y (quote 1))) (begin (assert (= x y)))))
             {
-                let [y] = [Scm::from(1)];
-                // (let* () (begin (assert (= x y))))
-                assert!(
-                    // (= x y)
-                    imports::_e_
-                        .with(|value| value.get())
-                        .invoke(&[x.clone(), y.clone(),])
-                        .is_true()
-                );
+                // (let* ((y (quote 1))) (begin (assert (= x y))))
+                {
+                    let [y] = [Scm::from(1)];
+                    // (letrec () (let* () (begin (assert (= x y)))))
+                    {
+                        // (let* () (begin (assert (= x y))))
+                        assert!(
+                            // (= x y)
+                            imports::_e_
+                                .with(|value| value.get())
+                                .invoke(&[x.clone(), y.clone(),])
+                                .is_true()
+                        );
+                    }
+                }
             }
         }
     }

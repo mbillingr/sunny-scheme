@@ -44,8 +44,10 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_regular_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->regular-application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_fixlet: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->fixlet"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-value"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-variable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-value"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_reference: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->reference"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static objectify_minus_symbol: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL objectify-symbol"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->assert"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testsuite"))}
@@ -66,14 +68,13 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->assignment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->constant"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_reference: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->reference"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_lib: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-lib"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_export: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->export"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_decls_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-decls->ast"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static sort: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sort"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->sequence"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static sort: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sort"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->import"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_libnames: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-libnames"))}
@@ -216,10 +217,14 @@ imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(),]),]),]),])}} 
 {let [ast, ] = [
 // (sexpr->sequence exp* global-env #f)
 globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(),global_minus_env.get(),Scm::False,]),];
+// (letrec () (let* ((main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
+{
 // (let* ((main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {let [main, ] = [
 // (boxify ast)
 imports::boxify.with(|value| value.get()).invoke(&[ast.clone(),]),];
+// (letrec () (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
+{
 // (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {let [globals, ] = [
 // (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env))
@@ -238,6 +243,8 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[
 imports::car.with(|value| value.get()).invoke(&[b.clone(),]),]),])}})},
 // (cdr global-env)
 imports::cdr.with(|value| value.get()).invoke(&[global_minus_env.get(),]),]),];
+// (letrec () (let* () (make-program globals imports init main (filter cdr (car library-env)))))
+{
 // (let* () (make-program globals imports init main (filter cdr (car library-env))))
 
 // (make-program globals imports init main (filter cdr (car library-env)))
@@ -245,7 +252,7 @@ imports::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(),i
 // (filter cdr (car library-env))
 imports::filter.with(|value| value.get()).invoke(&[imports::cdr.with(|value| value.get()),
 // (car library-env)
-imports::car.with(|value| value.get()).invoke(&[library_minus_env.get(),]),]),])}}}}}})});
+imports::car.with(|value| value.get()).invoke(&[library_minus_env.get(),]),]),])}}}}}}}}})});
 
 // (process-imports exp* (quote ()) (make-set))
 process_minus_imports.get().invoke(&[exp_star_.clone(),Scm::Nil,
@@ -576,60 +583,74 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 .invoke(&[libs.clone()]),
                                         ]),
                                     ];
-                                    // (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+                                    // (letrec () (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
                                     {
-                                        let [libast] = [
-                                            if (
-                                                // (library? lib)
-                                                globals::library_p
-                                                    .with(|value| value.get())
-                                                    .invoke(&[lib.clone()])
-                                            )
-                                            .is_true()
+                                        // (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+                                        {
+                                            let [libast] = [
+                                                if (
+                                                    // (library? lib)
+                                                    globals::library_p
+                                                        .with(|value| value.get())
+                                                        .invoke(&[lib.clone()])
+                                                )
+                                                .is_true()
+                                                {
+                                                    // (library->ast (library-name lib) (library-decls lib) library-env)
+                                                    globals::library_minus__g_ast
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (library-name lib)
+                                                            globals::library_minus_name
+                                                                .with(|value| value.get())
+                                                                .invoke(&[lib.clone()]),
+                                                            // (library-decls lib)
+                                                            globals::library_minus_decls
+                                                                .with(|value| value.get())
+                                                                .invoke(&[lib.clone()]),
+                                                            library_minus_env.clone(),
+                                                        ])
+                                                } else {
+                                                    Scm::False
+                                                },
+                                            ];
+                                            // (letrec () (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
                                             {
-                                                // (library->ast (library-name lib) (library-decls lib) library-env)
-                                                globals::library_minus__g_ast
+                                                // (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+
+                                                // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
+                                                imports::set_minus_car_i
                                                     .with(|value| value.get())
                                                     .invoke(&[
-                                                        // (library-name lib)
-                                                        globals::library_minus_name
-                                                            .with(|value| value.get())
-                                                            .invoke(&[lib.clone()]),
-                                                        // (library-decls lib)
-                                                        globals::library_minus_decls
-                                                            .with(|value| value.get())
-                                                            .invoke(&[lib.clone()]),
                                                         library_minus_env.clone(),
+                                                        // (cons (cons (car libs) libast) (car library-env))
+                                                        imports::cons
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                // (cons (car libs) libast)
+                                                                imports::cons
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[
+                                                                        // (car libs)
+                                                                        imports::car
+                                                                            .with(|value| {
+                                                                                value.get()
+                                                                            })
+                                                                            .invoke(
+                                                                                &[libs.clone()],
+                                                                            ),
+                                                                        libast.clone(),
+                                                                    ]),
+                                                                // (car library-env)
+                                                                imports::car
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[
+                                                                        library_minus_env.clone()
+                                                                    ]),
+                                                            ]),
                                                     ])
-                                            } else {
-                                                Scm::False
-                                            },
-                                        ];
-                                        // (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
-
-                                        // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
-                                        imports::set_minus_car_i.with(|value| value.get()).invoke(
-                                            &[
-                                                library_minus_env.clone(),
-                                                // (cons (cons (car libs) libast) (car library-env))
-                                                imports::cons.with(|value| value.get()).invoke(&[
-                                                    // (cons (car libs) libast)
-                                                    imports::cons.with(|value| value.get()).invoke(
-                                                        &[
-                                                            // (car libs)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[libs.clone()]),
-                                                            libast.clone(),
-                                                        ],
-                                                    ),
-                                                    // (car library-env)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[library_minus_env.clone()]),
-                                                ]),
-                                            ],
-                                        )
+                                            }
+                                        }
                                     }
                                 };
                                 // (register-libraries (cdr libs) library-env)
@@ -648,7 +669,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->ast exp env tail?) (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
+        // (define (sexpr->ast exp env tail?) (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
         globals::sexpr_minus__g_ast.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -658,36 +679,36 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     let exp = args[0].clone();
                     let env = args[1].clone();
                     let tail_p = args[2].clone();
-                    // (letrec () (if (atom? exp) (if (symbol? exp) (sexpr->reference exp env) (sexpr->constant exp env)) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))))
+                    // (letrec () (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
                     {
+                        // (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env)))
                         if (
-                            // (atom? exp)
-                            imports::atom_p
+                            // (keyword? exp)
+                            imports::keyword_p
                                 .with(|value| value.get())
                                 .invoke(&[exp.clone()])
                         )
                         .is_true()
                         {
-                            if (
-                                // (symbol? exp)
-                                imports::symbol_p
-                                    .with(|value| value.get())
-                                    .invoke(&[exp.clone()])
-                            )
-                            .is_true()
-                            {
-                                // (sexpr->reference exp env)
-                                globals::sexpr_minus__g_reference
-                                    .with(|value| value.get())
-                                    .invoke(&[exp.clone(), env.clone()])
-                            } else {
-                                // (sexpr->constant exp env)
-                                globals::sexpr_minus__g_constant
-                                    .with(|value| value.get())
-                                    .invoke(&[exp.clone(), env.clone()])
-                            }
-                        } else {
-                            // (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))))
+                            exp.clone()
+                        } else if (
+                            // (ast-node? exp)
+                            imports::ast_minus_node_p
+                                .with(|value| value.get())
+                                .invoke(&[exp.clone()])
+                        )
+                        .is_true()
+                        {
+                            exp.clone()
+                        } else if (
+                            // (pair? exp)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[exp.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (cond ((eq? (quote quote) (car exp)) (sexpr->constant (cadr exp) env)) ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote begin) (car exp)) (sexpr->sequence (cdr exp) env tail?)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote if) (car exp)) (sexpr->alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((eq? (quote and) (car exp)) (wrap-sexpr exp (sexpr->and (cdr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))
                             if (
                                 // (eq? (quote quote) (car exp))
                                 imports::eq_p.with(|value| value.get()).invoke(&[
@@ -1066,28 +1087,78 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         env.clone(),
                                     ])
                             } else {
-                                // (wrap-sexpr exp (sexpr->application (car exp) (cdr exp) env tail?))
-                                globals::wrap_minus_sexpr
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        exp.clone(),
-                                        // (sexpr->application (car exp) (cdr exp) env tail?)
-                                        globals::sexpr_minus__g_application
+                                // (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))
+                                {
+                                    let [f_minus_obj] = [
+                                        // (sexpr->ast (car exp) env #f)
+                                        globals::sexpr_minus__g_ast
                                             .with(|value| value.get())
                                             .invoke(&[
                                                 // (car exp)
                                                 imports::car
                                                     .with(|value| value.get())
                                                     .invoke(&[exp.clone()]),
-                                                // (cdr exp)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[exp.clone()]),
                                                 env.clone(),
-                                                tail_p.clone(),
+                                                Scm::False,
                                             ]),
-                                    ])
+                                    ];
+                                    // (letrec () (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))
+                                    {
+                                        if (
+                                            // (keyword? f-obj)
+                                            imports::keyword_p
+                                                .with(|value| value.get())
+                                                .invoke(&[f_minus_obj.clone()])
+                                        )
+                                        .is_true()
+                                        {
+                                            // ((keyword-handler f-obj) exp env tail?)
+
+                                            // (keyword-handler f-obj)
+                                            imports::keyword_minus_handler
+                                                .with(|value| value.get())
+                                                .invoke(&[f_minus_obj.clone()])
+                                                .invoke(&[exp.clone(), env.clone(), tail_p.clone()])
+                                        } else {
+                                            // (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))
+                                            globals::wrap_minus_sexpr
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    exp.clone(),
+                                                    // (sexpr->application f-obj (cdr exp) env tail?)
+                                                    globals::sexpr_minus__g_application
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            f_minus_obj.clone(),
+                                                            // (cdr exp)
+                                                            imports::cdr
+                                                                .with(|value| value.get())
+                                                                .invoke(&[exp.clone()]),
+                                                            env.clone(),
+                                                            tail_p.clone(),
+                                                        ]),
+                                                ])
+                                        }
+                                    }
+                                }
                             }
+                        } else if (
+                            // (symbol? exp)
+                            imports::symbol_p
+                                .with(|value| value.get())
+                                .invoke(&[exp.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (objectify-symbol exp env)
+                            globals::objectify_minus_symbol
+                                .with(|value| value.get())
+                                .invoke(&[exp.clone(), env.clone()])
+                        } else {
+                            // (sexpr->constant exp env)
+                            globals::sexpr_minus__g_constant
+                                .with(|value| value.get())
+                                .invoke(&[exp.clone(), env.clone()])
                         }
                     }
                 })
@@ -1131,6 +1202,48 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
+        // (define (objectify-symbol name env) (let ((var (ensure-var! name env))) (if (keyword? var) var (make-reference name var))))
+        globals::objectify_minus_symbol.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let name = args[0].clone();
+                    let env = args[1].clone();
+                    // (letrec () (let ((var (ensure-var! name env))) (if (keyword? var) var (make-reference name var))))
+                    {
+                        // (let ((var (ensure-var! name env))) (if (keyword? var) var (make-reference name var)))
+                        {
+                            let [var] = [
+                                // (ensure-var! name env)
+                                imports::ensure_minus_var_i
+                                    .with(|value| value.get())
+                                    .invoke(&[name.clone(), env.clone()]),
+                            ];
+                            // (letrec () (if (keyword? var) var (make-reference name var)))
+                            {
+                                if (
+                                    // (keyword? var)
+                                    imports::keyword_p
+                                        .with(|value| value.get())
+                                        .invoke(&[var.clone()])
+                                )
+                                .is_true()
+                                {
+                                    var.clone()
+                                } else {
+                                    // (make-reference name var)
+                                    imports::make_minus_reference
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone(), var.clone()])
+                                }
+                            }
+                        }
+                    }
+                })
+            })
+        });
         // (define (sexpr->reference name env) (let ((var (ensure-var! name env))) (make-reference name var)))
         globals::sexpr_minus__g_reference.with(|value| {
             value.set({
@@ -1150,10 +1263,13 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[name.clone(), env.clone()]),
                             ];
-                            // (make-reference name var)
-                            imports::make_minus_reference
-                                .with(|value| value.get())
-                                .invoke(&[name.clone(), var.clone()])
+                            // (letrec () (make-reference name var))
+                            {
+                                // (make-reference name var)
+                                imports::make_minus_reference
+                                    .with(|value| value.get())
+                                    .invoke(&[name.clone(), var.clone()])
+                            }
                         }
                     }
                 })
@@ -1183,76 +1299,17 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[name.clone(), env.clone()]),
                             ];
+                            // (letrec () (variable-set-mutable! var) (make-assignment name var val))
                             {
-                                // (variable-set-mutable! var)
-                                imports::variable_minus_set_minus_mutable_i
-                                    .with(|value| value.get())
-                                    .invoke(&[var.clone()]);
-                                // (make-assignment name var val)
-                                imports::make_minus_assignment
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone(), var.clone(), val.clone()])
-                            }
-                        }
-                    }
-                })
-            })
-        });
-        // (define (sexpr->definition exp env) (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
-        globals::sexpr_minus__g_definition.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let exp = args[0].clone();
-                    let env = args[1].clone();
-                    // (letrec () (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
-                    {
-                        // (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
-                        {
-                            let [name] = [
-                                // (definition-variable exp)
-                                globals::definition_minus_variable
-                                    .with(|value| value.get())
-                                    .invoke(&[exp.clone()]),
-                            ];
-                            // (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
-                            {
-                                let [value] = [
-                                    // (definition-value exp)
-                                    globals::definition_minus_value
-                                        .with(|value| value.get())
-                                        .invoke(&[exp.clone()]),
-                                ];
-                                // (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
                                 {
-                                    let [var] = [
-                                        // (ensure-var! name env)
-                                        imports::ensure_minus_var_i
-                                            .with(|value| value.get())
-                                            .invoke(&[name.clone(), env.clone()]),
-                                    ];
-                                    // (let* ((val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
-                                    {
-                                        let [val] = [
-                                            // (sexpr->ast value env #f)
-                                            globals::sexpr_minus__g_ast
-                                                .with(|value| value.get())
-                                                .invoke(&[value.clone(), env.clone(), Scm::False]),
-                                        ];
-                                        // (let* () (global-add-definition! var val) (make-definition name var val))
-                                        {
-                                            // (global-add-definition! var val)
-                                            imports::global_minus_add_minus_definition_i
-                                                .with(|value| value.get())
-                                                .invoke(&[var.clone(), val.clone()]);
-                                            // (make-definition name var val)
-                                            imports::make_minus_definition
-                                                .with(|value| value.get())
-                                                .invoke(&[name.clone(), var.clone(), val.clone()])
-                                        }
-                                    }
+                                    // (variable-set-mutable! var)
+                                    imports::variable_minus_set_minus_mutable_i
+                                        .with(|value| value.get())
+                                        .invoke(&[var.clone()]);
+                                    // (make-assignment name var val)
+                                    imports::make_minus_assignment
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone(), var.clone(), val.clone()])
                                 }
                             }
                         }
@@ -1260,6 +1317,40 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
+        // (define (sexpr->definition exp env) (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
+        globals::sexpr_minus__g_definition.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let exp = args[0].clone();let env = args[1].clone();
+// (letrec () (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
+{
+// (let* ((name (definition-variable exp)) (value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
+{let [name, ] = [
+// (definition-variable exp)
+globals::definition_minus_variable.with(|value| value.get()).invoke(&[exp.clone(),]),];
+// (letrec () (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
+{
+// (let* ((value (definition-value exp)) (var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
+{let [value, ] = [
+// (definition-value exp)
+globals::definition_minus_value.with(|value| value.get()).invoke(&[exp.clone(),]),];
+// (letrec () (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
+{
+// (let* ((var (ensure-var! name env)) (val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
+{let [var, ] = [
+// (ensure-var! name env)
+imports::ensure_minus_var_i.with(|value| value.get()).invoke(&[name.clone(),env.clone(),]),];
+// (letrec () (let* ((val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val)))
+{
+// (let* ((val (sexpr->ast value env #f))) (global-add-definition! var val) (make-definition name var val))
+{let [val, ] = [
+// (sexpr->ast value env #f)
+globals::sexpr_minus__g_ast.with(|value| value.get()).invoke(&[value.clone(),env.clone(),Scm::False,]),];
+// (letrec () (let* () (global-add-definition! var val) (make-definition name var val)))
+{
+// (let* () (global-add-definition! var val) (make-definition name var val))
+{
+// (global-add-definition! var val)
+imports::global_minus_add_minus_definition_i.with(|value| value.get()).invoke(&[var.clone(),val.clone(),]);
+// (make-definition name var val)
+imports::make_minus_definition.with(|value| value.get()).invoke(&[name.clone(),var.clone(),val.clone(),])}}}}}}}}}}})}));
         // (define (sexpr->alternative condition consequent alternative env tail?) (let* ((x (sexpr->ast condition env #f)) (a (sexpr->ast consequent env tail?)) (b (sexpr->ast alternative env tail?))) (make-alternative x a b)))
         globals::sexpr_minus__g_alternative.with(|value| {
             value.set({
@@ -1282,32 +1373,45 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[condition.clone(), env.clone(), Scm::False]),
                             ];
-                            // (let* ((a (sexpr->ast consequent env tail?)) (b (sexpr->ast alternative env tail?))) (make-alternative x a b))
+                            // (letrec () (let* ((a (sexpr->ast consequent env tail?)) (b (sexpr->ast alternative env tail?))) (make-alternative x a b)))
                             {
-                                let [a] = [
-                                    // (sexpr->ast consequent env tail?)
-                                    globals::sexpr_minus__g_ast
-                                        .with(|value| value.get())
-                                        .invoke(&[consequent.clone(), env.clone(), tail_p.clone()]),
-                                ];
-                                // (let* ((b (sexpr->ast alternative env tail?))) (make-alternative x a b))
+                                // (let* ((a (sexpr->ast consequent env tail?)) (b (sexpr->ast alternative env tail?))) (make-alternative x a b))
                                 {
-                                    let [b] = [
-                                        // (sexpr->ast alternative env tail?)
+                                    let [a] = [
+                                        // (sexpr->ast consequent env tail?)
                                         globals::sexpr_minus__g_ast
                                             .with(|value| value.get())
                                             .invoke(&[
-                                                alternative.clone(),
+                                                consequent.clone(),
                                                 env.clone(),
                                                 tail_p.clone(),
                                             ]),
                                     ];
-                                    // (let* () (make-alternative x a b))
+                                    // (letrec () (let* ((b (sexpr->ast alternative env tail?))) (make-alternative x a b)))
+                                    {
+                                        // (let* ((b (sexpr->ast alternative env tail?))) (make-alternative x a b))
+                                        {
+                                            let [b] = [
+                                                // (sexpr->ast alternative env tail?)
+                                                globals::sexpr_minus__g_ast
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        alternative.clone(),
+                                                        env.clone(),
+                                                        tail_p.clone(),
+                                                    ]),
+                                            ];
+                                            // (letrec () (let* () (make-alternative x a b)))
+                                            {
+                                                // (let* () (make-alternative x a b))
 
-                                    // (make-alternative x a b)
-                                    imports::make_minus_alternative
-                                        .with(|value| value.get())
-                                        .invoke(&[x.clone(), a.clone(), b.clone()])
+                                                // (make-alternative x a b)
+                                                imports::make_minus_alternative
+                                                    .with(|value| value.get())
+                                                    .invoke(&[x.clone(), a.clone(), b.clone()])
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1315,7 +1419,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->application func arg* env tail?) (if (and (pair? func) (eq? (car func) (quote lambda))) (sexpr->fixlet (cadr func) (cddr func) arg* env tail?) (sexpr->regular-application func arg* env tail?)))
+        // (define (sexpr->application func arg* env tail?) (if (eq? (quote ABSTRACTION) (func (quote kind))) (sexpr->fixlet (sexpr->ast func env #f) arg* env tail?) (sexpr->regular-application func arg* env tail?)))
         globals::sexpr_minus__g_application.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -1326,44 +1430,26 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     let arg_star_ = args[1].clone();
                     let env = args[2].clone();
                     let tail_p = args[3].clone();
-                    // (letrec () (if (and (pair? func) (eq? (car func) (quote lambda))) (sexpr->fixlet (cadr func) (cddr func) arg* env tail?) (sexpr->regular-application func arg* env tail?)))
+                    // (letrec () (if (eq? (quote ABSTRACTION) (func (quote kind))) (sexpr->fixlet (sexpr->ast func env #f) arg* env tail?) (sexpr->regular-application func arg* env tail?)))
                     {
                         if (
-                            // (and (pair? func) (eq? (car func) (quote lambda)))
-                            if (
-                                // (pair? func)
-                                imports::pair_p
-                                    .with(|value| value.get())
-                                    .invoke(&[func.clone()])
-                            )
-                            .is_true()
-                            {
-                                // (eq? (car func) (quote lambda))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    // (car func)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[func.clone()]),
-                                    Scm::symbol("lambda"),
-                                ])
-                            } else {
-                                Scm::False
-                            }
+                            // (eq? (quote ABSTRACTION) (func (quote kind)))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("ABSTRACTION"),
+                                // (func (quote kind))
+                                func.clone().invoke(&[Scm::symbol("kind")]),
+                            ])
                         )
                         .is_true()
                         {
-                            // (sexpr->fixlet (cadr func) (cddr func) arg* env tail?)
+                            // (sexpr->fixlet (sexpr->ast func env #f) arg* env tail?)
                             globals::sexpr_minus__g_fixlet
                                 .with(|value| value.get())
                                 .invoke(&[
-                                    // (cadr func)
-                                    imports::cadr
+                                    // (sexpr->ast func env #f)
+                                    globals::sexpr_minus__g_ast
                                         .with(|value| value.get())
-                                        .invoke(&[func.clone()]),
-                                    // (cddr func)
-                                    imports::cddr
-                                        .with(|value| value.get())
-                                        .invoke(&[func.clone()]),
+                                        .invoke(&[func.clone(), env.clone(), Scm::False]),
                                     arg_star_.clone(),
                                     env.clone(),
                                     tail_p.clone(),
@@ -1383,7 +1469,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->regular-application func arg* env tail?) (let ((func (sexpr->ast func env #f))) (let ((args (sexpr->args arg* env))) (make-application func args tail?))))
+        // (define (sexpr->regular-application func arg* env tail?) (let ((args (sexpr->args arg* env))) (make-application func args tail?)))
         globals::sexpr_minus__g_regular_minus_application.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -1394,24 +1480,18 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     let arg_star_ = args[1].clone();
                     let env = args[2].clone();
                     let tail_p = args[3].clone();
-                    // (letrec () (let ((func (sexpr->ast func env #f))) (let ((args (sexpr->args arg* env))) (make-application func args tail?))))
+                    // (letrec () (let ((args (sexpr->args arg* env))) (make-application func args tail?)))
                     {
-                        // (let ((func (sexpr->ast func env #f))) (let ((args (sexpr->args arg* env))) (make-application func args tail?)))
+                        // (let ((args (sexpr->args arg* env))) (make-application func args tail?))
                         {
-                            let [func] = [
-                                // (sexpr->ast func env #f)
-                                globals::sexpr_minus__g_ast
+                            let [args_] = [
+                                // (sexpr->args arg* env)
+                                globals::sexpr_minus__g_args
                                     .with(|value| value.get())
-                                    .invoke(&[func.clone(), env.clone(), Scm::False]),
+                                    .invoke(&[arg_star_.clone(), env.clone()]),
                             ];
-                            // (let ((args (sexpr->args arg* env))) (make-application func args tail?))
+                            // (letrec () (make-application func args tail?))
                             {
-                                let [args_] = [
-                                    // (sexpr->args arg* env)
-                                    globals::sexpr_minus__g_args
-                                        .with(|value| value.get())
-                                        .invoke(&[arg_star_.clone(), env.clone()]),
-                                ];
                                 // (make-application func args tail?)
                                 imports::make_minus_application
                                     .with(|value| value.get())
@@ -1422,58 +1502,50 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->fixlet param* body arg* env tail?) (let* ((local-env (adjoin-local-env param* env)) (args (sexpr->args arg* env)) (func-body (sexpr->sequence body local-env tail?))) (make-fixlet param* func-body args)))
+        // (define (sexpr->fixlet func arg* env tail?) (let* ((args (sexpr->args arg* env)) (func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
         globals::sexpr_minus__g_fixlet.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
-                    if args.len() != 5 {
+                    if args.len() != 4 {
                         panic!("invalid arity")
                     }
-                    let param_star_ = args[0].clone();
-                    let body = args[1].clone();
-                    let arg_star_ = args[2].clone();
-                    let env = args[3].clone();
-                    let tail_p = args[4].clone();
-                    // (letrec () (let* ((local-env (adjoin-local-env param* env)) (args (sexpr->args arg* env)) (func-body (sexpr->sequence body local-env tail?))) (make-fixlet param* func-body args)))
+                    let func = args[0].clone();
+                    let arg_star_ = args[1].clone();
+                    let env = args[2].clone();
+                    let tail_p = args[3].clone();
+                    // (letrec () (let* ((args (sexpr->args arg* env)) (func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
                     {
-                        // (let* ((local-env (adjoin-local-env param* env)) (args (sexpr->args arg* env)) (func-body (sexpr->sequence body local-env tail?))) (make-fixlet param* func-body args))
+                        // (let* ((args (sexpr->args arg* env)) (func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
                         {
-                            let [local_minus_env] = [
-                                // (adjoin-local-env param* env)
-                                imports::adjoin_minus_local_minus_env
+                            let [args_] = [
+                                // (sexpr->args arg* env)
+                                globals::sexpr_minus__g_args
                                     .with(|value| value.get())
-                                    .invoke(&[param_star_.clone(), env.clone()]),
+                                    .invoke(&[arg_star_.clone(), env.clone()]),
                             ];
-                            // (let* ((args (sexpr->args arg* env)) (func-body (sexpr->sequence body local-env tail?))) (make-fixlet param* func-body args))
+                            // (letrec () (let* ((func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
                             {
-                                let [args_] = [
-                                    // (sexpr->args arg* env)
-                                    globals::sexpr_minus__g_args
-                                        .with(|value| value.get())
-                                        .invoke(&[arg_star_.clone(), env.clone()]),
-                                ];
-                                // (let* ((func-body (sexpr->sequence body local-env tail?))) (make-fixlet param* func-body args))
+                                // (let* ((func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
                                 {
-                                    let [func_minus_body] = [
-                                        // (sexpr->sequence body local-env tail?)
-                                        globals::sexpr_minus__g_sequence
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                body.clone(),
-                                                local_minus_env.clone(),
-                                                tail_p.clone(),
-                                            ]),
+                                    let [func] = [
+                                        // (func (quote inner-function))
+                                        func.clone().invoke(&[Scm::symbol("inner-function")]),
                                     ];
-                                    // (let* () (make-fixlet param* func-body args))
+                                    // (letrec () (let* () (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
+                                    {
+                                        // (let* () (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
 
-                                    // (make-fixlet param* func-body args)
-                                    imports::make_minus_fixlet
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            param_star_.clone(),
-                                            func_minus_body.clone(),
-                                            args_.clone(),
-                                        ])
+                                        // (make-fixlet (func (quote get-params)) (func (quote get-body)) args)
+                                        imports::make_minus_fixlet.with(|value| value.get()).invoke(
+                                            &[
+                                                // (func (quote get-params))
+                                                func.clone().invoke(&[Scm::symbol("get-params")]),
+                                                // (func (quote get-body))
+                                                func.clone().invoke(&[Scm::symbol("get-body")]),
+                                                args_.clone(),
+                                            ],
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1630,62 +1702,73 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     bindings.clone(),
                                 ]),
                             ];
-                            // (let* ((body-env (adjoin-boxed-env params env)) (args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings))) (make-scope params (sexpr->sequence body body-env tail?) args))
+                            // (letrec () (let* ((body-env (adjoin-boxed-env params env)) (args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings))) (make-scope params (sexpr->sequence body body-env tail?) args)))
                             {
-                                let [body_minus_env] = [
-                                    // (adjoin-boxed-env params env)
-                                    imports::adjoin_minus_boxed_minus_env
-                                        .with(|value| value.get())
-                                        .invoke(&[params.clone(), env.clone()]),
-                                ];
-                                // (let* ((args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings))) (make-scope params (sexpr->sequence body body-env tail?) args))
+                                // (let* ((body-env (adjoin-boxed-env params env)) (args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings))) (make-scope params (sexpr->sequence body body-env tail?) args))
                                 {
-                                    let [args_] = [
-                                        // (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings)
-                                        imports::map.with(|value| value.get()).invoke(&[
-                                            {
-                                                let body_minus_env = body_minus_env.clone();
-                                                Scm::func(move |args: &[Scm]| {
-                                                    if args.len() != 1 {
-                                                        panic!("invalid arity")
-                                                    }
-                                                    let b = args[0].clone();
-                                                    // (letrec () (sexpr->ast (cadr b) body-env #f))
+                                    let [body_minus_env] = [
+                                        // (adjoin-boxed-env params env)
+                                        imports::adjoin_minus_boxed_minus_env
+                                            .with(|value| value.get())
+                                            .invoke(&[params.clone(), env.clone()]),
+                                    ];
+                                    // (letrec () (let* ((args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings))) (make-scope params (sexpr->sequence body body-env tail?) args)))
+                                    {
+                                        // (let* ((args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings))) (make-scope params (sexpr->sequence body body-env tail?) args))
+                                        {
+                                            let [args_] = [
+                                                // (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings)
+                                                imports::map.with(|value| value.get()).invoke(&[
                                                     {
-                                                        // (sexpr->ast (cadr b) body-env #f)
-                                                        globals::sexpr_minus__g_ast
+                                                        let body_minus_env = body_minus_env.clone();
+                                                        Scm::func(move |args: &[Scm]| {
+                                                            if args.len() != 1 {
+                                                                panic!("invalid arity")
+                                                            }
+                                                            let b = args[0].clone();
+                                                            // (letrec () (sexpr->ast (cadr b) body-env #f))
+                                                            {
+                                                                // (sexpr->ast (cadr b) body-env #f)
+                                                                globals::sexpr_minus__g_ast
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[
+                                                                        // (cadr b)
+                                                                        imports::cadr
+                                                                            .with(|value| {
+                                                                                value.get()
+                                                                            })
+                                                                            .invoke(&[b.clone()]),
+                                                                        body_minus_env.clone(),
+                                                                        Scm::False,
+                                                                    ])
+                                                            }
+                                                        })
+                                                    },
+                                                    bindings.clone(),
+                                                ]),
+                                            ];
+                                            // (letrec () (let* () (make-scope params (sexpr->sequence body body-env tail?) args)))
+                                            {
+                                                // (let* () (make-scope params (sexpr->sequence body body-env tail?) args))
+
+                                                // (make-scope params (sexpr->sequence body body-env tail?) args)
+                                                imports::make_minus_scope
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        params.clone(),
+                                                        // (sexpr->sequence body body-env tail?)
+                                                        globals::sexpr_minus__g_sequence
                                                             .with(|value| value.get())
                                                             .invoke(&[
-                                                                // (cadr b)
-                                                                imports::cadr
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[b.clone()]),
+                                                                body.clone(),
                                                                 body_minus_env.clone(),
-                                                                Scm::False,
-                                                            ])
-                                                    }
-                                                })
-                                            },
-                                            bindings.clone(),
-                                        ]),
-                                    ];
-                                    // (let* () (make-scope params (sexpr->sequence body body-env tail?) args))
-
-                                    // (make-scope params (sexpr->sequence body body-env tail?) args)
-                                    imports::make_minus_scope
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            params.clone(),
-                                            // (sexpr->sequence body body-env tail?)
-                                            globals::sexpr_minus__g_sequence
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    body.clone(),
-                                                    body_minus_env.clone(),
-                                                    tail_p.clone(),
-                                                ]),
-                                            args_.clone(),
-                                        ])
+                                                                tail_p.clone(),
+                                                            ]),
+                                                        args_.clone(),
+                                                    ])
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1693,7 +1776,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sexpr->scope-let bindings body env tail?) (let* ((param* (map (lambda (b) (car b)) bindings)) (arg* (map (lambda (b) (cadr b)) bindings))) (sexpr->fixlet param* body arg* env tail?)))
+        // (define (sexpr->scope-let bindings body env tail?) (let* ((param* (map (lambda (b) (car b)) bindings)) (arg* (map (lambda (b) (cadr b)) bindings)) (func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?)))
         globals::sexpr_minus__g_scope_minus_let.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -1704,9 +1787,9 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     let body = args[1].clone();
                     let env = args[2].clone();
                     let tail_p = args[3].clone();
-                    // (letrec () (let* ((param* (map (lambda (b) (car b)) bindings)) (arg* (map (lambda (b) (cadr b)) bindings))) (sexpr->fixlet param* body arg* env tail?)))
+                    // (letrec () (let* ((param* (map (lambda (b) (car b)) bindings)) (arg* (map (lambda (b) (cadr b)) bindings)) (func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?)))
                     {
-                        // (let* ((param* (map (lambda (b) (car b)) bindings)) (arg* (map (lambda (b) (cadr b)) bindings))) (sexpr->fixlet param* body arg* env tail?))
+                        // (let* ((param* (map (lambda (b) (car b)) bindings)) (arg* (map (lambda (b) (cadr b)) bindings)) (func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?))
                         {
                             let [param_star_] = [
                                 // (map (lambda (b) (car b)) bindings)
@@ -1729,41 +1812,62 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     bindings.clone(),
                                 ]),
                             ];
-                            // (let* ((arg* (map (lambda (b) (cadr b)) bindings))) (sexpr->fixlet param* body arg* env tail?))
+                            // (letrec () (let* ((arg* (map (lambda (b) (cadr b)) bindings)) (func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?)))
                             {
-                                let [arg_star_] = [
-                                    // (map (lambda (b) (cadr b)) bindings)
-                                    imports::map.with(|value| value.get()).invoke(&[
+                                // (let* ((arg* (map (lambda (b) (cadr b)) bindings)) (func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?))
+                                {
+                                    let [arg_star_] = [
+                                        // (map (lambda (b) (cadr b)) bindings)
+                                        imports::map.with(|value| value.get()).invoke(&[
+                                            {
+                                                Scm::func(move |args: &[Scm]| {
+                                                    if args.len() != 1 {
+                                                        panic!("invalid arity")
+                                                    }
+                                                    let b = args[0].clone();
+                                                    // (letrec () (cadr b))
+                                                    {
+                                                        // (cadr b)
+                                                        imports::cadr
+                                                            .with(|value| value.get())
+                                                            .invoke(&[b.clone()])
+                                                    }
+                                                })
+                                            },
+                                            bindings.clone(),
+                                        ]),
+                                    ];
+                                    // (letrec () (let* ((func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?)))
+                                    {
+                                        // (let* ((func (sexpr->abstraction param* body env))) (sexpr->fixlet func arg* env tail?))
                                         {
-                                            Scm::func(move |args: &[Scm]| {
-                                                if args.len() != 1 {
-                                                    panic!("invalid arity")
-                                                }
-                                                let b = args[0].clone();
-                                                // (letrec () (cadr b))
-                                                {
-                                                    // (cadr b)
-                                                    imports::cadr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[b.clone()])
-                                                }
-                                            })
-                                        },
-                                        bindings.clone(),
-                                    ]),
-                                ];
-                                // (let* () (sexpr->fixlet param* body arg* env tail?))
+                                            let [func] = [
+                                                // (sexpr->abstraction param* body env)
+                                                globals::sexpr_minus__g_abstraction
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        param_star_.clone(),
+                                                        body.clone(),
+                                                        env.clone(),
+                                                    ]),
+                                            ];
+                                            // (letrec () (let* () (sexpr->fixlet func arg* env tail?)))
+                                            {
+                                                // (let* () (sexpr->fixlet func arg* env tail?))
 
-                                // (sexpr->fixlet param* body arg* env tail?)
-                                globals::sexpr_minus__g_fixlet
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        param_star_.clone(),
-                                        body.clone(),
-                                        arg_star_.clone(),
-                                        env.clone(),
-                                        tail_p.clone(),
-                                    ])
+                                                // (sexpr->fixlet func arg* env tail?)
+                                                globals::sexpr_minus__g_fixlet
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        func.clone(),
+                                                        arg_star_.clone(),
+                                                        env.clone(),
+                                                        tail_p.clone(),
+                                                    ])
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1794,121 +1898,134 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     .with(|value| value.get())
                                     .invoke(&[body.clone()]),
                             ];
-                            if (
-                                // (dotted-list? param*)
-                                imports::dotted_minus_list_p
-                                    .with(|value| value.get())
-                                    .invoke(&[param_star_.clone()])
-                            )
-                            .is_true()
+                            // (letrec () (if (dotted-list? param*) (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))))
                             {
-                                // (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t)))
-                                imports::make_minus_closure
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))
-                                        imports::make_minus_vararg_minus_abstraction
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (proper-list-part param*)
-                                                imports::proper_minus_list_minus_part
-                                                    .with(|value| value.get())
-                                                    .invoke(&[param_star_.clone()]),
-                                                // (last-cdr param*)
-                                                imports::last_minus_cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[param_star_.clone()]),
-                                                // (map (lambda (p) (lookup p local-env)) (proper-list-part param*))
-                                                imports::map.with(|value| value.get()).invoke(&[
-                                                    {
-                                                        let local_minus_env =
-                                                            local_minus_env.clone();
-                                                        Scm::func(move |args: &[Scm]| {
-                                                            if args.len() != 1 {
-                                                                panic!("invalid arity")
-                                                            }
-                                                            let p = args[0].clone();
-                                                            // (letrec () (lookup p local-env))
-                                                            {
-                                                                // (lookup p local-env)
-                                                                imports::lookup
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        p.clone(),
-                                                                        local_minus_env.clone(),
-                                                                    ])
-                                                            }
-                                                        })
-                                                    },
+                                if (
+                                    // (dotted-list? param*)
+                                    imports::dotted_minus_list_p
+                                        .with(|value| value.get())
+                                        .invoke(&[param_star_.clone()])
+                                )
+                                .is_true()
+                                {
+                                    // (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t)))
+                                    imports::make_minus_closure
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))
+                                            imports::make_minus_vararg_minus_abstraction
+                                                .with(|value| value.get())
+                                                .invoke(&[
                                                     // (proper-list-part param*)
                                                     imports::proper_minus_list_minus_part
                                                         .with(|value| value.get())
                                                         .invoke(&[param_star_.clone()]),
-                                                ]),
-                                                // (lookup (last-cdr param*) local-env)
-                                                imports::lookup.with(|value| value.get()).invoke(
-                                                    &[
-                                                        // (last-cdr param*)
-                                                        imports::last_minus_cdr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[param_star_.clone()]),
-                                                        local_minus_env.clone(),
-                                                    ],
-                                                ),
-                                                // (sexpr->sequence body local-env #t)
-                                                globals::sexpr_minus__g_sequence
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        body.clone(),
-                                                        local_minus_env.clone(),
-                                                        Scm::True,
-                                                    ]),
-                                            ]),
-                                    ])
-                            } else {
-                                // (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))
-                                imports::make_minus_closure
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))
-                                        imports::make_minus_abstraction
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                param_star_.clone(),
-                                                // (map (lambda (p) (lookup p local-env)) param*)
-                                                imports::map.with(|value| value.get()).invoke(&[
-                                                    {
-                                                        let local_minus_env =
-                                                            local_minus_env.clone();
-                                                        Scm::func(move |args: &[Scm]| {
-                                                            if args.len() != 1 {
-                                                                panic!("invalid arity")
-                                                            }
-                                                            let p = args[0].clone();
-                                                            // (letrec () (lookup p local-env))
+                                                    // (last-cdr param*)
+                                                    imports::last_minus_cdr
+                                                        .with(|value| value.get())
+                                                        .invoke(&[param_star_.clone()]),
+                                                    // (map (lambda (p) (lookup p local-env)) (proper-list-part param*))
+                                                    imports::map.with(|value| value.get()).invoke(
+                                                        &[
                                                             {
-                                                                // (lookup p local-env)
-                                                                imports::lookup
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        p.clone(),
-                                                                        local_minus_env.clone(),
-                                                                    ])
-                                                            }
-                                                        })
-                                                    },
-                                                    param_star_.clone(),
+                                                                let local_minus_env =
+                                                                    local_minus_env.clone();
+                                                                Scm::func(move |args: &[Scm]| {
+                                                                    if args.len() != 1 {
+                                                                        panic!("invalid arity")
+                                                                    }
+                                                                    let p = args[0].clone();
+                                                                    // (letrec () (lookup p local-env))
+                                                                    {
+                                                                        // (lookup p local-env)
+                                                                        imports::lookup
+                                                                            .with(|value| {
+                                                                                value.get()
+                                                                            })
+                                                                            .invoke(&[
+                                                                                p.clone(),
+                                                                                local_minus_env
+                                                                                    .clone(),
+                                                                            ])
+                                                                    }
+                                                                })
+                                                            },
+                                                            // (proper-list-part param*)
+                                                            imports::proper_minus_list_minus_part
+                                                                .with(|value| value.get())
+                                                                .invoke(&[param_star_.clone()]),
+                                                        ],
+                                                    ),
+                                                    // (lookup (last-cdr param*) local-env)
+                                                    imports::lookup
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (last-cdr param*)
+                                                            imports::last_minus_cdr
+                                                                .with(|value| value.get())
+                                                                .invoke(&[param_star_.clone()]),
+                                                            local_minus_env.clone(),
+                                                        ]),
+                                                    // (sexpr->sequence body local-env #t)
+                                                    globals::sexpr_minus__g_sequence
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            body.clone(),
+                                                            local_minus_env.clone(),
+                                                            Scm::True,
+                                                        ]),
                                                 ]),
-                                                // (sexpr->sequence body local-env #t)
-                                                globals::sexpr_minus__g_sequence
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        body.clone(),
-                                                        local_minus_env.clone(),
-                                                        Scm::True,
-                                                    ]),
-                                            ]),
-                                    ])
+                                        ])
+                                } else {
+                                    // (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))
+                                    imports::make_minus_closure
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))
+                                            imports::make_minus_abstraction
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    param_star_.clone(),
+                                                    // (map (lambda (p) (lookup p local-env)) param*)
+                                                    imports::map.with(|value| value.get()).invoke(
+                                                        &[
+                                                            {
+                                                                let local_minus_env =
+                                                                    local_minus_env.clone();
+                                                                Scm::func(move |args: &[Scm]| {
+                                                                    if args.len() != 1 {
+                                                                        panic!("invalid arity")
+                                                                    }
+                                                                    let p = args[0].clone();
+                                                                    // (letrec () (lookup p local-env))
+                                                                    {
+                                                                        // (lookup p local-env)
+                                                                        imports::lookup
+                                                                            .with(|value| {
+                                                                                value.get()
+                                                                            })
+                                                                            .invoke(&[
+                                                                                p.clone(),
+                                                                                local_minus_env
+                                                                                    .clone(),
+                                                                            ])
+                                                                    }
+                                                                })
+                                                            },
+                                                            param_star_.clone(),
+                                                        ],
+                                                    ),
+                                                    // (sexpr->sequence body local-env #t)
+                                                    globals::sexpr_minus__g_sequence
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            body.clone(),
+                                                            local_minus_env.clone(),
+                                                            Scm::True,
+                                                        ]),
+                                                ]),
+                                        ])
+                                }
                             }
                         }
                     }
@@ -1981,23 +2098,26 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 Scm::False,
                                             ]),
                                     ];
-                                    // (make-sequence first (sexpr->sequence (cdr expr*) env tail?))
-                                    imports::make_minus_sequence
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            first.clone(),
-                                            // (sexpr->sequence (cdr expr*) env tail?)
-                                            globals::sexpr_minus__g_sequence
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (cdr expr*)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[expr_star_.clone()]),
-                                                    env.clone(),
-                                                    tail_p.clone(),
-                                                ]),
-                                        ])
+                                    // (letrec () (make-sequence first (sexpr->sequence (cdr expr*) env tail?)))
+                                    {
+                                        // (make-sequence first (sexpr->sequence (cdr expr*) env tail?))
+                                        imports::make_minus_sequence
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                first.clone(),
+                                                // (sexpr->sequence (cdr expr*) env tail?)
+                                                globals::sexpr_minus__g_sequence
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        // (cdr expr*)
+                                                        imports::cdr
+                                                            .with(|value| value.get())
+                                                            .invoke(&[expr_star_.clone()]),
+                                                        env.clone(),
+                                                        tail_p.clone(),
+                                                    ]),
+                                            ])
+                                    }
                                 }
                             }
                         }
@@ -2091,51 +2211,60 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             Scm::False,
                                         ]),
                                 ];
-                                // (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
+                                // (letrec () (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest)))
                                 {
-                                    let [sequence] = [
-                                        // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
-                                        globals::sexpr_minus__g_sequence
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cond-clause-sequence (car clauses))
-                                                globals::cond_minus_clause_minus_sequence
-                                                    .with(|value| value.get())
-                                                    .invoke(&[
-                                                        // (car clauses)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[clauses.clone()]),
-                                                    ]),
-                                                env.clone(),
-                                                tail_p.clone(),
-                                            ]),
-                                    ];
-                                    // (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
+                                    // (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
                                     {
-                                        let [rest] = [
-                                            // (sexpr->cond (cdr clauses) env tail?)
-                                            globals::sexpr_minus__g_cond
+                                        let [sequence] = [
+                                            // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
+                                            globals::sexpr_minus__g_sequence
                                                 .with(|value| value.get())
                                                 .invoke(&[
-                                                    // (cdr clauses)
-                                                    imports::cdr
+                                                    // (cond-clause-sequence (car clauses))
+                                                    globals::cond_minus_clause_minus_sequence
                                                         .with(|value| value.get())
-                                                        .invoke(&[clauses.clone()]),
+                                                        .invoke(&[
+                                                            // (car clauses)
+                                                            imports::car
+                                                                .with(|value| value.get())
+                                                                .invoke(&[clauses.clone()]),
+                                                        ]),
                                                     env.clone(),
                                                     tail_p.clone(),
                                                 ]),
                                         ];
-                                        // (let* () (make-alternative condition sequence rest))
+                                        // (letrec () (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest)))
+                                        {
+                                            // (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
+                                            {
+                                                let [rest] = [
+                                                    // (sexpr->cond (cdr clauses) env tail?)
+                                                    globals::sexpr_minus__g_cond
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (cdr clauses)
+                                                            imports::cdr
+                                                                .with(|value| value.get())
+                                                                .invoke(&[clauses.clone()]),
+                                                            env.clone(),
+                                                            tail_p.clone(),
+                                                        ]),
+                                                ];
+                                                // (letrec () (let* () (make-alternative condition sequence rest)))
+                                                {
+                                                    // (let* () (make-alternative condition sequence rest))
 
-                                        // (make-alternative condition sequence rest)
-                                        imports::make_minus_alternative
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                condition.clone(),
-                                                sequence.clone(),
-                                                rest.clone(),
-                                            ])
+                                                    // (make-alternative condition sequence rest)
+                                                    imports::make_minus_alternative
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            condition.clone(),
+                                                            sequence.clone(),
+                                                            rest.clone(),
+                                                        ])
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2535,19 +2664,22 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         ),
                                     ]),
                             ];
-                            if (full_minus_path.clone()).is_true() {
-                                // (read (open-input-file full-path))
-                                imports::read.with(|value| value.get()).invoke(&[
-                                    // (open-input-file full-path)
-                                    imports::open_minus_input_minus_file
+                            // (letrec () (if full-path (read (open-input-file full-path)) (error "Unknown library" lib)))
+                            {
+                                if (full_minus_path.clone()).is_true() {
+                                    // (read (open-input-file full-path))
+                                    imports::read.with(|value| value.get()).invoke(&[
+                                        // (open-input-file full-path)
+                                        imports::open_minus_input_minus_file
+                                            .with(|value| value.get())
+                                            .invoke(&[full_minus_path.clone()]),
+                                    ])
+                                } else {
+                                    // (error "Unknown library" lib)
+                                    imports::error
                                         .with(|value| value.get())
-                                        .invoke(&[full_minus_path.clone()]),
-                                ])
-                            } else {
-                                // (error "Unknown library" lib)
-                                imports::error
-                                    .with(|value| value.get())
-                                    .invoke(&[Scm::from("Unknown library"), lib.clone()])
+                                        .invoke(&[Scm::from("Unknown library"), lib.clone()])
+                                }
                             }
                         }
                     }
@@ -2590,29 +2722,37 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                             relative_minus_path.clone(),
                                         ]),
                                 ];
-                                // (let* ((full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
+                                // (letrec () (let* ((full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
                                 {
-                                    let [full_minus_path] = [
-                                        // (find-library-ext path extension*)
-                                        globals::find_minus_library_minus_ext
-                                            .with(|value| value.get())
-                                            .invoke(&[path.clone(), extension_star_.clone()]),
-                                    ];
-                                    // (let* () (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
-                                    if (full_minus_path.clone()).is_true() {
-                                        full_minus_path.clone()
-                                    } else {
-                                        // (find-library (cdr base-path*) relative-path extension*)
-                                        globals::find_minus_library
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cdr base-path*)
-                                                imports::cdr
+                                    // (let* ((full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
+                                    {
+                                        let [full_minus_path] = [
+                                            // (find-library-ext path extension*)
+                                            globals::find_minus_library_minus_ext
+                                                .with(|value| value.get())
+                                                .invoke(&[path.clone(), extension_star_.clone()]),
+                                        ];
+                                        // (letrec () (let* () (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
+                                        {
+                                            // (let* () (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
+                                            if (full_minus_path.clone()).is_true() {
+                                                full_minus_path.clone()
+                                            } else {
+                                                // (find-library (cdr base-path*) relative-path extension*)
+                                                globals::find_minus_library
                                                     .with(|value| value.get())
-                                                    .invoke(&[base_minus_path_star_.clone()]),
-                                                relative_minus_path.clone(),
-                                                extension_star_.clone(),
-                                            ])
+                                                    .invoke(&[
+                                                        // (cdr base-path*)
+                                                        imports::cdr
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                base_minus_path_star_.clone()
+                                                            ]),
+                                                        relative_minus_path.clone(),
+                                                        extension_star_.clone(),
+                                                    ])
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2656,26 +2796,29 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 .invoke(&[extension_star_.clone()]),
                                         ]),
                                 ];
-                                if (
-                                    // (file-exists? full-path)
-                                    imports::file_minus_exists_p
-                                        .with(|value| value.get())
-                                        .invoke(&[full_minus_path.clone()])
-                                )
-                                .is_true()
+                                // (letrec () (if (file-exists? full-path) full-path (find-library-ext path (cdr extension*))))
                                 {
-                                    full_minus_path.clone()
-                                } else {
-                                    // (find-library-ext path (cdr extension*))
-                                    globals::find_minus_library_minus_ext
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            path.clone(),
-                                            // (cdr extension*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[extension_star_.clone()]),
-                                        ])
+                                    if (
+                                        // (file-exists? full-path)
+                                        imports::file_minus_exists_p
+                                            .with(|value| value.get())
+                                            .invoke(&[full_minus_path.clone()])
+                                    )
+                                    .is_true()
+                                    {
+                                        full_minus_path.clone()
+                                    } else {
+                                        // (find-library-ext path (cdr extension*))
+                                        globals::find_minus_library_minus_ext
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                path.clone(),
+                                                // (cdr extension*)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[extension_star_.clone()]),
+                                            ])
+                                    }
                                 }
                             }
                         }
@@ -3181,19 +3324,22 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                     Scm::Nil,
                                 ]),
                             ];
-                            // (make-testcase (cadr case) (sexpr->ast body env #f))
-                            imports::make_minus_testcase
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    // (cadr case)
-                                    imports::cadr
-                                        .with(|value| value.get())
-                                        .invoke(&[case.clone()]),
-                                    // (sexpr->ast body env #f)
-                                    globals::sexpr_minus__g_ast
-                                        .with(|value| value.get())
-                                        .invoke(&[body.clone(), env.clone(), Scm::False]),
-                                ])
+                            // (letrec () (make-testcase (cadr case) (sexpr->ast body env #f)))
+                            {
+                                // (make-testcase (cadr case) (sexpr->ast body env #f))
+                                imports::make_minus_testcase
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cadr case)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[case.clone()]),
+                                        // (sexpr->ast body env #f)
+                                        globals::sexpr_minus__g_ast
+                                            .with(|value| value.get())
+                                            .invoke(&[body.clone(), env.clone(), Scm::False]),
+                                    ])
+                            }
                         }
                     }
                 })
@@ -4094,42 +4240,14 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .with(|value| value.get())
                                         .invoke(&[ass.clone()]),
                                 ];
-                                // (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))
-                                globals::append.with(|value| value.get()).invoke(&[
-                                    // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
-                                    globals::sort.with(|value| value.get()).invoke(&[
-                                        cmp.clone(),
-                                        // (filter (lambda (x) (cmp x pivot)) (cdr ass))
-                                        imports::filter.with(|value| value.get()).invoke(&[
-                                            {
-                                                let cmp = cmp.clone();
-                                                let pivot = pivot.clone();
-                                                Scm::func(move |args: &[Scm]| {
-                                                    if args.len() != 1 {
-                                                        panic!("invalid arity")
-                                                    }
-                                                    let x = args[0].clone();
-                                                    // (letrec () (cmp x pivot))
-                                                    {
-                                                        // (cmp x pivot)
-                                                        cmp.clone()
-                                                            .invoke(&[x.clone(), pivot.clone()])
-                                                    }
-                                                })
-                                            },
-                                            // (cdr ass)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[ass.clone()]),
-                                        ]),
-                                    ]),
-                                    // (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        pivot.clone(),
-                                        // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
+                                // (letrec () (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))))
+                                {
+                                    // (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))
+                                    globals::append.with(|value| value.get()).invoke(&[
+                                        // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
                                         globals::sort.with(|value| value.get()).invoke(&[
                                             cmp.clone(),
-                                            // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
+                                            // (filter (lambda (x) (cmp x pivot)) (cdr ass))
                                             imports::filter.with(|value| value.get()).invoke(&[
                                                 {
                                                     let cmp = cmp.clone();
@@ -4139,18 +4257,11 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                             panic!("invalid arity")
                                                         }
                                                         let x = args[0].clone();
-                                                        // (letrec () (not (cmp x pivot)))
+                                                        // (letrec () (cmp x pivot))
                                                         {
-                                                            // (not (cmp x pivot))
-                                                            imports::not
-                                                                .with(|value| value.get())
-                                                                .invoke(&[
-                                                                    // (cmp x pivot)
-                                                                    cmp.clone().invoke(&[
-                                                                        x.clone(),
-                                                                        pivot.clone(),
-                                                                    ]),
-                                                                ])
+                                                            // (cmp x pivot)
+                                                            cmp.clone()
+                                                                .invoke(&[x.clone(), pivot.clone()])
                                                         }
                                                     })
                                                 },
@@ -4160,8 +4271,48 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     .invoke(&[ass.clone()]),
                                             ]),
                                         ]),
-                                    ]),
-                                ])
+                                        // (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            pivot.clone(),
+                                            // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
+                                            globals::sort.with(|value| value.get()).invoke(&[
+                                                cmp.clone(),
+                                                // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
+                                                imports::filter.with(|value| value.get()).invoke(
+                                                    &[
+                                                        {
+                                                            let cmp = cmp.clone();
+                                                            let pivot = pivot.clone();
+                                                            Scm::func(move |args: &[Scm]| {
+                                                                if args.len() != 1 {
+                                                                    panic!("invalid arity")
+                                                                }
+                                                                let x = args[0].clone();
+                                                                // (letrec () (not (cmp x pivot)))
+                                                                {
+                                                                    // (not (cmp x pivot))
+                                                                    imports::not
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            // (cmp x pivot)
+                                                                            cmp.clone().invoke(&[
+                                                                                x.clone(),
+                                                                                pivot.clone(),
+                                                                            ]),
+                                                                        ])
+                                                                }
+                                                            })
+                                                        },
+                                                        // (cdr ass)
+                                                        imports::cdr
+                                                            .with(|value| value.get())
+                                                            .invoke(&[ass.clone()]),
+                                                    ],
+                                                ),
+                                            ]),
+                                        ]),
+                                    ])
+                                }
                             }
                         } else {
                             Scm::Nil

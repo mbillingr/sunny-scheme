@@ -1,5 +1,6 @@
 (define-library (sunny ast)
-  (export make-abstraction
+  (export ast-node?
+          make-abstraction
           make-alternative
           make-application
           make-args
@@ -35,6 +36,9 @@
           (sunny variable))
 
   (begin
+    (define (ast-node? obj)
+      (procedure? obj))
+
     (define (make-comment comment node)
       (define (repr)
         (cons 'COMMENT
