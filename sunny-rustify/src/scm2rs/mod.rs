@@ -123,7 +123,7 @@ pub fn main() {
                     .invoke(&[globals::input_minus_file_minus_name.with(|value| value.get())]),
             )
         });
-        // (define (load-sexpr) (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr)))))
+        // (define (load-sexpr) ...)
         globals::load_minus_sexpr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

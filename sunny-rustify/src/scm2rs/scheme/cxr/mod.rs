@@ -70,7 +70,7 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (caaar x) (car (caar x)))
+        // (define (caaar x) ...)
         globals::caaar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -89,7 +89,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caadr x) (car (cadr x)))
+        // (define (caadr x) ...)
         globals::caadr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -108,7 +108,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cadar x) (car (cdar x)))
+        // (define (cadar x) ...)
         globals::cadar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -127,7 +127,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caddr x) (car (cddr x)))
+        // (define (caddr x) ...)
         globals::caddr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -146,7 +146,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdaar x) (cdr (caar x)))
+        // (define (cdaar x) ...)
         globals::cdaar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -165,7 +165,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdadr x) (cdr (cadr x)))
+        // (define (cdadr x) ...)
         globals::cdadr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -184,7 +184,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cddar x) (cdr (cdar x)))
+        // (define (cddar x) ...)
         globals::cddar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -203,7 +203,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdddr x) (cdr (cddr x)))
+        // (define (cdddr x) ...)
         globals::cdddr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -222,7 +222,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caaaar x) (caar (caar x)))
+        // (define (caaaar x) ...)
         globals::caaaar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -241,7 +241,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caaadr x) (caar (cadr x)))
+        // (define (caaadr x) ...)
         globals::caaadr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -260,7 +260,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caadar x) (caar (cdar x)))
+        // (define (caadar x) ...)
         globals::caadar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -279,7 +279,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caaddr x) (caar (cddr x)))
+        // (define (caaddr x) ...)
         globals::caaddr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -298,7 +298,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cadaar x) (cadr (caar x)))
+        // (define (cadaar x) ...)
         globals::cadaar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -317,7 +317,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cadadr x) (cadr (cadr x)))
+        // (define (cadadr x) ...)
         globals::cadadr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -336,7 +336,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (caddar x) (cadr (cdar x)))
+        // (define (caddar x) ...)
         globals::caddar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -355,7 +355,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cadddr x) (cadr (cddr x)))
+        // (define (cadddr x) ...)
         globals::cadddr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -374,7 +374,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdaaar x) (cdar (caar x)))
+        // (define (cdaaar x) ...)
         globals::cdaaar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -393,7 +393,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdaadr x) (cdar (cadr x)))
+        // (define (cdaadr x) ...)
         globals::cdaadr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -412,7 +412,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdadar x) (cdar (cdar x)))
+        // (define (cdadar x) ...)
         globals::cdadar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -431,7 +431,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdaddr x) (cdar (cddr x)))
+        // (define (cdaddr x) ...)
         globals::cdaddr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -450,7 +450,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cddaar x) (cddr (caar x)))
+        // (define (cddaar x) ...)
         globals::cddaar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -469,7 +469,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cddadr x) (cddr (cadr x)))
+        // (define (cddadr x) ...)
         globals::cddadr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -488,7 +488,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cdddar x) (cddr (cdar x)))
+        // (define (cdddar x) ...)
         globals::cdddar.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -507,7 +507,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cddddr x) (cddr (cddr x)))
+        // (define (cddddr x) ...)
         globals::cddddr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

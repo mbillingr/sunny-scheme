@@ -37,9 +37,9 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sort: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sort"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static register_minus_libraries: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL register-libraries"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static scm_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scm->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static program_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL program->ast"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static scm_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scm->ast"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -72,7 +72,7 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (scm->ast exp*) (if (library? (car exp*)) (library->ast (library-name (car exp*)) (library-decls (car exp*)) (list (quote ()))) (program->ast exp*)))
+        // (define (scm->ast exp*) ...)
         globals::scm_minus__g_ast.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -128,7 +128,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (program->ast exp*) (define global-env (make-core-env)) (define library-env (list (quote ()))) (define (process-imports exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))) (process-imports exp* (quote ()) (make-set)))
+        // (define (program->ast exp*) ...)
         globals::program_minus__g_ast.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();
 // (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
 {let global_minus_env = Scm::uninitialized().into_boxed();
@@ -216,7 +216,7 @@ imports::car.with(|value| value.get()).invoke(&[library_minus_env.get(),]),]),])
 process_minus_imports.get().invoke(&[exp_star_.clone(),Scm::Nil,
 // (make-set)
 imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
-        // (define (library->ast name exp* library-env) (library-decls->ast name exp* (make-set) (make-nop) (make-core-env) library-env (quote ()) (quote ())))
+        // (define (library->ast name exp* library-env) ...)
         globals::library_minus__g_ast.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -254,7 +254,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (library-decls->ast name exp* init body global-env library-env imports exports) (cond ((null? exp*) (make-library name (cdr global-env) init body imports exports)) ((eq? (quote export) (caar exp*)) (library-decls->ast name (cdr exp*) init body global-env library-env imports (append exports (sexpr->export (cdar exp*) global-env)))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (library-decls->ast name (cdr exp*) (set-add* init (import-libnames (car exp*))) body global-env library-env (append imports (sexpr->import (cdar exp*) global-env)) exports)) ((eq? (quote begin) (caar exp*)) (library-decls->ast name (cdr exp*) init (make-sequence body (sexpr->sequence (cdar exp*) global-env #f)) global-env library-env imports exports))))
+        // (define (library-decls->ast name exp* init body global-env library-env imports exports) ...)
         globals::library_minus_decls_minus__g_ast.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -457,7 +457,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (register-libraries libs library-env) (cond ((null? libs) (quote DONE)) ((equal? (quote (sunny testing)) (car libs)) (register-libraries (cdr libs) library-env)) ((assoc (car libs) (car library-env)) (register-libraries (cdr libs) library-env)) (else (let* ((lib (get-lib (car libs))) (libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env)))) (register-libraries (cdr libs) library-env))))
+        // (define (register-libraries libs library-env) ...)
         globals::register_minus_libraries.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -627,7 +627,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (assoc obj seq) (if (pair? seq) (if (equal? obj (caar seq)) (car seq) (assoc obj (cdr seq))) #f))
+        // (define (assoc obj seq) ...)
         globals::assoc.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -679,7 +679,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (append seq-a seq-b) (if (pair? seq-a) (cons (car seq-a) (append (cdr seq-a) seq-b)) seq-b))
+        // (define (append seq-a seq-b) ...)
         globals::append.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -720,7 +720,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                 })
             })
         });
-        // (define (sort cmp ass) (if (pair? ass) (let ((pivot (car ass))) (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))) (quote ())))
+        // (define (sort cmp ass) ...)
         globals::sort.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

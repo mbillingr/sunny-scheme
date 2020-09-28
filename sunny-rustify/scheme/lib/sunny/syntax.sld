@@ -14,6 +14,7 @@
             (new-keyword 'and expand-and)
             (new-keyword 'begin expand-begin)
             (new-keyword 'cond expand-cond)
+            (new-keyword 'define expand-define)
             (new-keyword 'if expand-if)
             (new-keyword 'quote expand-quote)
             (new-keyword 'set! expand-set!)
@@ -30,6 +31,10 @@
     (define (expand-cond exp env tail?)
       (astify-comment '(cond ...)
         (astify-cond (cond-clauses exp) env tail?)))
+
+    (define (expand-define exp env tail?)
+      (astify-comment (cons 'define (definition-signature exp))
+        (astify-definition (definition-variable exp) (definition-value exp) env)))
 
     (define (expand-if exp env tail?)
       (astify-alternative

@@ -27,14 +27,14 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static show: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL show"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static showln: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL showln"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static as_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL as-port"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static println: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL println"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static as_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL as-port"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_block: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-block"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-port"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static close_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL close-module"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-path"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-port"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static open_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL open-submodule"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-path"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static open_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL open-module"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static module_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module?"))}
 }
@@ -55,7 +55,7 @@ pub fn initialize() {
     crate::sunny::rust::rustify::initialize();
     {
         (/*NOP*/);
-        // (define (module? obj) (and (pair? obj) (eq? (quote module) (car obj))))
+        // (define (module? obj) ...)
         globals::module_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -89,7 +89,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (open-module name base-path) (let ((path (string-append base-path "/" (rustify-libname name)))) (create-directory* path) (list (quote module) (open-output-file (string-append path "/mod.rs")) path)))
+        // (define (open-module name base-path) ...)
         globals::open_minus_module.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -143,7 +143,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (open-submodule name module) (open-module name (module-path module)))
+        // (define (open-submodule name module) ...)
         globals::open_minus_submodule.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -168,7 +168,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (close-module module) (close-port (module-port module)))
+        // (define (close-module module) ...)
         globals::close_minus_module.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -191,7 +191,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-port module) (cadr module))
+        // (define (module-port module) ...)
         globals::module_minus_port.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -209,7 +209,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-path module) (caddr module))
+        // (define (module-path module) ...)
         globals::module_minus_path.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -227,7 +227,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (rust-block module code) (print module "{") (code) (print module "}"))
+        // (define (rust-block module code) ...)
         globals::rust_minus_block.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -254,7 +254,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (println f . args) (for-each (lambda (a) (display a (as-port f))) args) (newline (as-port f)))
+        // (define (println f . args) ...)
         globals::println.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -302,7 +302,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (print f . args) (for-each (lambda (a) (display a (as-port f))) args))
+        // (define (print f . args) ...)
         globals::print.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -341,7 +341,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (showln f . args) (for-each (lambda (a) (write a (as-port f))) args) (newline (as-port f)))
+        // (define (showln f . args) ...)
         globals::showln.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -389,7 +389,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (show f . args) (for-each (lambda (a) (write a (as-port f))) args))
+        // (define (show f . args) ...)
         globals::show.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -428,7 +428,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (as-port port-or-module) (if (module? port-or-module) (module-port port-or-module) port-or-module))
+        // (define (as-port port-or-module) ...)
         globals::as_minus_port.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

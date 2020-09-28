@@ -19,8 +19,8 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_union: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-union"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove*"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_do_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-do*"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add*"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_do_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-do*"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_empty_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-empty?"))}
@@ -38,7 +38,7 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (make-set) (quote ()))
+        // (define (make-set) ...)
         globals::make_minus_set.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -52,7 +52,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-empty? set) (null? set))
+        // (define (set-empty? set) ...)
         globals::set_minus_empty_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -70,7 +70,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-add set item) (cond ((null? set) (cons item (quote ()))) ((equal? (car set) item) set) (else (cons (car set) (set-add (cdr set) item)))))
+        // (define (set-add set item) ...)
         globals::set_minus_add.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -128,7 +128,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-remove set item) (cond ((null? set) (quote ())) ((equal? (car set) item) (cdr set)) (else (cons (car set) (set-remove (cdr set) item)))))
+        // (define (set-remove set item) ...)
         globals::set_minus_remove.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -188,7 +188,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-add* set item*) (set-do* set-add set item*))
+        // (define (set-add* set item*) ...)
         globals::set_minus_add_star_.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -211,7 +211,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-remove* set item*) (set-do* set-remove set item*))
+        // (define (set-remove* set item*) ...)
         globals::set_minus_remove_star_.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -234,7 +234,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-do* func set item*) (if (null? item*) set (set-do* func (func set (car item*)) (cdr item*))))
+        // (define (set-do* func set item*) ...)
         globals::set_minus_do_star_.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -279,7 +279,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set-union set1 set2) (cond ((null? set1) set2) ((null? set2) set1) (else (set-add* set1 set2))))
+        // (define (set-union set1 set2) ...)
         globals::set_minus_union.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

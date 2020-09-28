@@ -30,7 +30,7 @@ pub fn initialize() {
     crate::sunny::utils::initialize();
     {
         (/*NOP*/);
-        // (define (rustify-identifier name) (define (char-map ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch))))) (define (append-all strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))) (cond ((eq? name (quote args)) "args_") ((eq? name (quote fn)) "fn_") ((eq? name (quote loop)) "loop_") ((eq? name (quote let)) "let_") ((eq? name (quote mut)) "mut_") ((eq? name (quote ref)) "ref_") ((eq? name (quote self)) "self_") (else (append-all (map char-map (string->list (symbol->string name)))))))
+        // (define (rustify-identifier name) ...)
         globals::rustify_minus_identifier.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -281,7 +281,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (rustify-libname name) (define (char-map ch) (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch))))) (define (append-all strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))) (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))))
+        // (define (rustify-libname name) ...)
         globals::rustify_minus_libname.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -424,7 +424,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (rustify-testname name) (define (char-map ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch))))) (define (append-all strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))) (append-all (filter (lambda (x) x) (map char-map (string->list name)))))
+        // (define (rustify-testname name) ...)
         globals::rustify_minus_testname.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

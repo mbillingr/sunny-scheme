@@ -17,18 +17,20 @@ pub mod exports {
     pub use super::globals::astify_minus_comment;
     pub use super::globals::astify_minus_cond;
     pub use super::globals::astify_minus_constant;
+    pub use super::globals::astify_minus_definition;
     pub use super::globals::astify_minus_sequence;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_definition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-definition"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-sequence"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assignment"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-alternative"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify"))}
 }
@@ -52,7 +54,7 @@ pub fn initialize() {
         // (define astify sexpr->ast)
         globals::astify
             .with(|value| value.set(imports::sexpr_minus__g_ast.with(|value| value.get())));
-        // (define (astify-alternative condition consequent alternative env tail?) (make-alternative (astify condition env #f) (astify consequent env tail?) (astify alternative env tail?)))
+        // (define (astify-alternative condition consequent alternative env tail?) ...)
         globals::astify_minus_alternative.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -93,7 +95,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (astify-and arg* env tail?) (cond ((null? arg*) (make-constant #t)) ((null? (cdr arg*)) (astify (car arg*) env tail?)) (else (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env)))))
+        // (define (astify-and arg* env tail?) ...)
         globals::astify_minus_and.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -173,7 +175,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (astify-assignment var-name value env) (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (variable-set-mutable! var) (make-assignment var-name var val)))
+        // (define (astify-assignment var-name value env) ...)
         globals::astify_minus_assignment.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -220,7 +222,7 @@ pub fn initialize() {
         // (define astify-comment make-comment)
         globals::astify_minus_comment
             .with(|value| value.set(imports::make_minus_comment.with(|value| value.get())));
-        // (define (astify-cond clause* env tail?) (cond ((null? clause*) (astify-unspecified)) ((cond-else-clause? (car clause*)) (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (else (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))))
+        // (define (astify-cond clause* env tail?) ...)
         globals::astify_minus_cond.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -351,7 +353,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (astify-constant exp env) (make-constant exp))
+        // (define (astify-constant exp env) ...)
         globals::astify_minus_constant.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -370,7 +372,51 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (astify-sequence exp* env tail?) (cond ((null? exp*) (error "empty sequence")) ((null? (cdr exp*)) (astify (car exp*) env tail?)) (else (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest)))))
+        // (define (astify-definition var-name value env) ...)
+        globals::astify_minus_definition.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let var_minus_name = args[0].clone();
+                    let value = args[1].clone();
+                    let env = args[2].clone();
+                    // (letrec () (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (global-add-definition! var val) (make-definition var-name var val)))
+                    {
+                        // (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (global-add-definition! var val) (make-definition var-name var val))
+                        {
+                            let [var, val] = [
+                                // (ensure-var! var-name env)
+                                imports::ensure_minus_var_i
+                                    .with(|value| value.get())
+                                    .invoke(&[var_minus_name.clone(), env.clone()]),
+                                // (astify value env #f)
+                                globals::astify.with(|value| value.get()).invoke(&[
+                                    value.clone(),
+                                    env.clone(),
+                                    Scm::False,
+                                ]),
+                            ];
+                            // (letrec () (global-add-definition! var val) (make-definition var-name var val))
+                            {
+                                {
+                                    // (global-add-definition! var val)
+                                    imports::global_minus_add_minus_definition_i
+                                        .with(|value| value.get())
+                                        .invoke(&[var.clone(), val.clone()]);
+                                    // (make-definition var-name var val)
+                                    imports::make_minus_definition
+                                        .with(|value| value.get())
+                                        .invoke(&[var_minus_name.clone(), var.clone(), val.clone()])
+                                }
+                            }
+                        }
+                    }
+                })
+            })
+        });
+        // (define (astify-sequence exp* env tail?) ...)
         globals::astify_minus_sequence.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -463,7 +509,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (astify-unspecified) (make-constant (quote *UNSPECIFIED*)))
+        // (define (astify-unspecified) ...)
         globals::astify_minus_unspecified.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

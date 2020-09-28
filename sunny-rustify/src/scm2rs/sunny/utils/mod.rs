@@ -22,8 +22,8 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static reduce: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reduce"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static filter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL filter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static dotted_minus_list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL dotted-list?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static atom_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL atom?"))}
 }
 
@@ -38,7 +38,7 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (atom? x) (if (pair? x) #f #t))
+        // (define (atom? x) ...)
         globals::atom_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -64,7 +64,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (dotted-list? seq) (not (null? (last-cdr seq))))
+        // (define (dotted-list? seq) ...)
         globals::dotted_minus_list_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -88,7 +88,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (last-cdr seq) (if (pair? seq) (last-cdr (cdr seq)) seq))
+        // (define (last-cdr seq) ...)
         globals::last_minus_cdr.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -120,7 +120,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (proper-list-part seq) (if (pair? seq) (cons (car seq) (proper-list-part (cdr seq))) (quote ())))
+        // (define (proper-list-part seq) ...)
         globals::proper_minus_list_minus_part.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -161,7 +161,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (filter f seq) (if (pair? seq) (if (f (car seq)) (cons (car seq) (filter f (cdr seq))) (filter f (cdr seq))) (quote ())))
+        // (define (filter f seq) ...)
         globals::filter.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -223,7 +223,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (reduce f init seq) (if (pair? seq) (reduce f (f init (car seq)) (cdr seq)) init))
+        // (define (reduce f init seq) ...)
         globals::reduce.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -266,7 +266,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (any f seq) (if (pair? seq) (if (f (car seq)) #t (any f (cdr seq))) #f))
+        // (define (any f seq) ...)
         globals::any.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -314,7 +314,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (bor first . args) (if first first (if (null? args) #f (apply bor args))))
+        // (define (bor first . args) ...)
         globals::bor.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

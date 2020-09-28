@@ -310,7 +310,7 @@ pub fn initialize() {
                     .invoke(&[globals::LocalVariable.with(|value| value.get())]),
             )
         });
-        // (define (keyword? obj) (and (table? obj) (ancestor? obj Keyword)))
+        // (define (keyword? obj) ...)
         globals::keyword_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -340,7 +340,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (make-keyword name handler) (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword))
+        // (define (make-keyword name handler) ...)
         globals::make_minus_keyword.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -386,7 +386,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (keyword-name kw) (get-field kw (quote name)))
+        // (define (keyword-name kw) ...)
         globals::keyword_minus_name.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -404,7 +404,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (keyword-handler kw) (get-field kw (quote handler)))
+        // (define (keyword-handler kw) ...)
         globals::keyword_minus_handler.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -422,7 +422,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (variable? obj) (ancestor? obj Variable))
+        // (define (variable? obj) ...)
         globals::variable_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -440,7 +440,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (global-variable? obj) (ancestor? obj GlobalVariable))
+        // (define (global-variable? obj) ...)
         globals::global_minus_variable_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -459,7 +459,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (import-variable? obj) (ancestor? obj ImportedVariable))
+        // (define (import-variable? obj) ...)
         globals::import_minus_variable_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -478,7 +478,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (local-variable? obj) (ancestor? obj LocalVariable))
+        // (define (local-variable? obj) ...)
         globals::local_minus_variable_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -497,7 +497,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (boxed-variable? obj) (ancestor? obj BoxedVariable))
+        // (define (boxed-variable? obj) ...)
         globals::boxed_minus_variable_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -516,7 +516,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (variable-mutable? var) (call-method var (quote mutable?)))
+        // (define (variable-mutable? var) ...)
         globals::variable_minus_mutable_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -534,7 +534,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (variable-set-mutable! var) (call-method var (quote set-mutable!)))
+        // (define (variable-set-mutable! var) ...)
         globals::variable_minus_set_minus_mutable_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -552,7 +552,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (global-add-definition! var val) (call-method var (quote add-definition!) val))
+        // (define (global-add-definition! var val) ...)
         globals::global_minus_add_minus_definition_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -571,7 +571,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (global-kind var) (get-field var (quote status)))
+        // (define (global-kind var) ...)
         globals::global_minus_kind.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -589,7 +589,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (local-boxify! var) (call-method var (quote into-boxed!)))
+        // (define (local-boxify! var) ...)
         globals::local_minus_boxify_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -607,7 +607,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (new-keyword name handler) (cons name (make-keyword name handler)))
+        // (define (new-keyword name handler) ...)
         globals::new_minus_keyword.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -630,7 +630,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (new-import name) (cons name (clone ImportedVariable)))
+        // (define (new-import name) ...)
         globals::new_minus_import.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -652,7 +652,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (new-global name) (cons name (clone GlobalVariable)))
+        // (define (new-global name) ...)
         globals::new_minus_global.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -674,7 +674,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (new-local name) (cons name (clone LocalVariable)))
+        // (define (new-local name) ...)
         globals::new_minus_local.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -696,7 +696,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (new-boxed name) (cons name (clone BoxedVariable)))
+        // (define (new-boxed name) ...)
         globals::new_minus_boxed.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -718,7 +718,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (replace-var! var new-var) (replace-table! var new-var))
+        // (define (replace-var! var new-var) ...)
         globals::replace_minus_var_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

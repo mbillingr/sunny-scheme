@@ -7,6 +7,7 @@
           cond-clause-sequence
           cond-else-clause?
           definition?
+          definition-signature
           definition-variable
           definition-value
           if-condition
@@ -54,6 +55,11 @@
     (define (definition? expr)
       (and (pair? expr)
            (eq? (car expr) 'define)))
+
+    (define (definition-signature expr)
+      (if (pair? (cadr expr))
+          (list (cadr expr) '...)
+          (cdr expr)))
 
     (define (definition-variable expr)
       (if (pair? (cadr expr))

@@ -19,9 +19,7 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((definition? exp) (wrap-sexpr exp
-                                        (sexpr->definition exp env)))
-                   ((abstraction? exp) (sexpr->abstraction (cadr exp)
+             (cond ((abstraction? exp) (sexpr->abstraction (cadr exp)
                                                            (cddr exp)
                                                            env))
                    ((eq? 'let (car exp)) (wrap-sexpr exp
@@ -66,14 +64,6 @@
     (define (sexpr->reference name env)
       (let ((var (ensure-var! name env)))
         (make-reference name var)))
-
-    (define (sexpr->definition exp env)
-      (let* ((name (definition-variable exp))
-             (value (definition-value exp))
-             (var (ensure-var! name env))
-             (val (sexpr->ast value env #f)))
-        (global-add-definition! var val)
-        (make-definition name var val)))
 
     (define (sexpr->application func arg* env tail?)
       (if (eq? 'ABSTRACTION (func 'kind))

@@ -15,6 +15,7 @@ pub mod exports {
     pub use super::globals::cond_minus_clause_minus_sequence;
     pub use super::globals::cond_minus_clauses;
     pub use super::globals::cond_minus_else_minus_clause_p;
+    pub use super::globals::definition_minus_signature;
     pub use super::globals::definition_minus_value;
     pub use super::globals::definition_minus_variable;
     pub use super::globals::definition_p;
@@ -35,14 +36,15 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static set_i_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set!-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static scan_minus_out_minus_defines: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scan-out-defines"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_libnames: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-libnames"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static if_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL if-alternative"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static if_minus_consequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL if-consequence"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static if_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL if-condition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-value"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-variable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_signature: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-signature"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_else_minus_clause_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-else-clause?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-sequence"))}
@@ -67,7 +69,7 @@ pub fn initialize() {
     crate::sunny::utils::initialize();
     {
         (/*NOP*/);
-        // (define (abstraction? expr) (and (pair? expr) (eq? (quote lambda) (car expr))))
+        // (define (abstraction? expr) ...)
         globals::abstraction_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -101,7 +103,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (and-args expr) (cdr expr))
+        // (define (and-args expr) ...)
         globals::and_minus_args.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -119,7 +121,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (begin-statements expr) (cdr expr))
+        // (define (begin-statements expr) ...)
         globals::begin_minus_statements.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -137,7 +139,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cond-clauses expr) (cdr expr))
+        // (define (cond-clauses expr) ...)
         globals::cond_minus_clauses.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -155,7 +157,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cond-clause-condition clause) (car clause))
+        // (define (cond-clause-condition clause) ...)
         globals::cond_minus_clause_minus_condition.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -173,7 +175,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cond-clause-sequence clause) (cdr clause))
+        // (define (cond-clause-sequence clause) ...)
         globals::cond_minus_clause_minus_sequence.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -191,7 +193,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (cond-else-clause? clause) (eq? (quote else) (car clause)))
+        // (define (cond-else-clause? clause) ...)
         globals::cond_minus_else_minus_clause_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -213,7 +215,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (definition? expr) (and (pair? expr) (eq? (car expr) (quote define))))
+        // (define (definition? expr) ...)
         globals::definition_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -247,7 +249,46 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (definition-variable expr) (if (pair? (cadr expr)) (caadr expr) (cadr expr)))
+        // (define (definition-signature expr) ...)
+        globals::definition_minus_signature.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (if (pair? (cadr expr)) (list (cadr expr) (quote ...)) (cdr expr)))
+                    {
+                        if (
+                            // (pair? (cadr expr))
+                            imports::pair_p.with(|value| value.get()).invoke(&[
+                                // (cadr expr)
+                                imports::cadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (list (cadr expr) (quote ...))
+                            imports::list.with(|value| value.get()).invoke(&[
+                                // (cadr expr)
+                                imports::cadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()]),
+                                Scm::symbol("..."),
+                            ])
+                        } else {
+                            // (cdr expr)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    }
+                })
+            })
+        });
+        // (define (definition-variable expr) ...)
         globals::definition_minus_variable.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -282,7 +323,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (definition-value expr) (if (pair? (cadr expr)) (cons (quote lambda) (cons (cdadr expr) (cddr expr))) (caddr expr)))
+        // (define (definition-value expr) ...)
         globals::definition_minus_value.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -328,7 +369,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (if-condition expr) (cadr expr))
+        // (define (if-condition expr) ...)
         globals::if_minus_condition.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -346,7 +387,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (if-consequence expr) (caddr expr))
+        // (define (if-consequence expr) ...)
         globals::if_minus_consequence.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -364,7 +405,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (if-alternative expr) (if (pair? (cdddr expr)) (cadddr expr) (quote (quote *UNSPECIFIED*))))
+        // (define (if-alternative expr) ...)
         globals::if_minus_alternative.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -399,7 +440,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (import? expr) (and (pair? expr) (eq? (car expr) (quote import))))
+        // (define (import? expr) ...)
         globals::import_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -433,7 +474,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (import-libnames exp*) (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*))))
+        // (define (import-libnames exp*) ...)
         globals::import_minus_libnames.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -480,7 +521,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (importset-libname expr) (cond ((eq? (quote only) (car expr)) (importset-libname (cadr expr))) ((eq? (quote except) (car expr)) (importset-libname (cadr expr))) (else expr)))
+        // (define (importset-libname expr) ...)
         globals::importset_minus_libname.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -540,7 +581,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (library? exp*) (and (pair? exp*) (eq? (quote define-library) (car exp*))))
+        // (define (library? exp*) ...)
         globals::library_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -574,7 +615,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (scan-out-defines body) (define (initializations exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*))))) (define (transform exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))) (list (cons (quote letrec) (cons (initializations body) (transform body)))))
+        // (define (scan-out-defines body) ...)
         globals::scan_minus_out_minus_defines.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -734,7 +775,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set!-variable expr) (cadr expr))
+        // (define (set!-variable expr) ...)
         globals::set_i_minus_variable.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -752,7 +793,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (set!-value expr) (caddr expr))
+        // (define (set!-value expr) ...)
         globals::set_i_minus_value.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

@@ -15,13 +15,14 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_begin: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-begin"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-cond"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_define: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-define"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_if: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-if"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_quote: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-quote"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_set_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-set!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -40,16 +41,16 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (make-core-env) (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+        // (define (make-core-env) ...)
         globals::make_minus_core_minus_env.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
                     {
-                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
                         imports::list.with(|value| value.get()).invoke(&[
                             Scm::symbol("GLOBAL-MARKER"),
                             // (new-keyword (quote and) expand-and)
@@ -72,6 +73,13 @@ pub fn initialize() {
                                 .invoke(&[
                                     Scm::symbol("cond"),
                                     globals::expand_minus_cond.with(|value| value.get()),
+                                ]),
+                            // (new-keyword (quote define) expand-define)
+                            imports::new_minus_keyword
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    Scm::symbol("define"),
+                                    globals::expand_minus_define.with(|value| value.get()),
                                 ]),
                             // (new-keyword (quote if) expand-if)
                             imports::new_minus_keyword
@@ -107,7 +115,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-and exp env tail?) (astify-comment exp (astify-and (and-args exp) env tail?)))
+        // (define (expand-and exp env tail?) ...)
         globals::expand_minus_and.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -140,7 +148,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-begin exp env tail?) (astify-sequence (begin-statements exp) env tail?))
+        // (define (expand-begin exp env tail?) ...)
         globals::expand_minus_begin.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -167,7 +175,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-cond exp env tail?) (astify-comment (quote (cond ...)) (astify-cond (cond-clauses exp) env tail?)))
+        // (define (expand-cond exp env tail?) ...)
         globals::expand_minus_cond.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -203,7 +211,50 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-if exp env tail?) (astify-alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?))
+        // (define (expand-define exp env tail?) ...)
+        globals::expand_minus_define.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (astify-comment (cons (quote define) (definition-signature exp)) (astify-definition (definition-variable exp) (definition-value exp) env)))
+                    {
+                        // (astify-comment (cons (quote define) (definition-signature exp)) (astify-definition (definition-variable exp) (definition-value exp) env))
+                        imports::astify_minus_comment
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (cons (quote define) (definition-signature exp))
+                                imports::cons.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("define"),
+                                    // (definition-signature exp)
+                                    imports::definition_minus_signature
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone()]),
+                                ]),
+                                // (astify-definition (definition-variable exp) (definition-value exp) env)
+                                imports::astify_minus_definition
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (definition-variable exp)
+                                        imports::definition_minus_variable
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        // (definition-value exp)
+                                        imports::definition_minus_value
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                    ]),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (expand-if exp env tail?) ...)
         globals::expand_minus_if.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -238,7 +289,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-quote exp env tail?) (astify-constant (cadr exp) env))
+        // (define (expand-quote exp env tail?) ...)
         globals::expand_minus_quote.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -264,7 +315,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-set! exp env tail?) (astify-assignment (set!-variable exp) (set!-value exp) env))
+        // (define (expand-set! exp env tail?) ...)
         globals::expand_minus_set_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

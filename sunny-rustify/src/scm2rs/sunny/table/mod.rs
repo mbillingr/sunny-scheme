@@ -58,7 +58,7 @@ pub fn initialize() {
                         .invoke(&[Scm::symbol("<table>"), Scm::Nil]),
                 )
             });
-            // (define (table? obj) (and (pair? obj) (eq? (car obj) TABLE-ID)))
+            // (define (table? obj) ...)
             globals::table_p.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -92,7 +92,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (make-table) (list TABLE-ID #f))
+            // (define (make-table) ...)
             globals::make_minus_table.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -110,7 +110,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (clone table) (list TABLE-ID table))
+            // (define (clone table) ...)
             globals::clone.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -129,7 +129,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (parent table) (cadr table))
+            // (define (parent table) ...)
             globals::parent.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -147,7 +147,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (set-parent! table parent) (set-car! (cdr table) parent))
+            // (define (set-parent! table parent) ...)
             globals::set_minus_parent_i.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -170,7 +170,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (fields table) (cddr table))
+            // (define (fields table) ...)
             globals::fields.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -188,7 +188,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (set-fields! table fields) (set-cdr! (cdr table) fields))
+            // (define (set-fields! table fields) ...)
             globals::set_minus_fields_i.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -211,7 +211,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (get-field table key) (let ((entry (assq key (fields table)))) (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f))))
+            // (define (get-field table key) ...)
             globals::get_minus_field.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -269,7 +269,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (set-field! table key value) (let ((entry (assq key (fields table)))) (if entry (set-cdr! entry value) (set-fields! table (cons (cons key value) (fields table))))))
+            // (define (set-field! table key value) ...)
             globals::set_minus_field_i.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -325,7 +325,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (call-method table key . args) (apply (get-field table key) table args))
+            // (define (call-method table key . args) ...)
             globals::call_minus_method.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -350,7 +350,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (ancestor? obj ancestor) (and (table? obj) (if (eq? (parent obj) ancestor) #t (ancestor? (parent obj) ancestor))))
+            // (define (ancestor? obj ancestor) ...)
             globals::ancestor_p.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -400,7 +400,7 @@ pub fn initialize() {
                     })
                 })
             });
-            // (define (replace-table! table source) (set-parent! table (parent source)) (set-fields! table (fields source)))
+            // (define (replace-table! table source) ...)
             globals::replace_minus_table_i.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
@@ -438,7 +438,7 @@ pub fn initialize() {
                 })
             })
         };
-        // (define (run-tests) (testsuite "table tests" (testcase "new table" (given (t <- (make-table))) (then (table? t))) (testcase "can't fake tables" (given (t <- (list (cons (quote <table>) (quote ()))))) (then (not (table? t)))) (testcase "empty table has no parent" (given (t <- (make-table))) (then (not (parent t)))) (testcase "cloned table has parent" (given (t <- (make-table))) (when (s <- (clone t))) (then (eq? (parent s) t))) (testcase "empty table has no fields" (given (t <- (make-table))) (when (f <- (fields t))) (then (null? f))) (testcase "access missing field" (given (t <- (make-table))) (when (value <- (get-field t (quote x)))) (then (not value))) (testcase "insert and retrieve field" (given (t <- (make-table))) (when (set-field! t (quote x) 1)) (then (= (get-field t (quote x)) 1))) (testcase "inherit field from parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t))) (then (= (get-field s (quote x)) 1))) (testcase "setting child field does not affect parent" (given (t <- (make-table))) (when (set-field! t (quote x) 1) (s <- (clone t)) (set-field! s (quote x) 2)) (then (= (get-field t (quote x)) 1))) (testcase "call unary method" (given (t <- (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (when (call-method t (quote inc))) (then (= (get-field t (quote count)) 1))) (testcase "call binary method" (given (t <- (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (when (call-method t (quote add) t)) (then (= (get-field t (quote value)) 2))) (testcase "big example" (given (goblin <- (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard <- (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (when (krog <- (call-method goblin (quote spawn))) (kold <- (call-method goblin (quote spawn))) (vard <- (call-method goblin (quote spawn))) (dega <- (call-method goblin-wizard (quote spawn))) (call-method krog (quote take-damage!) 15) (call-method kold (quote take-damage!) 30) (call-method vard (quote take-damage!) 45) (call-method dega (quote take-damage!) 20)) (then (call-method krog (quote alive?)) (call-method kold (quote alive?)) (not (call-method vard (quote alive?))) (not (call-method dega (quote alive?))))) (testcase "ancestor of untable" (given (t0 <- (make-table)) (obj <- (quote not-a-table))) (then (not (ancestor? obj t0)))) (testcase "ancestor of unrelated table" (given (t0 <- (make-table)) (t1 <- (make-table))) (then (not (ancestor? t1 t0)))) (testcase "ancestor of cloned table" (given (t0 <- (make-table)) (t1 <- (clone t0))) (then (ancestor? t1 t0) (not (ancestor? t0 t1)))) (testcase "ancestor across generations" (given (t0 <- (make-table)) (t1 <- (clone t0)) (t2 <- (clone t1)) (t3 <- (clone t2))) (then (ancestor? t3 t0)))))
+        // (define (run-tests) ...)
         globals::run_minus_tests.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

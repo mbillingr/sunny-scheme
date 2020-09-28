@@ -21,10 +21,10 @@ pub mod exports {
 mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-in-module"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-in-submodule"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree-list"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-in-submodule"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_modules: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-modules"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree-list"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_global_minus_defs: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-global-defs"))}
 }
 
@@ -44,7 +44,7 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (rust-gen-global-defs module g) (if (null? g) (println module) (cond ((import-variable? (cdar g)) (rust-gen-global-defs module (cdr g))) ((keyword? (cdar g)) (rust-gen-global-defs module (cdr g))) ((global-variable? (cdar g)) (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))) (else (error "Unexpected entry in global environment" (car g))))))
+        // (define (rust-gen-global-defs module g) ...)
         globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let g = args[1].clone();
 // (letrec () (if (null? g) (println module) (cond ((import-variable? (cdar g)) (rust-gen-global-defs module (cdr g))) ((keyword? (cdar g)) (rust-gen-global-defs module (cdr g))) ((global-variable? (cdar g)) (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))) (else (error "Unexpected entry in global environment" (car g))))))
 {if (
@@ -90,7 +90,7 @@ imports::cdr.with(|value| value.get()).invoke(&[g.clone(),]),])}} else {
 imports::error.with(|value| value.get()).invoke(&[Scm::from("Unexpected entry in global environment"),
 // (car g)
 imports::car.with(|value| value.get()).invoke(&[g.clone(),]),])}}}})}));
-        // (define (rust-gen-modules module libs) (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list module (module-tree-children module-tree))))
+        // (define (rust-gen-modules module libs) ...)
         globals::rust_minus_gen_minus_modules.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -159,7 +159,7 @@ imports::car.with(|value| value.get()).invoke(&[g.clone(),]),])}}}})}));
                 })
             })
         });
-        // (define (rust-gen-module-tree module node) (println module "pub mod " (rustify-libname (module-tree-name node)) ";") (if (module-tree-leaf? node) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod))) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))))
+        // (define (rust-gen-module-tree module node) ...)
         globals::rust_minus_gen_minus_module_minus_tree.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let node = args[1].clone();
 // (letrec () (println module "pub mod " (rustify-libname (module-tree-name node)) ";") (if (module-tree-leaf? node) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod))) (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))))
 {{
@@ -191,7 +191,7 @@ imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.cl
 globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[submod.clone(),
 // (module-tree-children node)
 imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[node.clone(),]),])}})},])}}}})}));
-        // (define (rust-gen-module-tree-list module nodes) (for-each (lambda (child) (rust-gen-module-tree module child)) nodes))
+        // (define (rust-gen-module-tree-list module nodes) ...)
         globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -226,7 +226,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                 })
             })
         });
-        // (define (rust-gen-in-module name base-path body) (let ((module (open-module name base-path))) (body module) (close-module module)))
+        // (define (rust-gen-in-module name base-path body) ...)
         globals::rust_minus_gen_minus_in_minus_module.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -262,7 +262,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                 })
             })
         });
-        // (define (rust-gen-in-submodule name parent body) (let ((module (open-submodule name parent))) (body module) (close-module module)))
+        // (define (rust-gen-in-submodule name parent body) ...)
         globals::rust_minus_gen_minus_in_minus_submodule.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

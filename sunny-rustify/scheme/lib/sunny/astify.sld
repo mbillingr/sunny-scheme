@@ -6,6 +6,7 @@
           astify-comment
           astify-cond
           astify-constant
+          astify-definition
           astify-sequence)
 
   (import (scheme base)
@@ -56,6 +57,12 @@
 
     (define (astify-constant exp env)
       (make-constant exp))
+
+    (define (astify-definition var-name value env)
+      (let ((var (ensure-var! var-name env))
+            (val (astify value env #f)))
+        (global-add-definition! var val)
+        (make-definition var-name var val)))
 
     (define (astify-sequence exp* env tail?)
       (cond ((null? exp*)

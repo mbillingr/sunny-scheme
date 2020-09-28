@@ -42,7 +42,7 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (make-module-tree-node name) (cons name (quote ())))
+        // (define (make-module-tree-node name) ...)
         globals::make_minus_module_minus_tree_minus_node.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -60,7 +60,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (make-module-tree-leaf name lib) (cons name lib))
+        // (define (make-module-tree-leaf name lib) ...)
         globals::make_minus_module_minus_tree_minus_leaf.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -79,7 +79,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-leaf? node) (and (pair? node) (symbol? (car node)) (not (null? (cdr node))) (not (pair? (cdr node)))))
+        // (define (module-tree-leaf? node) ...)
         globals::module_minus_tree_minus_leaf_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -146,7 +146,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-name node) (car node))
+        // (define (module-tree-name node) ...)
         globals::module_minus_tree_minus_name.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -164,7 +164,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-children node) (cdr node))
+        // (define (module-tree-children node) ...)
         globals::module_minus_tree_minus_children.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -182,7 +182,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-libobj node) (cdr node))
+        // (define (module-tree-libobj node) ...)
         globals::module_minus_tree_minus_libobj.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -200,7 +200,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-set-children! node children) (set-cdr! node children))
+        // (define (module-tree-set-children! node children) ...)
         globals::module_minus_tree_minus_set_minus_children_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -219,7 +219,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-find-child node name) (if (module-tree-leaf? node) (error "called (module-tree-find-child) on leaf node" name node)) (assq name (module-tree-children node)))
+        // (define (module-tree-find-child node name) ...)
         globals::module_minus_tree_minus_find_minus_child.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -261,7 +261,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-append-child! node child) (module-tree-set-children! node (cons child (module-tree-children node))))
+        // (define (module-tree-append-child! node child) ...)
         globals::module_minus_tree_minus_append_minus_child_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -290,7 +290,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (module-tree-insert! tree libname libobj) (if (null? libname) (error "invalid insert")) (let ((child (module-tree-find-child tree (car libname)))) (if child (module-tree-insert! child (cdr libname) libobj) (if (null? (cdr libname)) (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj)) (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node))))))
+        // (define (module-tree-insert! tree libname libobj) ...)
         globals::module_minus_tree_minus_insert_i.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let tree = args[0].clone();let libname = args[1].clone();let libobj = args[2].clone();
 // (letrec () (if (null? libname) (error "invalid insert")) (let ((child (module-tree-find-child tree (car libname)))) (if child (module-tree-insert! child (cdr libname) libobj) (if (null? (cdr libname)) (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj)) (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node))))))
 {{if (

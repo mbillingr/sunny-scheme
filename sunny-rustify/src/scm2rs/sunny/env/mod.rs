@@ -29,9 +29,9 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_import_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-import!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_globals: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-globals"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static ensure_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ensure-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lookup: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lookup"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static ensure_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ensure-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_global_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-global-env"))}
 }
 
@@ -47,7 +47,7 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (make-global-env) (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+        // (define (make-global-env) ...)
         globals::make_minus_global_minus_env.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -72,7 +72,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (ensure-var! name env) (let ((var (lookup name env))) (if var var (adjoin-global! name env))))
+        // (define (ensure-var! name env) ...)
         globals::ensure_minus_var_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -107,7 +107,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (lookup name env) (cond ((null? env) #f) ((eq? (quote GLOBAL-MARKER) (car env)) (lookup name (cdr env))) ((eq? name (caar env)) (cdar env)) (else (lookup name (cdr env)))))
+        // (define (lookup name env) ...)
         globals::lookup.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -178,7 +178,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (find-globals env) (if (eq? (quote GLOBAL-MARKER) (car env)) env (find-globals (cdr env))))
+        // (define (find-globals env) ...)
         globals::find_minus_globals.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -216,7 +216,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-global! name env) (adjoin-global-var! (new-global name) env))
+        // (define (adjoin-global! name env) ...)
         globals::adjoin_minus_global_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -241,7 +241,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-import! name env) (adjoin-global-var! (new-import name) env))
+        // (define (adjoin-import! name env) ...)
         globals::adjoin_minus_import_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -266,7 +266,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-global-var! var env) (let ((genv (find-globals env))) (set-cdr! genv (cons var (cdr genv))) (cdr var)))
+        // (define (adjoin-global-var! var env) ...)
         globals::adjoin_minus_global_minus_var_i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -311,7 +311,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-local name env) (cons (new-local name) env))
+        // (define (adjoin-local name env) ...)
         globals::adjoin_minus_local.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -334,7 +334,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-local-env name* env) (cond ((null? name*) env) ((pair? name*) (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))) (else (adjoin-local name* env))))
+        // (define (adjoin-local-env name* env) ...)
         globals::adjoin_minus_local_minus_env.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -392,7 +392,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-import*! name* env) (define (loop name* genv) (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv)))) (loop name* (find-globals env)))
+        // (define (adjoin-import*! name* env) ...)
         globals::adjoin_minus_import_star__i.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -477,7 +477,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-boxed name env) (cons (new-boxed name) env))
+        // (define (adjoin-boxed name env) ...)
         globals::adjoin_minus_boxed.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -500,7 +500,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (adjoin-boxed-env name* env) (cond ((null? name*) env) ((pair? name*) (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))) (else (adjoin-boxed name* env))))
+        // (define (adjoin-boxed-env name* env) ...)
         globals::adjoin_minus_boxed_minus_env.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -558,7 +558,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (map-env func env) (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
+        // (define (map-env func env) ...)
         globals::map_minus_env.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -603,7 +603,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (env-for-each func env) (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
+        // (define (env-for-each func env) ...)
         globals::env_minus_for_minus_each.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

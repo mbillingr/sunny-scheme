@@ -24,7 +24,7 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (run-tests) (testsuite "Scheme Tests" (testcase "the empty list" (given (x <- (quote ()))) (then (null? x))) (testcase "integers" (given (x <- 1) (y <- (quote 1))) (then (= x y)))))
+        // (define (run-tests) ...)
         globals::run_minus_tests.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

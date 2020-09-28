@@ -22,11 +22,11 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static check_minus_imports: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL check-imports"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_library_minus_ext: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-library-ext"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_lib: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-lib"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-path"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_library: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-library"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_lib: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-lib"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_exports: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-exports"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_decls: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-decls"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-name"))}
 }
@@ -48,7 +48,7 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (library-name expr) (cadr expr))
+        // (define (library-name expr) ...)
         globals::library_minus_name.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -66,7 +66,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (library-decls expr) (cddr expr))
+        // (define (library-decls expr) ...)
         globals::library_minus_decls.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -84,7 +84,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (library-exports lib-decl*) (cond ((null? lib-decl*) (quote ())) ((eq? (quote export) (caar lib-decl*)) (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))) (else (library-exports (cdr lib-decl*)))))
+        // (define (library-exports lib-decl*) ...)
         globals::library_minus_exports.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -147,7 +147,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (get-lib lib) (let ((full-path (find-library (quote ("." "./lib" "./scheme/lib" "scm-libs" "../scheme/lib" "../scm-libs" "../../scm-libs")) (library-path lib) (quote (".sld" ".slx"))))) (if full-path (read (open-input-file full-path)) (error "Unknown library" lib))))
+        // (define (get-lib lib) ...)
         globals::get_minus_lib.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -218,7 +218,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (find-library base-path* relative-path extension*) (if (null? base-path*) #f (let* ((path (string-append (car base-path*) relative-path)) (full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))))
+        // (define (find-library base-path* relative-path extension*) ...)
         globals::find_minus_library.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -293,7 +293,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (find-library-ext path extension*) (if (null? extension*) #f (let ((full-path (string-append path (car extension*)))) (if (file-exists? full-path) full-path (find-library-ext path (cdr extension*))))))
+        // (define (find-library-ext path extension*) ...)
         globals::find_minus_library_minus_ext.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -358,7 +358,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (library-path lib) (reduce (lambda (left right) (string-append left (string-append "/" right))) "" (map symbol->string lib)))
+        // (define (library-path lib) ...)
         globals::library_minus_path.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -403,7 +403,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (check-imports imports exports lib) (if (null? imports) #t (if (memq (car imports) exports) (check-imports (cdr imports) exports lib) (error "Invalid import" (car imports) lib))))
+        // (define (check-imports imports exports lib) ...)
         globals::check_minus_imports.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {

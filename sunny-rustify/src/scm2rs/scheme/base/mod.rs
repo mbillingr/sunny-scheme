@@ -52,21 +52,21 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static any_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static map_minus_1: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map-1"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static __map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _map"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static __for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _for-each"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static __map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _map"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL for-each"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static __for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _for-each"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static string_minus_append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL string-append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static string_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL string=?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static all_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL all?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static symbol_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL symbol=?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static all_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL all?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_right: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-right"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_right: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-right"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static reverse: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reverse"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_left: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-left"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static length: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL length"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_left: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-left"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static not: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL not"))}
@@ -83,7 +83,7 @@ pub fn initialize() {
     crate::native::base::initialize();
     {
         (/*NOP*/);
-        // (define (not x) (if x #f #t))
+        // (define (not x) ...)
         globals::not.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -102,7 +102,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (list . x) x)
+        // (define (list . x) ...)
         globals::list.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -117,7 +117,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (list? seq) (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f)))
+        // (define (list? seq) ...)
         globals::list_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -159,7 +159,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (length seq) (fold-left (lambda (acc _) (+ acc 1)) 0 seq))
+        // (define (length seq) ...)
         globals::length.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -194,7 +194,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (reverse seq) (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq))
+        // (define (reverse seq) ...)
         globals::reverse.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -229,7 +229,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (list-copy seq) (fold-right cons (quote ()) seq))
+        // (define (list-copy seq) ...)
         globals::list_minus_copy.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -251,7 +251,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (assq obj seq) (if (pair? seq) (if (eq? obj (caar seq)) (car seq) (assq obj (cdr seq))) #f))
+        // (define (assq obj seq) ...)
         globals::assq.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -303,7 +303,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (memq obj seq) (if (pair? seq) (if (eq? obj (car seq)) seq (memq obj (cdr seq))) #f))
+        // (define (memq obj seq) ...)
         globals::memq.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -352,7 +352,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (symbol=? s1 . args) (all? (lambda (s) (eq? s1 s)) args))
+        // (define (symbol=? s1 . args) ...)
         globals::symbol_e__p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -387,7 +387,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (string=? s1 . args) (all? (lambda (s) (equal? s1 s)) args))
+        // (define (string=? s1 . args) ...)
         globals::string_e__p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -422,7 +422,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (string-append s1 . args) (fold-left string-cons s1 args))
+        // (define (string-append s1 . args) ...)
         globals::string_minus_append.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -443,7 +443,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (for-each proc . seq*) (_for-each proc seq*))
+        // (define (for-each proc . seq*) ...)
         globals::for_minus_each.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -462,7 +462,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (map func . seq*) (_map func seq*))
+        // (define (map func . seq*) ...)
         globals::map.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -481,7 +481,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (_for-each proc seq*) (if (any? null? seq*) (quote ()) (begin (apply proc (map-1 car seq*)) (_for-each proc (map-1 cdr seq*)))))
+        // (define (_for-each proc seq*) ...)
         globals::__for_minus_each.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -530,7 +530,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (_map func seq*) (if (any? null? seq*) (quote ()) (cons (apply func (map-1 car seq*)) (_map func (map-1 cdr seq*)))))
+        // (define (_map func seq*) ...)
         globals::__map.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -578,7 +578,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (all? pred seq) (cond ((null? seq) #t) ((pred (car seq)) (all? pred (cdr seq))) (else #f)))
+        // (define (all? pred seq) ...)
         globals::all_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -625,7 +625,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (any? pred seq) (cond ((null? seq) #f) ((pred (car seq)) #t) (else (any? pred (cdr seq)))))
+        // (define (any? pred seq) ...)
         globals::any_p.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -672,7 +672,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (map-1 func seq) (fold-right (lambda (x acc) (cons (func x) acc)) (quote ()) seq))
+        // (define (map-1 func seq) ...)
         globals::map_minus_1.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -713,7 +713,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (fold-right op init seq) (if (null? seq) init (op (car seq) (fold-right op init (cdr seq)))))
+        // (define (fold-right op init seq) ...)
         globals::fold_minus_right.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -758,7 +758,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (fold-left op init seq) (if (null? seq) init (fold-left op (op init (car seq)) (cdr seq))))
+        // (define (fold-left op init seq) ...)
         globals::fold_minus_left.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
