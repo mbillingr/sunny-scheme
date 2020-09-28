@@ -12,12 +12,14 @@ pub mod exports {
     pub use super::globals::filter;
     pub use super::globals::last_minus_cdr;
     pub use super::globals::proper_minus_list_minus_part;
+    pub use super::globals::reduce;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static bor: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL bor"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static any: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static reduce: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reduce"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static filter: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL filter"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static proper_minus_list_minus_part: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL proper-list-part"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static last_minus_cdr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL last-cdr"))}
@@ -216,6 +218,49 @@ pub fn initialize() {
                             }
                         } else {
                             Scm::Nil
+                        }
+                    }
+                })
+            })
+        });
+        // (define (reduce f init seq) (if (pair? seq) (reduce f (f init (car seq)) (cdr seq)) init))
+        globals::reduce.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let f = args[0].clone();
+                    let init = args[1].clone();
+                    let seq = args[2].clone();
+                    // (letrec () (if (pair? seq) (reduce f (f init (car seq)) (cdr seq)) init))
+                    {
+                        if (
+                            // (pair? seq)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (reduce f (f init (car seq)) (cdr seq))
+                            globals::reduce.with(|value| value.get()).invoke(&[
+                                f.clone(),
+                                // (f init (car seq))
+                                f.clone().invoke(&[
+                                    init.clone(),
+                                    // (car seq)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                ]),
+                                // (cdr seq)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone()]),
+                            ])
+                        } else {
+                            init.clone()
                         }
                     }
                 })

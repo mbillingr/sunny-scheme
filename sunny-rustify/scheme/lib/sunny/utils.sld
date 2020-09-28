@@ -6,7 +6,8 @@
           dotted-list?
           filter
           last-cdr
-          proper-list-part)
+          proper-list-part
+          reduce)
 
   (import (scheme base))
 
@@ -37,6 +38,11 @@
                     (filter f (cdr seq)))
               (filter f (cdr seq)))
           '()))
+
+    (define (reduce f init seq)
+      (if (pair? seq)
+          (reduce f (f init (car seq)) (cdr seq))
+          init))
 
     (define (any f seq)
       (if (pair? seq)
