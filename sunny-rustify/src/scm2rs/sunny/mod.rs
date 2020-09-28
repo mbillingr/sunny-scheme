@@ -1,8 +1,10 @@
 pub mod ast;
 pub mod ast_transforms;
+pub mod astify;
 pub mod env;
 pub mod rust;
 pub mod sets;
+pub mod syntax;
 pub mod table;
 pub mod translate;
 pub mod utils;

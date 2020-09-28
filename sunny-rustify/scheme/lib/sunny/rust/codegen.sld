@@ -17,15 +17,19 @@
     (define (rust-gen-global-defs module g)
       (if (null? g)
           (println module)
-          (if (import-variable? (cdar g))
-              (rust-gen-global-defs module (cdr g))
-              (begin (println module
-                       "thread_local!{#[allow(non_upper_case_globals)] pub static "
-                       (rustify-identifier (caar g))
-                       ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "
-                       (caar g)
-                       "\"))}")
-                     (rust-gen-global-defs module (cdr g))))))
+          (cond ((import-variable? (cdar g))
+                 (rust-gen-global-defs module (cdr g)))
+                ((keyword? (cdar g))
+                 (rust-gen-global-defs module (cdr g)))
+                ((global-variable? (cdar g))
+                 (println module
+                          "thread_local!{#[allow(non_upper_case_globals)] pub static "
+                          (rustify-identifier (caar g))
+                          ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "
+                          (caar g)
+                          "\"))}")
+                 (rust-gen-global-defs module (cdr g)))
+                (else (error "Unexpected entry in global environment" (car g))))))
 
 
     (define (rust-gen-modules module libs)

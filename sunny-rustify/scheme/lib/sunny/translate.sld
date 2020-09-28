@@ -19,6 +19,7 @@
           (sunny rust module-tree)
           (sunny rust rustify)
           (sunny sets)
+          (sunny syntax)
           (sunny utils)
           (sunny variable))
 
@@ -31,7 +32,7 @@
           (program->ast exp*)))
 
     (define (program->ast exp*)
-      (define global-env (make-global-env))
+      (define global-env (make-core-env))
       (define library-env (list '()))
 
       (define (process-imports exp* imports init)
@@ -59,7 +60,7 @@
       (process-imports exp* '() (make-set)))
 
     (define (library->ast name exp* library-env)
-      (library-decls->ast name exp* (make-set) (make-nop) (make-global-env) library-env '() '()))
+      (library-decls->ast name exp* (make-set) (make-nop) (make-core-env) library-env '() '()))
 
     (define (library-decls->ast name exp* init body global-env library-env imports exports)
       (cond ((null? exp*)
@@ -123,8 +124,7 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((eq? 'quote (car exp)) (sexpr->constant (cadr exp) env))
-                   ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp)
+             (cond ((eq? 'set! (car exp)) (sexpr->assignment (cadr exp)
                                                              (caddr exp)
                                                              env))
                    ((definition? exp) (wrap-sexpr exp
