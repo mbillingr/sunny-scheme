@@ -127,7 +127,7 @@ pub fn initialize() {
                     let seq = args[0].clone();
                     // (letrec () (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f)))
                     {
-                        // (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f))
+                        // (cond ...)
                         if (
                             // (null? seq)
                             imports::null_p
@@ -589,7 +589,7 @@ pub fn initialize() {
                     let seq = args[1].clone();
                     // (letrec () (cond ((null? seq) #t) ((pred (car seq)) (all? pred (cdr seq))) (else #f)))
                     {
-                        // (cond ((null? seq) #t) ((pred (car seq)) (all? pred (cdr seq))) (else #f))
+                        // (cond ...)
                         if (
                             // (null? seq)
                             imports::null_p
@@ -636,7 +636,7 @@ pub fn initialize() {
                     let seq = args[1].clone();
                     // (letrec () (cond ((null? seq) #f) ((pred (car seq)) #t) (else (any? pred (cdr seq)))))
                     {
-                        // (cond ((null? seq) #f) ((pred (car seq)) #t) (else (any? pred (cdr seq))))
+                        // (cond ...)
                         if (
                             // (null? seq)
                             imports::null_p

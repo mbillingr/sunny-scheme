@@ -27,7 +27,7 @@
       (astify-sequence (begin-statements exp) env tail?))
 
     (define (expand-cond exp env tail?)
-      (astify-comment exp
+      (astify-comment '(cond ...)
         (astify-cond (cond-clauses exp) env tail?)))
 
     (define (expand-if exp env tail?)

@@ -236,7 +236,7 @@ pub fn initialize() {
                                 ];
                                 // (letrec () (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f)))
                                 {
-                                    // (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f))
+                                    // (cond ...)
                                     if (entry.clone()).is_true() {
                                         // (cdr entry)
                                         imports::cdr

@@ -81,7 +81,7 @@ pub fn initialize() {
                     let item = args[1].clone();
                     // (letrec () (cond ((null? set) (cons item (quote ()))) ((equal? (car set) item) set) (else (cons (car set) (set-add (cdr set) item)))))
                     {
-                        // (cond ((null? set) (cons item (quote ()))) ((equal? (car set) item) set) (else (cons (car set) (set-add (cdr set) item))))
+                        // (cond ...)
                         if (
                             // (null? set)
                             imports::null_p
@@ -139,7 +139,7 @@ pub fn initialize() {
                     let item = args[1].clone();
                     // (letrec () (cond ((null? set) (quote ())) ((equal? (car set) item) (cdr set)) (else (cons (car set) (set-remove (cdr set) item)))))
                     {
-                        // (cond ((null? set) (quote ())) ((equal? (car set) item) (cdr set)) (else (cons (car set) (set-remove (cdr set) item))))
+                        // (cond ...)
                         if (
                             // (null? set)
                             imports::null_p
@@ -290,7 +290,7 @@ pub fn initialize() {
                     let set2 = args[1].clone();
                     // (letrec () (cond ((null? set1) set2) ((null? set2) set1) (else (set-add* set1 set2))))
                     {
-                        // (cond ((null? set1) set2) ((null? set2) set1) (else (set-add* set1 set2)))
+                        // (cond ...)
                         if (
                             // (null? set1)
                             imports::null_p

@@ -118,7 +118,7 @@ pub fn initialize() {
                     let env = args[1].clone();
                     // (letrec () (cond ((null? env) #f) ((eq? (quote GLOBAL-MARKER) (car env)) (lookup name (cdr env))) ((eq? name (caar env)) (cdar env)) (else (lookup name (cdr env)))))
                     {
-                        // (cond ((null? env) #f) ((eq? (quote GLOBAL-MARKER) (car env)) (lookup name (cdr env))) ((eq? name (caar env)) (cdar env)) (else (lookup name (cdr env))))
+                        // (cond ...)
                         if (
                             // (null? env)
                             imports::null_p
@@ -345,7 +345,7 @@ pub fn initialize() {
                     let env = args[1].clone();
                     // (letrec () (cond ((null? name*) env) ((pair? name*) (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))) (else (adjoin-local name* env))))
                     {
-                        // (cond ((null? name*) env) ((pair? name*) (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))) (else (adjoin-local name* env)))
+                        // (cond ...)
                         if (
                             // (null? name*)
                             imports::null_p
@@ -511,7 +511,7 @@ pub fn initialize() {
                     let env = args[1].clone();
                     // (letrec () (cond ((null? name*) env) ((pair? name*) (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))) (else (adjoin-boxed name* env))))
                     {
-                        // (cond ((null? name*) env) ((pair? name*) (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))) (else (adjoin-boxed name* env)))
+                        // (cond ...)
                         if (
                             // (null? name*)
                             imports::null_p

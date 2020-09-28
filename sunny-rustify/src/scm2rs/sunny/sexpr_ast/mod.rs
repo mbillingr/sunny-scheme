@@ -78,7 +78,7 @@ pub fn initialize() {
                     let tail_p = args[2].clone();
                     // (letrec () (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
                     {
-                        // (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env)))
+                        // (cond ...)
                         if (
                             // (keyword? exp)
                             imports::keyword_p
@@ -105,7 +105,7 @@ pub fn initialize() {
                         )
                         .is_true()
                         {
-                            // (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))
+                            // (cond ...)
                             if (
                                 // (eq? (quote set!) (car exp))
                                 imports::eq_p.with(|value| value.get()).invoke(&[
@@ -1331,7 +1331,7 @@ imports::make_minus_definition.with(|value| value.get()).invoke(&[name.clone(),v
                     let env = args[1].clone();
                     // (letrec () (cond ((null? stmt*) (quote ())) ((equal? (quote (sunny testing)) (car stmt*)) (sexpr->import (cdr stmt*) env)) ((eq? (quote only) (caar stmt*)) (cons (sexpr->import-only (cadar stmt*) (cddar stmt*) env) (sexpr->import (cdr stmt*) env))) (else (cons (sexpr->import-all (car stmt*) env) (sexpr->import (cdr stmt*) env)))))
                     {
-                        // (cond ((null? stmt*) (quote ())) ((equal? (quote (sunny testing)) (car stmt*)) (sexpr->import (cdr stmt*) env)) ((eq? (quote only) (caar stmt*)) (cons (sexpr->import-only (cadar stmt*) (cddar stmt*) env) (sexpr->import (cdr stmt*) env))) (else (cons (sexpr->import-all (car stmt*) env) (sexpr->import (cdr stmt*) env))))
+                        // (cond ...)
                         if (
                             // (null? stmt*)
                             imports::null_p
@@ -1445,7 +1445,7 @@ imports::make_minus_definition.with(|value| value.get()).invoke(&[name.clone(),v
                     let env = args[1].clone();
                     // (letrec () (cond ((null? export-spec*) (quote ())) (else (cons (make-export env (car export-spec*) (car export-spec*)) (sexpr->export (cdr export-spec*) env)))))
                     {
-                        // (cond ((null? export-spec*) (quote ())) (else (cons (make-export env (car export-spec*) (car export-spec*)) (sexpr->export (cdr export-spec*) env))))
+                        // (cond ...)
                         if (
                             // (null? export-spec*)
                             imports::null_p
@@ -1613,7 +1613,7 @@ imports::make_minus_definition.with(|value| value.get()).invoke(&[name.clone(),v
                                             let stmt_star_ = args[0].clone();
                                             // (letrec () (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*))))))
                                             {
-                                                // (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))
+                                                // (cond ...)
                                                 if (
                                                     // (null? stmt*)
                                                     imports::null_p
@@ -1769,7 +1769,7 @@ imports::make_minus_definition.with(|value| value.get()).invoke(&[name.clone(),v
                                 let body = args[1].clone();
                                 // (letrec () (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase"))))
                                 {
-                                    // (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))
+                                    // (cond ...)
                                     if (
                                         // (null? section*)
                                         imports::null_p

@@ -52,7 +52,7 @@ pub fn initialize() {
 imports::null_p.with(|value| value.get()).invoke(&[g.clone(),])).is_true() {
 // (println module)
 imports::println.with(|value| value.get()).invoke(&[module.clone(),])} else {
-// (cond ((import-variable? (cdar g)) (rust-gen-global-defs module (cdr g))) ((keyword? (cdar g)) (rust-gen-global-defs module (cdr g))) ((global-variable? (cdar g)) (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}") (rust-gen-global-defs module (cdr g))) (else (error "Unexpected entry in global environment" (car g))))
+// (cond ...)
 if (
 // (import-variable? (cdar g))
 imports::import_minus_variable_p.with(|value| value.get()).invoke(&[

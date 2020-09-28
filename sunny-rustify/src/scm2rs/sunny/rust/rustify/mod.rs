@@ -50,7 +50,7 @@ pub fn initialize() {
                                 let ch = args[0].clone();
                                 // (letrec () (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))
                                 {
-                                    // (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch))))
+                                    // (cond ...)
                                     if (
                                         // (eq? ch #\_)
                                         imports::eq_p
@@ -195,7 +195,7 @@ pub fn initialize() {
                             })
                         });
 
-                        // (cond ((eq? name (quote args)) "args_") ((eq? name (quote fn)) "fn_") ((eq? name (quote loop)) "loop_") ((eq? name (quote let)) "let_") ((eq? name (quote mut)) "mut_") ((eq? name (quote ref)) "ref_") ((eq? name (quote self)) "self_") (else (append-all (map char-map (string->list (symbol->string name))))))
+                        // (cond ...)
                         if (
                             // (eq? name (quote args))
                             imports::eq_p
@@ -301,7 +301,7 @@ pub fn initialize() {
                                 let ch = args[0].clone();
                                 // (letrec () (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))
                                 {
-                                    // (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch))))
+                                    // (cond ...)
                                     if (
                                         // (eq? ch #\_)
                                         imports::eq_p
@@ -395,7 +395,7 @@ pub fn initialize() {
                             ];
                             // (letrec () (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))
                             {
-                                // (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))
+                                // (cond ...)
                                 if (
                                     // (eq? name (quote fn))
                                     imports::eq_p
@@ -444,7 +444,7 @@ pub fn initialize() {
                                 let ch = args[0].clone();
                                 // (letrec () (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))
                                 {
-                                    // (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch))))
+                                    // (cond ...)
                                     if (
                                         // (eq? ch #\ )
                                         imports::eq_p

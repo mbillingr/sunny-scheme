@@ -159,7 +159,7 @@ pub fn initialize() {
                 })
             })
         });
-        // (define (expand-cond exp env tail?) (astify-comment exp (astify-cond (cond-clauses exp) env tail?)))
+        // (define (expand-cond exp env tail?) (astify-comment (quote (cond ...)) (astify-cond (cond-clauses exp) env tail?)))
         globals::expand_minus_cond.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -169,13 +169,16 @@ pub fn initialize() {
                     let exp = args[0].clone();
                     let env = args[1].clone();
                     let tail_p = args[2].clone();
-                    // (letrec () (astify-comment exp (astify-cond (cond-clauses exp) env tail?)))
+                    // (letrec () (astify-comment (quote (cond ...)) (astify-cond (cond-clauses exp) env tail?)))
                     {
-                        // (astify-comment exp (astify-cond (cond-clauses exp) env tail?))
+                        // (astify-comment (quote (cond ...)) (astify-cond (cond-clauses exp) env tail?))
                         imports::astify_minus_comment
                             .with(|value| value.get())
                             .invoke(&[
-                                exp.clone(),
+                                Scm::pair(
+                                    Scm::symbol("cond"),
+                                    Scm::pair(Scm::symbol("..."), Scm::Nil),
+                                ),
                                 // (astify-cond (cond-clauses exp) env tail?)
                                 imports::astify_minus_cond
                                     .with(|value| value.get())

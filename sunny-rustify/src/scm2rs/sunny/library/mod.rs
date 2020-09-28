@@ -94,7 +94,7 @@ pub fn initialize() {
                     let lib_minus_decl_star_ = args[0].clone();
                     // (letrec () (cond ((null? lib-decl*) (quote ())) ((eq? (quote export) (caar lib-decl*)) (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))) (else (library-exports (cdr lib-decl*)))))
                     {
-                        // (cond ((null? lib-decl*) (quote ())) ((eq? (quote export) (caar lib-decl*)) (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))) (else (library-exports (cdr lib-decl*))))
+                        // (cond ...)
                         if (
                             // (null? lib-decl*)
                             imports::null_p

@@ -486,7 +486,7 @@ pub fn initialize() {
                     let expr = args[0].clone();
                     // (letrec () (cond ((eq? (quote only) (car expr)) (importset-libname (cadr expr))) ((eq? (quote except) (car expr)) (importset-libname (cadr expr))) (else expr)))
                     {
-                        // (cond ((eq? (quote only) (car expr)) (importset-libname (cadr expr))) ((eq? (quote except) (car expr)) (importset-libname (cadr expr))) (else expr))
+                        // (cond ...)
                         if (
                             // (eq? (quote only) (car expr))
                             imports::eq_p.with(|value| value.get()).invoke(&[
@@ -591,7 +591,7 @@ pub fn initialize() {
                                 let exp_star_ = args[0].clone();
                                 // (letrec () (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))
                                 {
-                                    // (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*))))
+                                    // (cond ...)
                                     if (
                                         // (null? exp*)
                                         imports::null_p
@@ -664,7 +664,7 @@ pub fn initialize() {
                                 let exp_star_ = args[0].clone();
                                 // (letrec () (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*))))))
                                 {
-                                    // (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))
+                                    // (cond ...)
                                     if (
                                         // (null? exp*)
                                         imports::null_p

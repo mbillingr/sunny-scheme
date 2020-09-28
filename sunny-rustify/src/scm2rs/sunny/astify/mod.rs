@@ -99,7 +99,7 @@ pub fn initialize() {
                     let tail_p = args[2].clone();
                     // (letrec () (cond ((null? arg*) (make-constant #t)) ((null? (cdr arg*)) (astify (car arg*) env tail?)) (else (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env)))))
                     {
-                        // (cond ((null? arg*) (make-constant #t)) ((null? (cdr arg*)) (astify (car arg*) env tail?)) (else (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env))))
+                        // (cond ...)
                         if (
                             // (null? arg*)
                             imports::null_p
@@ -182,7 +182,7 @@ pub fn initialize() {
                     let tail_p = args[2].clone();
                     // (letrec () (cond ((null? clause*) (astify-unspecified)) ((cond-else-clause? (car clause*)) (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (else (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))))
                     {
-                        // (cond ((null? clause*) (astify-unspecified)) ((cond-else-clause? (car clause*)) (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (else (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))))
+                        // (cond ...)
                         if (
                             // (null? clause*)
                             imports::null_p
@@ -332,7 +332,7 @@ pub fn initialize() {
                     let tail_p = args[2].clone();
                     // (letrec () (cond ((null? exp*) (error "empty sequence")) ((null? (cdr exp*)) (astify (car exp*) env tail?)) (else (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest)))))
                     {
-                        // (cond ((null? exp*) (error "empty sequence")) ((null? (cdr exp*)) (astify (car exp*) env tail?)) (else (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest))))
+                        // (cond ...)
                         if (
                             // (null? exp*)
                             imports::null_p
