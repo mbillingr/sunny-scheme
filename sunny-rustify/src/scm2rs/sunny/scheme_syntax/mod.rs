@@ -9,6 +9,7 @@ mod imports {
 
 pub mod exports {
     pub use super::globals::abstraction_p;
+    pub use super::globals::and_minus_args;
     pub use super::globals::cond_minus_clause_minus_condition;
     pub use super::globals::cond_minus_clause_minus_sequence;
     pub use super::globals::cond_minus_clauses;
@@ -40,6 +41,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-sequence"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-condition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clauses: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clauses"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static and_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL and-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static abstraction_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL abstraction?"))}
 }
 
@@ -87,6 +89,24 @@ pub fn initialize() {
                         } else {
                             Scm::False
                         }
+                    }
+                })
+            })
+        });
+        // (define (and-args expr) (cdr expr))
+        globals::and_minus_args.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (cdr expr))
+                    {
+                        // (cdr expr)
+                        imports::cdr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
                     }
                 })
             })

@@ -1,5 +1,7 @@
 (define-library (sunny astify)
   (export astify-alternative
+          astify-and
+          astify-comment
           astify-constant)
 
   (import (scheme base)
@@ -8,12 +10,24 @@
 
   (begin
     (define astify sexpr->ast)
-    
+
     (define (astify-alternative condition consequent alternative env tail?)
       (make-alternative
         (astify condition env #f)
         (astify consequent env tail?)
         (astify alternative env tail?)))
+
+    (define (astify-and arg* env tail?)
+      (cond ((null? arg*) (make-constant #t))
+            ((null? (cdr arg*))
+             (astify (car arg*) env tail?))
+            (else
+             (make-alternative
+               (astify (car arg*) env #f)
+               (astify-and (cdr arg*) env tail?)
+               (astify-constant #f env)))))
+
+    (define astify-comment make-comment)
 
     (define (astify-constant exp env)
       (make-constant exp))))

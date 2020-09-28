@@ -11,10 +11,15 @@
   (begin
     (define (make-core-env)
       (list 'GLOBAL-MARKER
+            (new-keyword 'and expand-and)
             (new-keyword 'if expand-if)
             (new-keyword 'quote expand-quote)
             (new-import 'assert-eq)
             (new-import 'assert-equal)))
+
+    (define (expand-and exp env tail?)
+      (astify-comment exp
+        (astify-and (and-args exp) env tail?)))
 
     (define (expand-if exp env tail?)
       (astify-alternative

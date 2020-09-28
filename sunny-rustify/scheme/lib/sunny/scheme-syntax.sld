@@ -1,5 +1,6 @@
 (define-library (sunny scheme-syntax)
   (export abstraction?
+          and-args
           cond-clauses
           cond-clause-condition
           cond-clause-sequence
@@ -23,6 +24,10 @@
     (define (abstraction? expr)
      (and (pair? expr)
           (eq? 'lambda (car expr))))
+
+
+    (define (and-args expr)
+      (cdr expr))
 
 
     (define (cond-clauses expr)

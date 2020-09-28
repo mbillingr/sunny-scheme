@@ -8,12 +8,16 @@ mod imports {
 
 pub mod exports {
     pub use super::globals::astify_minus_alternative;
+    pub use super::globals::astify_minus_and;
+    pub use super::globals::astify_minus_comment;
     pub use super::globals::astify_minus_constant;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-alternative"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify"))}
 }
@@ -75,6 +79,89 @@ pub fn initialize() {
                 })
             })
         });
+        // (define (astify-and arg* env tail?) (cond ((null? arg*) (make-constant #t)) ((null? (cdr arg*)) (astify (car arg*) env tail?)) (else (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env)))))
+        globals::astify_minus_and.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let arg_star_ = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (cond ((null? arg*) (make-constant #t)) ((null? (cdr arg*)) (astify (car arg*) env tail?)) (else (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env)))))
+                    {
+                        // (cond ((null? arg*) (make-constant #t)) ((null? (cdr arg*)) (astify (car arg*) env tail?)) (else (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env))))
+                        if (
+                            // (null? arg*)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[arg_star_.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (make-constant #t)
+                            imports::make_minus_constant
+                                .with(|value| value.get())
+                                .invoke(&[Scm::True])
+                        } else if (
+                            // (null? (cdr arg*))
+                            imports::null_p.with(|value| value.get()).invoke(&[
+                                // (cdr arg*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[arg_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (astify (car arg*) env tail?)
+                            globals::astify.with(|value| value.get()).invoke(&[
+                                // (car arg*)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[arg_star_.clone()]),
+                                env.clone(),
+                                tail_p.clone(),
+                            ])
+                        } else {
+                            // (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env))
+                            imports::make_minus_alternative
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (astify (car arg*) env #f)
+                                    globals::astify.with(|value| value.get()).invoke(&[
+                                        // (car arg*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[arg_star_.clone()]),
+                                        env.clone(),
+                                        Scm::False,
+                                    ]),
+                                    // (astify-and (cdr arg*) env tail?)
+                                    globals::astify_minus_and
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (cdr arg*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[arg_star_.clone()]),
+                                            env.clone(),
+                                            tail_p.clone(),
+                                        ]),
+                                    // (astify-constant #f env)
+                                    globals::astify_minus_constant
+                                        .with(|value| value.get())
+                                        .invoke(&[Scm::False, env.clone()]),
+                                ])
+                        }
+                    }
+                })
+            })
+        });
+        // (define astify-comment make-comment)
+        globals::astify_minus_comment
+            .with(|value| value.set(imports::make_minus_comment.with(|value| value.get())));
         // (define (astify-constant exp env) (make-constant exp))
         globals::astify_minus_constant.with(|value| {
             value.set({
