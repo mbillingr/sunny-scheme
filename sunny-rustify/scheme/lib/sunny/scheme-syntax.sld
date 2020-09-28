@@ -15,7 +15,9 @@
           import?
           import-libnames
           library?
-          scan-out-defines)
+          scan-out-defines
+          set!-variable
+          set!-value)
 
   (import (scheme base)
           (scheme cxr)
@@ -119,4 +121,10 @@
                           (transform (cdr exp*))))))
       (list (cons 'letrec
                   (cons (initializations body)
-                        (transform body)))))))
+                        (transform body)))))
+
+    (define (set!-variable expr)
+      (cadr expr))
+
+    (define (set!-value expr)
+      (caddr expr))))

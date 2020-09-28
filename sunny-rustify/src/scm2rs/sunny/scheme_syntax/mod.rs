@@ -25,10 +25,14 @@ pub mod exports {
     pub use super::globals::import_p;
     pub use super::globals::library_p;
     pub use super::globals::scan_minus_out_minus_defines;
+    pub use super::globals::set_i_minus_value;
+    pub use super::globals::set_i_minus_variable;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_i_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set!-value"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_i_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set!-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static scan_minus_out_minus_defines: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scan-out-defines"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
@@ -726,6 +730,42 @@ pub fn initialize() {
                                 ]),
                             ]),
                         ])
+                    }
+                })
+            })
+        });
+        // (define (set!-variable expr) (cadr expr))
+        globals::set_i_minus_variable.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (cadr expr))
+                    {
+                        // (cadr expr)
+                        imports::cadr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
+                    }
+                })
+            })
+        });
+        // (define (set!-value expr) (caddr expr))
+        globals::set_i_minus_value.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (caddr expr))
+                    {
+                        // (caddr expr)
+                        imports::caddr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
                     }
                 })
             })

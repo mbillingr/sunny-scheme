@@ -3,14 +3,17 @@ use sunny_core::{Mut, Scm};
 mod imports {
     pub use crate::scheme::base::exports::*;
     pub use crate::sunny::ast::exports::*;
+    pub use crate::sunny::env::exports::*;
     pub use crate::sunny::scheme_syntax::exports::*;
     pub use crate::sunny::sexpr_ast::exports::*;
+    pub use crate::sunny::variable::exports::*;
 }
 
 pub mod exports {
     pub use super::globals::astify;
     pub use super::globals::astify_minus_alternative;
     pub use super::globals::astify_minus_and;
+    pub use super::globals::astify_minus_assignment;
     pub use super::globals::astify_minus_comment;
     pub use super::globals::astify_minus_cond;
     pub use super::globals::astify_minus_constant;
@@ -23,6 +26,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assignment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-alternative"))}
@@ -39,8 +43,10 @@ pub fn initialize() {
 
     crate::scheme::base::initialize();
     crate::sunny::ast::initialize();
+    crate::sunny::env::initialize();
     crate::sunny::scheme_syntax::initialize();
     crate::sunny::sexpr_ast::initialize();
+    crate::sunny::variable::initialize();
     {
         (/*NOP*/);
         // (define astify sexpr->ast)
@@ -162,6 +168,50 @@ pub fn initialize() {
                                         .with(|value| value.get())
                                         .invoke(&[Scm::False, env.clone()]),
                                 ])
+                        }
+                    }
+                })
+            })
+        });
+        // (define (astify-assignment var-name value env) (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (variable-set-mutable! var) (make-assignment var-name var val)))
+        globals::astify_minus_assignment.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let var_minus_name = args[0].clone();
+                    let value = args[1].clone();
+                    let env = args[2].clone();
+                    // (letrec () (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (variable-set-mutable! var) (make-assignment var-name var val)))
+                    {
+                        // (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (variable-set-mutable! var) (make-assignment var-name var val))
+                        {
+                            let [var, val] = [
+                                // (ensure-var! var-name env)
+                                imports::ensure_minus_var_i
+                                    .with(|value| value.get())
+                                    .invoke(&[var_minus_name.clone(), env.clone()]),
+                                // (astify value env #f)
+                                globals::astify.with(|value| value.get()).invoke(&[
+                                    value.clone(),
+                                    env.clone(),
+                                    Scm::False,
+                                ]),
+                            ];
+                            // (letrec () (variable-set-mutable! var) (make-assignment var-name var val))
+                            {
+                                {
+                                    // (variable-set-mutable! var)
+                                    imports::variable_minus_set_minus_mutable_i
+                                        .with(|value| value.get())
+                                        .invoke(&[var.clone()]);
+                                    // (make-assignment var-name var val)
+                                    imports::make_minus_assignment
+                                        .with(|value| value.get())
+                                        .invoke(&[var_minus_name.clone(), var.clone(), val.clone()])
+                                }
+                            }
                         }
                     }
                 })

@@ -16,6 +16,7 @@
             (new-keyword 'cond expand-cond)
             (new-keyword 'if expand-if)
             (new-keyword 'quote expand-quote)
+            (new-keyword 'set! expand-set!)
             (new-import 'assert-eq)
             (new-import 'assert-equal)))
 
@@ -38,4 +39,7 @@
         env tail?))
 
     (define (expand-quote exp env tail?)
-      (astify-constant (cadr exp) env))))
+      (astify-constant (cadr exp) env))
+
+    (define (expand-set! exp env tail?)
+      (astify-assignment (set!-variable exp) (set!-value exp) env))))

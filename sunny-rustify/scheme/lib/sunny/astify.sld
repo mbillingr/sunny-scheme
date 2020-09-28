@@ -2,6 +2,7 @@
   (export astify
           astify-alternative
           astify-and
+          astify-assignment
           astify-comment
           astify-cond
           astify-constant
@@ -9,8 +10,10 @@
 
   (import (scheme base)
           (sunny ast)
+          (sunny env)
           (sunny scheme-syntax)
-          (sunny sexpr-ast))
+          (sunny sexpr-ast)
+          (sunny variable))
 
   (begin
     (define astify sexpr->ast)
@@ -30,6 +33,12 @@
                (astify (car arg*) env #f)
                (astify-and (cdr arg*) env tail?)
                (astify-constant #f env)))))
+
+    (define (astify-assignment var-name value env)
+      (let ((var (ensure-var! var-name env))
+            (val (astify value env #f)))
+        (variable-set-mutable! var)
+        (make-assignment var-name var val)))
 
     (define astify-comment make-comment)
 
