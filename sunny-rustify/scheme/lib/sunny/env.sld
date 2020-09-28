@@ -6,6 +6,7 @@
           ensure-var!
           env-for-each
           lookup
+          lookup*
           make-global-env
           map-env)
 
@@ -23,6 +24,11 @@
         (if var
             var
             (adjoin-global! name env))))
+
+    (define (lookup* name* env)
+      (map (lambda (name)
+             (lookup name env)) 
+           name*))
 
     (define (lookup name env)
       (cond ((null? env)

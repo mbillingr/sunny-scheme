@@ -16,6 +16,7 @@
             (new-keyword 'cond expand-cond)
             (new-keyword 'define expand-define)
             (new-keyword 'if expand-if)
+            (new-keyword 'lambda expand-lambda)
             (new-keyword 'quote expand-quote)
             (new-keyword 'set! expand-set!)
             (new-import 'assert-eq)
@@ -42,6 +43,9 @@
         (if-consequence exp)
         (if-alternative exp)
         env tail?))
+
+    (define (expand-lambda exp env tail?)
+      (astify-abstraction (lambda-params exp) (lambda-body exp) env))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

@@ -24,6 +24,8 @@ pub mod exports {
     pub use super::globals::if_minus_consequence;
     pub use super::globals::import_minus_libnames;
     pub use super::globals::import_p;
+    pub use super::globals::lambda_minus_body;
+    pub use super::globals::lambda_minus_params;
     pub use super::globals::library_p;
     pub use super::globals::scan_minus_out_minus_defines;
     pub use super::globals::set_i_minus_value;
@@ -36,6 +38,8 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static set_i_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set!-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static scan_minus_out_minus_defines: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scan-out-defines"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static lambda_minus_params: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lambda-params"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static lambda_minus_body: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lambda-body"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_libnames: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-libnames"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import?"))}
@@ -577,6 +581,42 @@ pub fn initialize() {
                         } else {
                             expr.clone()
                         }
+                    }
+                })
+            })
+        });
+        // (define (lambda-body expr) ...)
+        globals::lambda_minus_body.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (cddr expr))
+                    {
+                        // (cddr expr)
+                        imports::cddr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
+                    }
+                })
+            })
+        });
+        // (define (lambda-params expr) ...)
+        globals::lambda_minus_params.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (cadr expr))
+                    {
+                        // (cadr expr)
+                        imports::cadr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
                     }
                 })
             })

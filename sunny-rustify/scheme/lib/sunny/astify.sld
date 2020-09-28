@@ -1,5 +1,6 @@
 (define-library (sunny astify)
   (export astify
+          astify-abstraction
           astify-alternative
           astify-and
           astify-assignment
@@ -14,10 +15,29 @@
           (sunny env)
           (sunny scheme-syntax)
           (sunny sexpr-ast)
+          (sunny utils)
           (sunny variable))
 
   (begin
     (define astify sexpr->ast)
+
+    (define (astify-abstraction param* body env)
+      (let* ((local-env (adjoin-local-env param* env))
+             (body-sexpr (scan-out-defines body))
+             (body-ast (astify-sequence body-sexpr local-env #t)))
+        (if (dotted-list? param*)
+            (let ((fix-param (proper-list-part param*))
+                  (var-param (last-cdr param*)))
+              (make-closure
+                (make-vararg-abstraction fix-param
+                                         var-param
+                                         (lookup* fix-param local-env)
+                                         (lookup var-param local-env)
+                                         body-ast)))
+            (make-closure
+              (make-abstraction param*
+                                (lookup* param* local-env)
+                                body-ast)))))
 
     (define (astify-alternative condition consequent alternative env tail?)
       (make-alternative

@@ -13,6 +13,7 @@ pub mod exports {
     pub use super::globals::ensure_minus_var_i;
     pub use super::globals::env_minus_for_minus_each;
     pub use super::globals::lookup;
+    pub use super::globals::lookup_star_;
     pub use super::globals::make_minus_global_minus_env;
     pub use super::globals::map_minus_env;
 }
@@ -29,6 +30,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_import_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-import!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static find_minus_globals: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL find-globals"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static lookup_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lookup*"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ensure_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ensure-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lookup: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lookup"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static adjoin_minus_global_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL adjoin-global!"))}
@@ -103,6 +105,41 @@ pub fn initialize() {
                                 }
                             }
                         }
+                    }
+                })
+            })
+        });
+        // (define (lookup* name* env) ...)
+        globals::lookup_star_.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let name_star_ = args[0].clone();
+                    let env = args[1].clone();
+                    // (letrec () (map (lambda (name) (lookup name env)) name*))
+                    {
+                        // (map (lambda (name) (lookup name env)) name*)
+                        imports::map.with(|value| value.get()).invoke(&[
+                            {
+                                let env = env.clone();
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 1 {
+                                        panic!("invalid arity")
+                                    }
+                                    let name = args[0].clone();
+                                    // (letrec () (lookup name env))
+                                    {
+                                        // (lookup name env)
+                                        globals::lookup
+                                            .with(|value| value.get())
+                                            .invoke(&[name.clone(), env.clone()])
+                                    }
+                                })
+                            },
+                            name_star_.clone(),
+                        ])
                     }
                 })
             })

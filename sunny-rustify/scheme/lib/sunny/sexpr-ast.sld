@@ -19,10 +19,7 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((abstraction? exp) (sexpr->abstraction (cadr exp)
-                                                           (cddr exp)
-                                                           env))
-                   ((eq? 'let (car exp)) (wrap-sexpr exp
+             (cond ((eq? 'let (car exp)) (wrap-sexpr exp
                                            (sexpr->scope-let (cadr exp)
                                                              (cddr exp)
                                                              env tail?)))

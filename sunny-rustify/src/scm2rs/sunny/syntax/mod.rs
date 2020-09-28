@@ -21,6 +21,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_define: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-define"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_if: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-if"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_lambda: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-lambda"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_quote: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-quote"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_set_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-set!"))}
 }
@@ -48,9 +49,9 @@ pub fn initialize() {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
                     {
-                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
                         imports::list.with(|value| value.get()).invoke(&[
                             Scm::symbol("GLOBAL-MARKER"),
                             // (new-keyword (quote and) expand-and)
@@ -87,6 +88,13 @@ pub fn initialize() {
                                 .invoke(&[
                                     Scm::symbol("if"),
                                     globals::expand_minus_if.with(|value| value.get()),
+                                ]),
+                            // (new-keyword (quote lambda) expand-lambda)
+                            imports::new_minus_keyword
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    Scm::symbol("lambda"),
+                                    globals::expand_minus_lambda.with(|value| value.get()),
                                 ]),
                             // (new-keyword (quote quote) expand-quote)
                             imports::new_minus_keyword
@@ -284,6 +292,36 @@ pub fn initialize() {
                                     .invoke(&[exp.clone()]),
                                 env.clone(),
                                 tail_p.clone(),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (expand-lambda exp env tail?) ...)
+        globals::expand_minus_lambda.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (astify-abstraction (lambda-params exp) (lambda-body exp) env))
+                    {
+                        // (astify-abstraction (lambda-params exp) (lambda-body exp) env)
+                        imports::astify_minus_abstraction
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (lambda-params exp)
+                                imports::lambda_minus_params
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()]),
+                                // (lambda-body exp)
+                                imports::lambda_minus_body
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()]),
+                                env.clone(),
                             ])
                     }
                 })

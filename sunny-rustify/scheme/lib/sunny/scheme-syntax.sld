@@ -15,6 +15,8 @@
           if-alternative
           import?
           import-libnames
+          lambda-body
+          lambda-params
           library?
           scan-out-defines
           set!-variable
@@ -102,6 +104,13 @@
             ((eq? 'except (car expr))
              (importset-libname (cadr expr)))
             (else expr)))
+
+
+    (define (lambda-body expr)
+      (cddr expr))
+
+    (define (lambda-params expr)
+      (cadr expr))
 
 
     (define (library? exp*)
