@@ -9,7 +9,6 @@
           (scheme file)
           (scheme read)
           (scheme write)
-          (sunny astify)
           (sunny env)
           (sunny utils)
           (sunny variable))

@@ -41,10 +41,6 @@
                                               (sexpr->scope-rec (cadr exp)
                                                                 (cddr exp)
                                                                 env tail?)))
-                   ((eq? 'if (car exp)) (sexpr->alternative (if-condition exp)
-                                                            (if-consequence exp)
-                                                            (if-alternative exp)
-                                                            env tail?))
                    ((eq? 'cond (car exp)) (wrap-sexpr exp
                                             (sexpr->cond (cond-clauses exp)
                                                          env tail?)))
@@ -94,12 +90,6 @@
              (val (sexpr->ast value env #f)))
         (global-add-definition! var val)
         (make-definition name var val)))
-
-    (define (sexpr->alternative condition consequent alternative env tail?)
-      (let* ((x (sexpr->ast condition env #f))
-             (a (sexpr->ast consequent env tail?))
-             (b (sexpr->ast alternative env tail?)))
-        (make-alternative x a b)))
 
     (define (sexpr->application func arg* env tail?)
       (if (eq? 'ABSTRACTION (func 'kind))

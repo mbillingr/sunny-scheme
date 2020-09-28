@@ -5,7 +5,6 @@ mod imports {
     pub use crate::scheme::file::exports::*;
     pub use crate::scheme::read::exports::*;
     pub use crate::scheme::write::exports::*;
-    pub use crate::sunny::astify::exports::*;
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::utils::exports::*;
     pub use crate::sunny::variable::exports::*;
@@ -44,7 +43,6 @@ pub fn initialize() {
     crate::scheme::file::initialize();
     crate::scheme::read::initialize();
     crate::scheme::write::initialize();
-    crate::sunny::astify::initialize();
     crate::sunny::env::initialize();
     crate::sunny::utils::initialize();
     crate::sunny::variable::initialize();

@@ -17,10 +17,7 @@
   (import (scheme base)
           (scheme cxr)
           (scheme write)
-          (sunny astify)
-          (sunny env)
-          (sunny utils)
-          (sunny variable))
+          (sunny utils))
 
   (begin
     (define (abstraction? expr)

@@ -4,10 +4,7 @@ mod imports {
     pub use crate::scheme::base::exports::*;
     pub use crate::scheme::cxr::exports::*;
     pub use crate::scheme::write::exports::*;
-    pub use crate::sunny::astify::exports::*;
-    pub use crate::sunny::env::exports::*;
     pub use crate::sunny::utils::exports::*;
-    pub use crate::sunny::variable::exports::*;
 }
 
 pub mod exports {
@@ -57,10 +54,7 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     crate::scheme::cxr::initialize();
     crate::scheme::write::initialize();
-    crate::sunny::astify::initialize();
-    crate::sunny::env::initialize();
     crate::sunny::utils::initialize();
-    crate::sunny::variable::initialize();
     {
         (/*NOP*/);
         // (define (abstraction? expr) (and (pair? expr) (eq? (quote lambda) (car expr))))
