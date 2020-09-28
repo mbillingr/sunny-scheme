@@ -27,8 +27,6 @@
                    ((abstraction? exp) (sexpr->abstraction (cadr exp)
                                                            (cddr exp)
                                                            env))
-                   ((eq? 'begin (car exp)) (sexpr->sequence (cdr exp)
-                                                            env tail?))
                    ((eq? 'let (car exp)) (wrap-sexpr exp
                                            (sexpr->scope-let (cadr exp)
                                                              (cddr exp)

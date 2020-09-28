@@ -15,7 +15,10 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-and"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_begin: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-begin"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_if: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-if"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_quote: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-quote"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
@@ -37,16 +40,16 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (make-core-env) (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+        // (define (make-core-env) (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
         globals::make_minus_core_minus_env.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
                     {
-                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote if) expand-if) (new-keyword (quote quote) expand-quote) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
                         imports::list.with(|value| value.get()).invoke(&[
                             Scm::symbol("GLOBAL-MARKER"),
                             // (new-keyword (quote and) expand-and)
@@ -55,6 +58,20 @@ pub fn initialize() {
                                 .invoke(&[
                                     Scm::symbol("and"),
                                     globals::expand_minus_and.with(|value| value.get()),
+                                ]),
+                            // (new-keyword (quote begin) expand-begin)
+                            imports::new_minus_keyword
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    Scm::symbol("begin"),
+                                    globals::expand_minus_begin.with(|value| value.get()),
+                                ]),
+                            // (new-keyword (quote cond) expand-cond)
+                            imports::new_minus_keyword
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    Scm::symbol("cond"),
+                                    globals::expand_minus_cond.with(|value| value.get()),
                                 ]),
                             // (new-keyword (quote if) expand-if)
                             imports::new_minus_keyword
@@ -106,6 +123,66 @@ pub fn initialize() {
                                     .invoke(&[
                                         // (and-args exp)
                                         imports::and_minus_args
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                        tail_p.clone(),
+                                    ]),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (expand-begin exp env tail?) (astify-sequence (begin-statements exp) env tail?))
+        globals::expand_minus_begin.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (astify-sequence (begin-statements exp) env tail?))
+                    {
+                        // (astify-sequence (begin-statements exp) env tail?)
+                        imports::astify_minus_sequence
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (begin-statements exp)
+                                imports::begin_minus_statements
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()]),
+                                env.clone(),
+                                tail_p.clone(),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (expand-cond exp env tail?) (astify-comment exp (astify-cond (cond-clauses exp) env tail?)))
+        globals::expand_minus_cond.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (astify-comment exp (astify-cond (cond-clauses exp) env tail?)))
+                    {
+                        // (astify-comment exp (astify-cond (cond-clauses exp) env tail?))
+                        imports::astify_minus_comment
+                            .with(|value| value.get())
+                            .invoke(&[
+                                exp.clone(),
+                                // (astify-cond (cond-clauses exp) env tail?)
+                                globals::astify_minus_cond
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cond-clauses exp)
+                                        imports::cond_minus_clauses
                                             .with(|value| value.get())
                                             .invoke(&[exp.clone()]),
                                         env.clone(),

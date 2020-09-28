@@ -1,6 +1,7 @@
 (define-library (sunny scheme-syntax)
   (export abstraction?
           and-args
+          begin-statements
           cond-clauses
           cond-clause-condition
           cond-clause-sequence
@@ -27,6 +28,10 @@
 
 
     (define (and-args expr)
+      (cdr expr))
+
+
+    (define (begin-statements expr)
       (cdr expr))
 
 

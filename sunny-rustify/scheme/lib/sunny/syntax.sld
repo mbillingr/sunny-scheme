@@ -12,6 +12,7 @@
     (define (make-core-env)
       (list 'GLOBAL-MARKER
             (new-keyword 'and expand-and)
+            (new-keyword 'begin expand-begin)
             (new-keyword 'cond expand-cond)
             (new-keyword 'if expand-if)
             (new-keyword 'quote expand-quote)
@@ -22,9 +23,12 @@
       (astify-comment exp
         (astify-and (and-args exp) env tail?)))
 
+    (define (expand-begin exp env tail?)
+      (astify-sequence (begin-statements exp) env tail?))
+
     (define (expand-cond exp env tail?)
       (astify-comment exp
-        (astify-cond (cond-clauses exp) env tail?)))                     
+        (astify-cond (cond-clauses exp) env tail?)))
 
     (define (expand-if exp env tail?)
       (astify-alternative

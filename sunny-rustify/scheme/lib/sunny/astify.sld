@@ -2,7 +2,8 @@
   (export astify-alternative
           astify-and
           astify-comment
-          astify-constant)
+          astify-constant
+          astify-sequence)
 
   (import (scheme base)
           (sunny ast)
@@ -30,4 +31,13 @@
     (define astify-comment make-comment)
 
     (define (astify-constant exp env)
-      (make-constant exp))))
+      (make-constant exp))
+
+    (define (astify-sequence exp* env tail?)
+      (cond ((null? exp*)
+             (error "empty sequence"))
+            ((null? (cdr exp*))
+             (astify (car exp*) env tail?))
+            (else (let* ((first (astify (car exp*) env #f))
+                         (rest (astify-sequence (cdr exp*) env tail?)))
+                    (make-sequence first rest)))))))

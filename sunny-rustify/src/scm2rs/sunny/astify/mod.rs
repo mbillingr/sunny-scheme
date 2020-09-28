@@ -11,10 +11,12 @@ pub mod exports {
     pub use super::globals::astify_minus_and;
     pub use super::globals::astify_minus_comment;
     pub use super::globals::astify_minus_constant;
+    pub use super::globals::astify_minus_sequence;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-sequence"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
@@ -177,6 +179,99 @@ pub fn initialize() {
                         imports::make_minus_constant
                             .with(|value| value.get())
                             .invoke(&[exp.clone()])
+                    }
+                })
+            })
+        });
+        // (define (astify-sequence exp* env tail?) (cond ((null? exp*) (error "empty sequence")) ((null? (cdr exp*)) (astify (car exp*) env tail?)) (else (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest)))))
+        globals::astify_minus_sequence.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp_star_ = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (cond ((null? exp*) (error "empty sequence")) ((null? (cdr exp*)) (astify (car exp*) env tail?)) (else (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest)))))
+                    {
+                        // (cond ((null? exp*) (error "empty sequence")) ((null? (cdr exp*)) (astify (car exp*) env tail?)) (else (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest))))
+                        if (
+                            // (null? exp*)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[exp_star_.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (error "empty sequence")
+                            imports::error
+                                .with(|value| value.get())
+                                .invoke(&[Scm::from("empty sequence")])
+                        } else if (
+                            // (null? (cdr exp*))
+                            imports::null_p.with(|value| value.get()).invoke(&[
+                                // (cdr exp*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (astify (car exp*) env tail?)
+                            globals::astify.with(|value| value.get()).invoke(&[
+                                // (car exp*)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()]),
+                                env.clone(),
+                                tail_p.clone(),
+                            ])
+                        } else {
+                            // (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest))
+                            {
+                                let [first] = [
+                                    // (astify (car exp*) env #f)
+                                    globals::astify.with(|value| value.get()).invoke(&[
+                                        // (car exp*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[exp_star_.clone()]),
+                                        env.clone(),
+                                        Scm::False,
+                                    ]),
+                                ];
+                                // (letrec () (let* ((rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest)))
+                                {
+                                    // (let* ((rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest))
+                                    {
+                                        let [rest] = [
+                                            // (astify-sequence (cdr exp*) env tail?)
+                                            globals::astify_minus_sequence
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    // (cdr exp*)
+                                                    imports::cdr
+                                                        .with(|value| value.get())
+                                                        .invoke(&[exp_star_.clone()]),
+                                                    env.clone(),
+                                                    tail_p.clone(),
+                                                ]),
+                                        ];
+                                        // (letrec () (let* () (make-sequence first rest)))
+                                        {
+                                            // (let* () (make-sequence first rest))
+
+                                            // (make-sequence first rest)
+                                            imports::make_minus_sequence
+                                                .with(|value| value.get())
+                                                .invoke(&[first.clone(), rest.clone()])
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 })
             })
