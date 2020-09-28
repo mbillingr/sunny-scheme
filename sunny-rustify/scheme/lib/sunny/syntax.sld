@@ -6,6 +6,7 @@
           (sunny astify)
           (sunny env)
           (sunny scheme-syntax)
+          (sunny sexpr-ast)
           (sunny variable))
 
   (begin
@@ -17,6 +18,7 @@
             (new-keyword 'define expand-define)
             (new-keyword 'if expand-if)
             (new-keyword 'lambda expand-lambda)
+            (new-keyword 'let expand-let)
             (new-keyword 'quote expand-quote)
             (new-keyword 'set! expand-set!)
             (new-import 'assert-eq)
@@ -46,6 +48,19 @@
 
     (define (expand-lambda exp env tail?)
       (astify-abstraction (lambda-params exp) (lambda-body exp) env))
+
+    (define (expand-let exp env tail?)
+      (astify-comment exp
+        (error "whats wrong here?")
+        
+        ;works
+        ;(sexpr->scope-let (cadr exp) (cddr exp) env tail?)))
+
+        ;dos not work
+        (astify-application
+          (astify-abstraction (let-vars exp) (let-body exp) env)
+          (let-args exp)
+          env tail?)))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

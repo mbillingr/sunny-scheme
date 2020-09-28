@@ -17,6 +17,9 @@
           import-libnames
           lambda-body
           lambda-params
+          let-args
+          let-body
+          let-vars
           library?
           scan-out-defines
           set!-variable
@@ -111,6 +114,16 @@
 
     (define (lambda-params expr)
       (cadr expr))
+
+
+    (define (let-args expr)
+      (map cadr (cadr expr)))
+
+    (define (let-body expr)
+      (cddr expr))
+
+    (define (let-vars expr)
+      (map car (cadr expr)))
 
 
     (define (library? exp*)

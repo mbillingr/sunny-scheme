@@ -2,7 +2,8 @@
   (export sexpr->ast
           sexpr->export
           sexpr->import
-          sexpr->sequence)
+          sexpr->sequence
+          sexpr->scope-let)
 
   (import (scheme base)
           (scheme cxr)
@@ -19,11 +20,7 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((eq? 'let (car exp)) (wrap-sexpr exp
-                                           (sexpr->scope-let (cadr exp)
-                                                             (cddr exp)
-                                                             env tail?)))
-                   ((eq? 'let* (car exp)) (wrap-sexpr exp
+             (cond ((eq? 'let* (car exp)) (wrap-sexpr exp
                                             (sexpr->scope-seq (cadr exp)
                                                               (cddr exp)
                                                               env tail?)))

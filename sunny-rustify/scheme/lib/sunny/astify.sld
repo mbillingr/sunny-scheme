@@ -58,16 +58,10 @@
 
     (define (astify-application proc arg* env tail?)
       (if (eq? 'ABSTRACTION (proc 'kind))
-          (astify-fixlet proc arg* env tail?)
-          (astify-regular-application proc arg* env tail?)))
-
-    (define (astify-fixlet proc arg* env tail?)
-      (make-fixlet ((proc 'inner-function) 'get-params)
-                   ((proc 'inner-function) 'get-body)
-                   (astify-args arg* env)))
-
-    (define (astify-regular-application proc arg* env tail?)
-      (make-application proc (astify-args arg* env) arg* tail?))
+          (make-fixlet ((proc 'inner-function) 'get-params)
+                       ((proc 'inner-function) 'get-body)
+                       (astify-args arg* env))
+          (make-application proc (astify-args arg* env) tail?)))
 
     (define (astify-args arg* env)
       (if (null? arg*)
