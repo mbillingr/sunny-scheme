@@ -3,6 +3,7 @@
           astify-abstraction
           astify-alternative
           astify-and
+          astify-application
           astify-assignment
           astify-comment
           astify-cond
@@ -54,6 +55,25 @@
                (astify (car arg*) env #f)
                (astify-and (cdr arg*) env tail?)
                (astify-constant #f env)))))
+
+    (define (astify-application proc arg* env tail?)
+      (if (eq? 'ABSTRACTION (proc 'kind))
+          (astify-fixlet proc arg* env tail?)
+          (astify-regular-application proc arg* env tail?)))
+
+    (define (astify-fixlet proc arg* env tail?)
+      (make-fixlet ((proc 'inner-function) 'get-params)
+                   ((proc 'inner-function) 'get-body)
+                   (astify-args arg* env)))
+
+    (define (astify-regular-application proc arg* env tail?)
+      (make-application proc (astify-args arg* env) arg* tail?))
+
+    (define (astify-args arg* env)
+      (if (null? arg*)
+          (make-null-arg)
+          (make-args (astify (car arg*) env #f)
+                     (astify-args (cdr arg*) env))))
 
     (define (astify-assignment var-name value env)
       (let ((var (ensure-var! var-name env))

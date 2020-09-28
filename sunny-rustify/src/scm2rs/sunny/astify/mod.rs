@@ -15,6 +15,7 @@ pub mod exports {
     pub use super::globals::astify_minus_abstraction;
     pub use super::globals::astify_minus_alternative;
     pub use super::globals::astify_minus_and;
+    pub use super::globals::astify_minus_application;
     pub use super::globals::astify_minus_assignment;
     pub use super::globals::astify_minus_comment;
     pub use super::globals::astify_minus_cond;
@@ -30,6 +31,10 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assignment"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-args"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-application"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_fixlet: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-fixlet"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_regular_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-regular-application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-alternative"))}
@@ -222,6 +227,171 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                         .with(|value| value.get())
                                         .invoke(&[Scm::False, env.clone()]),
                                 ])
+                        }
+                    }
+                })
+            })
+        });
+        // (define (astify-application proc arg* env tail?) ...)
+        globals::astify_minus_application.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 4 {
+                        panic!("invalid arity")
+                    }
+                    let proc = args[0].clone();
+                    let arg_star_ = args[1].clone();
+                    let env = args[2].clone();
+                    let tail_p = args[3].clone();
+                    // (letrec () (if (eq? (quote ABSTRACTION) (proc (quote kind))) (astify-fixlet proc arg* env tail?) (astify-regular-application proc arg* env tail?)))
+                    {
+                        if (
+                            // (eq? (quote ABSTRACTION) (proc (quote kind)))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("ABSTRACTION"),
+                                // (proc (quote kind))
+                                proc.clone().invoke(&[Scm::symbol("kind")]),
+                            ])
+                        )
+                        .is_true()
+                        {
+                            // (astify-fixlet proc arg* env tail?)
+                            globals::astify_minus_fixlet
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    proc.clone(),
+                                    arg_star_.clone(),
+                                    env.clone(),
+                                    tail_p.clone(),
+                                ])
+                        } else {
+                            // (astify-regular-application proc arg* env tail?)
+                            globals::astify_minus_regular_minus_application
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    proc.clone(),
+                                    arg_star_.clone(),
+                                    env.clone(),
+                                    tail_p.clone(),
+                                ])
+                        }
+                    }
+                })
+            })
+        });
+        // (define (astify-fixlet proc arg* env tail?) ...)
+        globals::astify_minus_fixlet.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 4 {
+                        panic!("invalid arity")
+                    }
+                    let proc = args[0].clone();
+                    let arg_star_ = args[1].clone();
+                    let env = args[2].clone();
+                    let tail_p = args[3].clone();
+                    // (letrec () (make-fixlet ((proc (quote inner-function)) (quote get-params)) ((proc (quote inner-function)) (quote get-body)) (astify-args arg* env)))
+                    {
+                        // (make-fixlet ((proc (quote inner-function)) (quote get-params)) ((proc (quote inner-function)) (quote get-body)) (astify-args arg* env))
+                        imports::make_minus_fixlet
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // ((proc (quote inner-function)) (quote get-params))
+
+                                // (proc (quote inner-function))
+                                proc.clone()
+                                    .invoke(&[Scm::symbol("inner-function")])
+                                    .invoke(&[Scm::symbol("get-params")]),
+                                // ((proc (quote inner-function)) (quote get-body))
+
+                                // (proc (quote inner-function))
+                                proc.clone()
+                                    .invoke(&[Scm::symbol("inner-function")])
+                                    .invoke(&[Scm::symbol("get-body")]),
+                                // (astify-args arg* env)
+                                globals::astify_minus_args
+                                    .with(|value| value.get())
+                                    .invoke(&[arg_star_.clone(), env.clone()]),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (astify-regular-application proc arg* env tail?) ...)
+        globals::astify_minus_regular_minus_application.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 4 {
+                        panic!("invalid arity")
+                    }
+                    let proc = args[0].clone();
+                    let arg_star_ = args[1].clone();
+                    let env = args[2].clone();
+                    let tail_p = args[3].clone();
+                    // (letrec () (make-application proc (astify-args arg* env) arg* tail?))
+                    {
+                        // (make-application proc (astify-args arg* env) arg* tail?)
+                        imports::make_minus_application
+                            .with(|value| value.get())
+                            .invoke(&[
+                                proc.clone(),
+                                // (astify-args arg* env)
+                                globals::astify_minus_args
+                                    .with(|value| value.get())
+                                    .invoke(&[arg_star_.clone(), env.clone()]),
+                                arg_star_.clone(),
+                                tail_p.clone(),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (astify-args arg* env) ...)
+        globals::astify_minus_args.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 2 {
+                        panic!("invalid arity")
+                    }
+                    let arg_star_ = args[0].clone();
+                    let env = args[1].clone();
+                    // (letrec () (if (null? arg*) (make-null-arg) (make-args (astify (car arg*) env #f) (astify-args (cdr arg*) env))))
+                    {
+                        if (
+                            // (null? arg*)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[arg_star_.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (make-null-arg)
+                            imports::make_minus_null_minus_arg
+                                .with(|value| value.get())
+                                .invoke(&[])
+                        } else {
+                            // (make-args (astify (car arg*) env #f) (astify-args (cdr arg*) env))
+                            imports::make_minus_args.with(|value| value.get()).invoke(&[
+                                // (astify (car arg*) env #f)
+                                globals::astify.with(|value| value.get()).invoke(&[
+                                    // (car arg*)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[arg_star_.clone()]),
+                                    env.clone(),
+                                    Scm::False,
+                                ]),
+                                // (astify-args (cdr arg*) env)
+                                globals::astify_minus_args
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (cdr arg*)
+                                        imports::cdr
+                                            .with(|value| value.get())
+                                            .invoke(&[arg_star_.clone()]),
+                                        env.clone(),
+                                    ]),
+                            ])
                         }
                     }
                 })
