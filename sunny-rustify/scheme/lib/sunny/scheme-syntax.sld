@@ -5,6 +5,7 @@
           cond-clauses
           cond-clause-condition
           cond-clause-sequence
+          cond-else-clause?
           definition?
           definition-variable
           definition-value
@@ -43,6 +44,9 @@
 
     (define (cond-clause-sequence clause)
       (cdr clause))
+
+    (define (cond-else-clause? clause)
+      (eq? 'else (car clause)))
 
 
     (define (definition? expr)

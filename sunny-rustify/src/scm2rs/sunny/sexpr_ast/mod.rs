@@ -37,7 +37,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->assert"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testsuite"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_scope_minus_rec: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->scope-rec"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_scope_minus_seq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->scope-seq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_scope_minus_let: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->scope-let"))}
@@ -67,7 +66,7 @@ pub fn initialize() {
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
-        // (define (sexpr->ast exp env tail?) (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
+        // (define (sexpr->ast exp env tail?) (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
         globals::sexpr_minus__g_ast.with(|value| {
             value.set({
                 Scm::func(move |args: &[Scm]| {
@@ -77,9 +76,9 @@ pub fn initialize() {
                     let exp = args[0].clone();
                     let env = args[1].clone();
                     let tail_p = args[2].clone();
-                    // (letrec () (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
+                    // (letrec () (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env))))
                     {
-                        // (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env)))
+                        // (cond ((keyword? exp) exp) ((ast-node? exp) exp) ((pair? exp) (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))) ((symbol? exp) (objectify-symbol exp env)) (else (sexpr->constant exp env)))
                         if (
                             // (keyword? exp)
                             imports::keyword_p
@@ -106,7 +105,7 @@ pub fn initialize() {
                         )
                         .is_true()
                         {
-                            // (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((eq? (quote cond) (car exp)) (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))
+                            // (cond ((eq? (quote set!) (car exp)) (sexpr->assignment (cadr exp) (caddr exp) env)) ((definition? exp) (wrap-sexpr exp (sexpr->definition exp env))) ((abstraction? exp) (sexpr->abstraction (cadr exp) (cddr exp) env)) ((eq? (quote let) (car exp)) (wrap-sexpr exp (sexpr->scope-let (cadr exp) (cddr exp) env tail?))) ((eq? (quote let*) (car exp)) (wrap-sexpr exp (sexpr->scope-seq (cadr exp) (cddr exp) env tail?))) ((eq? (quote letrec) (car exp)) (wrap-sexpr exp (sexpr->scope-rec (cadr exp) (cddr exp) env tail?))) ((and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env))) (sexpr->testsuite (cadr exp) (cddr exp) env)) ((and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env))) (sexpr->assert (cadr exp) env)) (else (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))))
                             if (
                                 // (eq? (quote set!) (car exp))
                                 imports::eq_p.with(|value| value.get()).invoke(&[
@@ -266,35 +265,6 @@ pub fn initialize() {
                                                     .invoke(&[exp.clone()]),
                                                 // (cddr exp)
                                                 imports::cddr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[exp.clone()]),
-                                                env.clone(),
-                                                tail_p.clone(),
-                                            ]),
-                                    ])
-                            } else if (
-                                // (eq? (quote cond) (car exp))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("cond"),
-                                    // (car exp)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[exp.clone()]),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                // (wrap-sexpr exp (sexpr->cond (cond-clauses exp) env tail?))
-                                globals::wrap_minus_sexpr
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        exp.clone(),
-                                        // (sexpr->cond (cond-clauses exp) env tail?)
-                                        globals::sexpr_minus__g_cond
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (cond-clauses exp)
-                                                imports::cond_minus_clauses
                                                     .with(|value| value.get())
                                                     .invoke(&[exp.clone()]),
                                                 env.clone(),
@@ -1345,156 +1315,6 @@ imports::make_minus_definition.with(|value| value.get()).invoke(&[name.clone(),v
                                     }
                                 }
                             }
-                        }
-                    }
-                })
-            })
-        });
-        // (define (sexpr->cond clauses env tail?) (cond ((null? clauses) (make-constant (quote *UNSPECIFIED*))) ((eq? (quote else) (cond-clause-condition (car clauses))) (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) ((pair? clauses) (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f)) (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest)))))
-        globals::sexpr_minus__g_cond.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 3 {
-                        panic!("invalid arity")
-                    }
-                    let clauses = args[0].clone();
-                    let env = args[1].clone();
-                    let tail_p = args[2].clone();
-                    // (letrec () (cond ((null? clauses) (make-constant (quote *UNSPECIFIED*))) ((eq? (quote else) (cond-clause-condition (car clauses))) (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) ((pair? clauses) (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f)) (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest)))))
-                    {
-                        // (cond ((null? clauses) (make-constant (quote *UNSPECIFIED*))) ((eq? (quote else) (cond-clause-condition (car clauses))) (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) ((pair? clauses) (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f)) (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))))
-                        if (
-                            // (null? clauses)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[clauses.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (make-constant (quote *UNSPECIFIED*))
-                            imports::make_minus_constant
-                                .with(|value| value.get())
-                                .invoke(&[Scm::symbol("*UNSPECIFIED*")])
-                        } else if (
-                            // (eq? (quote else) (cond-clause-condition (car clauses)))
-                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                Scm::symbol("else"),
-                                // (cond-clause-condition (car clauses))
-                                imports::cond_minus_clause_minus_condition
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (car clauses)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[clauses.clone()]),
-                                    ]),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
-                            globals::sexpr_minus__g_sequence
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    // (cond-clause-sequence (car clauses))
-                                    imports::cond_minus_clause_minus_sequence
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car clauses)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[clauses.clone()]),
-                                        ]),
-                                    env.clone(),
-                                    tail_p.clone(),
-                                ])
-                        } else if (
-                            // (pair? clauses)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[clauses.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f)) (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
-                            {
-                                let [condition] = [
-                                    // (sexpr->ast (cond-clause-condition (car clauses)) env #f)
-                                    globals::sexpr_minus__g_ast
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (cond-clause-condition (car clauses))
-                                            imports::cond_minus_clause_minus_condition
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (car clauses)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[clauses.clone()]),
-                                                ]),
-                                            env.clone(),
-                                            Scm::False,
-                                        ]),
-                                ];
-                                // (letrec () (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest)))
-                                {
-                                    // (let* ((sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)) (rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
-                                    {
-                                        let [sequence] = [
-                                            // (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?)
-                                            globals::sexpr_minus__g_sequence
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (cond-clause-sequence (car clauses))
-                                                    imports::cond_minus_clause_minus_sequence
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            // (car clauses)
-                                                            imports::car
-                                                                .with(|value| value.get())
-                                                                .invoke(&[clauses.clone()]),
-                                                        ]),
-                                                    env.clone(),
-                                                    tail_p.clone(),
-                                                ]),
-                                        ];
-                                        // (letrec () (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest)))
-                                        {
-                                            // (let* ((rest (sexpr->cond (cdr clauses) env tail?))) (make-alternative condition sequence rest))
-                                            {
-                                                let [rest] = [
-                                                    // (sexpr->cond (cdr clauses) env tail?)
-                                                    globals::sexpr_minus__g_cond
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            // (cdr clauses)
-                                                            imports::cdr
-                                                                .with(|value| value.get())
-                                                                .invoke(&[clauses.clone()]),
-                                                            env.clone(),
-                                                            tail_p.clone(),
-                                                        ]),
-                                                ];
-                                                // (letrec () (let* () (make-alternative condition sequence rest)))
-                                                {
-                                                    // (let* () (make-alternative condition sequence rest))
-
-                                                    // (make-alternative condition sequence rest)
-                                                    imports::make_minus_alternative
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            condition.clone(),
-                                                            sequence.clone(),
-                                                            rest.clone(),
-                                                        ])
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            Scm::symbol("*UNSPECIFIED*")
                         }
                     }
                 })

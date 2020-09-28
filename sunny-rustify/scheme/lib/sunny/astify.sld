@@ -1,12 +1,15 @@
 (define-library (sunny astify)
-  (export astify-alternative
+  (export astify
+          astify-alternative
           astify-and
           astify-comment
+          astify-cond
           astify-constant
           astify-sequence)
 
   (import (scheme base)
           (sunny ast)
+          (sunny scheme-syntax)
           (sunny sexpr-ast))
 
   (begin
@@ -30,6 +33,18 @@
 
     (define astify-comment make-comment)
 
+    (define (astify-cond clause* env tail?)
+      (cond ((null? clause*)
+             (astify-unspecified))
+            ((cond-else-clause? (car clause*))
+             (astify-sequence (cond-clause-sequence (car clause*))
+                              env tail?))
+            (else
+              (let* ((i (astify (cond-clause-condition (car clause*)) env #f))
+                     (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?))
+                     (e (astify-cond (cdr clause*) env tail?)))
+                (make-alternative i t e)))))
+
     (define (astify-constant exp env)
       (make-constant exp))
 
@@ -40,4 +55,7 @@
              (astify (car exp*) env tail?))
             (else (let* ((first (astify (car exp*) env #f))
                          (rest (astify-sequence (cdr exp*) env tail?)))
-                    (make-sequence first rest)))))))
+                    (make-sequence first rest)))))
+
+    (define (astify-unspecified)
+      (make-constant '*UNSPECIFIED*))))

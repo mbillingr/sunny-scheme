@@ -15,7 +15,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_begin: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-begin"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-cond"))}
@@ -178,7 +177,7 @@ pub fn initialize() {
                             .invoke(&[
                                 exp.clone(),
                                 // (astify-cond (cond-clauses exp) env tail?)
-                                globals::astify_minus_cond
+                                imports::astify_minus_cond
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (cond-clauses exp)

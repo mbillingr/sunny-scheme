@@ -39,9 +39,6 @@
                                               (sexpr->scope-rec (cadr exp)
                                                                 (cddr exp)
                                                                 env tail?)))
-                   ((eq? 'cond (car exp)) (wrap-sexpr exp
-                                            (sexpr->cond (cond-clauses exp)
-                                                         env tail?)))
                    ((and (eq? 'testsuite (car exp))
                          (not (lookup 'testsuite env)))
                     (sexpr->testsuite (cadr exp) (cddr exp) env))
@@ -156,16 +153,6 @@
           (let ((first (sexpr->ast (car expr*) env #f)))
             (make-sequence first
                            (sexpr->sequence (cdr expr*) env tail?)))))
-
-    (define (sexpr->cond clauses env tail?)
-      (cond ((null? clauses) (make-constant '*UNSPECIFIED*))
-            ((eq? 'else (cond-clause-condition (car clauses)))
-             (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?))
-            ((pair? clauses)
-             (let* ((condition (sexpr->ast (cond-clause-condition (car clauses)) env #f))
-                    (sequence (sexpr->sequence (cond-clause-sequence (car clauses)) env tail?))
-                    (rest (sexpr->cond (cdr clauses) env tail?)))
-               (make-alternative condition sequence rest)))))
 
     (define (sexpr->import stmt* env)
       (cond ((null? stmt*)

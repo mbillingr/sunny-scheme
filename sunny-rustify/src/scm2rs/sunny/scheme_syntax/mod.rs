@@ -14,6 +14,7 @@ pub mod exports {
     pub use super::globals::cond_minus_clause_minus_condition;
     pub use super::globals::cond_minus_clause_minus_sequence;
     pub use super::globals::cond_minus_clauses;
+    pub use super::globals::cond_minus_else_minus_clause_p;
     pub use super::globals::definition_minus_value;
     pub use super::globals::definition_minus_variable;
     pub use super::globals::definition_p;
@@ -39,6 +40,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-value"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static definition_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL definition?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_else_minus_clause_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-else-clause?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-sequence"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-condition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clauses: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clauses"))}
@@ -181,6 +183,28 @@ pub fn initialize() {
                         imports::cdr
                             .with(|value| value.get())
                             .invoke(&[clause.clone()])
+                    }
+                })
+            })
+        });
+        // (define (cond-else-clause? clause) (eq? (quote else) (car clause)))
+        globals::cond_minus_else_minus_clause_p.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let clause = args[0].clone();
+                    // (letrec () (eq? (quote else) (car clause)))
+                    {
+                        // (eq? (quote else) (car clause))
+                        imports::eq_p.with(|value| value.get()).invoke(&[
+                            Scm::symbol("else"),
+                            // (car clause)
+                            imports::car
+                                .with(|value| value.get())
+                                .invoke(&[clause.clone()]),
+                        ])
                     }
                 })
             })

@@ -3,13 +3,16 @@ use sunny_core::{Mut, Scm};
 mod imports {
     pub use crate::scheme::base::exports::*;
     pub use crate::sunny::ast::exports::*;
+    pub use crate::sunny::scheme_syntax::exports::*;
     pub use crate::sunny::sexpr_ast::exports::*;
 }
 
 pub mod exports {
+    pub use super::globals::astify;
     pub use super::globals::astify_minus_alternative;
     pub use super::globals::astify_minus_and;
     pub use super::globals::astify_minus_comment;
+    pub use super::globals::astify_minus_cond;
     pub use super::globals::astify_minus_constant;
     pub use super::globals::astify_minus_sequence;
 }
@@ -17,6 +20,8 @@ pub mod exports {
 mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-sequence"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
@@ -34,6 +39,7 @@ pub fn initialize() {
 
     crate::scheme::base::initialize();
     crate::sunny::ast::initialize();
+    crate::sunny::scheme_syntax::initialize();
     crate::sunny::sexpr_ast::initialize();
     {
         (/*NOP*/);
@@ -164,6 +170,137 @@ pub fn initialize() {
         // (define astify-comment make-comment)
         globals::astify_minus_comment
             .with(|value| value.set(imports::make_minus_comment.with(|value| value.get())));
+        // (define (astify-cond clause* env tail?) (cond ((null? clause*) (astify-unspecified)) ((cond-else-clause? (car clause*)) (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (else (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))))
+        globals::astify_minus_cond.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let clause_star_ = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (cond ((null? clause*) (astify-unspecified)) ((cond-else-clause? (car clause*)) (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (else (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))))
+                    {
+                        // (cond ((null? clause*) (astify-unspecified)) ((cond-else-clause? (car clause*)) (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (else (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))))
+                        if (
+                            // (null? clause*)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[clause_star_.clone()])
+                        )
+                        .is_true()
+                        {
+                            // (astify-unspecified)
+                            globals::astify_minus_unspecified
+                                .with(|value| value.get())
+                                .invoke(&[])
+                        } else if (
+                            // (cond-else-clause? (car clause*))
+                            imports::cond_minus_else_minus_clause_p
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (car clause*)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[clause_star_.clone()]),
+                                ])
+                        )
+                        .is_true()
+                        {
+                            // (astify-sequence (cond-clause-sequence (car clause*)) env tail?)
+                            globals::astify_minus_sequence
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cond-clause-sequence (car clause*))
+                                    imports::cond_minus_clause_minus_sequence
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car clause*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[clause_star_.clone()]),
+                                        ]),
+                                    env.clone(),
+                                    tail_p.clone(),
+                                ])
+                        } else {
+                            // (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))
+                            {
+                                let [i] = [
+                                    // (astify (cond-clause-condition (car clause*)) env #f)
+                                    globals::astify.with(|value| value.get()).invoke(&[
+                                        // (cond-clause-condition (car clause*))
+                                        imports::cond_minus_clause_minus_condition
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (car clause*)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[clause_star_.clone()]),
+                                            ]),
+                                        env.clone(),
+                                        Scm::False,
+                                    ]),
+                                ];
+                                // (letrec () (let* ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))
+                                {
+                                    // (let* ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))
+                                    {
+                                        let [t] = [
+                                            // (astify-sequence (cond-clause-sequence (car clause*)) env tail?)
+                                            globals::astify_minus_sequence
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    // (cond-clause-sequence (car clause*))
+                                                    imports::cond_minus_clause_minus_sequence
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (car clause*)
+                                                            imports::car
+                                                                .with(|value| value.get())
+                                                                .invoke(&[clause_star_.clone()]),
+                                                        ]),
+                                                    env.clone(),
+                                                    tail_p.clone(),
+                                                ]),
+                                        ];
+                                        // (letrec () (let* ((e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))
+                                        {
+                                            // (let* ((e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))
+                                            {
+                                                let [e] = [
+                                                    // (astify-cond (cdr clause*) env tail?)
+                                                    globals::astify_minus_cond
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (cdr clause*)
+                                                            imports::cdr
+                                                                .with(|value| value.get())
+                                                                .invoke(&[clause_star_.clone()]),
+                                                            env.clone(),
+                                                            tail_p.clone(),
+                                                        ]),
+                                                ];
+                                                // (letrec () (let* () (make-alternative i t e)))
+                                                {
+                                                    // (let* () (make-alternative i t e))
+
+                                                    // (make-alternative i t e)
+                                                    imports::make_minus_alternative
+                                                        .with(|value| value.get())
+                                                        .invoke(&[i.clone(), t.clone(), e.clone()])
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+            })
+        });
         // (define (astify-constant exp env) (make-constant exp))
         globals::astify_minus_constant.with(|value| {
             value.set({
@@ -272,6 +409,23 @@ pub fn initialize() {
                                 }
                             }
                         }
+                    }
+                })
+            })
+        });
+        // (define (astify-unspecified) (make-constant (quote *UNSPECIFIED*)))
+        globals::astify_minus_unspecified.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 0 {
+                        panic!("invalid arity")
+                    }
+                    // (letrec () (make-constant (quote *UNSPECIFIED*)))
+                    {
+                        // (make-constant (quote *UNSPECIFIED*))
+                        imports::make_minus_constant
+                            .with(|value| value.get())
+                            .invoke(&[Scm::symbol("*UNSPECIFIED*")])
                     }
                 })
             })
