@@ -46,58 +46,55 @@ pub fn initialize() {
                                 }
                                 let node = args[0].clone();
                                 let transform_minus_children = args[1].clone();
-                                // (letrec () (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (make-closure (transform-children))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (make-closure (transform-children))) ((eq? (node (quote kind)) (quote CLOSURE)) node) (else (transform-children))))
+                                // (cond ...)
+                                if (
+                                    // (eq? (node (quote kind)) (quote ABSTRACTION))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        // (node (quote kind))
+                                        node.clone().invoke(&[Scm::symbol("kind")]),
+                                        Scm::symbol("ABSTRACTION"),
+                                    ])
+                                )
+                                .is_true()
                                 {
-                                    // (cond ...)
-                                    if (
-                                        // (eq? (node (quote kind)) (quote ABSTRACTION))
-                                        imports::eq_p.with(|value| value.get()).invoke(&[
-                                            // (node (quote kind))
-                                            node.clone().invoke(&[Scm::symbol("kind")]),
-                                            Scm::symbol("ABSTRACTION"),
+                                    // (make-closure (transform-children))
+                                    imports::make_minus_closure
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (transform-children)
+                                            transform_minus_children.clone().invoke(&[]),
                                         ])
-                                    )
-                                    .is_true()
-                                    {
-                                        // (make-closure (transform-children))
-                                        imports::make_minus_closure
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (transform-children)
-                                                transform_minus_children.clone().invoke(&[]),
-                                            ])
-                                    } else if (
-                                        // (eq? (node (quote kind)) (quote VARARG-ABSTRACTION))
-                                        imports::eq_p.with(|value| value.get()).invoke(&[
-                                            // (node (quote kind))
-                                            node.clone().invoke(&[Scm::symbol("kind")]),
-                                            Scm::symbol("VARARG-ABSTRACTION"),
+                                } else if (
+                                    // (eq? (node (quote kind)) (quote VARARG-ABSTRACTION))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        // (node (quote kind))
+                                        node.clone().invoke(&[Scm::symbol("kind")]),
+                                        Scm::symbol("VARARG-ABSTRACTION"),
+                                    ])
+                                )
+                                .is_true()
+                                {
+                                    // (make-closure (transform-children))
+                                    imports::make_minus_closure
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (transform-children)
+                                            transform_minus_children.clone().invoke(&[]),
                                         ])
-                                    )
-                                    .is_true()
-                                    {
-                                        // (make-closure (transform-children))
-                                        imports::make_minus_closure
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (transform-children)
-                                                transform_minus_children.clone().invoke(&[]),
-                                            ])
-                                    } else if (
-                                        // (eq? (node (quote kind)) (quote CLOSURE))
-                                        imports::eq_p.with(|value| value.get()).invoke(&[
-                                            // (node (quote kind))
-                                            node.clone().invoke(&[Scm::symbol("kind")]),
-                                            Scm::symbol("CLOSURE"),
-                                        ])
-                                    )
-                                    .is_true()
-                                    {
-                                        node.clone()
-                                    } else {
-                                        // (transform-children)
-                                        transform_minus_children.clone().invoke(&[])
-                                    }
+                                } else if (
+                                    // (eq? (node (quote kind)) (quote CLOSURE))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        // (node (quote kind))
+                                        node.clone().invoke(&[Scm::symbol("kind")]),
+                                        Scm::symbol("CLOSURE"),
+                                    ])
+                                )
+                                .is_true()
+                                {
+                                    node.clone()
+                                } else {
+                                    // (transform-children)
+                                    transform_minus_children.clone().invoke(&[])
                                 }
                             })
                         });

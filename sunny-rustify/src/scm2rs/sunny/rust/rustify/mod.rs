@@ -48,110 +48,107 @@ pub fn initialize() {
                                     panic!("invalid arity")
                                 }
                                 let ch = args[0].clone();
-                                // (letrec () (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))
+                                // (cond ...)
+                                if (
+                                    // (eq? ch #\_)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('_')])
+                                )
+                                .is_true()
                                 {
-                                    // (cond ...)
-                                    if (
-                                        // (eq? ch #\_)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('_')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("__")
-                                    } else if (
-                                        // (eq? ch #\?)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('?')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_p")
-                                    } else if (
-                                        // (eq? ch #\!)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('!')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_i")
-                                    } else if (
-                                        // (eq? ch #\<)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('<')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_l_")
-                                    } else if (
-                                        // (eq? ch #\>)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('>')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_g_")
-                                    } else if (
-                                        // (eq? ch #\=)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('=')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_e_")
-                                    } else if (
-                                        // (eq? ch #\-)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('-')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_minus_")
-                                    } else if (
-                                        // (eq? ch #\+)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('+')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_plus_")
-                                    } else if (
-                                        // (eq? ch #\*)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('*')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_star_")
-                                    } else if (
-                                        // (eq? ch #\/)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('/')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_slash_")
-                                    } else {
-                                        // (list->string (list ch))
-                                        imports::list_minus__g_string
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (list ch)
-                                                imports::list
-                                                    .with(|value| value.get())
-                                                    .invoke(&[ch.clone()]),
-                                            ])
-                                    }
+                                    Scm::from("__")
+                                } else if (
+                                    // (eq? ch #\?)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('?')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_p")
+                                } else if (
+                                    // (eq? ch #\!)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('!')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_i")
+                                } else if (
+                                    // (eq? ch #\<)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('<')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_l_")
+                                } else if (
+                                    // (eq? ch #\>)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('>')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_g_")
+                                } else if (
+                                    // (eq? ch #\=)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('=')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_e_")
+                                } else if (
+                                    // (eq? ch #\-)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('-')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_minus_")
+                                } else if (
+                                    // (eq? ch #\+)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('+')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_plus_")
+                                } else if (
+                                    // (eq? ch #\*)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('*')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_star_")
+                                } else if (
+                                    // (eq? ch #\/)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('/')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_slash_")
+                                } else {
+                                    // (list->string (list ch))
+                                    imports::list_minus__g_string
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (list ch)
+                                            imports::list
+                                                .with(|value| value.get())
+                                                .invoke(&[ch.clone()]),
+                                        ])
                                 }
                             })
                         });
@@ -162,35 +159,32 @@ pub fn initialize() {
                                     panic!("invalid arity")
                                 }
                                 let strs = args[0].clone();
-                                // (letrec () (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))
+                                if (
+                                    // (null? strs)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[strs.clone()])
+                                )
+                                .is_true()
                                 {
-                                    if (
-                                        // (null? strs)
-                                        imports::null_p
-                                            .with(|value| value.get())
-                                            .invoke(&[strs.clone()])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("")
-                                    } else {
-                                        // (string-append (car strs) (append-all (cdr strs)))
-                                        imports::string_minus_append
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car strs)
-                                                imports::car
+                                    Scm::from("")
+                                } else {
+                                    // (string-append (car strs) (append-all (cdr strs)))
+                                    imports::string_minus_append
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car strs)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[strs.clone()]),
+                                            // (append-all (cdr strs))
+                                            append_minus_all.get().invoke(&[
+                                                // (cdr strs)
+                                                imports::cdr
                                                     .with(|value| value.get())
                                                     .invoke(&[strs.clone()]),
-                                                // (append-all (cdr strs))
-                                                append_minus_all.get().invoke(&[
-                                                    // (cdr strs)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[strs.clone()]),
-                                                ]),
-                                            ])
-                                    }
+                                            ]),
+                                        ])
                                 }
                             })
                         });
@@ -299,38 +293,35 @@ pub fn initialize() {
                                     panic!("invalid arity")
                                 }
                                 let ch = args[0].clone();
-                                // (letrec () (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))
+                                // (cond ...)
+                                if (
+                                    // (eq? ch #\_)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('_')])
+                                )
+                                .is_true()
                                 {
-                                    // (cond ...)
-                                    if (
-                                        // (eq? ch #\_)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('_')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("__")
-                                    } else if (
-                                        // (eq? ch #\-)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('-')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_")
-                                    } else {
-                                        // (list->string (list ch))
-                                        imports::list_minus__g_string
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (list ch)
-                                                imports::list
-                                                    .with(|value| value.get())
-                                                    .invoke(&[ch.clone()]),
-                                            ])
-                                    }
+                                    Scm::from("__")
+                                } else if (
+                                    // (eq? ch #\-)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('-')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::from("_")
+                                } else {
+                                    // (list->string (list ch))
+                                    imports::list_minus__g_string
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (list ch)
+                                            imports::list
+                                                .with(|value| value.get())
+                                                .invoke(&[ch.clone()]),
+                                        ])
                                 }
                             })
                         });
@@ -341,35 +332,32 @@ pub fn initialize() {
                                     panic!("invalid arity")
                                 }
                                 let strs = args[0].clone();
-                                // (letrec () (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))
+                                if (
+                                    // (null? strs)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[strs.clone()])
+                                )
+                                .is_true()
                                 {
-                                    if (
-                                        // (null? strs)
-                                        imports::null_p
-                                            .with(|value| value.get())
-                                            .invoke(&[strs.clone()])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("")
-                                    } else {
-                                        // (string-append (car strs) (append-all (cdr strs)))
-                                        imports::string_minus_append
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car strs)
-                                                imports::car
+                                    Scm::from("")
+                                } else {
+                                    // (string-append (car strs) (append-all (cdr strs)))
+                                    imports::string_minus_append
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car strs)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[strs.clone()]),
+                                            // (append-all (cdr strs))
+                                            append_minus_all.get().invoke(&[
+                                                // (cdr strs)
+                                                imports::cdr
                                                     .with(|value| value.get())
                                                     .invoke(&[strs.clone()]),
-                                                // (append-all (cdr strs))
-                                                append_minus_all.get().invoke(&[
-                                                    // (cdr strs)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[strs.clone()]),
-                                                ]),
-                                            ])
-                                    }
+                                            ]),
+                                        ])
                                 }
                             })
                         });
@@ -393,31 +381,28 @@ pub fn initialize() {
                                     name.clone()
                                 },
                             ];
-                            // (letrec () (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))
+                            // (cond ...)
+                            if (
+                                // (eq? name (quote fn))
+                                imports::eq_p
+                                    .with(|value| value.get())
+                                    .invoke(&[name.clone(), Scm::symbol("fn")])
+                            )
+                            .is_true()
                             {
-                                // (cond ...)
-                                if (
-                                    // (eq? name (quote fn))
-                                    imports::eq_p
-                                        .with(|value| value.get())
-                                        .invoke(&[name.clone(), Scm::symbol("fn")])
-                                )
-                                .is_true()
-                                {
-                                    Scm::from("fn_")
-                                } else {
-                                    // (append-all (map char-map (string->list name)))
-                                    append_minus_all.get().invoke(&[
-                                        // (map char-map (string->list name))
-                                        imports::map.with(|value| value.get()).invoke(&[
-                                            char_minus_map.get(),
-                                            // (string->list name)
-                                            imports::string_minus__g_list
-                                                .with(|value| value.get())
-                                                .invoke(&[name.clone()]),
-                                        ]),
-                                    ])
-                                }
+                                Scm::from("fn_")
+                            } else {
+                                // (append-all (map char-map (string->list name)))
+                                append_minus_all.get().invoke(&[
+                                    // (map char-map (string->list name))
+                                    imports::map.with(|value| value.get()).invoke(&[
+                                        char_minus_map.get(),
+                                        // (string->list name)
+                                        imports::string_minus__g_list
+                                            .with(|value| value.get())
+                                            .invoke(&[name.clone()]),
+                                    ]),
+                                ])
                             }
                         }
                     }
@@ -442,38 +427,35 @@ pub fn initialize() {
                                     panic!("invalid arity")
                                 }
                                 let ch = args[0].clone();
-                                // (letrec () (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))
+                                // (cond ...)
+                                if (
+                                    // (eq? ch #\ )
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char(' ')])
+                                )
+                                .is_true()
                                 {
-                                    // (cond ...)
-                                    if (
-                                        // (eq? ch #\ )
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char(' ')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("_")
-                                    } else if (
-                                        // (eq? ch #\')
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[ch.clone(), Scm::char('\'')])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::False
-                                    } else {
-                                        // (list->string (list ch))
-                                        imports::list_minus__g_string
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (list ch)
-                                                imports::list
-                                                    .with(|value| value.get())
-                                                    .invoke(&[ch.clone()]),
-                                            ])
-                                    }
+                                    Scm::from("_")
+                                } else if (
+                                    // (eq? ch #\')
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[ch.clone(), Scm::char('\'')])
+                                )
+                                .is_true()
+                                {
+                                    Scm::False
+                                } else {
+                                    // (list->string (list ch))
+                                    imports::list_minus__g_string
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (list ch)
+                                            imports::list
+                                                .with(|value| value.get())
+                                                .invoke(&[ch.clone()]),
+                                        ])
                                 }
                             })
                         });
@@ -484,35 +466,32 @@ pub fn initialize() {
                                     panic!("invalid arity")
                                 }
                                 let strs = args[0].clone();
-                                // (letrec () (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))
+                                if (
+                                    // (null? strs)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[strs.clone()])
+                                )
+                                .is_true()
                                 {
-                                    if (
-                                        // (null? strs)
-                                        imports::null_p
-                                            .with(|value| value.get())
-                                            .invoke(&[strs.clone()])
-                                    )
-                                    .is_true()
-                                    {
-                                        Scm::from("")
-                                    } else {
-                                        // (string-append (car strs) (append-all (cdr strs)))
-                                        imports::string_minus_append
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                // (car strs)
-                                                imports::car
+                                    Scm::from("")
+                                } else {
+                                    // (string-append (car strs) (append-all (cdr strs)))
+                                    imports::string_minus_append
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            // (car strs)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[strs.clone()]),
+                                            // (append-all (cdr strs))
+                                            append_minus_all.get().invoke(&[
+                                                // (cdr strs)
+                                                imports::cdr
                                                     .with(|value| value.get())
                                                     .invoke(&[strs.clone()]),
-                                                // (append-all (cdr strs))
-                                                append_minus_all.get().invoke(&[
-                                                    // (cdr strs)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[strs.clone()]),
-                                                ]),
-                                            ])
-                                    }
+                                            ]),
+                                        ])
                                 }
                             })
                         });
@@ -527,10 +506,7 @@ pub fn initialize() {
                                             panic!("invalid arity")
                                         }
                                         let x = args[0].clone();
-                                        // (letrec () x)
-                                        {
-                                            x.clone()
-                                        }
+                                        x.clone()
                                     })
                                 },
                                 // (map char-map (string->list name))

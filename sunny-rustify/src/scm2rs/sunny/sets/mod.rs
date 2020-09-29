@@ -45,10 +45,7 @@ pub fn initialize() {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (quote ()))
-                    {
-                        Scm::Nil
-                    }
+                    Scm::Nil
                 })
             })
         });
@@ -60,13 +57,10 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let set = args[0].clone();
-                    // (letrec () (null? set))
-                    {
-                        // (null? set)
-                        imports::null_p
-                            .with(|value| value.get())
-                            .invoke(&[set.clone()])
-                    }
+                    // (null? set)
+                    imports::null_p
+                        .with(|value| value.get())
+                        .invoke(&[set.clone()])
                 })
             })
         });
@@ -79,51 +73,48 @@ pub fn initialize() {
                     }
                     let set = args[0].clone();
                     let item = args[1].clone();
-                    // (letrec () (cond ((null? set) (cons item (quote ()))) ((equal? (car set) item) set) (else (cons (car set) (set-add (cdr set) item)))))
+                    // (cond ...)
+                    if (
+                        // (null? set)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[set.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? set)
-                            imports::null_p
+                        // (cons item (quote ()))
+                        imports::cons
+                            .with(|value| value.get())
+                            .invoke(&[item.clone(), Scm::Nil])
+                    } else if (
+                        // (equal? (car set) item)
+                        imports::equal_p.with(|value| value.get()).invoke(&[
+                            // (car set)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[set.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (cons item (quote ()))
-                            imports::cons
+                                .invoke(&[set.clone()]),
+                            item.clone(),
+                        ])
+                    )
+                    .is_true()
+                    {
+                        set.clone()
+                    } else {
+                        // (cons (car set) (set-add (cdr set) item))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            // (car set)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[item.clone(), Scm::Nil])
-                        } else if (
-                            // (equal? (car set) item)
-                            imports::equal_p.with(|value| value.get()).invoke(&[
-                                // (car set)
-                                imports::car
+                                .invoke(&[set.clone()]),
+                            // (set-add (cdr set) item)
+                            globals::set_minus_add.with(|value| value.get()).invoke(&[
+                                // (cdr set)
+                                imports::cdr
                                     .with(|value| value.get())
                                     .invoke(&[set.clone()]),
                                 item.clone(),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            set.clone()
-                        } else {
-                            // (cons (car set) (set-add (cdr set) item))
-                            imports::cons.with(|value| value.get()).invoke(&[
-                                // (car set)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[set.clone()]),
-                                // (set-add (cdr set) item)
-                                globals::set_minus_add.with(|value| value.get()).invoke(&[
-                                    // (cdr set)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[set.clone()]),
-                                    item.clone(),
-                                ]),
-                            ])
-                        }
+                            ]),
+                        ])
                     }
                 })
             })
@@ -137,53 +128,50 @@ pub fn initialize() {
                     }
                     let set = args[0].clone();
                     let item = args[1].clone();
-                    // (letrec () (cond ((null? set) (quote ())) ((equal? (car set) item) (cdr set)) (else (cons (car set) (set-remove (cdr set) item)))))
+                    // (cond ...)
+                    if (
+                        // (null? set)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[set.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? set)
-                            imports::null_p
+                        Scm::Nil
+                    } else if (
+                        // (equal? (car set) item)
+                        imports::equal_p.with(|value| value.get()).invoke(&[
+                            // (car set)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[set.clone()])
-                        )
-                        .is_true()
-                        {
-                            Scm::Nil
-                        } else if (
-                            // (equal? (car set) item)
-                            imports::equal_p.with(|value| value.get()).invoke(&[
-                                // (car set)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[set.clone()]),
-                                item.clone(),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            // (cdr set)
-                            imports::cdr
+                                .invoke(&[set.clone()]),
+                            item.clone(),
+                        ])
+                    )
+                    .is_true()
+                    {
+                        // (cdr set)
+                        imports::cdr
+                            .with(|value| value.get())
+                            .invoke(&[set.clone()])
+                    } else {
+                        // (cons (car set) (set-remove (cdr set) item))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            // (car set)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[set.clone()])
-                        } else {
-                            // (cons (car set) (set-remove (cdr set) item))
-                            imports::cons.with(|value| value.get()).invoke(&[
-                                // (car set)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[set.clone()]),
-                                // (set-remove (cdr set) item)
-                                globals::set_minus_remove
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        // (cdr set)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[set.clone()]),
-                                        item.clone(),
-                                    ]),
-                            ])
-                        }
+                                .invoke(&[set.clone()]),
+                            // (set-remove (cdr set) item)
+                            globals::set_minus_remove
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    // (cdr set)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[set.clone()]),
+                                    item.clone(),
+                                ]),
+                        ])
                     }
                 })
             })
@@ -197,17 +185,14 @@ pub fn initialize() {
                     }
                     let set = args[0].clone();
                     let item_star_ = args[1].clone();
-                    // (letrec () (set-do* set-add set item*))
-                    {
-                        // (set-do* set-add set item*)
-                        globals::set_minus_do_star_
-                            .with(|value| value.get())
-                            .invoke(&[
-                                globals::set_minus_add.with(|value| value.get()),
-                                set.clone(),
-                                item_star_.clone(),
-                            ])
-                    }
+                    // (set-do* set-add set item*)
+                    globals::set_minus_do_star_
+                        .with(|value| value.get())
+                        .invoke(&[
+                            globals::set_minus_add.with(|value| value.get()),
+                            set.clone(),
+                            item_star_.clone(),
+                        ])
                 })
             })
         });
@@ -220,17 +205,14 @@ pub fn initialize() {
                     }
                     let set = args[0].clone();
                     let item_star_ = args[1].clone();
-                    // (letrec () (set-do* set-remove set item*))
-                    {
-                        // (set-do* set-remove set item*)
-                        globals::set_minus_do_star_
-                            .with(|value| value.get())
-                            .invoke(&[
-                                globals::set_minus_remove.with(|value| value.get()),
-                                set.clone(),
-                                item_star_.clone(),
-                            ])
-                    }
+                    // (set-do* set-remove set item*)
+                    globals::set_minus_do_star_
+                        .with(|value| value.get())
+                        .invoke(&[
+                            globals::set_minus_remove.with(|value| value.get()),
+                            set.clone(),
+                            item_star_.clone(),
+                        ])
                 })
             })
         });
@@ -244,37 +226,34 @@ pub fn initialize() {
                     let func = args[0].clone();
                     let set = args[1].clone();
                     let item_star_ = args[2].clone();
-                    // (letrec () (if (null? item*) set (set-do* func (func set (car item*)) (cdr item*))))
+                    if (
+                        // (null? item*)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[item_star_.clone()])
+                    )
+                    .is_true()
                     {
-                        if (
-                            // (null? item*)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[item_star_.clone()])
-                        )
-                        .is_true()
-                        {
-                            set.clone()
-                        } else {
-                            // (set-do* func (func set (car item*)) (cdr item*))
-                            globals::set_minus_do_star_
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    func.clone(),
-                                    // (func set (car item*))
-                                    func.clone().invoke(&[
-                                        set.clone(),
-                                        // (car item*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[item_star_.clone()]),
-                                    ]),
-                                    // (cdr item*)
-                                    imports::cdr
+                        set.clone()
+                    } else {
+                        // (set-do* func (func set (car item*)) (cdr item*))
+                        globals::set_minus_do_star_
+                            .with(|value| value.get())
+                            .invoke(&[
+                                func.clone(),
+                                // (func set (car item*))
+                                func.clone().invoke(&[
+                                    set.clone(),
+                                    // (car item*)
+                                    imports::car
                                         .with(|value| value.get())
                                         .invoke(&[item_star_.clone()]),
-                                ])
-                        }
+                                ]),
+                                // (cdr item*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[item_star_.clone()]),
+                            ])
                     }
                 })
             })
@@ -288,33 +267,30 @@ pub fn initialize() {
                     }
                     let set1 = args[0].clone();
                     let set2 = args[1].clone();
-                    // (letrec () (cond ((null? set1) set2) ((null? set2) set1) (else (set-add* set1 set2))))
+                    // (cond ...)
+                    if (
+                        // (null? set1)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[set1.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? set1)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[set1.clone()])
-                        )
-                        .is_true()
-                        {
-                            set2.clone()
-                        } else if (
-                            // (null? set2)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[set2.clone()])
-                        )
-                        .is_true()
-                        {
-                            set1.clone()
-                        } else {
-                            // (set-add* set1 set2)
-                            globals::set_minus_add_star_
-                                .with(|value| value.get())
-                                .invoke(&[set1.clone(), set2.clone()])
-                        }
+                        set2.clone()
+                    } else if (
+                        // (null? set2)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[set2.clone()])
+                    )
+                    .is_true()
+                    {
+                        set1.clone()
+                    } else {
+                        // (set-add* set1 set2)
+                        globals::set_minus_add_star_
+                            .with(|value| value.get())
+                            .invoke(&[set1.clone(), set2.clone()])
                     }
                 })
             })

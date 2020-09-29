@@ -91,13 +91,10 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (if x #f #t))
-                    {
-                        if (x.clone()).is_true() {
-                            Scm::False
-                        } else {
-                            Scm::True
-                        }
+                    if (x.clone()).is_true() {
+                        Scm::False
+                    } else {
+                        Scm::True
                     }
                 })
             })
@@ -110,10 +107,7 @@ pub fn initialize() {
                         panic!("not enough args")
                     }
                     let x = Scm::list(&args[0..]);
-                    // (letrec () x)
-                    {
-                        x.clone()
-                    }
+                    x.clone()
                 })
             })
         });
@@ -125,36 +119,33 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let seq = args[0].clone();
-                    // (letrec () (cond ((null? seq) #t) ((pair? seq) (list? (cdr seq))) (else #f)))
+                    // (cond ...)
+                    if (
+                        // (null? seq)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? seq)
-                            imports::null_p
+                        Scm::True
+                    } else if (
+                        // (pair? seq)
+                        imports::pair_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
+                    {
+                        // (list? (cdr seq))
+                        globals::list_p.with(|value| value.get()).invoke(&[
+                            // (cdr seq)
+                            imports::cdr
                                 .with(|value| value.get())
-                                .invoke(&[seq.clone()])
-                        )
-                        .is_true()
-                        {
-                            Scm::True
-                        } else if (
-                            // (pair? seq)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (list? (cdr seq))
-                            globals::list_p.with(|value| value.get()).invoke(&[
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()]),
-                            ])
-                        } else {
-                            Scm::False
-                        }
+                                .invoke(&[seq.clone()]),
+                        ])
+                    } else {
+                        Scm::False
                     }
                 })
             })
@@ -167,30 +158,24 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let seq = args[0].clone();
-                    // (letrec () (fold-left (lambda (acc _) (+ acc 1)) 0 seq))
-                    {
-                        // (fold-left (lambda (acc _) (+ acc 1)) 0 seq)
-                        globals::fold_minus_left.with(|value| value.get()).invoke(&[
-                            {
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 2 {
-                                        panic!("invalid arity")
-                                    }
-                                    let acc = args[0].clone();
-                                    let __ = args[1].clone();
-                                    // (letrec () (+ acc 1))
-                                    {
-                                        // (+ acc 1)
-                                        imports::_plus_
-                                            .with(|value| value.get())
-                                            .invoke(&[acc.clone(), Scm::from(1)])
-                                    }
-                                })
-                            },
-                            Scm::from(0),
-                            seq.clone(),
-                        ])
-                    }
+                    // (fold-left (lambda (acc _) (+ acc 1)) 0 seq)
+                    globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                        {
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 2 {
+                                    panic!("invalid arity")
+                                }
+                                let acc = args[0].clone();
+                                let __ = args[1].clone();
+                                // (+ acc 1)
+                                imports::_plus_
+                                    .with(|value| value.get())
+                                    .invoke(&[acc.clone(), Scm::from(1)])
+                            })
+                        },
+                        Scm::from(0),
+                        seq.clone(),
+                    ])
                 })
             })
         });
@@ -202,30 +187,24 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let seq = args[0].clone();
-                    // (letrec () (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq))
-                    {
-                        // (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq)
-                        globals::fold_minus_left.with(|value| value.get()).invoke(&[
-                            {
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 2 {
-                                        panic!("invalid arity")
-                                    }
-                                    let acc = args[0].clone();
-                                    let x = args[1].clone();
-                                    // (letrec () (cons x acc))
-                                    {
-                                        // (cons x acc)
-                                        imports::cons
-                                            .with(|value| value.get())
-                                            .invoke(&[x.clone(), acc.clone()])
-                                    }
-                                })
-                            },
-                            Scm::Nil,
-                            seq.clone(),
-                        ])
-                    }
+                    // (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq)
+                    globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                        {
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 2 {
+                                    panic!("invalid arity")
+                                }
+                                let acc = args[0].clone();
+                                let x = args[1].clone();
+                                // (cons x acc)
+                                imports::cons
+                                    .with(|value| value.get())
+                                    .invoke(&[x.clone(), acc.clone()])
+                            })
+                        },
+                        Scm::Nil,
+                        seq.clone(),
+                    ])
                 })
             })
         });
@@ -237,17 +216,14 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let seq = args[0].clone();
-                    // (letrec () (fold-right cons (quote ()) seq))
-                    {
-                        // (fold-right cons (quote ()) seq)
-                        globals::fold_minus_right
-                            .with(|value| value.get())
-                            .invoke(&[
-                                imports::cons.with(|value| value.get()),
-                                Scm::Nil,
-                                seq.clone(),
-                            ])
-                    }
+                    // (fold-right cons (quote ()) seq)
+                    globals::fold_minus_right
+                        .with(|value| value.get())
+                        .invoke(&[
+                            imports::cons.with(|value| value.get()),
+                            Scm::Nil,
+                            seq.clone(),
+                        ])
                 })
             })
         });
@@ -260,45 +236,42 @@ pub fn initialize() {
                     }
                     let obj = args[0].clone();
                     let seq = args[1].clone();
-                    // (letrec () (if (pair? seq) (if (eq? obj (caar seq)) (car seq) (assq obj (cdr seq))) #f))
+                    if (
+                        // (pair? seq)
+                        imports::pair_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
                         if (
-                            // (pair? seq)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
+                            // (eq? obj (caar seq))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                // (caar seq)
+                                imports::caar
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone()]),
+                            ])
                         )
                         .is_true()
                         {
-                            if (
-                                // (eq? obj (caar seq))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    obj.clone(),
-                                    // (caar seq)
-                                    imports::caar
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()]),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                // (car seq)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            } else {
-                                // (assq obj (cdr seq))
-                                globals::assq.with(|value| value.get()).invoke(&[
-                                    obj.clone(),
-                                    // (cdr seq)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()]),
-                                ])
-                            }
+                            // (car seq)
+                            imports::car
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
                         } else {
-                            Scm::False
+                            // (assq obj (cdr seq))
+                            globals::assq.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                // (cdr seq)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone()]),
+                            ])
                         }
+                    } else {
+                        Scm::False
                     }
                 })
             })
@@ -312,42 +285,39 @@ pub fn initialize() {
                     }
                     let obj = args[0].clone();
                     let seq = args[1].clone();
-                    // (letrec () (if (pair? seq) (if (eq? obj (car seq)) seq (memq obj (cdr seq))) #f))
+                    if (
+                        // (pair? seq)
+                        imports::pair_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
                         if (
-                            // (pair? seq)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
+                            // (eq? obj (car seq))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                // (car seq)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone()]),
+                            ])
                         )
                         .is_true()
                         {
-                            if (
-                                // (eq? obj (car seq))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    obj.clone(),
-                                    // (car seq)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()]),
-                                ])
-                            )
-                            .is_true()
-                            {
-                                seq.clone()
-                            } else {
-                                // (memq obj (cdr seq))
-                                globals::memq.with(|value| value.get()).invoke(&[
-                                    obj.clone(),
-                                    // (cdr seq)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()]),
-                                ])
-                            }
+                            seq.clone()
                         } else {
-                            Scm::False
+                            // (memq obj (cdr seq))
+                            globals::memq.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                // (cdr seq)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone()]),
+                            ])
                         }
+                    } else {
+                        Scm::False
                     }
                 })
             })
@@ -361,29 +331,23 @@ pub fn initialize() {
                     }
                     let s1 = args[0].clone();
                     let args_ = Scm::list(&args[1..]);
-                    // (letrec () (all? (lambda (s) (eq? s1 s)) args))
-                    {
-                        // (all? (lambda (s) (eq? s1 s)) args)
-                        globals::all_p.with(|value| value.get()).invoke(&[
-                            {
-                                let s1 = s1.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let s = args[0].clone();
-                                    // (letrec () (eq? s1 s))
-                                    {
-                                        // (eq? s1 s)
-                                        imports::eq_p
-                                            .with(|value| value.get())
-                                            .invoke(&[s1.clone(), s.clone()])
-                                    }
-                                })
-                            },
-                            args_.clone(),
-                        ])
-                    }
+                    // (all? (lambda (s) (eq? s1 s)) args)
+                    globals::all_p.with(|value| value.get()).invoke(&[
+                        {
+                            let s1 = s1.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let s = args[0].clone();
+                                // (eq? s1 s)
+                                imports::eq_p
+                                    .with(|value| value.get())
+                                    .invoke(&[s1.clone(), s.clone()])
+                            })
+                        },
+                        args_.clone(),
+                    ])
                 })
             })
         });
@@ -396,29 +360,23 @@ pub fn initialize() {
                     }
                     let s1 = args[0].clone();
                     let args_ = Scm::list(&args[1..]);
-                    // (letrec () (all? (lambda (s) (equal? s1 s)) args))
-                    {
-                        // (all? (lambda (s) (equal? s1 s)) args)
-                        globals::all_p.with(|value| value.get()).invoke(&[
-                            {
-                                let s1 = s1.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let s = args[0].clone();
-                                    // (letrec () (equal? s1 s))
-                                    {
-                                        // (equal? s1 s)
-                                        imports::equal_p
-                                            .with(|value| value.get())
-                                            .invoke(&[s1.clone(), s.clone()])
-                                    }
-                                })
-                            },
-                            args_.clone(),
-                        ])
-                    }
+                    // (all? (lambda (s) (equal? s1 s)) args)
+                    globals::all_p.with(|value| value.get()).invoke(&[
+                        {
+                            let s1 = s1.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let s = args[0].clone();
+                                // (equal? s1 s)
+                                imports::equal_p
+                                    .with(|value| value.get())
+                                    .invoke(&[s1.clone(), s.clone()])
+                            })
+                        },
+                        args_.clone(),
+                    ])
                 })
             })
         });
@@ -431,15 +389,12 @@ pub fn initialize() {
                     }
                     let s1 = args[0].clone();
                     let args_ = Scm::list(&args[1..]);
-                    // (letrec () (fold-left string-cons s1 args))
-                    {
-                        // (fold-left string-cons s1 args)
-                        globals::fold_minus_left.with(|value| value.get()).invoke(&[
-                            imports::string_minus_cons.with(|value| value.get()),
-                            s1.clone(),
-                            args_.clone(),
-                        ])
-                    }
+                    // (fold-left string-cons s1 args)
+                    globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                        imports::string_minus_cons.with(|value| value.get()),
+                        s1.clone(),
+                        args_.clone(),
+                    ])
                 })
             })
         });
@@ -452,13 +407,10 @@ pub fn initialize() {
                     }
                     let proc = args[0].clone();
                     let seq_star_ = Scm::list(&args[1..]);
-                    // (letrec () (_for-each proc seq*))
-                    {
-                        // (_for-each proc seq*)
-                        globals::__for_minus_each
-                            .with(|value| value.get())
-                            .invoke(&[proc.clone(), seq_star_.clone()])
-                    }
+                    // (_for-each proc seq*)
+                    globals::__for_minus_each
+                        .with(|value| value.get())
+                        .invoke(&[proc.clone(), seq_star_.clone()])
                 })
             })
         });
@@ -471,13 +423,10 @@ pub fn initialize() {
                     }
                     let func = args[0].clone();
                     let seq_star_ = Scm::list(&args[1..]);
-                    // (letrec () (_map func seq*))
-                    {
-                        // (_map func seq*)
-                        globals::__map
-                            .with(|value| value.get())
-                            .invoke(&[func.clone(), seq_star_.clone()])
-                    }
+                    // (_map func seq*)
+                    globals::__map
+                        .with(|value| value.get())
+                        .invoke(&[func.clone(), seq_star_.clone()])
                 })
             })
         });
@@ -490,41 +439,37 @@ pub fn initialize() {
                     }
                     let proc = args[0].clone();
                     let seq_star_ = args[1].clone();
-                    // (letrec () (if (any? null? seq*) (quote ()) (begin (apply proc (map-1 car seq*)) (_for-each proc (map-1 cdr seq*)))))
+                    if (
+                        // (any? null? seq*)
+                        globals::any_p
+                            .with(|value| value.get())
+                            .invoke(&[imports::null_p.with(|value| value.get()), seq_star_.clone()])
+                    )
+                    .is_true()
                     {
-                        if (
-                            // (any? null? seq*)
-                            globals::any_p.with(|value| value.get()).invoke(&[
-                                imports::null_p.with(|value| value.get()),
-                                seq_star_.clone(),
-                            ])
-                        )
-                        .is_true()
+                        Scm::Nil
+                    } else {
                         {
-                            Scm::Nil
-                        } else {
-                            {
-                                // (apply proc (map-1 car seq*))
-                                imports::apply.with(|value| value.get()).invoke(&[
+                            // (apply proc (map-1 car seq*))
+                            imports::apply.with(|value| value.get()).invoke(&[
+                                proc.clone(),
+                                // (map-1 car seq*)
+                                globals::map_minus_1.with(|value| value.get()).invoke(&[
+                                    imports::car.with(|value| value.get()),
+                                    seq_star_.clone(),
+                                ]),
+                            ]);
+                            // (_for-each proc (map-1 cdr seq*))
+                            globals::__for_minus_each
+                                .with(|value| value.get())
+                                .invoke(&[
                                     proc.clone(),
-                                    // (map-1 car seq*)
+                                    // (map-1 cdr seq*)
                                     globals::map_minus_1.with(|value| value.get()).invoke(&[
-                                        imports::car.with(|value| value.get()),
+                                        imports::cdr.with(|value| value.get()),
                                         seq_star_.clone(),
                                     ]),
-                                ]);
-                                // (_for-each proc (map-1 cdr seq*))
-                                globals::__for_minus_each
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        proc.clone(),
-                                        // (map-1 cdr seq*)
-                                        globals::map_minus_1.with(|value| value.get()).invoke(&[
-                                            imports::cdr.with(|value| value.get()),
-                                            seq_star_.clone(),
-                                        ]),
-                                    ])
-                            }
+                                ])
                         }
                     }
                 })
@@ -539,41 +484,37 @@ pub fn initialize() {
                     }
                     let func = args[0].clone();
                     let seq_star_ = args[1].clone();
-                    // (letrec () (if (any? null? seq*) (quote ()) (cons (apply func (map-1 car seq*)) (_map func (map-1 cdr seq*)))))
+                    if (
+                        // (any? null? seq*)
+                        globals::any_p
+                            .with(|value| value.get())
+                            .invoke(&[imports::null_p.with(|value| value.get()), seq_star_.clone()])
+                    )
+                    .is_true()
                     {
-                        if (
-                            // (any? null? seq*)
-                            globals::any_p.with(|value| value.get()).invoke(&[
-                                imports::null_p.with(|value| value.get()),
-                                seq_star_.clone(),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            Scm::Nil
-                        } else {
-                            // (cons (apply func (map-1 car seq*)) (_map func (map-1 cdr seq*)))
-                            imports::cons.with(|value| value.get()).invoke(&[
-                                // (apply func (map-1 car seq*))
-                                imports::apply.with(|value| value.get()).invoke(&[
-                                    func.clone(),
-                                    // (map-1 car seq*)
-                                    globals::map_minus_1.with(|value| value.get()).invoke(&[
-                                        imports::car.with(|value| value.get()),
-                                        seq_star_.clone(),
-                                    ]),
+                        Scm::Nil
+                    } else {
+                        // (cons (apply func (map-1 car seq*)) (_map func (map-1 cdr seq*)))
+                        imports::cons.with(|value| value.get()).invoke(&[
+                            // (apply func (map-1 car seq*))
+                            imports::apply.with(|value| value.get()).invoke(&[
+                                func.clone(),
+                                // (map-1 car seq*)
+                                globals::map_minus_1.with(|value| value.get()).invoke(&[
+                                    imports::car.with(|value| value.get()),
+                                    seq_star_.clone(),
                                 ]),
-                                // (_map func (map-1 cdr seq*))
-                                globals::__map.with(|value| value.get()).invoke(&[
-                                    func.clone(),
-                                    // (map-1 cdr seq*)
-                                    globals::map_minus_1.with(|value| value.get()).invoke(&[
-                                        imports::cdr.with(|value| value.get()),
-                                        seq_star_.clone(),
-                                    ]),
+                            ]),
+                            // (_map func (map-1 cdr seq*))
+                            globals::__map.with(|value| value.get()).invoke(&[
+                                func.clone(),
+                                // (map-1 cdr seq*)
+                                globals::map_minus_1.with(|value| value.get()).invoke(&[
+                                    imports::cdr.with(|value| value.get()),
+                                    seq_star_.clone(),
                                 ]),
-                            ])
-                        }
+                            ]),
+                        ])
                     }
                 })
             })
@@ -587,40 +528,37 @@ pub fn initialize() {
                     }
                     let pred = args[0].clone();
                     let seq = args[1].clone();
-                    // (letrec () (cond ((null? seq) #t) ((pred (car seq)) (all? pred (cdr seq))) (else #f)))
+                    // (cond ...)
+                    if (
+                        // (null? seq)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? seq)
-                            imports::null_p
+                        Scm::True
+                    } else if (
+                        // (pred (car seq))
+                        pred.clone().invoke(&[
+                            // (car seq)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[seq.clone()])
-                        )
-                        .is_true()
-                        {
-                            Scm::True
-                        } else if (
-                            // (pred (car seq))
-                            pred.clone().invoke(&[
-                                // (car seq)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()]),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            // (all? pred (cdr seq))
-                            globals::all_p.with(|value| value.get()).invoke(&[
-                                pred.clone(),
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()]),
-                            ])
-                        } else {
-                            Scm::False
-                        }
+                                .invoke(&[seq.clone()]),
+                        ])
+                    )
+                    .is_true()
+                    {
+                        // (all? pred (cdr seq))
+                        globals::all_p.with(|value| value.get()).invoke(&[
+                            pred.clone(),
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()]),
+                        ])
+                    } else {
+                        Scm::False
                     }
                 })
             })
@@ -634,40 +572,37 @@ pub fn initialize() {
                     }
                     let pred = args[0].clone();
                     let seq = args[1].clone();
-                    // (letrec () (cond ((null? seq) #f) ((pred (car seq)) #t) (else (any? pred (cdr seq)))))
+                    // (cond ...)
+                    if (
+                        // (null? seq)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? seq)
-                            imports::null_p
+                        Scm::False
+                    } else if (
+                        // (pred (car seq))
+                        pred.clone().invoke(&[
+                            // (car seq)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[seq.clone()])
-                        )
-                        .is_true()
-                        {
-                            Scm::False
-                        } else if (
-                            // (pred (car seq))
-                            pred.clone().invoke(&[
-                                // (car seq)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()]),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            Scm::True
-                        } else {
-                            // (any? pred (cdr seq))
-                            globals::any_p.with(|value| value.get()).invoke(&[
-                                pred.clone(),
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()]),
-                            ])
-                        }
+                                .invoke(&[seq.clone()]),
+                        ])
+                    )
+                    .is_true()
+                    {
+                        Scm::True
+                    } else {
+                        // (any? pred (cdr seq))
+                        globals::any_p.with(|value| value.get()).invoke(&[
+                            pred.clone(),
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()]),
+                        ])
                     }
                 })
             })
@@ -681,35 +616,29 @@ pub fn initialize() {
                     }
                     let func = args[0].clone();
                     let seq = args[1].clone();
-                    // (letrec () (fold-right (lambda (x acc) (cons (func x) acc)) (quote ()) seq))
-                    {
-                        // (fold-right (lambda (x acc) (cons (func x) acc)) (quote ()) seq)
-                        globals::fold_minus_right
-                            .with(|value| value.get())
-                            .invoke(&[
-                                {
-                                    let func = func.clone();
-                                    Scm::func(move |args: &[Scm]| {
-                                        if args.len() != 2 {
-                                            panic!("invalid arity")
-                                        }
-                                        let x = args[0].clone();
-                                        let acc = args[1].clone();
-                                        // (letrec () (cons (func x) acc))
-                                        {
-                                            // (cons (func x) acc)
-                                            imports::cons.with(|value| value.get()).invoke(&[
-                                                // (func x)
-                                                func.clone().invoke(&[x.clone()]),
-                                                acc.clone(),
-                                            ])
-                                        }
-                                    })
-                                },
-                                Scm::Nil,
-                                seq.clone(),
-                            ])
-                    }
+                    // (fold-right (lambda (x acc) (cons (func x) acc)) (quote ()) seq)
+                    globals::fold_minus_right
+                        .with(|value| value.get())
+                        .invoke(&[
+                            {
+                                let func = func.clone();
+                                Scm::func(move |args: &[Scm]| {
+                                    if args.len() != 2 {
+                                        panic!("invalid arity")
+                                    }
+                                    let x = args[0].clone();
+                                    let acc = args[1].clone();
+                                    // (cons (func x) acc)
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        // (func x)
+                                        func.clone().invoke(&[x.clone()]),
+                                        acc.clone(),
+                                    ])
+                                })
+                            },
+                            Scm::Nil,
+                            seq.clone(),
+                        ])
                 })
             })
         });
@@ -723,37 +652,34 @@ pub fn initialize() {
                     let op = args[0].clone();
                     let init = args[1].clone();
                     let seq = args[2].clone();
-                    // (letrec () (if (null? seq) init (op (car seq) (fold-right op init (cdr seq)))))
+                    if (
+                        // (null? seq)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
-                        if (
-                            // (null? seq)
-                            imports::null_p
+                        init.clone()
+                    } else {
+                        // (op (car seq) (fold-right op init (cdr seq)))
+                        op.clone().invoke(&[
+                            // (car seq)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[seq.clone()])
-                        )
-                        .is_true()
-                        {
-                            init.clone()
-                        } else {
-                            // (op (car seq) (fold-right op init (cdr seq)))
-                            op.clone().invoke(&[
-                                // (car seq)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()]),
-                                // (fold-right op init (cdr seq))
-                                globals::fold_minus_right
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        op.clone(),
-                                        init.clone(),
-                                        // (cdr seq)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[seq.clone()]),
-                                    ]),
-                            ])
-                        }
+                                .invoke(&[seq.clone()]),
+                            // (fold-right op init (cdr seq))
+                            globals::fold_minus_right
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    op.clone(),
+                                    init.clone(),
+                                    // (cdr seq)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()]),
+                                ]),
+                        ])
                     }
                 })
             })
@@ -768,35 +694,32 @@ pub fn initialize() {
                     let op = args[0].clone();
                     let init = args[1].clone();
                     let seq = args[2].clone();
-                    // (letrec () (if (null? seq) init (fold-left op (op init (car seq)) (cdr seq))))
+                    if (
+                        // (null? seq)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[seq.clone()])
+                    )
+                    .is_true()
                     {
-                        if (
-                            // (null? seq)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
-                        )
-                        .is_true()
-                        {
-                            init.clone()
-                        } else {
-                            // (fold-left op (op init (car seq)) (cdr seq))
-                            globals::fold_minus_left.with(|value| value.get()).invoke(&[
-                                op.clone(),
-                                // (op init (car seq))
-                                op.clone().invoke(&[
-                                    init.clone(),
-                                    // (car seq)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()]),
-                                ]),
-                                // (cdr seq)
-                                imports::cdr
+                        init.clone()
+                    } else {
+                        // (fold-left op (op init (car seq)) (cdr seq))
+                        globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                            op.clone(),
+                            // (op init (car seq))
+                            op.clone().invoke(&[
+                                init.clone(),
+                                // (car seq)
+                                imports::car
                                     .with(|value| value.get())
                                     .invoke(&[seq.clone()]),
-                            ])
-                        }
+                            ]),
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()]),
+                        ])
                     }
                 })
             })

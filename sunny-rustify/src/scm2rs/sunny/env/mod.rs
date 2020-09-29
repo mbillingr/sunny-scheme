@@ -56,21 +56,18 @@ pub fn initialize() {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
-                    {
-                        // (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
-                        imports::list.with(|value| value.get()).invoke(&[
-                            Scm::symbol("GLOBAL-MARKER"),
-                            // (new-import (quote assert-eq))
-                            imports::new_minus_import
-                                .with(|value| value.get())
-                                .invoke(&[Scm::symbol("assert-eq")]),
-                            // (new-import (quote assert-equal))
-                            imports::new_minus_import
-                                .with(|value| value.get())
-                                .invoke(&[Scm::symbol("assert-equal")]),
-                        ])
-                    }
+                    // (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                    imports::list.with(|value| value.get()).invoke(&[
+                        Scm::symbol("GLOBAL-MARKER"),
+                        // (new-import (quote assert-eq))
+                        imports::new_minus_import
+                            .with(|value| value.get())
+                            .invoke(&[Scm::symbol("assert-eq")]),
+                        // (new-import (quote assert-equal))
+                        imports::new_minus_import
+                            .with(|value| value.get())
+                            .invoke(&[Scm::symbol("assert-equal")]),
+                    ])
                 })
             })
         });
@@ -83,27 +80,21 @@ pub fn initialize() {
                     }
                     let name = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (let ((var (lookup name env))) (if var var (adjoin-global! name env))))
+                    // (let ((var (lookup name env))) (if var var (adjoin-global! name env)))
                     {
-                        // (let ((var (lookup name env))) (if var var (adjoin-global! name env)))
-                        {
-                            let [var] = [
-                                // (lookup name env)
-                                globals::lookup
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone(), env.clone()]),
-                            ];
-                            // (letrec () (if var var (adjoin-global! name env)))
-                            {
-                                if (var.clone()).is_true() {
-                                    var.clone()
-                                } else {
-                                    // (adjoin-global! name env)
-                                    globals::adjoin_minus_global_i
-                                        .with(|value| value.get())
-                                        .invoke(&[name.clone(), env.clone()])
-                                }
-                            }
+                        let [var] = [
+                            // (lookup name env)
+                            globals::lookup
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), env.clone()]),
+                        ];
+                        if (var.clone()).is_true() {
+                            var.clone()
+                        } else {
+                            // (adjoin-global! name env)
+                            globals::adjoin_minus_global_i
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), env.clone()])
                         }
                     }
                 })
@@ -118,29 +109,23 @@ pub fn initialize() {
                     }
                     let name_star_ = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (map (lambda (name) (lookup name env)) name*))
-                    {
-                        // (map (lambda (name) (lookup name env)) name*)
-                        imports::map.with(|value| value.get()).invoke(&[
-                            {
-                                let env = env.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let name = args[0].clone();
-                                    // (letrec () (lookup name env))
-                                    {
-                                        // (lookup name env)
-                                        globals::lookup
-                                            .with(|value| value.get())
-                                            .invoke(&[name.clone(), env.clone()])
-                                    }
-                                })
-                            },
-                            name_star_.clone(),
-                        ])
-                    }
+                    // (map (lambda (name) (lookup name env)) name*)
+                    imports::map.with(|value| value.get()).invoke(&[
+                        {
+                            let env = env.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let name = args[0].clone();
+                                // (lookup name env)
+                                globals::lookup
+                                    .with(|value| value.get())
+                                    .invoke(&[name.clone(), env.clone()])
+                            })
+                        },
+                        name_star_.clone(),
+                    ])
                 })
             })
         });
@@ -153,64 +138,61 @@ pub fn initialize() {
                     }
                     let name = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (cond ((null? env) #f) ((eq? (quote GLOBAL-MARKER) (car env)) (lookup name (cdr env))) ((eq? name (caar env)) (cdar env)) (else (lookup name (cdr env)))))
+                    // (cond ...)
+                    if (
+                        // (null? env)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[env.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? env)
-                            imports::null_p
+                        Scm::False
+                    } else if (
+                        // (eq? (quote GLOBAL-MARKER) (car env))
+                        imports::eq_p.with(|value| value.get()).invoke(&[
+                            Scm::symbol("GLOBAL-MARKER"),
+                            // (car env)
+                            imports::car
                                 .with(|value| value.get())
-                                .invoke(&[env.clone()])
-                        )
-                        .is_true()
-                        {
-                            Scm::False
-                        } else if (
-                            // (eq? (quote GLOBAL-MARKER) (car env))
-                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                Scm::symbol("GLOBAL-MARKER"),
-                                // (car env)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()]),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            // (lookup name (cdr env))
-                            globals::lookup.with(|value| value.get()).invoke(&[
-                                name.clone(),
-                                // (cdr env)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()]),
-                            ])
-                        } else if (
-                            // (eq? name (caar env))
-                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                name.clone(),
-                                // (caar env)
-                                imports::caar
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()]),
-                            ])
-                        )
-                        .is_true()
-                        {
-                            // (cdar env)
-                            imports::cdar
+                                .invoke(&[env.clone()]),
+                        ])
+                    )
+                    .is_true()
+                    {
+                        // (lookup name (cdr env))
+                        globals::lookup.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (cdr env)
+                            imports::cdr
                                 .with(|value| value.get())
-                                .invoke(&[env.clone()])
-                        } else {
-                            // (lookup name (cdr env))
-                            globals::lookup.with(|value| value.get()).invoke(&[
-                                name.clone(),
-                                // (cdr env)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()]),
-                            ])
-                        }
+                                .invoke(&[env.clone()]),
+                        ])
+                    } else if (
+                        // (eq? name (caar env))
+                        imports::eq_p.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (caar env)
+                            imports::caar
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()]),
+                        ])
+                    )
+                    .is_true()
+                    {
+                        // (cdar env)
+                        imports::cdar
+                            .with(|value| value.get())
+                            .invoke(&[env.clone()])
+                    } else {
+                        // (lookup name (cdr env))
+                        globals::lookup.with(|value| value.get()).invoke(&[
+                            name.clone(),
+                            // (cdr env)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()]),
+                        ])
                     }
                 })
             })
@@ -223,32 +205,29 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let env = args[0].clone();
-                    // (letrec () (if (eq? (quote GLOBAL-MARKER) (car env)) env (find-globals (cdr env))))
+                    if (
+                        // (eq? (quote GLOBAL-MARKER) (car env))
+                        imports::eq_p.with(|value| value.get()).invoke(&[
+                            Scm::symbol("GLOBAL-MARKER"),
+                            // (car env)
+                            imports::car
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()]),
+                        ])
+                    )
+                    .is_true()
                     {
-                        if (
-                            // (eq? (quote GLOBAL-MARKER) (car env))
-                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                Scm::symbol("GLOBAL-MARKER"),
-                                // (car env)
-                                imports::car
+                        env.clone()
+                    } else {
+                        // (find-globals (cdr env))
+                        globals::find_minus_globals
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (cdr env)
+                                imports::cdr
                                     .with(|value| value.get())
                                     .invoke(&[env.clone()]),
                             ])
-                        )
-                        .is_true()
-                        {
-                            env.clone()
-                        } else {
-                            // (find-globals (cdr env))
-                            globals::find_minus_globals
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    // (cdr env)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[env.clone()]),
-                                ])
-                        }
                     }
                 })
             })
@@ -262,19 +241,16 @@ pub fn initialize() {
                     }
                     let name = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (adjoin-global-var! (new-global name) env))
-                    {
-                        // (adjoin-global-var! (new-global name) env)
-                        globals::adjoin_minus_global_minus_var_i
-                            .with(|value| value.get())
-                            .invoke(&[
-                                // (new-global name)
-                                imports::new_minus_global
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone()]),
-                                env.clone(),
-                            ])
-                    }
+                    // (adjoin-global-var! (new-global name) env)
+                    globals::adjoin_minus_global_minus_var_i
+                        .with(|value| value.get())
+                        .invoke(&[
+                            // (new-global name)
+                            imports::new_minus_global
+                                .with(|value| value.get())
+                                .invoke(&[name.clone()]),
+                            env.clone(),
+                        ])
                 })
             })
         });
@@ -287,19 +263,16 @@ pub fn initialize() {
                     }
                     let name = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (adjoin-global-var! (new-import name) env))
-                    {
-                        // (adjoin-global-var! (new-import name) env)
-                        globals::adjoin_minus_global_minus_var_i
-                            .with(|value| value.get())
-                            .invoke(&[
-                                // (new-import name)
-                                imports::new_minus_import
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone()]),
-                                env.clone(),
-                            ])
-                    }
+                    // (adjoin-global-var! (new-import name) env)
+                    globals::adjoin_minus_global_minus_var_i
+                        .with(|value| value.get())
+                        .invoke(&[
+                            // (new-import name)
+                            imports::new_minus_import
+                                .with(|value| value.get())
+                                .invoke(&[name.clone()]),
+                            env.clone(),
+                        ])
                 })
             })
         });
@@ -312,37 +285,31 @@ pub fn initialize() {
                     }
                     let var = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (let ((genv (find-globals env))) (set-cdr! genv (cons var (cdr genv))) (cdr var)))
+                    // (let ((genv (find-globals env))) (set-cdr! genv (cons var (cdr genv))) (cdr var))
                     {
-                        // (let ((genv (find-globals env))) (set-cdr! genv (cons var (cdr genv))) (cdr var))
+                        let [genv] = [
+                            // (find-globals env)
+                            globals::find_minus_globals
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()]),
+                        ];
                         {
-                            let [genv] = [
-                                // (find-globals env)
-                                globals::find_minus_globals
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()]),
-                            ];
-                            // (letrec () (set-cdr! genv (cons var (cdr genv))) (cdr var))
-                            {
-                                {
-                                    // (set-cdr! genv (cons var (cdr genv)))
-                                    imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[
-                                        genv.clone(),
-                                        // (cons var (cdr genv))
-                                        imports::cons.with(|value| value.get()).invoke(&[
-                                            var.clone(),
-                                            // (cdr genv)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[genv.clone()]),
-                                        ]),
-                                    ]);
-                                    // (cdr var)
+                            // (set-cdr! genv (cons var (cdr genv)))
+                            imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[
+                                genv.clone(),
+                                // (cons var (cdr genv))
+                                imports::cons.with(|value| value.get()).invoke(&[
+                                    var.clone(),
+                                    // (cdr genv)
                                     imports::cdr
                                         .with(|value| value.get())
-                                        .invoke(&[var.clone()])
-                                }
-                            }
+                                        .invoke(&[genv.clone()]),
+                                ]),
+                            ]);
+                            // (cdr var)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[var.clone()])
                         }
                     }
                 })
@@ -357,17 +324,14 @@ pub fn initialize() {
                     }
                     let name = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (cons (new-local name) env))
-                    {
-                        // (cons (new-local name) env)
-                        imports::cons.with(|value| value.get()).invoke(&[
-                            // (new-local name)
-                            imports::new_minus_local
-                                .with(|value| value.get())
-                                .invoke(&[name.clone()]),
-                            env.clone(),
-                        ])
-                    }
+                    // (cons (new-local name) env)
+                    imports::cons.with(|value| value.get()).invoke(&[
+                        // (new-local name)
+                        imports::new_minus_local
+                            .with(|value| value.get())
+                            .invoke(&[name.clone()]),
+                        env.clone(),
+                    ])
                 })
             })
         });
@@ -380,51 +344,48 @@ pub fn initialize() {
                     }
                     let name_star_ = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (cond ((null? name*) env) ((pair? name*) (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))) (else (adjoin-local name* env))))
+                    // (cond ...)
+                    if (
+                        // (null? name*)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[name_star_.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? name*)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[name_star_.clone()])
-                        )
-                        .is_true()
-                        {
-                            env.clone()
-                        } else if (
-                            // (pair? name*)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[name_star_.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))
-                            globals::adjoin_minus_local_minus_env
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    // (cdr name*)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[name_star_.clone()]),
-                                    // (adjoin-local (car name*) env)
-                                    globals::adjoin_minus_local
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car name*)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[name_star_.clone()]),
-                                            env.clone(),
-                                        ]),
-                                ])
-                        } else {
-                            // (adjoin-local name* env)
-                            globals::adjoin_minus_local
-                                .with(|value| value.get())
-                                .invoke(&[name_star_.clone(), env.clone()])
-                        }
+                        env.clone()
+                    } else if (
+                        // (pair? name*)
+                        imports::pair_p
+                            .with(|value| value.get())
+                            .invoke(&[name_star_.clone()])
+                    )
+                    .is_true()
+                    {
+                        // (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))
+                        globals::adjoin_minus_local_minus_env
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (cdr name*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[name_star_.clone()]),
+                                // (adjoin-local (car name*) env)
+                                globals::adjoin_minus_local
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (car name*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[name_star_.clone()]),
+                                        env.clone(),
+                                    ]),
+                            ])
+                    } else {
+                        // (adjoin-local name* env)
+                        globals::adjoin_minus_local
+                            .with(|value| value.get())
+                            .invoke(&[name_star_.clone(), env.clone()])
                     }
                 })
             })
@@ -449,54 +410,47 @@ pub fn initialize() {
                                 }
                                 let name_star_ = args[0].clone();
                                 let genv = args[1].clone();
-                                // (letrec () (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv))))
+                                if (
+                                    // (null? name*)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[name_star_.clone()])
+                                )
+                                .is_true()
                                 {
-                                    if (
-                                        // (null? name*)
-                                        imports::null_p
-                                            .with(|value| value.get())
-                                            .invoke(&[name_star_.clone()])
-                                    )
-                                    .is_true()
+                                    Scm::Nil
+                                } else {
                                     {
-                                        Scm::Nil
-                                    } else {
-                                        {
-                                            // (set-cdr! genv (cons (new-import (car name*)) (cdr genv)))
-                                            imports::set_minus_cdr_i
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    genv.clone(),
-                                                    // (cons (new-import (car name*)) (cdr genv))
-                                                    imports::cons.with(|value| value.get()).invoke(
-                                                        &[
-                                                            // (new-import (car name*))
-                                                            imports::new_minus_import
-                                                                .with(|value| value.get())
-                                                                .invoke(&[
-                                                                    // (car name*)
-                                                                    imports::car
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[
-                                                                            name_star_.clone()
-                                                                        ]),
-                                                                ]),
-                                                            // (cdr genv)
-                                                            imports::cdr
-                                                                .with(|value| value.get())
-                                                                .invoke(&[genv.clone()]),
-                                                        ],
-                                                    ),
-                                                ]);
-                                            // (loop (cdr name*) genv)
-                                            loop_.get().invoke(&[
-                                                // (cdr name*)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[name_star_.clone()]),
+                                        // (set-cdr! genv (cons (new-import (car name*)) (cdr genv)))
+                                        imports::set_minus_cdr_i.with(|value| value.get()).invoke(
+                                            &[
                                                 genv.clone(),
-                                            ])
-                                        }
+                                                // (cons (new-import (car name*)) (cdr genv))
+                                                imports::cons.with(|value| value.get()).invoke(&[
+                                                    // (new-import (car name*))
+                                                    imports::new_minus_import
+                                                        .with(|value| value.get())
+                                                        .invoke(&[
+                                                            // (car name*)
+                                                            imports::car
+                                                                .with(|value| value.get())
+                                                                .invoke(&[name_star_.clone()]),
+                                                        ]),
+                                                    // (cdr genv)
+                                                    imports::cdr
+                                                        .with(|value| value.get())
+                                                        .invoke(&[genv.clone()]),
+                                                ]),
+                                            ],
+                                        );
+                                        // (loop (cdr name*) genv)
+                                        loop_.get().invoke(&[
+                                            // (cdr name*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[name_star_.clone()]),
+                                            genv.clone(),
+                                        ])
                                     }
                                 }
                             })
@@ -523,17 +477,14 @@ pub fn initialize() {
                     }
                     let name = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (cons (new-boxed name) env))
-                    {
-                        // (cons (new-boxed name) env)
-                        imports::cons.with(|value| value.get()).invoke(&[
-                            // (new-boxed name)
-                            imports::new_minus_boxed
-                                .with(|value| value.get())
-                                .invoke(&[name.clone()]),
-                            env.clone(),
-                        ])
-                    }
+                    // (cons (new-boxed name) env)
+                    imports::cons.with(|value| value.get()).invoke(&[
+                        // (new-boxed name)
+                        imports::new_minus_boxed
+                            .with(|value| value.get())
+                            .invoke(&[name.clone()]),
+                        env.clone(),
+                    ])
                 })
             })
         });
@@ -546,51 +497,48 @@ pub fn initialize() {
                     }
                     let name_star_ = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (cond ((null? name*) env) ((pair? name*) (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))) (else (adjoin-boxed name* env))))
+                    // (cond ...)
+                    if (
+                        // (null? name*)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[name_star_.clone()])
+                    )
+                    .is_true()
                     {
-                        // (cond ...)
-                        if (
-                            // (null? name*)
-                            imports::null_p
-                                .with(|value| value.get())
-                                .invoke(&[name_star_.clone()])
-                        )
-                        .is_true()
-                        {
-                            env.clone()
-                        } else if (
-                            // (pair? name*)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[name_star_.clone()])
-                        )
-                        .is_true()
-                        {
-                            // (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))
-                            globals::adjoin_minus_boxed_minus_env
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    // (cdr name*)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[name_star_.clone()]),
-                                    // (adjoin-boxed (car name*) env)
-                                    globals::adjoin_minus_boxed
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            // (car name*)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[name_star_.clone()]),
-                                            env.clone(),
-                                        ]),
-                                ])
-                        } else {
-                            // (adjoin-boxed name* env)
-                            globals::adjoin_minus_boxed
-                                .with(|value| value.get())
-                                .invoke(&[name_star_.clone(), env.clone()])
-                        }
+                        env.clone()
+                    } else if (
+                        // (pair? name*)
+                        imports::pair_p
+                            .with(|value| value.get())
+                            .invoke(&[name_star_.clone()])
+                    )
+                    .is_true()
+                    {
+                        // (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))
+                        globals::adjoin_minus_boxed_minus_env
+                            .with(|value| value.get())
+                            .invoke(&[
+                                // (cdr name*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[name_star_.clone()]),
+                                // (adjoin-boxed (car name*) env)
+                                globals::adjoin_minus_boxed
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (car name*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[name_star_.clone()]),
+                                        env.clone(),
+                                    ]),
+                            ])
+                    } else {
+                        // (adjoin-boxed name* env)
+                        globals::adjoin_minus_boxed
+                            .with(|value| value.get())
+                            .invoke(&[name_star_.clone(), env.clone()])
                     }
                 })
             })
@@ -604,39 +552,32 @@ pub fn initialize() {
                     }
                     let func = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
-                    {
-                        // (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
-                        imports::map.with(|value| value.get()).invoke(&[
-                            {
-                                let func = func.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let entry = args[0].clone();
-                                    // (letrec () (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry)))
-                                    {
-                                        if (
-                                            // (eq? (quote GLOBAL-MARKER) entry)
-                                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                                Scm::symbol("GLOBAL-MARKER"),
-                                                entry.clone(),
-                                            ])
-                                        )
-                                        .is_true()
-                                        {
-                                            entry.clone()
-                                        } else {
-                                            // (func entry)
-                                            func.clone().invoke(&[entry.clone()])
-                                        }
-                                    }
-                                })
-                            },
-                            env.clone(),
-                        ])
-                    }
+                    // (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
+                    imports::map.with(|value| value.get()).invoke(&[
+                        {
+                            let func = func.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let entry = args[0].clone();
+                                if (
+                                    // (eq? (quote GLOBAL-MARKER) entry)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[Scm::symbol("GLOBAL-MARKER"), entry.clone()])
+                                )
+                                .is_true()
+                                {
+                                    entry.clone()
+                                } else {
+                                    // (func entry)
+                                    func.clone().invoke(&[entry.clone()])
+                                }
+                            })
+                        },
+                        env.clone(),
+                    ])
                 })
             })
         });
@@ -649,39 +590,32 @@ pub fn initialize() {
                     }
                     let func = args[0].clone();
                     let env = args[1].clone();
-                    // (letrec () (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env))
-                    {
-                        // (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
-                        imports::for_minus_each.with(|value| value.get()).invoke(&[
-                            {
-                                let func = func.clone();
-                                Scm::func(move |args: &[Scm]| {
-                                    if args.len() != 1 {
-                                        panic!("invalid arity")
-                                    }
-                                    let entry = args[0].clone();
-                                    // (letrec () (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry)))
-                                    {
-                                        if (
-                                            // (eq? (quote GLOBAL-MARKER) entry)
-                                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                                Scm::symbol("GLOBAL-MARKER"),
-                                                entry.clone(),
-                                            ])
-                                        )
-                                        .is_true()
-                                        {
-                                            entry.clone()
-                                        } else {
-                                            // (func entry)
-                                            func.clone().invoke(&[entry.clone()])
-                                        }
-                                    }
-                                })
-                            },
-                            env.clone(),
-                        ])
-                    }
+                    // (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
+                    imports::for_minus_each.with(|value| value.get()).invoke(&[
+                        {
+                            let func = func.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 1 {
+                                    panic!("invalid arity")
+                                }
+                                let entry = args[0].clone();
+                                if (
+                                    // (eq? (quote GLOBAL-MARKER) entry)
+                                    imports::eq_p
+                                        .with(|value| value.get())
+                                        .invoke(&[Scm::symbol("GLOBAL-MARKER"), entry.clone()])
+                                )
+                                .is_true()
+                                {
+                                    entry.clone()
+                                } else {
+                                    // (func entry)
+                                    func.clone().invoke(&[entry.clone()])
+                                }
+                            })
+                        },
+                        env.clone(),
+                    ])
                 })
             })
         })

@@ -151,9 +151,12 @@
                (transform (cdr exp*)))
               (else (cons (car exp*)
                           (transform (cdr exp*))))))
-      (list (cons 'letrec
-                  (cons (initializations body)
-                        (transform body)))))
+      (let ((ini (initializations body)))
+        (if (null? ini)
+            body
+            (list (cons 'letrec
+                        (cons ini
+                              (transform body)))))))
 
     (define (set!-variable expr)
       (cadr expr))

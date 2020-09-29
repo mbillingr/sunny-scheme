@@ -78,14 +78,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (car (caar x)))
-                    {
-                        // (car (caar x))
-                        imports::car.with(|value| value.get()).invoke(&[
-                            // (caar x)
-                            imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (car (caar x))
+                    imports::car.with(|value| value.get()).invoke(&[
+                        // (caar x)
+                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -97,14 +94,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (car (cadr x)))
-                    {
-                        // (car (cadr x))
-                        imports::car.with(|value| value.get()).invoke(&[
-                            // (cadr x)
-                            imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (car (cadr x))
+                    imports::car.with(|value| value.get()).invoke(&[
+                        // (cadr x)
+                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -116,14 +110,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (car (cdar x)))
-                    {
-                        // (car (cdar x))
-                        imports::car.with(|value| value.get()).invoke(&[
-                            // (cdar x)
-                            imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (car (cdar x))
+                    imports::car.with(|value| value.get()).invoke(&[
+                        // (cdar x)
+                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -135,14 +126,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (car (cddr x)))
-                    {
-                        // (car (cddr x))
-                        imports::car.with(|value| value.get()).invoke(&[
-                            // (cddr x)
-                            imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (car (cddr x))
+                    imports::car.with(|value| value.get()).invoke(&[
+                        // (cddr x)
+                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -154,14 +142,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdr (caar x)))
-                    {
-                        // (cdr (caar x))
-                        imports::cdr.with(|value| value.get()).invoke(&[
-                            // (caar x)
-                            imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdr (caar x))
+                    imports::cdr.with(|value| value.get()).invoke(&[
+                        // (caar x)
+                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -173,14 +158,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdr (cadr x)))
-                    {
-                        // (cdr (cadr x))
-                        imports::cdr.with(|value| value.get()).invoke(&[
-                            // (cadr x)
-                            imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdr (cadr x))
+                    imports::cdr.with(|value| value.get()).invoke(&[
+                        // (cadr x)
+                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -192,14 +174,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdr (cdar x)))
-                    {
-                        // (cdr (cdar x))
-                        imports::cdr.with(|value| value.get()).invoke(&[
-                            // (cdar x)
-                            imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdr (cdar x))
+                    imports::cdr.with(|value| value.get()).invoke(&[
+                        // (cdar x)
+                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -211,14 +190,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdr (cddr x)))
-                    {
-                        // (cdr (cddr x))
-                        imports::cdr.with(|value| value.get()).invoke(&[
-                            // (cddr x)
-                            imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdr (cddr x))
+                    imports::cdr.with(|value| value.get()).invoke(&[
+                        // (cddr x)
+                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -230,14 +206,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (caar (caar x)))
-                    {
-                        // (caar (caar x))
-                        imports::caar.with(|value| value.get()).invoke(&[
-                            // (caar x)
-                            imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (caar (caar x))
+                    imports::caar.with(|value| value.get()).invoke(&[
+                        // (caar x)
+                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -249,14 +222,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (caar (cadr x)))
-                    {
-                        // (caar (cadr x))
-                        imports::caar.with(|value| value.get()).invoke(&[
-                            // (cadr x)
-                            imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (caar (cadr x))
+                    imports::caar.with(|value| value.get()).invoke(&[
+                        // (cadr x)
+                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -268,14 +238,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (caar (cdar x)))
-                    {
-                        // (caar (cdar x))
-                        imports::caar.with(|value| value.get()).invoke(&[
-                            // (cdar x)
-                            imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (caar (cdar x))
+                    imports::caar.with(|value| value.get()).invoke(&[
+                        // (cdar x)
+                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -287,14 +254,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (caar (cddr x)))
-                    {
-                        // (caar (cddr x))
-                        imports::caar.with(|value| value.get()).invoke(&[
-                            // (cddr x)
-                            imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (caar (cddr x))
+                    imports::caar.with(|value| value.get()).invoke(&[
+                        // (cddr x)
+                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -306,14 +270,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cadr (caar x)))
-                    {
-                        // (cadr (caar x))
-                        imports::cadr.with(|value| value.get()).invoke(&[
-                            // (caar x)
-                            imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cadr (caar x))
+                    imports::cadr.with(|value| value.get()).invoke(&[
+                        // (caar x)
+                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -325,14 +286,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cadr (cadr x)))
-                    {
-                        // (cadr (cadr x))
-                        imports::cadr.with(|value| value.get()).invoke(&[
-                            // (cadr x)
-                            imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cadr (cadr x))
+                    imports::cadr.with(|value| value.get()).invoke(&[
+                        // (cadr x)
+                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -344,14 +302,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cadr (cdar x)))
-                    {
-                        // (cadr (cdar x))
-                        imports::cadr.with(|value| value.get()).invoke(&[
-                            // (cdar x)
-                            imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cadr (cdar x))
+                    imports::cadr.with(|value| value.get()).invoke(&[
+                        // (cdar x)
+                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -363,14 +318,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cadr (cddr x)))
-                    {
-                        // (cadr (cddr x))
-                        imports::cadr.with(|value| value.get()).invoke(&[
-                            // (cddr x)
-                            imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cadr (cddr x))
+                    imports::cadr.with(|value| value.get()).invoke(&[
+                        // (cddr x)
+                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -382,14 +334,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdar (caar x)))
-                    {
-                        // (cdar (caar x))
-                        imports::cdar.with(|value| value.get()).invoke(&[
-                            // (caar x)
-                            imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdar (caar x))
+                    imports::cdar.with(|value| value.get()).invoke(&[
+                        // (caar x)
+                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -401,14 +350,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdar (cadr x)))
-                    {
-                        // (cdar (cadr x))
-                        imports::cdar.with(|value| value.get()).invoke(&[
-                            // (cadr x)
-                            imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdar (cadr x))
+                    imports::cdar.with(|value| value.get()).invoke(&[
+                        // (cadr x)
+                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -420,14 +366,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdar (cdar x)))
-                    {
-                        // (cdar (cdar x))
-                        imports::cdar.with(|value| value.get()).invoke(&[
-                            // (cdar x)
-                            imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdar (cdar x))
+                    imports::cdar.with(|value| value.get()).invoke(&[
+                        // (cdar x)
+                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -439,14 +382,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cdar (cddr x)))
-                    {
-                        // (cdar (cddr x))
-                        imports::cdar.with(|value| value.get()).invoke(&[
-                            // (cddr x)
-                            imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cdar (cddr x))
+                    imports::cdar.with(|value| value.get()).invoke(&[
+                        // (cddr x)
+                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -458,14 +398,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cddr (caar x)))
-                    {
-                        // (cddr (caar x))
-                        imports::cddr.with(|value| value.get()).invoke(&[
-                            // (caar x)
-                            imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cddr (caar x))
+                    imports::cddr.with(|value| value.get()).invoke(&[
+                        // (caar x)
+                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -477,14 +414,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cddr (cadr x)))
-                    {
-                        // (cddr (cadr x))
-                        imports::cddr.with(|value| value.get()).invoke(&[
-                            // (cadr x)
-                            imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cddr (cadr x))
+                    imports::cddr.with(|value| value.get()).invoke(&[
+                        // (cadr x)
+                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -496,14 +430,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cddr (cdar x)))
-                    {
-                        // (cddr (cdar x))
-                        imports::cddr.with(|value| value.get()).invoke(&[
-                            // (cdar x)
-                            imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cddr (cdar x))
+                    imports::cddr.with(|value| value.get()).invoke(&[
+                        // (cdar x)
+                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         });
@@ -515,14 +446,11 @@ pub fn initialize() {
                         panic!("invalid arity")
                     }
                     let x = args[0].clone();
-                    // (letrec () (cddr (cddr x)))
-                    {
-                        // (cddr (cddr x))
-                        imports::cddr.with(|value| value.get()).invoke(&[
-                            // (cddr x)
-                            imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                        ])
-                    }
+                    // (cddr (cddr x))
+                    imports::cddr.with(|value| value.get()).invoke(&[
+                        // (cddr x)
+                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
+                    ])
                 })
             })
         })

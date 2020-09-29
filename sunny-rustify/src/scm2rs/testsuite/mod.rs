@@ -31,10 +31,7 @@ pub fn initialize() {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (testsuite "Scheme Tests" (testcase "the empty list" (given (x <- (quote ()))) (then (null? x))) (testcase "integers" (given (x <- 1) (y <- (quote 1))) (then (= x y)))))
-                    {
-                        Scm::symbol("*UNSPECIFIED*")
-                    }
+                    Scm::symbol("*UNSPECIFIED*")
                 })
             })
         })
@@ -52,16 +49,13 @@ mod tests {
         // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
         {
             let [x] = [Scm::Nil];
-            // (letrec () (begin (begin (assert (null? x)))))
-            {
-                assert!(
-                    // (null? x)
-                    imports::null_p
-                        .with(|value| value.get())
-                        .invoke(&[x.clone(),])
-                        .is_true()
-                );
-            }
+            assert!(
+                // (null? x)
+                imports::null_p
+                    .with(|value| value.get())
+                    .invoke(&[x.clone(),])
+                    .is_true()
+            );
         }
     }
     #[test]
@@ -73,22 +67,16 @@ mod tests {
         // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
         {
             let [x] = [Scm::from(1)];
-            // (letrec () (let ((y (quote 1))) (begin (begin (assert (= x y))))))
+            // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
             {
-                // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
-                {
-                    let [y] = [Scm::from(1)];
-                    // (letrec () (begin (begin (assert (= x y)))))
-                    {
-                        assert!(
-                            // (= x y)
-                            imports::_e_
-                                .with(|value| value.get())
-                                .invoke(&[x.clone(), y.clone(),])
-                                .is_true()
-                        );
-                    }
-                }
+                let [y] = [Scm::from(1)];
+                assert!(
+                    // (= x y)
+                    imports::_e_
+                        .with(|value| value.get())
+                        .invoke(&[x.clone(), y.clone(),])
+                        .is_true()
+                );
             }
         }
     }

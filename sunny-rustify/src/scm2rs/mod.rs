@@ -130,38 +130,32 @@ pub fn main() {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr)))))
+                    // (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
                     {
-                        // (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
+                        let [expr] = [
+                            // (read input-file)
+                            imports::read
+                                .with(|value| value.get())
+                                .invoke(&[globals::input_minus_file.with(|value| value.get())]),
+                        ];
+                        if (
+                            // (eof-object? expr)
+                            imports::eof_minus_object_p
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        )
+                        .is_true()
                         {
-                            let [expr] = [
-                                // (read input-file)
-                                imports::read
+                            Scm::Nil
+                        } else {
+                            // (cons expr (load-sexpr))
+                            imports::cons.with(|value| value.get()).invoke(&[
+                                expr.clone(),
+                                // (load-sexpr)
+                                globals::load_minus_sexpr
                                     .with(|value| value.get())
-                                    .invoke(&[globals::input_minus_file.with(|value| value.get())]),
-                            ];
-                            // (letrec () (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
-                            {
-                                if (
-                                    // (eof-object? expr)
-                                    imports::eof_minus_object_p
-                                        .with(|value| value.get())
-                                        .invoke(&[expr.clone()])
-                                )
-                                .is_true()
-                                {
-                                    Scm::Nil
-                                } else {
-                                    // (cons expr (load-sexpr))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        expr.clone(),
-                                        // (load-sexpr)
-                                        globals::load_minus_sexpr
-                                            .with(|value| value.get())
-                                            .invoke(&[]),
-                                    ])
-                                }
-                            }
+                                    .invoke(&[]),
+                            ])
                         }
                     }
                 })
@@ -197,13 +191,10 @@ pub fn main() {
                             panic!("invalid arity")
                         }
                         let module = args[0].clone();
-                        // (letrec () (ast (quote gen-rust) module))
-                        {
-                            // (ast (quote gen-rust) module)
-                            globals::ast
-                                .with(|value| value.get())
-                                .invoke(&[Scm::symbol("gen-rust"), module.clone()])
-                        }
+                        // (ast (quote gen-rust) module)
+                        globals::ast
+                            .with(|value| value.get())
+                            .invoke(&[Scm::symbol("gen-rust"), module.clone()])
                     })
                 },
             ])
