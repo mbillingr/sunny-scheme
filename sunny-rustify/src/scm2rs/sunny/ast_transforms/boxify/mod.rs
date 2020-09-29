@@ -145,7 +145,7 @@ pub fn initialize() {
                     let param_star_ = args[2].clone();
                     let var_star_ = args[3].clone();
                     let body = args[4].clone();
-                    // (letrec () (if (null? var*) (make-abstraction params vars body) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
+                    // (letrec () (if (null? var*) (make-abstraction params vars (boxify body)) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-abstraction params vars (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-abstraction params vars (cdr param*) (cdr var*) body))))
                     {
                         if (
                             // (null? var*)
@@ -155,10 +155,17 @@ pub fn initialize() {
                         )
                         .is_true()
                         {
-                            // (make-abstraction params vars body)
+                            // (make-abstraction params vars (boxify body))
                             imports::make_minus_abstraction
                                 .with(|value| value.get())
-                                .invoke(&[params.clone(), vars.clone(), body.clone()])
+                                .invoke(&[
+                                    params.clone(),
+                                    vars.clone(),
+                                    // (boxify body)
+                                    globals::boxify
+                                        .with(|value| value.get())
+                                        .invoke(&[body.clone()]),
+                                ])
                         } else if (
                             // (variable-mutable? (car var*))
                             imports::variable_minus_mutable_p
@@ -244,7 +251,7 @@ pub fn initialize() {
                     let param_star_ = args[4].clone();
                     let var_star_ = args[5].clone();
                     let body = args[6].clone();
-                    // (letrec () (if (null? var*) (make-vararg-abstraction params vararg vars varvar body) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
+                    // (letrec () (if (null? var*) (make-vararg-abstraction params vararg vars varvar (boxify body)) (if (variable-mutable? (car var*)) (begin (local-boxify! (car var*)) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) (make-boxify (car param*) body))) (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
                     {
                         if (
                             // (null? var*)
@@ -254,7 +261,7 @@ pub fn initialize() {
                         )
                         .is_true()
                         {
-                            // (make-vararg-abstraction params vararg vars varvar body)
+                            // (make-vararg-abstraction params vararg vars varvar (boxify body))
                             imports::make_minus_vararg_minus_abstraction
                                 .with(|value| value.get())
                                 .invoke(&[
@@ -262,7 +269,10 @@ pub fn initialize() {
                                     vararg.clone(),
                                     vars.clone(),
                                     varvar.clone(),
-                                    body.clone(),
+                                    // (boxify body)
+                                    globals::boxify
+                                        .with(|value| value.get())
+                                        .invoke(&[body.clone()]),
                                 ])
                         } else if (
                             // (variable-mutable? (car var*))

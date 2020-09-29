@@ -30,7 +30,7 @@
 
     (define (boxify-abstraction params vars param* var* body)
       (if (null? var*)
-          (make-abstraction params vars body)
+          (make-abstraction params vars (boxify body))
           (if (variable-mutable? (car var*))
               (begin (local-boxify! (car var*))
                      (boxify-abstraction params vars (cdr param*) (cdr var*)
@@ -39,7 +39,7 @@
 
     (define (boxify-vararg-abstraction params vararg vars varvar param* var* body)
       (if (null? var*)
-          (make-vararg-abstraction params vararg vars varvar body)
+          (make-vararg-abstraction params vararg vars varvar (boxify body))
           (if (variable-mutable? (car var*))
               (begin (local-boxify! (car var*))
                      (boxify-vararg-abstraction params vararg vars varvar
