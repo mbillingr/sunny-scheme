@@ -81,793 +81,853 @@ pub fn initialize() {
     crate::sunny::utils::initialize();
     {
         (/*NOP*/);
-        // (define (abstraction? expr) ...)
-        globals::abstraction_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (and (pair? expr) (eq? (quote lambda) (car expr)))
-                    if (
-                        // (pair? expr)
-                        imports::pair_p
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    )
-                    .is_true()
-                    {
-                        // (eq? (quote lambda) (car expr))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("lambda"),
-                            // (car expr)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    } else {
-                        Scm::False
-                    }
-                })
-            })
-        });
-        // (define (and-args expr) ...)
-        globals::and_minus_args.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cdr expr)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (begin-statements expr) ...)
-        globals::begin_minus_statements.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cdr expr)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (cond-clauses expr) ...)
-        globals::cond_minus_clauses.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cdr expr)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (cond-clause-condition clause) ...)
-        globals::cond_minus_clause_minus_condition.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let clause = args[0].clone();
-                    // (car clause)
-                    imports::car
-                        .with(|value| value.get())
-                        .invoke(&[clause.clone()])
-                })
-            })
-        });
-        // (define (cond-clause-sequence clause) ...)
-        globals::cond_minus_clause_minus_sequence.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let clause = args[0].clone();
-                    // (cdr clause)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[clause.clone()])
-                })
-            })
-        });
-        // (define (cond-else-clause? clause) ...)
-        globals::cond_minus_else_minus_clause_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let clause = args[0].clone();
-                    // (eq? (quote else) (car clause))
-                    imports::eq_p.with(|value| value.get()).invoke(&[
-                        Scm::symbol("else"),
-                        // (car clause)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[clause.clone()]),
-                    ])
-                })
-            })
-        });
-        // (define (definition? expr) ...)
-        globals::definition_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (and (pair? expr) (eq? (car expr) (quote define)))
-                    if (
-                        // (pair? expr)
-                        imports::pair_p
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    )
-                    .is_true()
-                    {
-                        // (eq? (car expr) (quote define))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            // (car expr)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                            Scm::symbol("define"),
-                        ])
-                    } else {
-                        Scm::False
-                    }
-                })
-            })
-        });
-        // (define (definition-signature expr) ...)
-        globals::definition_minus_signature.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    if (
-                        // (pair? (cadr expr))
-                        imports::pair_p.with(|value| value.get()).invoke(&[
-                            // (cadr expr)
-                            imports::cadr
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    )
-                    .is_true()
-                    {
-                        // (list (cadr expr) (quote ...))
-                        imports::list.with(|value| value.get()).invoke(&[
-                            // (cadr expr)
-                            imports::cadr
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                            Scm::symbol("..."),
-                        ])
-                    } else {
-                        // (cdr expr)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    }
-                })
-            })
-        });
-        // (define (definition-variable expr) ...)
-        globals::definition_minus_variable.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    if (
-                        // (pair? (cadr expr))
-                        imports::pair_p.with(|value| value.get()).invoke(&[
-                            // (cadr expr)
-                            imports::cadr
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    )
-                    .is_true()
-                    {
-                        // (caadr expr)
-                        imports::caadr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    } else {
-                        // (cadr expr)
-                        imports::cadr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    }
-                })
-            })
-        });
-        // (define (definition-value expr) ...)
-        globals::definition_minus_value.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    if (
-                        // (pair? (cadr expr))
-                        imports::pair_p.with(|value| value.get()).invoke(&[
-                            // (cadr expr)
-                            imports::cadr
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    )
-                    .is_true()
-                    {
-                        // (cons (quote lambda) (cons (cdadr expr) (cddr expr)))
-                        imports::cons.with(|value| value.get()).invoke(&[
-                            Scm::symbol("lambda"),
-                            // (cons (cdadr expr) (cddr expr))
-                            imports::cons.with(|value| value.get()).invoke(&[
-                                // (cdadr expr)
-                                imports::cdadr
-                                    .with(|value| value.get())
-                                    .invoke(&[expr.clone()]),
-                                // (cddr expr)
-                                imports::cddr
-                                    .with(|value| value.get())
-                                    .invoke(&[expr.clone()]),
-                            ]),
-                        ])
-                    } else {
-                        // (caddr expr)
-                        imports::caddr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    }
-                })
-            })
-        });
-        // (define (if-condition expr) ...)
-        globals::if_minus_condition.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cadr expr)
-                    imports::cadr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (if-consequence expr) ...)
-        globals::if_minus_consequence.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (caddr expr)
-                    imports::caddr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (if-alternative expr) ...)
-        globals::if_minus_alternative.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    if (
-                        // (pair? (cdddr expr))
-                        imports::pair_p.with(|value| value.get()).invoke(&[
-                            // (cdddr expr)
-                            imports::cdddr
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    )
-                    .is_true()
-                    {
-                        // (cadddr expr)
-                        imports::cadddr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    } else {
-                        Scm::pair(
-                            Scm::symbol("quote"),
-                            Scm::pair(Scm::symbol("*UNSPECIFIED*"), Scm::Nil),
-                        )
-                    }
-                })
-            })
-        });
-        // (define (import? expr) ...)
-        globals::import_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (and (pair? expr) (eq? (car expr) (quote import)))
-                    if (
-                        // (pair? expr)
-                        imports::pair_p
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()])
-                    )
-                    .is_true()
-                    {
-                        // (eq? (car expr) (quote import))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            // (car expr)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                            Scm::symbol("import"),
-                        ])
-                    } else {
-                        Scm::False
-                    }
-                })
-            })
-        });
-        // (define (import-libnames exp*) ...)
-        globals::import_minus_libnames.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let exp_star_ = args[0].clone();
-                    // (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*)))
-                    imports::filter.with(|value| value.get()).invoke(&[
+        {
+            // (define (abstraction? expr) ...)
+            globals::abstraction_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
                         {
-                            Scm::func(move |args: &[Scm]| {
-                                if args.len() != 1 {
-                                    panic!("invalid arity")
-                                }
-                                let libname = args[0].clone();
-                                // (not (equal? libname (quote (sunny testing))))
-                                imports::not.with(|value| value.get()).invoke(&[
-                                    // (equal? libname (quote (sunny testing)))
-                                    imports::equal_p.with(|value| value.get()).invoke(&[
-                                        libname.clone(),
-                                        Scm::pair(
-                                            Scm::symbol("sunny"),
-                                            Scm::pair(Scm::symbol("testing"), Scm::Nil),
-                                        ),
-                                    ]),
-                                ])
-                            })
-                        },
-                        // (map importset-libname (cdr exp*))
-                        imports::map.with(|value| value.get()).invoke(&[
-                            globals::importset_minus_libname.with(|value| value.get()),
-                            // (cdr exp*)
-                            imports::cdr
-                                .with(|value| value.get())
-                                .invoke(&[exp_star_.clone()]),
-                        ]),
-                    ])
-                })
-            })
-        });
-        // (define (importset-libname expr) ...)
-        globals::importset_minus_libname.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cond ...)
-                    if (
-                        // (eq? (quote only) (car expr))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("only"),
-                            // (car expr)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    )
-                    .is_true()
-                    {
-                        // (importset-libname (cadr expr))
-                        globals::importset_minus_libname
-                            .with(|value| value.get())
-                            .invoke(&[
-                                // (cadr expr)
-                                imports::cadr
+                            // (and (pair? expr) (eq? (quote lambda) (car expr)))
+                            if ({
+                                // (pair? expr)
+                                imports::pair_p
                                     .with(|value| value.get())
-                                    .invoke(&[expr.clone()]),
-                            ])
-                    } else if (
-                        // (eq? (quote except) (car expr))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("except"),
-                            // (car expr)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[expr.clone()]),
-                        ])
-                    )
-                    .is_true()
-                    {
-                        // (importset-libname (cadr expr))
-                        globals::importset_minus_libname
-                            .with(|value| value.get())
-                            .invoke(&[
-                                // (cadr expr)
-                                imports::cadr
-                                    .with(|value| value.get())
-                                    .invoke(&[expr.clone()]),
-                            ])
-                    } else {
-                        expr.clone()
-                    }
-                })
-            })
-        });
-        // (define (lambda-body expr) ...)
-        globals::lambda_minus_body.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cddr expr)
-                    imports::cddr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (lambda-params expr) ...)
-        globals::lambda_minus_params.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cadr expr)
-                    imports::cadr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (let-args expr) ...)
-        globals::let_minus_args.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (map cadr (cadr expr))
-                    imports::map.with(|value| value.get()).invoke(&[
-                        imports::cadr.with(|value| value.get()),
-                        // (cadr expr)
-                        imports::cadr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()]),
-                    ])
-                })
-            })
-        });
-        // (define (let-body expr) ...)
-        globals::let_minus_body.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cddr expr)
-                    imports::cddr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (let-vars expr) ...)
-        globals::let_minus_vars.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (map car (cadr expr))
-                    imports::map.with(|value| value.get()).invoke(&[
-                        imports::car.with(|value| value.get()),
-                        // (cadr expr)
-                        imports::cadr
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone()]),
-                    ])
-                })
-            })
-        });
-        // (define (let*-bindings expr) ...)
-        globals::let_star__minus_bindings.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cadr expr)
-                    imports::cadr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
-                })
-            })
-        });
-        // (define (library? exp*) ...)
-        globals::library_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let exp_star_ = args[0].clone();
-                    // (and (pair? exp*) (eq? (quote define-library) (car exp*)))
-                    if (
-                        // (pair? exp*)
-                        imports::pair_p
-                            .with(|value| value.get())
-                            .invoke(&[exp_star_.clone()])
-                    )
-                    .is_true()
-                    {
-                        // (eq? (quote define-library) (car exp*))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("define-library"),
-                            // (car exp*)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[exp_star_.clone()]),
-                        ])
-                    } else {
-                        Scm::False
-                    }
-                })
-            })
-        });
-        // (define (scan-out-defines body) ...)
-        globals::scan_minus_out_minus_defines.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let body = args[0].clone();
-                    // (letrec ((initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body)))))))
-                    {
-                        let initializations = Scm::uninitialized().into_boxed();
-                        let transform = Scm::uninitialized().into_boxed();
-                        initializations.set({
-                            let initializations = initializations.clone();
-                            Scm::func(move |args: &[Scm]| {
-                                if args.len() != 1 {
-                                    panic!("invalid arity")
-                                }
-                                let exp_star_ = args[0].clone();
-                                // (cond ...)
-                                if (
-                                    // (null? exp*)
-                                    imports::null_p
-                                        .with(|value| value.get())
-                                        .invoke(&[exp_star_.clone()])
-                                )
-                                .is_true()
-                                {
-                                    Scm::Nil
-                                } else if (
-                                    // (definition? (car exp*))
-                                    globals::definition_p.with(|value| value.get()).invoke(&[
-                                        // (car exp*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[exp_star_.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    // (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        // (list (definition-variable (car exp*)) (definition-value (car exp*)))
-                                        imports::list.with(|value| value.get()).invoke(&[
-                                            // (definition-variable (car exp*))
-                                            globals::definition_minus_variable
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (car exp*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                ]),
-                                            // (definition-value (car exp*))
-                                            globals::definition_minus_value
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    // (car exp*)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp_star_.clone()]),
-                                                ]),
-                                        ]),
-                                        // (initializations (cdr exp*))
-                                        initializations.get().invoke(&[
-                                            // (cdr exp*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[exp_star_.clone()]),
-                                        ]),
-                                    ])
-                                } else {
-                                    // (initializations (cdr exp*))
-                                    initializations.get().invoke(&[
-                                        // (cdr exp*)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[exp_star_.clone()]),
-                                    ])
-                                }
+                                    .invoke(&[expr.clone()])
                             })
-                        });
-                        transform.set({
-                            let transform = transform.clone();
-                            Scm::func(move |args: &[Scm]| {
-                                if args.len() != 1 {
-                                    panic!("invalid arity")
-                                }
-                                let exp_star_ = args[0].clone();
-                                // (cond ...)
-                                if (
-                                    // (null? exp*)
-                                    imports::null_p
-                                        .with(|value| value.get())
-                                        .invoke(&[exp_star_.clone()])
-                                )
-                                .is_true()
-                                {
-                                    Scm::Nil
-                                } else if (
-                                    // (definition? (car exp*))
-                                    globals::definition_p.with(|value| value.get()).invoke(&[
-                                        // (car exp*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[exp_star_.clone()]),
-                                    ])
-                                )
-                                .is_true()
-                                {
-                                    // (transform (cdr exp*))
-                                    transform.get().invoke(&[
-                                        // (cdr exp*)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[exp_star_.clone()]),
-                                    ])
-                                } else {
-                                    // (cons (car exp*) (transform (cdr exp*)))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        // (car exp*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[exp_star_.clone()]),
-                                        // (transform (cdr exp*))
-                                        transform.get().invoke(&[
-                                            // (cdr exp*)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[exp_star_.clone()]),
-                                        ]),
-                                    ])
-                                }
-                            })
-                        });
-
-                        // (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))
-                        {
-                            let [ini] = [
-                                // (initializations body)
-                                initializations.get().invoke(&[body.clone()]),
-                            ];
-                            if (
-                                // (null? ini)
-                                imports::null_p
-                                    .with(|value| value.get())
-                                    .invoke(&[ini.clone()])
-                            )
                             .is_true()
                             {
-                                body.clone()
+                                {
+                                    // (eq? (quote lambda) (car expr))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("lambda"),
+                                        {
+                                            // (car expr)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[expr.clone()])
+                                        },
+                                    ])
+                                }
                             } else {
-                                // (list (cons (quote letrec) (cons ini (transform body))))
-                                imports::list.with(|value| value.get()).invoke(&[
-                                    // (cons (quote letrec) (cons ini (transform body)))
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        Scm::symbol("letrec"),
-                                        // (cons ini (transform body))
-                                        imports::cons.with(|value| value.get()).invoke(&[
-                                            ini.clone(),
-                                            // (transform body)
-                                            transform.get().invoke(&[body.clone()]),
-                                        ]),
-                                    ]),
-                                ])
+                                Scm::False
                             }
                         }
-                    }
+                    })
                 })
             })
-        });
-        // (define (set!-variable expr) ...)
-        globals::set_i_minus_variable.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (cadr expr)
-                    imports::cadr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
+        };
+        {
+            // (define (and-args expr) ...)
+            globals::and_minus_args.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cdr expr)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
                 })
             })
-        });
-        // (define (set!-value expr) ...)
-        globals::set_i_minus_value.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let expr = args[0].clone();
-                    // (caddr expr)
-                    imports::caddr
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
+        };
+        {
+            // (define (begin-statements expr) ...)
+            globals::begin_minus_statements.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cdr expr)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
                 })
             })
-        })
+        };
+        {
+            // (define (cond-clauses expr) ...)
+            globals::cond_minus_clauses.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cdr expr)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (cond-clause-condition clause) ...)
+            globals::cond_minus_clause_minus_condition.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let clause = args[0].clone();
+                        {
+                            // (car clause)
+                            imports::car
+                                .with(|value| value.get())
+                                .invoke(&[clause.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (cond-clause-sequence clause) ...)
+            globals::cond_minus_clause_minus_sequence.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let clause = args[0].clone();
+                        {
+                            // (cdr clause)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[clause.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (cond-else-clause? clause) ...)
+            globals::cond_minus_else_minus_clause_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let clause = args[0].clone();
+                        {
+                            // (eq? (quote else) (car clause))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("else"),
+                                {
+                                    // (car clause)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[clause.clone()])
+                                },
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (definition? expr) ...)
+            globals::definition_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (and (pair? expr) (eq? (car expr) (quote define)))
+                            if ({
+                                // (pair? expr)
+                                imports::pair_p
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (eq? (car expr) (quote define))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        {
+                                            // (car expr)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[expr.clone()])
+                                        },
+                                        Scm::symbol("define"),
+                                    ])
+                                }
+                            } else {
+                                Scm::False
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (definition-signature expr) ...)
+            globals::definition_minus_signature.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        if ({
+                            // (pair? (cadr expr))
+                            imports::pair_p.with(|value| value.get()).invoke(&[{
+                                // (cadr expr)
+                                imports::cadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }])
+                        })
+                        .is_true()
+                        {
+                            {
+                                // (list (cadr expr) (quote ...))
+                                imports::list.with(|value| value.get()).invoke(&[
+                                    {
+                                        // (cadr expr)
+                                        imports::cadr
+                                            .with(|value| value.get())
+                                            .invoke(&[expr.clone()])
+                                    },
+                                    Scm::symbol("..."),
+                                ])
+                            }
+                        } else {
+                            {
+                                // (cdr expr)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (definition-variable expr) ...)
+            globals::definition_minus_variable.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        if ({
+                            // (pair? (cadr expr))
+                            imports::pair_p.with(|value| value.get()).invoke(&[{
+                                // (cadr expr)
+                                imports::cadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }])
+                        })
+                        .is_true()
+                        {
+                            {
+                                // (caadr expr)
+                                imports::caadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }
+                        } else {
+                            {
+                                // (cadr expr)
+                                imports::cadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (definition-value expr) ...)
+            globals::definition_minus_value.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        if ({
+                            // (pair? (cadr expr))
+                            imports::pair_p.with(|value| value.get()).invoke(&[{
+                                // (cadr expr)
+                                imports::cadr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }])
+                        })
+                        .is_true()
+                        {
+                            {
+                                // (cons (quote lambda) (cons (cdadr expr) (cddr expr)))
+                                imports::cons.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("lambda"),
+                                    {
+                                        // (cons (cdadr expr) (cddr expr))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            {
+                                                // (cdadr expr)
+                                                imports::cdadr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[expr.clone()])
+                                            },
+                                            {
+                                                // (cddr expr)
+                                                imports::cddr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[expr.clone()])
+                                            },
+                                        ])
+                                    },
+                                ])
+                            }
+                        } else {
+                            {
+                                // (caddr expr)
+                                imports::caddr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (if-condition expr) ...)
+            globals::if_minus_condition.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cadr expr)
+                            imports::cadr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (if-consequence expr) ...)
+            globals::if_minus_consequence.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (caddr expr)
+                            imports::caddr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (if-alternative expr) ...)
+            globals::if_minus_alternative.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        if ({
+                            // (pair? (cdddr expr))
+                            imports::pair_p.with(|value| value.get()).invoke(&[{
+                                // (cdddr expr)
+                                imports::cdddr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }])
+                        })
+                        .is_true()
+                        {
+                            {
+                                // (cadddr expr)
+                                imports::cadddr
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            }
+                        } else {
+                            Scm::pair(
+                                Scm::symbol("quote"),
+                                Scm::pair(Scm::symbol("*UNSPECIFIED*"), Scm::Nil),
+                            )
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (import? expr) ...)
+            globals::import_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (and (pair? expr) (eq? (car expr) (quote import)))
+                            if ({
+                                // (pair? expr)
+                                imports::pair_p
+                                    .with(|value| value.get())
+                                    .invoke(&[expr.clone()])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (eq? (car expr) (quote import))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        {
+                                            // (car expr)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[expr.clone()])
+                                        },
+                                        Scm::symbol("import"),
+                                    ])
+                                }
+                            } else {
+                                Scm::False
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (import-libnames exp*) ...)
+            globals::import_minus_libnames.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let exp_star_ = args[0].clone();
+                        {
+                            // (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*)))
+                            imports::filter.with(|value| value.get()).invoke(&[
+                                {
+                                    Scm::func(move |args: &[Scm]| {
+                                        if args.len() != 1 {
+                                            panic!("invalid arity")
+                                        }
+                                        let libname = args[0].clone();
+                                        {
+                                            // (not (equal? libname (quote (sunny testing))))
+                                            imports::not.with(|value| value.get()).invoke(&[{
+                                                // (equal? libname (quote (sunny testing)))
+                                                imports::equal_p.with(|value| value.get()).invoke(
+                                                    &[
+                                                        libname.clone(),
+                                                        Scm::pair(
+                                                            Scm::symbol("sunny"),
+                                                            Scm::pair(
+                                                                Scm::symbol("testing"),
+                                                                Scm::Nil,
+                                                            ),
+                                                        ),
+                                                    ],
+                                                )
+                                            }])
+                                        }
+                                    })
+                                },
+                                {
+                                    // (map importset-libname (cdr exp*))
+                                    imports::map.with(|value| value.get()).invoke(&[
+                                        globals::importset_minus_libname.with(|value| value.get()),
+                                        {
+                                            // (cdr exp*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()])
+                                        },
+                                    ])
+                                },
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (importset-libname expr) ...)
+            globals::importset_minus_libname.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cond ...)
+                            if ({
+                                // (eq? (quote only) (car expr))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("only"),
+                                    {
+                                        // (car expr)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[expr.clone()])
+                                    },
+                                ])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (importset-libname (cadr expr))
+                                    globals::importset_minus_libname
+                                        .with(|value| value.get())
+                                        .invoke(&[{
+                                            // (cadr expr)
+                                            imports::cadr
+                                                .with(|value| value.get())
+                                                .invoke(&[expr.clone()])
+                                        }])
+                                }
+                            } else if ({
+                                // (eq? (quote except) (car expr))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("except"),
+                                    {
+                                        // (car expr)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[expr.clone()])
+                                    },
+                                ])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (importset-libname (cadr expr))
+                                    globals::importset_minus_libname
+                                        .with(|value| value.get())
+                                        .invoke(&[{
+                                            // (cadr expr)
+                                            imports::cadr
+                                                .with(|value| value.get())
+                                                .invoke(&[expr.clone()])
+                                        }])
+                                }
+                            } else {
+                                expr.clone()
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (lambda-body expr) ...)
+            globals::lambda_minus_body.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cddr expr)
+                            imports::cddr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (lambda-params expr) ...)
+            globals::lambda_minus_params.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cadr expr)
+                            imports::cadr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (let-args expr) ...)
+            globals::let_minus_args.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (map cadr (cadr expr))
+                            imports::map.with(|value| value.get()).invoke(&[
+                                imports::cadr.with(|value| value.get()),
+                                {
+                                    // (cadr expr)
+                                    imports::cadr
+                                        .with(|value| value.get())
+                                        .invoke(&[expr.clone()])
+                                },
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (let-body expr) ...)
+            globals::let_minus_body.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cddr expr)
+                            imports::cddr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (let-vars expr) ...)
+            globals::let_minus_vars.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (map car (cadr expr))
+                            imports::map.with(|value| value.get()).invoke(&[
+                                imports::car.with(|value| value.get()),
+                                {
+                                    // (cadr expr)
+                                    imports::cadr
+                                        .with(|value| value.get())
+                                        .invoke(&[expr.clone()])
+                                },
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (let*-bindings expr) ...)
+            globals::let_star__minus_bindings.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cadr expr)
+                            imports::cadr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (library? exp*) ...)
+            globals::library_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let exp_star_ = args[0].clone();
+                        {
+                            // (and (pair? exp*) (eq? (quote define-library) (car exp*)))
+                            if ({
+                                // (pair? exp*)
+                                imports::pair_p
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (eq? (quote define-library) (car exp*))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        Scm::symbol("define-library"),
+                                        {
+                                            // (car exp*)
+                                            imports::car
+                                                .with(|value| value.get())
+                                                .invoke(&[exp_star_.clone()])
+                                        },
+                                    ])
+                                }
+                            } else {
+                                Scm::False
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (scan-out-defines body) ...)
+            globals::scan_minus_out_minus_defines.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let body = args[0].clone();{
+// (letrec ((initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body)))))))
+{let initializations = Scm::uninitialized().into_boxed();
+let transform = Scm::uninitialized().into_boxed();
+initializations.set({let initializations = initializations.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+// (cond ...)
+if ({
+// (null? exp*)
+imports::null_p.with(|value| value.get()).invoke(&[exp_star_.clone()])}).is_true() {Scm::Nil} else if ({
+// (definition? (car exp*))
+globals::definition_p.with(|value| value.get()).invoke(&[{
+// (car exp*)
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}).is_true() {{
+// (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))
+imports::cons.with(|value| value.get()).invoke(&[{
+// (list (definition-variable (car exp*)) (definition-value (car exp*)))
+imports::list.with(|value| value.get()).invoke(&[{
+// (definition-variable (car exp*))
+globals::definition_minus_variable.with(|value| value.get()).invoke(&[{
+// (car exp*)
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])},{
+// (definition-value (car exp*))
+globals::definition_minus_value.with(|value| value.get()).invoke(&[{
+// (car exp*)
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])},{
+// (initializations (cdr exp*))
+initializations.get().invoke(&[{
+// (cdr exp*)
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}} else {{
+// (initializations (cdr exp*))
+initializations.get().invoke(&[{
+// (cdr exp*)
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}}}})});
+transform.set({let transform = transform.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+// (cond ...)
+if ({
+// (null? exp*)
+imports::null_p.with(|value| value.get()).invoke(&[exp_star_.clone()])}).is_true() {Scm::Nil} else if ({
+// (definition? (car exp*))
+globals::definition_p.with(|value| value.get()).invoke(&[{
+// (car exp*)
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}).is_true() {{
+// (transform (cdr exp*))
+transform.get().invoke(&[{
+// (cdr exp*)
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}} else {{
+// (cons (car exp*) (transform (cdr exp*)))
+imports::cons.with(|value| value.get()).invoke(&[{
+// (car exp*)
+imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])},{
+// (transform (cdr exp*))
+transform.get().invoke(&[{
+// (cdr exp*)
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}}}})});
+{
+// (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))
+{let ini = {
+// (initializations body)
+initializations.get().invoke(&[body.clone()])};if ({
+// (null? ini)
+imports::null_p.with(|value| value.get()).invoke(&[ini.clone()])}).is_true() {body.clone()} else {{
+// (list (cons (quote letrec) (cons ini (transform body))))
+imports::list.with(|value| value.get()).invoke(&[{
+// (cons (quote letrec) (cons ini (transform body)))
+imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("letrec"),{
+// (cons ini (transform body))
+imports::cons.with(|value| value.get()).invoke(&[ini.clone(),{
+// (transform body)
+transform.get().invoke(&[body.clone()])}])}])}])}}}}}}})}))
+        };
+        {
+            // (define (set!-variable expr) ...)
+            globals::set_i_minus_variable.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cadr expr)
+                            imports::cadr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (set!-value expr) ...)
+            globals::set_i_minus_value.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (caddr expr)
+                            imports::caddr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        }
     };
 }

@@ -74,579 +74,725 @@ pub fn initialize() {
     crate::sunny::table::initialize();
     {
         (/*NOP*/);
-        // (define Keyword (make-table))
-        globals::Keyword.with(|value| {
-            value.set(
-                // (make-table)
-                imports::make_minus_table
-                    .with(|value| value.get())
-                    .invoke(&[]),
-            )
-        });
-        // (define Variable (make-table))
-        globals::Variable.with(|value| {
-            value.set(
-                // (make-table)
-                imports::make_minus_table
-                    .with(|value| value.get())
-                    .invoke(&[]),
-            )
-        });
-        // (set-field! Variable (quote mut) #f)
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::Variable.with(|value| value.get()),
-                Scm::symbol("mut"),
-                Scm::False,
-            ]);
-        // (set-field! Variable (quote mutable?) (lambda (self) (get-field self (quote mut))))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::Variable.with(|value| value.get()),
-                Scm::symbol("mutable?"),
-                {
+        {
+            // (define Keyword (make-table))
+            globals::Keyword.with(|value| {
+                value.set({
+                    // (make-table)
+                    imports::make_minus_table
+                        .with(|value| value.get())
+                        .invoke(&[])
+                })
+            })
+        };
+        {
+            // (define Variable (make-table))
+            globals::Variable.with(|value| {
+                value.set({
+                    // (make-table)
+                    imports::make_minus_table
+                        .with(|value| value.get())
+                        .invoke(&[])
+                })
+            })
+        };
+        {
+            // (set-field! Variable (quote mut) #f)
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::Variable.with(|value| value.get()),
+                    Scm::symbol("mut"),
+                    Scm::False,
+                ])
+        };
+        {
+            // (set-field! Variable (quote mutable?) (lambda (self) (get-field self (quote mut))))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::Variable.with(|value| value.get()),
+                    Scm::symbol("mutable?"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            {
+                                // (get-field self (quote mut))
+                                imports::get_minus_field
+                                    .with(|value| value.get())
+                                    .invoke(&[self_.clone(), Scm::symbol("mut")])
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (set-field! Variable (quote set-mutable!) (lambda (self) (set-field! self (quote mut) #t)))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::Variable.with(|value| value.get()),
+                    Scm::symbol("set-mutable!"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            {
+                                // (set-field! self (quote mut) #t)
+                                imports::set_minus_field_i
+                                    .with(|value| value.get())
+                                    .invoke(&[self_.clone(), Scm::symbol("mut"), Scm::True])
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (define GlobalVariable (clone Variable))
+            globals::GlobalVariable.with(|value| {
+                value.set({
+                    // (clone Variable)
+                    imports::clone
+                        .with(|value| value.get())
+                        .invoke(&[globals::Variable.with(|value| value.get())])
+                })
+            })
+        };
+        {
+            // (set-field! GlobalVariable (quote status) (quote UNDEFINED))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::GlobalVariable.with(|value| value.get()),
+                    Scm::symbol("status"),
+                    Scm::symbol("UNDEFINED"),
+                ])
+        };
+        {
+            // (set-field! GlobalVariable (quote mutable?) (lambda (self) (eq? (quote MUTABLE) (get-field self (quote status)))))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::GlobalVariable.with(|value| value.get()),
+                    Scm::symbol("mutable?"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            {
+                                // (eq? (quote MUTABLE) (get-field self (quote status)))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("MUTABLE"),
+                                    {
+                                        // (get-field self (quote status))
+                                        imports::get_minus_field
+                                            .with(|value| value.get())
+                                            .invoke(&[self_.clone(), Scm::symbol("status")])
+                                    },
+                                ])
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (set-field! GlobalVariable (quote set-mutable!) (lambda (self) (set-field! self (quote status) (quote MUTABLE))))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::GlobalVariable.with(|value| value.get()),
+                    Scm::symbol("set-mutable!"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            {
+                                // (set-field! self (quote status) (quote MUTABLE))
+                                imports::set_minus_field_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        self_.clone(),
+                                        Scm::symbol("status"),
+                                        Scm::symbol("MUTABLE"),
+                                    ])
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (set-field! GlobalVariable (quote add-definition!) (lambda (self value) (if (eq? (quote UNDEFINED) (get-field self (quote status))) (set-field! self (quote status) value) (set-field! self (quote status) (quote MUTABLE)))))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::GlobalVariable.with(|value| value.get()),
+                    Scm::symbol("add-definition!"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            let value = args[1].clone();
+                            if ({
+                                // (eq? (quote UNDEFINED) (get-field self (quote status)))
+                                imports::eq_p.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("UNDEFINED"),
+                                    {
+                                        // (get-field self (quote status))
+                                        imports::get_minus_field
+                                            .with(|value| value.get())
+                                            .invoke(&[self_.clone(), Scm::symbol("status")])
+                                    },
+                                ])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (set-field! self (quote status) value)
+                                    imports::set_minus_field_i
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            self_.clone(),
+                                            Scm::symbol("status"),
+                                            value.clone(),
+                                        ])
+                                }
+                            } else {
+                                {
+                                    // (set-field! self (quote status) (quote MUTABLE))
+                                    imports::set_minus_field_i
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            self_.clone(),
+                                            Scm::symbol("status"),
+                                            Scm::symbol("MUTABLE"),
+                                        ])
+                                }
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (define ImportedVariable (clone Variable))
+            globals::ImportedVariable.with(|value| {
+                value.set({
+                    // (clone Variable)
+                    imports::clone
+                        .with(|value| value.get())
+                        .invoke(&[globals::Variable.with(|value| value.get())])
+                })
+            })
+        };
+        {
+            // (define LocalVariable (clone Variable))
+            globals::LocalVariable.with(|value| {
+                value.set({
+                    // (clone Variable)
+                    imports::clone
+                        .with(|value| value.get())
+                        .invoke(&[globals::Variable.with(|value| value.get())])
+                })
+            })
+        };
+        {
+            // (set-field! LocalVariable (quote into-boxed!) (lambda (self) (set-parent! self BoxedVariable)))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::LocalVariable.with(|value| value.get()),
+                    Scm::symbol("into-boxed!"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 1 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            {
+                                // (set-parent! self BoxedVariable)
+                                imports::set_minus_parent_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        self_.clone(),
+                                        globals::BoxedVariable.with(|value| value.get()),
+                                    ])
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (define BoxedVariable (clone LocalVariable))
+            globals::BoxedVariable.with(|value| {
+                value.set({
+                    // (clone LocalVariable)
+                    imports::clone
+                        .with(|value| value.get())
+                        .invoke(&[globals::LocalVariable.with(|value| value.get())])
+                })
+            })
+        };
+        {
+            // (define (keyword? obj) ...)
+            globals::keyword_p.with(|value| {
+                value.set({
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
-                        // (get-field self (quote mut))
-                        imports::get_minus_field
-                            .with(|value| value.get())
-                            .invoke(&[self_.clone(), Scm::symbol("mut")])
-                    })
-                },
-            ]);
-        // (set-field! Variable (quote set-mutable!) (lambda (self) (set-field! self (quote mut) #t)))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::Variable.with(|value| value.get()),
-                Scm::symbol("set-mutable!"),
-                {
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 1 {
-                            panic!("invalid arity")
+                        let obj = args[0].clone();
+                        {
+                            // (and (table? obj) (ancestor? obj Keyword))
+                            if ({
+                                // (table? obj)
+                                imports::table_p
+                                    .with(|value| value.get())
+                                    .invoke(&[obj.clone()])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (ancestor? obj Keyword)
+                                    imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                        obj.clone(),
+                                        globals::Keyword.with(|value| value.get()),
+                                    ])
+                                }
+                            } else {
+                                Scm::False
+                            }
                         }
-                        let self_ = args[0].clone();
-                        // (set-field! self (quote mut) #t)
-                        imports::set_minus_field_i
-                            .with(|value| value.get())
-                            .invoke(&[self_.clone(), Scm::symbol("mut"), Scm::True])
                     })
-                },
-            ]);
-        // (define GlobalVariable (clone Variable))
-        globals::GlobalVariable.with(|value| {
-            value.set(
-                // (clone Variable)
-                imports::clone
-                    .with(|value| value.get())
-                    .invoke(&[globals::Variable.with(|value| value.get())]),
-            )
-        });
-        // (set-field! GlobalVariable (quote status) (quote UNDEFINED))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::GlobalVariable.with(|value| value.get()),
-                Scm::symbol("status"),
-                Scm::symbol("UNDEFINED"),
-            ]);
-        // (set-field! GlobalVariable (quote mutable?) (lambda (self) (eq? (quote MUTABLE) (get-field self (quote status)))))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::GlobalVariable.with(|value| value.get()),
-                Scm::symbol("mutable?"),
-                {
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 1 {
-                            panic!("invalid arity")
-                        }
-                        let self_ = args[0].clone();
-                        // (eq? (quote MUTABLE) (get-field self (quote status)))
-                        imports::eq_p.with(|value| value.get()).invoke(&[
-                            Scm::symbol("MUTABLE"),
-                            // (get-field self (quote status))
-                            imports::get_minus_field
-                                .with(|value| value.get())
-                                .invoke(&[self_.clone(), Scm::symbol("status")]),
-                        ])
-                    })
-                },
-            ]);
-        // (set-field! GlobalVariable (quote set-mutable!) (lambda (self) (set-field! self (quote status) (quote MUTABLE))))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::GlobalVariable.with(|value| value.get()),
-                Scm::symbol("set-mutable!"),
-                {
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 1 {
-                            panic!("invalid arity")
-                        }
-                        let self_ = args[0].clone();
-                        // (set-field! self (quote status) (quote MUTABLE))
-                        imports::set_minus_field_i
-                            .with(|value| value.get())
-                            .invoke(&[self_.clone(), Scm::symbol("status"), Scm::symbol("MUTABLE")])
-                    })
-                },
-            ]);
-        // (set-field! GlobalVariable (quote add-definition!) (lambda (self value) (if (eq? (quote UNDEFINED) (get-field self (quote status))) (set-field! self (quote status) value) (set-field! self (quote status) (quote MUTABLE)))))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::GlobalVariable.with(|value| value.get()),
-                Scm::symbol("add-definition!"),
-                {
+                })
+            })
+        };
+        {
+            // (define (make-keyword name handler) ...)
+            globals::make_minus_keyword.with(|value| {
+                value.set({
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
-                        let value = args[1].clone();
-                        if (
-                            // (eq? (quote UNDEFINED) (get-field self (quote status)))
-                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                Scm::symbol("UNDEFINED"),
-                                // (get-field self (quote status))
-                                imports::get_minus_field
-                                    .with(|value| value.get())
-                                    .invoke(&[self_.clone(), Scm::symbol("status")]),
-                            ])
-                        )
-                        .is_true()
+                        let name = args[0].clone();
+                        let handler = args[1].clone();
                         {
-                            // (set-field! self (quote status) value)
-                            imports::set_minus_field_i
-                                .with(|value| value.get())
-                                .invoke(&[self_.clone(), Scm::symbol("status"), value.clone()])
-                        } else {
-                            // (set-field! self (quote status) (quote MUTABLE))
-                            imports::set_minus_field_i
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    self_.clone(),
-                                    Scm::symbol("status"),
-                                    Scm::symbol("MUTABLE"),
-                                ])
+                            // (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword)
+                            {
+                                let keyword = {
+                                    // (clone Keyword)
+                                    imports::clone
+                                        .with(|value| value.get())
+                                        .invoke(&[globals::Keyword.with(|value| value.get())])
+                                };
+                                {
+                                    {
+                                        // (set-field! keyword (quote name) name)
+                                        imports::set_minus_field_i.with(|value| value.get()).invoke(
+                                            &[keyword.clone(), Scm::symbol("name"), name.clone()],
+                                        )
+                                    };
+                                    {
+                                        // (set-field! keyword (quote handler) handler)
+                                        imports::set_minus_field_i.with(|value| value.get()).invoke(
+                                            &[
+                                                keyword.clone(),
+                                                Scm::symbol("handler"),
+                                                handler.clone(),
+                                            ],
+                                        )
+                                    };
+                                    keyword.clone()
+                                }
+                            }
                         }
                     })
-                },
-            ]);
-        // (define ImportedVariable (clone Variable))
-        globals::ImportedVariable.with(|value| {
-            value.set(
-                // (clone Variable)
-                imports::clone
-                    .with(|value| value.get())
-                    .invoke(&[globals::Variable.with(|value| value.get())]),
-            )
-        });
-        // (define LocalVariable (clone Variable))
-        globals::LocalVariable.with(|value| {
-            value.set(
-                // (clone Variable)
-                imports::clone
-                    .with(|value| value.get())
-                    .invoke(&[globals::Variable.with(|value| value.get())]),
-            )
-        });
-        // (set-field! LocalVariable (quote into-boxed!) (lambda (self) (set-parent! self BoxedVariable)))
-        imports::set_minus_field_i
-            .with(|value| value.get())
-            .invoke(&[
-                globals::LocalVariable.with(|value| value.get()),
-                Scm::symbol("into-boxed!"),
-                {
+                })
+            })
+        };
+        {
+            // (define (keyword-name kw) ...)
+            globals::keyword_minus_name.with(|value| {
+                value.set({
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
-                        // (set-parent! self BoxedVariable)
-                        imports::set_minus_parent_i
-                            .with(|value| value.get())
-                            .invoke(&[
-                                self_.clone(),
+                        let kw = args[0].clone();
+                        {
+                            // (get-field kw (quote name))
+                            imports::get_minus_field
+                                .with(|value| value.get())
+                                .invoke(&[kw.clone(), Scm::symbol("name")])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (keyword-handler kw) ...)
+            globals::keyword_minus_handler.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let kw = args[0].clone();
+                        {
+                            // (get-field kw (quote handler))
+                            imports::get_minus_field
+                                .with(|value| value.get())
+                                .invoke(&[kw.clone(), Scm::symbol("handler")])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (variable? obj) ...)
+            globals::variable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj Variable)
+                            imports::ancestor_p
+                                .with(|value| value.get())
+                                .invoke(&[obj.clone(), globals::Variable.with(|value| value.get())])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (global-variable? obj) ...)
+            globals::global_minus_variable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj GlobalVariable)
+                            imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                globals::GlobalVariable.with(|value| value.get()),
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (import-variable? obj) ...)
+            globals::import_minus_variable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj ImportedVariable)
+                            imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                globals::ImportedVariable.with(|value| value.get()),
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (local-variable? obj) ...)
+            globals::local_minus_variable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj LocalVariable)
+                            imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                globals::LocalVariable.with(|value| value.get()),
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (boxed-variable? obj) ...)
+            globals::boxed_minus_variable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj BoxedVariable)
+                            imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
                                 globals::BoxedVariable.with(|value| value.get()),
                             ])
-                    })
-                },
-            ]);
-        // (define BoxedVariable (clone LocalVariable))
-        globals::BoxedVariable.with(|value| {
-            value.set(
-                // (clone LocalVariable)
-                imports::clone
-                    .with(|value| value.get())
-                    .invoke(&[globals::LocalVariable.with(|value| value.get())]),
-            )
-        });
-        // (define (keyword? obj) ...)
-        globals::keyword_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let obj = args[0].clone();
-                    // (and (table? obj) (ancestor? obj Keyword))
-                    if (
-                        // (table? obj)
-                        imports::table_p
-                            .with(|value| value.get())
-                            .invoke(&[obj.clone()])
-                    )
-                    .is_true()
-                    {
-                        // (ancestor? obj Keyword)
-                        imports::ancestor_p
-                            .with(|value| value.get())
-                            .invoke(&[obj.clone(), globals::Keyword.with(|value| value.get())])
-                    } else {
-                        Scm::False
-                    }
-                })
-            })
-        });
-        // (define (make-keyword name handler) ...)
-        globals::make_minus_keyword.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let name = args[0].clone();
-                    let handler = args[1].clone();
-                    // (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword)
-                    {
-                        let [keyword] = [
-                            // (clone Keyword)
-                            imports::clone
-                                .with(|value| value.get())
-                                .invoke(&[globals::Keyword.with(|value| value.get())]),
-                        ];
-                        {
-                            // (set-field! keyword (quote name) name)
-                            imports::set_minus_field_i
-                                .with(|value| value.get())
-                                .invoke(&[keyword.clone(), Scm::symbol("name"), name.clone()]);
-                            // (set-field! keyword (quote handler) handler)
-                            imports::set_minus_field_i
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    keyword.clone(),
-                                    Scm::symbol("handler"),
-                                    handler.clone(),
-                                ]);
-                            keyword.clone()
                         }
-                    }
+                    })
                 })
             })
-        });
-        // (define (keyword-name kw) ...)
-        globals::keyword_minus_name.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let kw = args[0].clone();
-                    // (get-field kw (quote name))
-                    imports::get_minus_field
-                        .with(|value| value.get())
-                        .invoke(&[kw.clone(), Scm::symbol("name")])
+        };
+        {
+            // (define (variable-mutable? var) ...)
+            globals::variable_minus_mutable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        {
+                            // (call-method var (quote mutable?))
+                            imports::call_minus_method
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), Scm::symbol("mutable?")])
+                        }
+                    })
                 })
             })
-        });
-        // (define (keyword-handler kw) ...)
-        globals::keyword_minus_handler.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let kw = args[0].clone();
-                    // (get-field kw (quote handler))
-                    imports::get_minus_field
-                        .with(|value| value.get())
-                        .invoke(&[kw.clone(), Scm::symbol("handler")])
+        };
+        {
+            // (define (variable-set-mutable! var) ...)
+            globals::variable_minus_set_minus_mutable_i.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        {
+                            // (call-method var (quote set-mutable!))
+                            imports::call_minus_method
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), Scm::symbol("set-mutable!")])
+                        }
+                    })
                 })
             })
-        });
-        // (define (variable? obj) ...)
-        globals::variable_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let obj = args[0].clone();
-                    // (ancestor? obj Variable)
-                    imports::ancestor_p
-                        .with(|value| value.get())
-                        .invoke(&[obj.clone(), globals::Variable.with(|value| value.get())])
+        };
+        {
+            // (define (global-add-definition! var val) ...)
+            globals::global_minus_add_minus_definition_i.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        let val = args[1].clone();
+                        {
+                            // (call-method var (quote add-definition!) val)
+                            imports::call_minus_method
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), Scm::symbol("add-definition!"), val.clone()])
+                        }
+                    })
                 })
             })
-        });
-        // (define (global-variable? obj) ...)
-        globals::global_minus_variable_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let obj = args[0].clone();
-                    // (ancestor? obj GlobalVariable)
-                    imports::ancestor_p.with(|value| value.get()).invoke(&[
-                        obj.clone(),
-                        globals::GlobalVariable.with(|value| value.get()),
-                    ])
+        };
+        {
+            // (define (global-kind var) ...)
+            globals::global_minus_kind.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        {
+                            // (get-field var (quote status))
+                            imports::get_minus_field
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), Scm::symbol("status")])
+                        }
+                    })
                 })
             })
-        });
-        // (define (import-variable? obj) ...)
-        globals::import_minus_variable_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let obj = args[0].clone();
-                    // (ancestor? obj ImportedVariable)
-                    imports::ancestor_p.with(|value| value.get()).invoke(&[
-                        obj.clone(),
-                        globals::ImportedVariable.with(|value| value.get()),
-                    ])
+        };
+        {
+            // (define (local-boxify! var) ...)
+            globals::local_minus_boxify_i.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        {
+                            // (call-method var (quote into-boxed!))
+                            imports::call_minus_method
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), Scm::symbol("into-boxed!")])
+                        }
+                    })
                 })
             })
-        });
-        // (define (local-variable? obj) ...)
-        globals::local_minus_variable_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let obj = args[0].clone();
-                    // (ancestor? obj LocalVariable)
-                    imports::ancestor_p.with(|value| value.get()).invoke(&[
-                        obj.clone(),
-                        globals::LocalVariable.with(|value| value.get()),
-                    ])
+        };
+        {
+            // (define (new-keyword name handler) ...)
+            globals::new_minus_keyword.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        let handler = args[1].clone();
+                        {
+                            // (cons name (make-keyword name handler))
+                            imports::cons
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), {
+                                    // (make-keyword name handler)
+                                    globals::make_minus_keyword
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone(), handler.clone()])
+                                }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (boxed-variable? obj) ...)
-        globals::boxed_minus_variable_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let obj = args[0].clone();
-                    // (ancestor? obj BoxedVariable)
-                    imports::ancestor_p.with(|value| value.get()).invoke(&[
-                        obj.clone(),
-                        globals::BoxedVariable.with(|value| value.get()),
-                    ])
+        };
+        {
+            // (define (new-import name) ...)
+            globals::new_minus_import.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        {
+                            // (cons name (clone ImportedVariable))
+                            imports::cons
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), {
+                                    // (clone ImportedVariable)
+                                    imports::clone.with(|value| value.get()).invoke(&[
+                                        globals::ImportedVariable.with(|value| value.get()),
+                                    ])
+                                }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (variable-mutable? var) ...)
-        globals::variable_minus_mutable_p.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (call-method var (quote mutable?))
-                    imports::call_minus_method
-                        .with(|value| value.get())
-                        .invoke(&[var.clone(), Scm::symbol("mutable?")])
+        };
+        {
+            // (define (new-global name) ...)
+            globals::new_minus_global.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        {
+                            // (cons name (clone GlobalVariable))
+                            imports::cons
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), {
+                                    // (clone GlobalVariable)
+                                    imports::clone.with(|value| value.get()).invoke(&[
+                                        globals::GlobalVariable.with(|value| value.get()),
+                                    ])
+                                }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (variable-set-mutable! var) ...)
-        globals::variable_minus_set_minus_mutable_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (call-method var (quote set-mutable!))
-                    imports::call_minus_method
-                        .with(|value| value.get())
-                        .invoke(&[var.clone(), Scm::symbol("set-mutable!")])
+        };
+        {
+            // (define (new-local name) ...)
+            globals::new_minus_local.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        {
+                            // (cons name (clone LocalVariable))
+                            imports::cons
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), {
+                                    // (clone LocalVariable)
+                                    imports::clone
+                                        .with(|value| value.get())
+                                        .invoke(&[globals::LocalVariable.with(|value| value.get())])
+                                }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (global-add-definition! var val) ...)
-        globals::global_minus_add_minus_definition_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    let val = args[1].clone();
-                    // (call-method var (quote add-definition!) val)
-                    imports::call_minus_method
-                        .with(|value| value.get())
-                        .invoke(&[var.clone(), Scm::symbol("add-definition!"), val.clone()])
+        };
+        {
+            // (define (new-boxed name) ...)
+            globals::new_minus_boxed.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        {
+                            // (cons name (clone BoxedVariable))
+                            imports::cons
+                                .with(|value| value.get())
+                                .invoke(&[name.clone(), {
+                                    // (clone BoxedVariable)
+                                    imports::clone
+                                        .with(|value| value.get())
+                                        .invoke(&[globals::BoxedVariable.with(|value| value.get())])
+                                }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (global-kind var) ...)
-        globals::global_minus_kind.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (get-field var (quote status))
-                    imports::get_minus_field
-                        .with(|value| value.get())
-                        .invoke(&[var.clone(), Scm::symbol("status")])
+        };
+        {
+            // (define (replace-var! var new-var) ...)
+            globals::replace_minus_var_i.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        let new_minus_var = args[1].clone();
+                        {
+                            // (replace-table! var new-var)
+                            imports::replace_minus_table_i
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), new_minus_var.clone()])
+                        }
+                    })
                 })
             })
-        });
-        // (define (local-boxify! var) ...)
-        globals::local_minus_boxify_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    // (call-method var (quote into-boxed!))
-                    imports::call_minus_method
-                        .with(|value| value.get())
-                        .invoke(&[var.clone(), Scm::symbol("into-boxed!")])
-                })
-            })
-        });
-        // (define (new-keyword name handler) ...)
-        globals::new_minus_keyword.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let name = args[0].clone();
-                    let handler = args[1].clone();
-                    // (cons name (make-keyword name handler))
-                    imports::cons.with(|value| value.get()).invoke(&[
-                        name.clone(),
-                        // (make-keyword name handler)
-                        globals::make_minus_keyword
-                            .with(|value| value.get())
-                            .invoke(&[name.clone(), handler.clone()]),
-                    ])
-                })
-            })
-        });
-        // (define (new-import name) ...)
-        globals::new_minus_import.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let name = args[0].clone();
-                    // (cons name (clone ImportedVariable))
-                    imports::cons.with(|value| value.get()).invoke(&[
-                        name.clone(),
-                        // (clone ImportedVariable)
-                        imports::clone
-                            .with(|value| value.get())
-                            .invoke(&[globals::ImportedVariable.with(|value| value.get())]),
-                    ])
-                })
-            })
-        });
-        // (define (new-global name) ...)
-        globals::new_minus_global.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let name = args[0].clone();
-                    // (cons name (clone GlobalVariable))
-                    imports::cons.with(|value| value.get()).invoke(&[
-                        name.clone(),
-                        // (clone GlobalVariable)
-                        imports::clone
-                            .with(|value| value.get())
-                            .invoke(&[globals::GlobalVariable.with(|value| value.get())]),
-                    ])
-                })
-            })
-        });
-        // (define (new-local name) ...)
-        globals::new_minus_local.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let name = args[0].clone();
-                    // (cons name (clone LocalVariable))
-                    imports::cons.with(|value| value.get()).invoke(&[
-                        name.clone(),
-                        // (clone LocalVariable)
-                        imports::clone
-                            .with(|value| value.get())
-                            .invoke(&[globals::LocalVariable.with(|value| value.get())]),
-                    ])
-                })
-            })
-        });
-        // (define (new-boxed name) ...)
-        globals::new_minus_boxed.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let name = args[0].clone();
-                    // (cons name (clone BoxedVariable))
-                    imports::cons.with(|value| value.get()).invoke(&[
-                        name.clone(),
-                        // (clone BoxedVariable)
-                        imports::clone
-                            .with(|value| value.get())
-                            .invoke(&[globals::BoxedVariable.with(|value| value.get())]),
-                    ])
-                })
-            })
-        });
-        // (define (replace-var! var new-var) ...)
-        globals::replace_minus_var_i.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 2 {
-                        panic!("invalid arity")
-                    }
-                    let var = args[0].clone();
-                    let new_minus_var = args[1].clone();
-                    // (replace-table! var new-var)
-                    imports::replace_minus_table_i
-                        .with(|value| value.get())
-                        .invoke(&[var.clone(), new_minus_var.clone()])
-                })
-            })
-        })
+        }
     };
 }

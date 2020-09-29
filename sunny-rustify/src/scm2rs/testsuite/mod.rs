@@ -24,17 +24,19 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (run-tests) ...)
-        globals::run_minus_tests.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 0 {
-                        panic!("invalid arity")
-                    }
-                    Scm::symbol("*UNSPECIFIED*")
+        {
+            // (define (run-tests) ...)
+            globals::run_minus_tests.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 0 {
+                            panic!("invalid arity")
+                        }
+                        Scm::symbol("*UNSPECIFIED*")
+                    })
                 })
             })
-        })
+        }
     };
 }
 #[cfg(test)]
@@ -43,40 +45,42 @@ mod tests {
     #[test]
     fn the_empty_list() {
         super::initialize();
-
-        // (let* ((x (quote ()))) (begin (assert (null? x))))
-
-        // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
         {
-            let [x] = [Scm::Nil];
-            assert!(
-                // (null? x)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[x.clone(),])
-                    .is_true()
-            );
+            // (let* ((x (quote ()))) (begin (assert (null? x))))
+            {
+                // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
+                {
+                    let x = Scm::Nil;
+                    assert!({
+                        // (null? x)
+                        imports::null_p
+                            .with(|value| value.get())
+                            .invoke(&[x.clone()])
+                    }
+                    .is_true());
+                }
+            }
         }
     }
     #[test]
     fn integers() {
         super::initialize();
-
-        // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
-
-        // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
         {
-            let [x] = [Scm::from(1)];
-            // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
+            // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
             {
-                let [y] = [Scm::from(1)];
-                assert!(
-                    // (= x y)
-                    imports::_e_
-                        .with(|value| value.get())
-                        .invoke(&[x.clone(), y.clone(),])
-                        .is_true()
-                );
+                // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
+                {
+                    let x = Scm::from(1);
+                    // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
+                    let y = Scm::from(1);
+                    assert!({
+                        // (= x y)
+                        imports::_e_
+                            .with(|value| value.get())
+                            .invoke(&[x.clone(), y.clone()])
+                    }
+                    .is_true());
+                }
             }
         }
     }

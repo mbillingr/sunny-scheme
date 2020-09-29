@@ -70,389 +70,485 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     {
         (/*NOP*/);
-        // (define (caaar x) ...)
-        globals::caaar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (car (caar x))
-                    imports::car.with(|value| value.get()).invoke(&[
-                        // (caar x)
-                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        {
+            // (define (caaar x) ...)
+            globals::caaar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (car (caar x))
+                            imports::car.with(|value| value.get()).invoke(&[{
+                                // (caar x)
+                                imports::caar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caadr x) ...)
-        globals::caadr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (car (cadr x))
-                    imports::car.with(|value| value.get()).invoke(&[
-                        // (cadr x)
-                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caadr x) ...)
+            globals::caadr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (car (cadr x))
+                            imports::car.with(|value| value.get()).invoke(&[{
+                                // (cadr x)
+                                imports::cadr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cadar x) ...)
-        globals::cadar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (car (cdar x))
-                    imports::car.with(|value| value.get()).invoke(&[
-                        // (cdar x)
-                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cadar x) ...)
+            globals::cadar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (car (cdar x))
+                            imports::car.with(|value| value.get()).invoke(&[{
+                                // (cdar x)
+                                imports::cdar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caddr x) ...)
-        globals::caddr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (car (cddr x))
-                    imports::car.with(|value| value.get()).invoke(&[
-                        // (cddr x)
-                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caddr x) ...)
+            globals::caddr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (car (cddr x))
+                            imports::car.with(|value| value.get()).invoke(&[{
+                                // (cddr x)
+                                imports::cddr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdaar x) ...)
-        globals::cdaar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdr (caar x))
-                    imports::cdr.with(|value| value.get()).invoke(&[
-                        // (caar x)
-                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdaar x) ...)
+            globals::cdaar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdr (caar x))
+                            imports::cdr.with(|value| value.get()).invoke(&[{
+                                // (caar x)
+                                imports::caar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdadr x) ...)
-        globals::cdadr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdr (cadr x))
-                    imports::cdr.with(|value| value.get()).invoke(&[
-                        // (cadr x)
-                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdadr x) ...)
+            globals::cdadr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdr (cadr x))
+                            imports::cdr.with(|value| value.get()).invoke(&[{
+                                // (cadr x)
+                                imports::cadr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cddar x) ...)
-        globals::cddar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdr (cdar x))
-                    imports::cdr.with(|value| value.get()).invoke(&[
-                        // (cdar x)
-                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cddar x) ...)
+            globals::cddar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdr (cdar x))
+                            imports::cdr.with(|value| value.get()).invoke(&[{
+                                // (cdar x)
+                                imports::cdar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdddr x) ...)
-        globals::cdddr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdr (cddr x))
-                    imports::cdr.with(|value| value.get()).invoke(&[
-                        // (cddr x)
-                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdddr x) ...)
+            globals::cdddr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdr (cddr x))
+                            imports::cdr.with(|value| value.get()).invoke(&[{
+                                // (cddr x)
+                                imports::cddr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caaaar x) ...)
-        globals::caaaar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (caar (caar x))
-                    imports::caar.with(|value| value.get()).invoke(&[
-                        // (caar x)
-                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caaaar x) ...)
+            globals::caaaar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (caar (caar x))
+                            imports::caar.with(|value| value.get()).invoke(&[{
+                                // (caar x)
+                                imports::caar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caaadr x) ...)
-        globals::caaadr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (caar (cadr x))
-                    imports::caar.with(|value| value.get()).invoke(&[
-                        // (cadr x)
-                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caaadr x) ...)
+            globals::caaadr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (caar (cadr x))
+                            imports::caar.with(|value| value.get()).invoke(&[{
+                                // (cadr x)
+                                imports::cadr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caadar x) ...)
-        globals::caadar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (caar (cdar x))
-                    imports::caar.with(|value| value.get()).invoke(&[
-                        // (cdar x)
-                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caadar x) ...)
+            globals::caadar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (caar (cdar x))
+                            imports::caar.with(|value| value.get()).invoke(&[{
+                                // (cdar x)
+                                imports::cdar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caaddr x) ...)
-        globals::caaddr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (caar (cddr x))
-                    imports::caar.with(|value| value.get()).invoke(&[
-                        // (cddr x)
-                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caaddr x) ...)
+            globals::caaddr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (caar (cddr x))
+                            imports::caar.with(|value| value.get()).invoke(&[{
+                                // (cddr x)
+                                imports::cddr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cadaar x) ...)
-        globals::cadaar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cadr (caar x))
-                    imports::cadr.with(|value| value.get()).invoke(&[
-                        // (caar x)
-                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cadaar x) ...)
+            globals::cadaar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cadr (caar x))
+                            imports::cadr.with(|value| value.get()).invoke(&[{
+                                // (caar x)
+                                imports::caar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cadadr x) ...)
-        globals::cadadr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cadr (cadr x))
-                    imports::cadr.with(|value| value.get()).invoke(&[
-                        // (cadr x)
-                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cadadr x) ...)
+            globals::cadadr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cadr (cadr x))
+                            imports::cadr.with(|value| value.get()).invoke(&[{
+                                // (cadr x)
+                                imports::cadr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (caddar x) ...)
-        globals::caddar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cadr (cdar x))
-                    imports::cadr.with(|value| value.get()).invoke(&[
-                        // (cdar x)
-                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (caddar x) ...)
+            globals::caddar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cadr (cdar x))
+                            imports::cadr.with(|value| value.get()).invoke(&[{
+                                // (cdar x)
+                                imports::cdar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cadddr x) ...)
-        globals::cadddr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cadr (cddr x))
-                    imports::cadr.with(|value| value.get()).invoke(&[
-                        // (cddr x)
-                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cadddr x) ...)
+            globals::cadddr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cadr (cddr x))
+                            imports::cadr.with(|value| value.get()).invoke(&[{
+                                // (cddr x)
+                                imports::cddr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdaaar x) ...)
-        globals::cdaaar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdar (caar x))
-                    imports::cdar.with(|value| value.get()).invoke(&[
-                        // (caar x)
-                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdaaar x) ...)
+            globals::cdaaar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdar (caar x))
+                            imports::cdar.with(|value| value.get()).invoke(&[{
+                                // (caar x)
+                                imports::caar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdaadr x) ...)
-        globals::cdaadr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdar (cadr x))
-                    imports::cdar.with(|value| value.get()).invoke(&[
-                        // (cadr x)
-                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdaadr x) ...)
+            globals::cdaadr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdar (cadr x))
+                            imports::cdar.with(|value| value.get()).invoke(&[{
+                                // (cadr x)
+                                imports::cadr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdadar x) ...)
-        globals::cdadar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdar (cdar x))
-                    imports::cdar.with(|value| value.get()).invoke(&[
-                        // (cdar x)
-                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdadar x) ...)
+            globals::cdadar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdar (cdar x))
+                            imports::cdar.with(|value| value.get()).invoke(&[{
+                                // (cdar x)
+                                imports::cdar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdaddr x) ...)
-        globals::cdaddr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cdar (cddr x))
-                    imports::cdar.with(|value| value.get()).invoke(&[
-                        // (cddr x)
-                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdaddr x) ...)
+            globals::cdaddr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cdar (cddr x))
+                            imports::cdar.with(|value| value.get()).invoke(&[{
+                                // (cddr x)
+                                imports::cddr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cddaar x) ...)
-        globals::cddaar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cddr (caar x))
-                    imports::cddr.with(|value| value.get()).invoke(&[
-                        // (caar x)
-                        imports::caar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cddaar x) ...)
+            globals::cddaar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cddr (caar x))
+                            imports::cddr.with(|value| value.get()).invoke(&[{
+                                // (caar x)
+                                imports::caar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cddadr x) ...)
-        globals::cddadr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cddr (cadr x))
-                    imports::cddr.with(|value| value.get()).invoke(&[
-                        // (cadr x)
-                        imports::cadr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cddadr x) ...)
+            globals::cddadr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cddr (cadr x))
+                            imports::cddr.with(|value| value.get()).invoke(&[{
+                                // (cadr x)
+                                imports::cadr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cdddar x) ...)
-        globals::cdddar.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cddr (cdar x))
-                    imports::cddr.with(|value| value.get()).invoke(&[
-                        // (cdar x)
-                        imports::cdar.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cdddar x) ...)
+            globals::cdddar.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cddr (cdar x))
+                            imports::cddr.with(|value| value.get()).invoke(&[{
+                                // (cdar x)
+                                imports::cdar.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        });
-        // (define (cddddr x) ...)
-        globals::cddddr.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 1 {
-                        panic!("invalid arity")
-                    }
-                    let x = args[0].clone();
-                    // (cddr (cddr x))
-                    imports::cddr.with(|value| value.get()).invoke(&[
-                        // (cddr x)
-                        imports::cddr.with(|value| value.get()).invoke(&[x.clone()]),
-                    ])
+        };
+        {
+            // (define (cddddr x) ...)
+            globals::cddddr.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let x = args[0].clone();
+                        {
+                            // (cddr (cddr x))
+                            imports::cddr.with(|value| value.get()).invoke(&[{
+                                // (cddr x)
+                                imports::cddr.with(|value| value.get()).invoke(&[x.clone()])
+                            }])
+                        }
+                    })
                 })
             })
-        })
+        }
     };
 }
