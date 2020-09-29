@@ -51,17 +51,10 @@
 
     (define (expand-let exp env tail?)
       (astify-comment exp
-        ;works
-        (sexpr->fixlet
+        (astify-application
           (astify-abstraction (let-vars exp) (let-body exp) env)
           (let-args exp)
           env tail?)))
-
-        ;dos not work
-        ;(astify-application
-        ;  (astify-abstraction (let-vars exp) (let-body exp) env)
-        ;  (let-args exp)
-        ;  env tail?)))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

@@ -29,16 +29,14 @@
         (if (dotted-list? param*)
             (let ((fix-param (proper-list-part param*))
                   (var-param (last-cdr param*)))
-              (make-closure
-                (make-vararg-abstraction fix-param
+              (make-vararg-abstraction fix-param
                                          var-param
                                          (lookup* fix-param local-env)
                                          (lookup var-param local-env)
-                                         body-ast)))
-            (make-closure
-              (make-abstraction param*
+                                         body-ast))
+            (make-abstraction param*
                                 (lookup* param* local-env)
-                                body-ast)))))
+                                body-ast))))
 
     (define (astify-alternative condition consequent alternative env tail?)
       (make-alternative

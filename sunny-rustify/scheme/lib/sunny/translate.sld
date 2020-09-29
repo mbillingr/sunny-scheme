@@ -4,7 +4,6 @@
 
 
   (import (scheme base)
-          (scheme write)
           (scheme cxr)
           (only (scheme read) read)
           (only (scheme file) file-exists?
@@ -12,6 +11,7 @@
                               open-output-file)
           (chibi filesystem)
           (sunny ast-transforms boxify)
+          (sunny ast-transforms close-procedures)
           (sunny ast)
           (sunny env)
           (sunny library)
@@ -48,7 +48,7 @@
                                 (set-add* init (import-libnames (car exp*)))))
 
               (else (let* ((ast (sexpr->sequence exp* global-env #f))
-                           (main (boxify ast))
+                           (main (boxify (close-procedures ast)))
                            (globals (sort (lambda (a b)
                                             (string<? (symbol->string (car a))
                                                       (symbol->string (car b))))
@@ -57,8 +57,7 @@
                                     imports
                                     init
                                     main
-                                    (filter cdr
-                                            (car library-env)))))))
+                                    (filter cdr (car library-env)))))))
 
       (process-imports exp* '() (make-set)))
 
@@ -67,7 +66,13 @@
 
     (define (library-decls->ast name exp* init body global-env library-env imports exports)
       (cond ((null? exp*)
-             (make-library name (cdr global-env) init body imports exports))
+             (make-library
+               name
+               (cdr global-env)
+               init
+               (boxify (close-procedures body))
+               imports
+               exports))
             ((eq? 'export (caar exp*))
              (library-decls->ast name
                                  (cdr exp*)

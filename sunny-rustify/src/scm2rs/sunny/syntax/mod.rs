@@ -347,15 +347,15 @@ pub fn initialize() {
                     let exp = args[0].clone();
                     let env = args[1].clone();
                     let tail_p = args[2].clone();
-                    // (letrec () (astify-comment exp (sexpr->fixlet (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)))
+                    // (letrec () (astify-comment exp (astify-application (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)))
                     {
-                        // (astify-comment exp (sexpr->fixlet (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?))
+                        // (astify-comment exp (astify-application (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?))
                         imports::astify_minus_comment
                             .with(|value| value.get())
                             .invoke(&[
                                 exp.clone(),
-                                // (sexpr->fixlet (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)
-                                imports::sexpr_minus__g_fixlet
+                                // (astify-application (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)
+                                imports::astify_minus_application
                                     .with(|value| value.get())
                                     .invoke(&[
                                         // (astify-abstraction (let-vars exp) (let-body exp) env)

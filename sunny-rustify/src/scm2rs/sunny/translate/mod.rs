@@ -8,9 +8,9 @@ mod imports {
         file_minus_exists_p, open_minus_input_minus_file, open_minus_output_minus_file,
     };
     pub use crate::scheme::read::exports::read;
-    pub use crate::scheme::write::exports::*;
     pub use crate::sunny::ast::exports::*;
     pub use crate::sunny::ast_transforms::boxify::exports::*;
+    pub use crate::sunny::ast_transforms::close_procedures::exports::*;
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::library::exports::*;
     pub use crate::sunny::rust::codegen::exports::*;
@@ -51,12 +51,12 @@ pub fn initialize() {
     INITIALIZED.with(|x| x.set(true));
 
     crate::scheme::base::initialize();
-    crate::scheme::write::initialize();
     crate::scheme::cxr::initialize();
     crate::scheme::read::initialize();
     crate::scheme::file::initialize();
     crate::chibi::filesystem::initialize();
     crate::sunny::ast_transforms::boxify::initialize();
+    crate::sunny::ast_transforms::close_procedures::initialize();
     crate::sunny::ast::initialize();
     crate::sunny::env::initialize();
     crate::sunny::library::initialize();
@@ -130,7 +130,7 @@ pub fn initialize() {
         });
         // (define (program->ast exp*) ...)
         globals::program_minus__g_ast.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();
-// (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
+// (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
 {let global_minus_env = Scm::uninitialized().into_boxed();
 let library_minus_env = Scm::uninitialized().into_boxed();
 let process_minus_imports = Scm::uninitialized().into_boxed();
@@ -141,7 +141,7 @@ library_minus_env.set(
 // (list (quote ()))
 imports::list.with(|value| value.get()).invoke(&[Scm::Nil,]));
 process_minus_imports.set({let library_minus_env = library_minus_env.clone();let process_minus_imports = process_minus_imports.clone();let global_minus_env = global_minus_env.clone();Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp_star_ = args[0].clone();let imports = args[1].clone();let init = args[2].clone();
-// (letrec () (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))
+// (letrec () (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))
 {
 // (cond ...)
 if (
@@ -171,16 +171,18 @@ imports::set_minus_add_star_.with(|value| value.get()).invoke(&[init.clone(),
 imports::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(),]),]),]),])}} else {
-// (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+// (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {let [ast, ] = [
 // (sexpr->sequence exp* global-env #f)
 imports::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(),global_minus_env.get(),Scm::False,]),];
-// (letrec () (let* ((main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
+// (letrec () (let* ((main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
 {
-// (let* ((main (boxify ast)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+// (let* ((main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {let [main, ] = [
-// (boxify ast)
-imports::boxify.with(|value| value.get()).invoke(&[ast.clone(),]),];
+// (boxify (close-procedures ast))
+imports::boxify.with(|value| value.get()).invoke(&[
+// (close-procedures ast)
+imports::close_minus_procedures.with(|value| value.get()).invoke(&[ast.clone(),]),]),];
 // (letrec () (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
 {
 // (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
@@ -269,7 +271,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                     let library_minus_env = args[5].clone();
                     let imports = args[6].clone();
                     let exports = args[7].clone();
-                    // (letrec () (cond ((null? exp*) (make-library name (cdr global-env) init body imports exports)) ((eq? (quote export) (caar exp*)) (library-decls->ast name (cdr exp*) init body global-env library-env imports (append exports (sexpr->export (cdar exp*) global-env)))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (library-decls->ast name (cdr exp*) (set-add* init (import-libnames (car exp*))) body global-env library-env (append imports (sexpr->import (cdar exp*) global-env)) exports)) ((eq? (quote begin) (caar exp*)) (library-decls->ast name (cdr exp*) init (make-sequence body (sexpr->sequence (cdar exp*) global-env #f)) global-env library-env imports exports))))
+                    // (letrec () (cond ((null? exp*) (make-library name (cdr global-env) init (boxify (close-procedures body)) imports exports)) ((eq? (quote export) (caar exp*)) (library-decls->ast name (cdr exp*) init body global-env library-env imports (append exports (sexpr->export (cdar exp*) global-env)))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (library-decls->ast name (cdr exp*) (set-add* init (import-libnames (car exp*))) body global-env library-env (append imports (sexpr->import (cdar exp*) global-env)) exports)) ((eq? (quote begin) (caar exp*)) (library-decls->ast name (cdr exp*) init (make-sequence body (sexpr->sequence (cdar exp*) global-env #f)) global-env library-env imports exports))))
                     {
                         // (cond ...)
                         if (
@@ -280,7 +282,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                         )
                         .is_true()
                         {
-                            // (make-library name (cdr global-env) init body imports exports)
+                            // (make-library name (cdr global-env) init (boxify (close-procedures body)) imports exports)
                             imports::make_minus_library
                                 .with(|value| value.get())
                                 .invoke(&[
@@ -290,7 +292,13 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                         .with(|value| value.get())
                                         .invoke(&[global_minus_env.clone()]),
                                     init.clone(),
-                                    body.clone(),
+                                    // (boxify (close-procedures body))
+                                    imports::boxify.with(|value| value.get()).invoke(&[
+                                        // (close-procedures body)
+                                        imports::close_minus_procedures
+                                            .with(|value| value.get())
+                                            .invoke(&[body.clone()]),
+                                    ]),
                                     imports.clone(),
                                     exports.clone(),
                                 ])

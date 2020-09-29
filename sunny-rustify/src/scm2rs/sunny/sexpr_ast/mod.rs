@@ -532,9 +532,9 @@ pub fn initialize() {
                     let arg_star_ = args[1].clone();
                     let env = args[2].clone();
                     let tail_p = args[3].clone();
-                    // (letrec () (let* ((args (sexpr->args arg* env)) (func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
+                    // (letrec () (let* ((args (sexpr->args arg* env))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
                     {
-                        // (let* ((args (sexpr->args arg* env)) (func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
+                        // (let* ((args (sexpr->args arg* env))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
                         {
                             let [args_] = [
                                 // (sexpr->args arg* env)
@@ -542,30 +542,20 @@ pub fn initialize() {
                                     .with(|value| value.get())
                                     .invoke(&[arg_star_.clone(), env.clone()]),
                             ];
-                            // (letrec () (let* ((func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
+                            // (letrec () (let* () (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
                             {
-                                // (let* ((func (func (quote inner-function)))) (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
-                                {
-                                    let [func] = [
-                                        // (func (quote inner-function))
-                                        func.clone().invoke(&[Scm::symbol("inner-function")]),
-                                    ];
-                                    // (letrec () (let* () (make-fixlet (func (quote get-params)) (func (quote get-body)) args)))
-                                    {
-                                        // (let* () (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
+                                // (let* () (make-fixlet (func (quote get-params)) (func (quote get-body)) args))
 
-                                        // (make-fixlet (func (quote get-params)) (func (quote get-body)) args)
-                                        imports::make_minus_fixlet.with(|value| value.get()).invoke(
-                                            &[
-                                                // (func (quote get-params))
-                                                func.clone().invoke(&[Scm::symbol("get-params")]),
-                                                // (func (quote get-body))
-                                                func.clone().invoke(&[Scm::symbol("get-body")]),
-                                                args_.clone(),
-                                            ],
-                                        )
-                                    }
-                                }
+                                // (make-fixlet (func (quote get-params)) (func (quote get-body)) args)
+                                imports::make_minus_fixlet
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (func (quote get-params))
+                                        func.clone().invoke(&[Scm::symbol("get-params")]),
+                                        // (func (quote get-body))
+                                        func.clone().invoke(&[Scm::symbol("get-body")]),
+                                        args_.clone(),
+                                    ])
                             }
                         }
                     }
@@ -903,9 +893,9 @@ pub fn initialize() {
                     let param_star_ = args[0].clone();
                     let body = args[1].clone();
                     let env = args[2].clone();
-                    // (letrec () (let ((local-env (adjoin-local-env param* env)) (body (scan-out-defines body))) (if (dotted-list? param*) (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))))))
+                    // (letrec () (let ((local-env (adjoin-local-env param* env)) (body (scan-out-defines body))) (if (dotted-list? param*) (make-vararg-abstraction (proper-list-part param* (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))))
                     {
-                        // (let ((local-env (adjoin-local-env param* env)) (body (scan-out-defines body))) (if (dotted-list? param*) (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))))
+                        // (let ((local-env (adjoin-local-env param* env)) (body (scan-out-defines body))) (if (dotted-list? param*) (make-vararg-abstraction (proper-list-part param* (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))))
                         {
                             let [local_minus_env, body] = [
                                 // (adjoin-local-env param* env)
@@ -917,7 +907,7 @@ pub fn initialize() {
                                     .with(|value| value.get())
                                     .invoke(&[body.clone()]),
                             ];
-                            // (letrec () (if (dotted-list? param*) (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))))
+                            // (letrec () (if (dotted-list? param*) (make-vararg-abstraction (proper-list-part param* (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))) (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))))
                             {
                                 if (
                                     // (dotted-list? param*)
@@ -927,18 +917,15 @@ pub fn initialize() {
                                 )
                                 .is_true()
                                 {
-                                    // (make-closure (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t)))
-                                    imports::make_minus_closure
+                                    // (make-vararg-abstraction (proper-list-part param* (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t)))
+                                    imports::make_minus_vararg_minus_abstraction
                                         .with(|value| value.get())
                                         .invoke(&[
-                                            // (make-vararg-abstraction (proper-list-part param*) (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))
-                                            imports::make_minus_vararg_minus_abstraction
+                                            // (proper-list-part param* (last-cdr param*) (map (lambda (p) (lookup p local-env)) (proper-list-part param*)) (lookup (last-cdr param*) local-env) (sexpr->sequence body local-env #t))
+                                            imports::proper_minus_list_minus_part
                                                 .with(|value| value.get())
                                                 .invoke(&[
-                                                    // (proper-list-part param*)
-                                                    imports::proper_minus_list_minus_part
-                                                        .with(|value| value.get())
-                                                        .invoke(&[param_star_.clone()]),
+                                                    param_star_.clone(),
                                                     // (last-cdr param*)
                                                     imports::last_minus_cdr
                                                         .with(|value| value.get())
@@ -996,52 +983,41 @@ pub fn initialize() {
                                                 ]),
                                         ])
                                 } else {
-                                    // (make-closure (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t)))
-                                    imports::make_minus_closure
+                                    // (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))
+                                    imports::make_minus_abstraction
                                         .with(|value| value.get())
                                         .invoke(&[
-                                            // (make-abstraction param* (map (lambda (p) (lookup p local-env)) param*) (sexpr->sequence body local-env #t))
-                                            imports::make_minus_abstraction
+                                            param_star_.clone(),
+                                            // (map (lambda (p) (lookup p local-env)) param*)
+                                            imports::map.with(|value| value.get()).invoke(&[
+                                                {
+                                                    let local_minus_env = local_minus_env.clone();
+                                                    Scm::func(move |args: &[Scm]| {
+                                                        if args.len() != 1 {
+                                                            panic!("invalid arity")
+                                                        }
+                                                        let p = args[0].clone();
+                                                        // (letrec () (lookup p local-env))
+                                                        {
+                                                            // (lookup p local-env)
+                                                            imports::lookup
+                                                                .with(|value| value.get())
+                                                                .invoke(&[
+                                                                    p.clone(),
+                                                                    local_minus_env.clone(),
+                                                                ])
+                                                        }
+                                                    })
+                                                },
+                                                param_star_.clone(),
+                                            ]),
+                                            // (sexpr->sequence body local-env #t)
+                                            globals::sexpr_minus__g_sequence
                                                 .with(|value| value.get())
                                                 .invoke(&[
-                                                    param_star_.clone(),
-                                                    // (map (lambda (p) (lookup p local-env)) param*)
-                                                    imports::map.with(|value| value.get()).invoke(
-                                                        &[
-                                                            {
-                                                                let local_minus_env =
-                                                                    local_minus_env.clone();
-                                                                Scm::func(move |args: &[Scm]| {
-                                                                    if args.len() != 1 {
-                                                                        panic!("invalid arity")
-                                                                    }
-                                                                    let p = args[0].clone();
-                                                                    // (letrec () (lookup p local-env))
-                                                                    {
-                                                                        // (lookup p local-env)
-                                                                        imports::lookup
-                                                                            .with(|value| {
-                                                                                value.get()
-                                                                            })
-                                                                            .invoke(&[
-                                                                                p.clone(),
-                                                                                local_minus_env
-                                                                                    .clone(),
-                                                                            ])
-                                                                    }
-                                                                })
-                                                            },
-                                                            param_star_.clone(),
-                                                        ],
-                                                    ),
-                                                    // (sexpr->sequence body local-env #t)
-                                                    globals::sexpr_minus__g_sequence
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            body.clone(),
-                                                            local_minus_env.clone(),
-                                                            Scm::True,
-                                                        ]),
+                                                    body.clone(),
+                                                    local_minus_env.clone(),
+                                                    Scm::True,
                                                 ]),
                                         ])
                                 }

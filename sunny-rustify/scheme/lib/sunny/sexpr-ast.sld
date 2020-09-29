@@ -69,8 +69,7 @@
         (make-application func args tail?)))
 
     (define (sexpr->fixlet func arg* env tail?)
-      (let* ((args      (sexpr->args arg* env))
-             (func      (func 'inner-function)))
+      (let* ((args      (sexpr->args arg* env)))
         (make-fixlet (func 'get-params) (func 'get-body) args)))
 
     (define (sexpr->args arg* env)
@@ -108,16 +107,14 @@
       (let ((local-env (adjoin-local-env param* env))
             (body (scan-out-defines body)))
         (if (dotted-list? param*)
-            (make-closure
-              (make-vararg-abstraction (proper-list-part param*)
+            (make-vararg-abstraction (proper-list-part param*
                                        (last-cdr param*)
                                        (map (lambda (p) (lookup p local-env)) (proper-list-part param*))
                                        (lookup (last-cdr param*) local-env)
                                        (sexpr->sequence body local-env #t)))
-            (make-closure
-              (make-abstraction param*
+            (make-abstraction param*
                                 (map (lambda (p) (lookup p local-env)) param*)
-                                (sexpr->sequence body local-env #t))))))
+                                (sexpr->sequence body local-env #t)))))
 
     (define (sexpr->sequence expr* env tail?)
       (if (null? expr*)
