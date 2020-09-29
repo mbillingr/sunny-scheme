@@ -29,6 +29,7 @@ pub mod exports {
     pub use super::globals::let_minus_args;
     pub use super::globals::let_minus_body;
     pub use super::globals::let_minus_vars;
+    pub use super::globals::let_star__minus_bindings;
     pub use super::globals::library_p;
     pub use super::globals::scan_minus_out_minus_defines;
     pub use super::globals::set_i_minus_value;
@@ -41,6 +42,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static set_i_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set!-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static scan_minus_out_minus_defines: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scan-out-defines"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static let_star__minus_bindings: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let*-bindings"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_vars: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-vars"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_body: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-body"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-args"))}
@@ -685,6 +687,24 @@ pub fn initialize() {
                                 .with(|value| value.get())
                                 .invoke(&[expr.clone()]),
                         ])
+                    }
+                })
+            })
+        });
+        // (define (let*-bindings expr) ...)
+        globals::let_star__minus_bindings.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (cadr expr))
+                    {
+                        // (cadr expr)
+                        imports::cadr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
                     }
                 })
             })

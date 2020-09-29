@@ -19,6 +19,7 @@
             (new-keyword 'if expand-if)
             (new-keyword 'lambda expand-lambda)
             (new-keyword 'let expand-let)
+            (new-keyword 'let* expand-let*)
             (new-keyword 'quote expand-quote)
             (new-keyword 'set! expand-set!)
             (new-import 'assert-eq)
@@ -55,6 +56,15 @@
           (astify-abstraction (let-vars exp) (let-body exp) env)
           (let-args exp)
           env tail?)))
+
+    (define (expand-let* exp env tail?)
+      (define (loop bindings)
+        (if (null? bindings)
+            (cons 'begin (let-body exp))
+            (list 'let (list (car bindings)) (loop (cdr bindings)))))
+      (astify-comment exp
+        (expand-let (loop (let*-bindings exp))
+                env tail?)))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

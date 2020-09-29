@@ -20,11 +20,7 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((eq? 'let* (car exp)) (wrap-sexpr exp
-                                            (sexpr->scope-seq (cadr exp)
-                                                              (cddr exp)
-                                                              env tail?)))
-                   ((eq? 'letrec (car exp)) (wrap-sexpr exp
+             (cond ((eq? 'letrec (car exp)) (wrap-sexpr exp
                                               (sexpr->scope-rec (cadr exp)
                                                                 (cddr exp)
                                                                 env tail?)))
@@ -78,16 +74,6 @@
           (make-args (sexpr->ast (car arg*) env #f)
                      (sexpr->args (cdr arg*) env))))
 
-    (define (sexpr->scope-seq bindings body env tail?)
-      (if (null? bindings)
-          (sexpr->sequence body env tail?)
-          (sexpr->scope-let (list (car bindings))
-                            (list (cons 'let*
-                                        (cons (cdr bindings)
-                                              body)))
-                            env
-                            tail?)))
-
 
     (define (sexpr->scope-rec bindings body env tail?)
       (let* ((params (map (lambda (b) (car b)) bindings))
@@ -96,12 +82,6 @@
         (make-scope params
                     (sexpr->sequence body body-env tail?)
                     args)))
-
-    (define (sexpr->scope-let bindings body env tail?)
-      (let* ((param* (map (lambda (b) (car b)) bindings))
-             (arg* (map (lambda (b) (cadr b)) bindings))
-             (func (sexpr->abstraction param* body env)))
-        (sexpr->fixlet func arg* env tail?)))
 
     (define (sexpr->abstraction param* body env)
       (let ((local-env (adjoin-local-env param* env))

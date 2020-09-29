@@ -20,6 +20,7 @@
           let-args
           let-body
           let-vars
+          let*-bindings
           library?
           scan-out-defines
           set!-variable
@@ -124,6 +125,9 @@
 
     (define (let-vars expr)
       (map car (cadr expr)))
+
+    (define (let*-bindings expr)
+      (cadr expr))
 
 
     (define (library? exp*)

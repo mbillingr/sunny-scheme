@@ -462,6 +462,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (begin (assert (table? t))))
+
+        // (let ((t (make-table))) (begin (begin (assert (table? t)))))
         {
             let [t] = [
                 // (make-table)
@@ -469,9 +471,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (begin (assert (table? t)))))
+            // (letrec () (begin (begin (assert (table? t)))))
             {
-                // (let* () (begin (assert (table? t))))
                 assert!(
                     // (table? t)
                     globals::table_p
@@ -487,6 +488,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (list (cons (quote <table>) (quote ()))))) (begin (assert (not (table? t)))))
+
+        // (let ((t (list (cons (quote <table>) (quote ()))))) (begin (begin (assert (not (table? t))))))
         {
             let [t] = [
                 // (list (cons (quote <table>) (quote ())))
@@ -497,9 +500,8 @@ mod tests {
                         .invoke(&[Scm::symbol("<table>"), Scm::Nil]),
                 ]),
             ];
-            // (letrec () (let* () (begin (assert (not (table? t))))))
+            // (letrec () (begin (begin (assert (not (table? t))))))
             {
-                // (let* () (begin (assert (not (table? t)))))
                 assert!(
                     // (not (table? t))
                     imports::not
@@ -520,6 +522,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (begin (assert (not (parent t)))))
+
+        // (let ((t (make-table))) (begin (begin (assert (not (parent t))))))
         {
             let [t] = [
                 // (make-table)
@@ -527,9 +531,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (begin (assert (not (parent t))))))
+            // (letrec () (begin (begin (assert (not (parent t))))))
             {
-                // (let* () (begin (assert (not (parent t)))))
                 assert!(
                     // (not (parent t))
                     imports::not
@@ -550,6 +553,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (let ((s (clone t))) (begin (assert (eq? (parent s) t)))))
+
+        // (let ((t (make-table))) (begin (let ((s (clone t))) (begin (assert (eq? (parent s) t))))))
         {
             let [t] = [
                 // (make-table)
@@ -557,10 +562,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (let ((s (clone t))) (begin (assert (eq? (parent s) t))))))
+            // (letrec () (begin (let ((s (clone t))) (begin (assert (eq? (parent s) t))))))
             {
-                // (let* () (let ((s (clone t))) (begin (assert (eq? (parent s) t)))))
-
                 // (let ((s (clone t))) (begin (assert (eq? (parent s) t))))
                 {
                     let [s] = [
@@ -594,6 +597,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (let ((f (fields t))) (begin (assert (null? f)))))
+
+        // (let ((t (make-table))) (begin (let ((f (fields t))) (begin (assert (null? f))))))
         {
             let [t] = [
                 // (make-table)
@@ -601,10 +606,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (let ((f (fields t))) (begin (assert (null? f))))))
+            // (letrec () (begin (let ((f (fields t))) (begin (assert (null? f))))))
             {
-                // (let* () (let ((f (fields t))) (begin (assert (null? f)))))
-
                 // (let ((f (fields t))) (begin (assert (null? f))))
                 {
                     let [f] = [
@@ -632,6 +635,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (let ((value (get-field t (quote x)))) (begin (assert (not value)))))
+
+        // (let ((t (make-table))) (begin (let ((value (get-field t (quote x)))) (begin (assert (not value))))))
         {
             let [t] = [
                 // (make-table)
@@ -639,10 +644,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (let ((value (get-field t (quote x)))) (begin (assert (not value))))))
+            // (letrec () (begin (let ((value (get-field t (quote x)))) (begin (assert (not value))))))
             {
-                // (let* () (let ((value (get-field t (quote x)))) (begin (assert (not value)))))
-
                 // (let ((value (get-field t (quote x)))) (begin (assert (not value))))
                 {
                     let [value] = [
@@ -670,6 +673,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (begin (set-field! t (quote x) 1) (begin (assert (= (get-field t (quote x)) 1)))))
+
+        // (let ((t (make-table))) (begin (begin (set-field! t (quote x) 1) (begin (assert (= (get-field t (quote x)) 1))))))
         {
             let [t] = [
                 // (make-table)
@@ -677,9 +682,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (begin (set-field! t (quote x) 1) (begin (assert (= (get-field t (quote x)) 1))))))
+            // (letrec () (begin (begin (set-field! t (quote x) 1) (begin (assert (= (get-field t (quote x)) 1))))))
             {
-                // (let* () (begin (set-field! t (quote x) 1) (begin (assert (= (get-field t (quote x)) 1)))))
                 {
                     // (set-field! t (quote x) 1)
                     globals::set_minus_field_i
@@ -707,6 +711,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1))))))
+
+        // (let ((t (make-table))) (begin (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1)))))))
         {
             let [t] = [
                 // (make-table)
@@ -714,9 +720,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1)))))))
+            // (letrec () (begin (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1)))))))
             {
-                // (let* () (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1))))))
                 {
                     // (set-field! t (quote x) 1)
                     globals::set_minus_field_i
@@ -756,6 +761,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (make-table))) (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1)))))))
+
+        // (let ((t (make-table))) (begin (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1))))))))
         {
             let [t] = [
                 // (make-table)
@@ -763,9 +770,8 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* () (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1))))))))
+            // (letrec () (begin (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1))))))))
             {
-                // (let* () (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1)))))))
                 {
                     // (set-field! t (quote x) 1)
                     globals::set_minus_field_i
@@ -811,6 +817,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (begin (call-method t (quote inc)) (begin (assert (= (get-field t (quote count)) 1)))))
+
+        // (let ((t (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (begin (begin (call-method t (quote inc)) (begin (assert (= (get-field t (quote count)) 1))))))
         {
             let [t] = [
                 // (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t)
@@ -867,9 +875,8 @@ mod tests {
                     }
                 },
             ];
-            // (letrec () (let* () (begin (call-method t (quote inc)) (begin (assert (= (get-field t (quote count)) 1))))))
+            // (letrec () (begin (begin (call-method t (quote inc)) (begin (assert (= (get-field t (quote count)) 1))))))
             {
-                // (let* () (begin (call-method t (quote inc)) (begin (assert (= (get-field t (quote count)) 1)))))
                 {
                     // (call-method t (quote inc))
                     globals::call_minus_method
@@ -897,6 +904,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (begin (call-method t (quote add) t) (begin (assert (= (get-field t (quote value)) 2)))))
+
+        // (let ((t (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (begin (begin (call-method t (quote add) t) (begin (assert (= (get-field t (quote value)) 2))))))
         {
             let [t] = [
                 // (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t)
@@ -960,9 +969,8 @@ mod tests {
                     }
                 },
             ];
-            // (letrec () (let* () (begin (call-method t (quote add) t) (begin (assert (= (get-field t (quote value)) 2))))))
+            // (letrec () (begin (begin (call-method t (quote add) t) (begin (assert (= (get-field t (quote value)) 2))))))
             {
-                // (let* () (begin (call-method t (quote add) t) (begin (assert (= (get-field t (quote value)) 2)))))
                 {
                     // (call-method t (quote add) t)
                     globals::call_minus_method
@@ -990,6 +998,8 @@ mod tests {
         super::initialize();
 
         // (let* ((goblin (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)) (goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))
+
+        // (let ((goblin (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin))) (let ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (begin (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))))
         {
             let [goblin] = [
                 // (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)
@@ -1128,9 +1138,9 @@ mod tests {
                     }
                 },
             ];
-            // (letrec () (let* ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))))
+            // (letrec () (let ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (begin (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))))
             {
-                // (let* ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))
+                // (let ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (begin (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))))
                 {
                     let [goblin_minus_wizard] = [
                         // (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard)
@@ -1165,10 +1175,8 @@ mod tests {
                             }
                         },
                     ];
-                    // (letrec () (let* () (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))))
+                    // (letrec () (begin (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))))
                     {
-                        // (let* () (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))
-
                         // (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))
                         {
                             let [krog] = [
@@ -1325,6 +1333,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t0 (make-table)) (obj (quote not-a-table))) (begin (assert (not (ancestor? obj t0)))))
+
+        // (let ((t0 (make-table))) (let ((obj (quote not-a-table))) (begin (begin (assert (not (ancestor? obj t0)))))))
         {
             let [t0] = [
                 // (make-table)
@@ -1332,14 +1342,13 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* ((obj (quote not-a-table))) (begin (assert (not (ancestor? obj t0))))))
+            // (letrec () (let ((obj (quote not-a-table))) (begin (begin (assert (not (ancestor? obj t0)))))))
             {
-                // (let* ((obj (quote not-a-table))) (begin (assert (not (ancestor? obj t0)))))
+                // (let ((obj (quote not-a-table))) (begin (begin (assert (not (ancestor? obj t0))))))
                 {
                     let [obj] = [Scm::symbol("not-a-table")];
-                    // (letrec () (let* () (begin (assert (not (ancestor? obj t0))))))
+                    // (letrec () (begin (begin (assert (not (ancestor? obj t0))))))
                     {
-                        // (let* () (begin (assert (not (ancestor? obj t0)))))
                         assert!(
                             // (not (ancestor? obj t0))
                             imports::not
@@ -1362,6 +1371,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t0 (make-table)) (t1 (make-table))) (begin (assert (not (ancestor? t1 t0)))))
+
+        // (let ((t0 (make-table))) (let ((t1 (make-table))) (begin (begin (assert (not (ancestor? t1 t0)))))))
         {
             let [t0] = [
                 // (make-table)
@@ -1369,9 +1380,9 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* ((t1 (make-table))) (begin (assert (not (ancestor? t1 t0))))))
+            // (letrec () (let ((t1 (make-table))) (begin (begin (assert (not (ancestor? t1 t0)))))))
             {
-                // (let* ((t1 (make-table))) (begin (assert (not (ancestor? t1 t0)))))
+                // (let ((t1 (make-table))) (begin (begin (assert (not (ancestor? t1 t0))))))
                 {
                     let [t1] = [
                         // (make-table)
@@ -1379,9 +1390,8 @@ mod tests {
                             .with(|value| value.get())
                             .invoke(&[]),
                     ];
-                    // (letrec () (let* () (begin (assert (not (ancestor? t1 t0))))))
+                    // (letrec () (begin (begin (assert (not (ancestor? t1 t0))))))
                     {
-                        // (let* () (begin (assert (not (ancestor? t1 t0)))))
                         assert!(
                             // (not (ancestor? t1 t0))
                             imports::not
@@ -1404,6 +1414,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t0 (make-table)) (t1 (clone t0))) (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))
+
+        // (let ((t0 (make-table))) (let ((t1 (clone t0))) (begin (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))))
         {
             let [t0] = [
                 // (make-table)
@@ -1411,9 +1423,9 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* ((t1 (clone t0))) (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1))))))
+            // (letrec () (let ((t1 (clone t0))) (begin (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))))
             {
-                // (let* ((t1 (clone t0))) (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))
+                // (let ((t1 (clone t0))) (begin (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1))))))
                 {
                     let [t1] = [
                         // (clone t0)
@@ -1421,9 +1433,8 @@ mod tests {
                             .with(|value| value.get())
                             .invoke(&[t0.clone()]),
                     ];
-                    // (letrec () (let* () (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1))))))
+                    // (letrec () (begin (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1))))))
                     {
-                        // (let* () (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))
                         {
                             assert!(
                                 // (ancestor? t1 t0)
@@ -1455,6 +1466,8 @@ mod tests {
         super::initialize();
 
         // (let* ((t0 (make-table)) (t1 (clone t0)) (t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+
+        // (let ((t0 (make-table))) (let ((t1 (clone t0))) (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0))))))))
         {
             let [t0] = [
                 // (make-table)
@@ -1462,9 +1475,9 @@ mod tests {
                     .with(|value| value.get())
                     .invoke(&[]),
             ];
-            // (letrec () (let* ((t1 (clone t0)) (t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0)))))
+            // (letrec () (let ((t1 (clone t0))) (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0))))))))
             {
-                // (let* ((t1 (clone t0)) (t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+                // (let ((t1 (clone t0))) (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0)))))))
                 {
                     let [t1] = [
                         // (clone t0)
@@ -1472,9 +1485,9 @@ mod tests {
                             .with(|value| value.get())
                             .invoke(&[t0.clone()]),
                     ];
-                    // (letrec () (let* ((t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0)))))
+                    // (letrec () (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0)))))))
                     {
-                        // (let* ((t2 (clone t1)) (t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+                        // (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0))))))
                         {
                             let [t2] = [
                                 // (clone t1)
@@ -1482,9 +1495,9 @@ mod tests {
                                     .with(|value| value.get())
                                     .invoke(&[t1.clone()]),
                             ];
-                            // (letrec () (let* ((t3 (clone t2))) (begin (assert (ancestor? t3 t0)))))
+                            // (letrec () (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0))))))
                             {
-                                // (let* ((t3 (clone t2))) (begin (assert (ancestor? t3 t0))))
+                                // (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0)))))
                                 {
                                     let [t3] = [
                                         // (clone t2)
@@ -1492,9 +1505,8 @@ mod tests {
                                             .with(|value| value.get())
                                             .invoke(&[t2.clone()]),
                                     ];
-                                    // (letrec () (let* () (begin (assert (ancestor? t3 t0)))))
+                                    // (letrec () (begin (begin (assert (ancestor? t3 t0)))))
                                     {
-                                        // (let* () (begin (assert (ancestor? t3 t0))))
                                         assert!(
                                             // (ancestor? t3 t0)
                                             globals::ancestor_p

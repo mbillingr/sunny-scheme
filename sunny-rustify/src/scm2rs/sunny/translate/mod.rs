@@ -172,20 +172,22 @@ imports::import_minus_libnames.with(|value| value.get()).invoke(&[
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone(),]),]),]),])}} else {
 // (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+
+// (let ((ast (sexpr->sequence exp* global-env #f))) (let ((main (boxify (close-procedures ast)))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))))
 {let [ast, ] = [
 // (sexpr->sequence exp* global-env #f)
 imports::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(),global_minus_env.get(),Scm::False,]),];
-// (letrec () (let* ((main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
+// (letrec () (let ((main (boxify (close-procedures ast)))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))))
 {
-// (let* ((main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+// (let ((main (boxify (close-procedures ast)))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))
 {let [main, ] = [
 // (boxify (close-procedures ast))
 imports::boxify.with(|value| value.get()).invoke(&[
 // (close-procedures ast)
 imports::close_minus_procedures.with(|value| value.get()).invoke(&[ast.clone(),]),]),];
-// (letrec () (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))
+// (letrec () (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))
 {
-// (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+// (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))
 {let [globals, ] = [
 // (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env))
 globals::sort.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let a = args[0].clone();let b = args[1].clone();
@@ -203,10 +205,8 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[
 imports::car.with(|value| value.get()).invoke(&[b.clone(),]),]),])}})},
 // (cdr global-env)
 imports::cdr.with(|value| value.get()).invoke(&[global_minus_env.get(),]),]),];
-// (letrec () (let* () (make-program globals imports init main (filter cdr (car library-env)))))
+// (letrec () (begin (make-program globals imports init main (filter cdr (car library-env)))))
 {
-// (let* () (make-program globals imports init main (filter cdr (car library-env))))
-
 // (make-program globals imports init main (filter cdr (car library-env)))
 imports::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(),imports.clone(),init.clone(),main.clone(),
 // (filter cdr (car library-env))
@@ -539,6 +539,8 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                         } else {
                             {
                                 // (let* ((lib (get-lib (car libs))) (libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+
+                                // (let ((lib (get-lib (car libs)))) (let ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env))))))
                                 {
                                     let [lib] = [
                                         // (get-lib (car libs))
@@ -549,9 +551,9 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                 .invoke(&[libs.clone()]),
                                         ]),
                                     ];
-                                    // (letrec () (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
+                                    // (letrec () (let ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env))))))
                                     {
-                                        // (let* ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
+                                        // (let ((libast (if (library? lib) (library->ast (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
                                         {
                                             let [libast] = [
                                                 if (
@@ -580,10 +582,8 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[]),])}})}));
                                                     Scm::False
                                                 },
                                             ];
-                                            // (letrec () (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
+                                            // (letrec () (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
                                             {
-                                                // (let* () (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
-
                                                 // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
                                                 imports::set_minus_car_i
                                                     .with(|value| value.get())

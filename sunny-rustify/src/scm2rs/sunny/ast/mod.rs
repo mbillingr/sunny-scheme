@@ -1901,6 +1901,8 @@ pub fn initialize() {
                                             // (letrec () (let* ((a (first (quote transform) func)) (b (next (quote transform) func))) (make-sequence a b)))
                                             {
                                                 // (let* ((a (first (quote transform) func)) (b (next (quote transform) func))) (make-sequence a b))
+
+                                                // (let ((a (first (quote transform) func))) (let ((b (next (quote transform) func))) (begin (make-sequence a b))))
                                                 {
                                                     let [a] = [
                                                         // (first (quote transform) func)
@@ -1909,9 +1911,9 @@ pub fn initialize() {
                                                             func.clone(),
                                                         ]),
                                                     ];
-                                                    // (letrec () (let* ((b (next (quote transform) func))) (make-sequence a b)))
+                                                    // (letrec () (let ((b (next (quote transform) func))) (begin (make-sequence a b))))
                                                     {
-                                                        // (let* ((b (next (quote transform) func))) (make-sequence a b))
+                                                        // (let ((b (next (quote transform) func))) (begin (make-sequence a b)))
                                                         {
                                                             let [b] = [
                                                                 // (next (quote transform) func)
@@ -1920,10 +1922,8 @@ pub fn initialize() {
                                                                     func.clone(),
                                                                 ]),
                                                             ];
-                                                            // (letrec () (let* () (make-sequence a b)))
+                                                            // (letrec () (begin (make-sequence a b)))
                                                             {
-                                                                // (let* () (make-sequence a b))
-
                                                                 // (make-sequence a b)
                                                                 globals::make_minus_sequence
                                                                     .with(|value| value.get())

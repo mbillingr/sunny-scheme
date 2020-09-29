@@ -66,25 +66,25 @@ pub fn initialize() {
 // (letrec () (let* ((local-env (adjoin-local-env param* env)) (body-sexpr (scan-out-defines body)) (body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
 {
 // (let* ((local-env (adjoin-local-env param* env)) (body-sexpr (scan-out-defines body)) (body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))
+
+// (let ((local-env (adjoin-local-env param* env))) (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))))
 {let [local_minus_env, ] = [
 // (adjoin-local-env param* env)
 imports::adjoin_minus_local_minus_env.with(|value| value.get()).invoke(&[param_star_.clone(),env.clone(),]),];
-// (letrec () (let* ((body-sexpr (scan-out-defines body)) (body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
+// (letrec () (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))))
 {
-// (let* ((body-sexpr (scan-out-defines body)) (body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))
+// (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))))
 {let [body_minus_sexpr, ] = [
 // (scan-out-defines body)
 imports::scan_minus_out_minus_defines.with(|value| value.get()).invoke(&[body.clone(),]),];
-// (letrec () (let* ((body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
+// (letrec () (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))))
 {
-// (let* ((body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))
+// (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
 {let [body_minus_ast, ] = [
 // (astify-sequence body-sexpr local-env #t)
 globals::astify_minus_sequence.with(|value| value.get()).invoke(&[body_minus_sexpr.clone(),local_minus_env.clone(),Scm::True,]),];
-// (letrec () (let* () (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
-{
-// (let* () (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))
-if (
+// (letrec () (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
+{if (
 // (dotted-list? param*)
 imports::dotted_minus_list_p.with(|value| value.get()).invoke(&[param_star_.clone(),])).is_true() {
 // (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast))
@@ -433,6 +433,8 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                 ])
                         } else {
                             // (let* ((i (astify (cond-clause-condition (car clause*)) env #f)) (t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))
+
+                            // (let ((i (astify (cond-clause-condition (car clause*)) env #f))) (let ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?))) (let ((e (astify-cond (cdr clause*) env tail?))) (begin (make-alternative i t e)))))
                             {
                                 let [i] = [
                                     // (astify (cond-clause-condition (car clause*)) env #f)
@@ -450,9 +452,9 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                         Scm::False,
                                     ]),
                                 ];
-                                // (letrec () (let* ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))
+                                // (letrec () (let ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?))) (let ((e (astify-cond (cdr clause*) env tail?))) (begin (make-alternative i t e)))))
                                 {
-                                    // (let* ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?)) (e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))
+                                    // (let ((t (astify-sequence (cond-clause-sequence (car clause*)) env tail?))) (let ((e (astify-cond (cdr clause*) env tail?))) (begin (make-alternative i t e))))
                                     {
                                         let [t] = [
                                             // (astify-sequence (cond-clause-sequence (car clause*)) env tail?)
@@ -472,9 +474,9 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                                     tail_p.clone(),
                                                 ]),
                                         ];
-                                        // (letrec () (let* ((e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e)))
+                                        // (letrec () (let ((e (astify-cond (cdr clause*) env tail?))) (begin (make-alternative i t e))))
                                         {
-                                            // (let* ((e (astify-cond (cdr clause*) env tail?))) (make-alternative i t e))
+                                            // (let ((e (astify-cond (cdr clause*) env tail?))) (begin (make-alternative i t e)))
                                             {
                                                 let [e] = [
                                                     // (astify-cond (cdr clause*) env tail?)
@@ -489,10 +491,8 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                                             tail_p.clone(),
                                                         ]),
                                                 ];
-                                                // (letrec () (let* () (make-alternative i t e)))
+                                                // (letrec () (begin (make-alternative i t e)))
                                                 {
-                                                    // (let* () (make-alternative i t e))
-
                                                     // (make-alternative i t e)
                                                     imports::make_minus_alternative
                                                         .with(|value| value.get())
@@ -618,6 +618,8 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                             ])
                         } else {
                             // (let* ((first (astify (car exp*) env #f)) (rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest))
+
+                            // (let ((first (astify (car exp*) env #f))) (let ((rest (astify-sequence (cdr exp*) env tail?))) (begin (make-sequence first rest))))
                             {
                                 let [first] = [
                                     // (astify (car exp*) env #f)
@@ -630,9 +632,9 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                         Scm::False,
                                     ]),
                                 ];
-                                // (letrec () (let* ((rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest)))
+                                // (letrec () (let ((rest (astify-sequence (cdr exp*) env tail?))) (begin (make-sequence first rest))))
                                 {
-                                    // (let* ((rest (astify-sequence (cdr exp*) env tail?))) (make-sequence first rest))
+                                    // (let ((rest (astify-sequence (cdr exp*) env tail?))) (begin (make-sequence first rest)))
                                     {
                                         let [rest] = [
                                             // (astify-sequence (cdr exp*) env tail?)
@@ -647,10 +649,8 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                                                     tail_p.clone(),
                                                 ]),
                                         ];
-                                        // (letrec () (let* () (make-sequence first rest)))
+                                        // (letrec () (begin (make-sequence first rest)))
                                         {
-                                            // (let* () (make-sequence first rest))
-
                                             // (make-sequence first rest)
                                             imports::make_minus_sequence
                                                 .with(|value| value.get())

@@ -48,11 +48,12 @@ mod tests {
         super::initialize();
 
         // (let* ((x (quote ()))) (begin (assert (null? x))))
+
+        // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
         {
             let [x] = [Scm::Nil];
-            // (letrec () (let* () (begin (assert (null? x)))))
+            // (letrec () (begin (begin (assert (null? x)))))
             {
-                // (let* () (begin (assert (null? x))))
                 assert!(
                     // (null? x)
                     imports::null_p
@@ -68,16 +69,17 @@ mod tests {
         super::initialize();
 
         // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
+
+        // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
         {
             let [x] = [Scm::from(1)];
-            // (letrec () (let* ((y (quote 1))) (begin (assert (= x y)))))
+            // (letrec () (let ((y (quote 1))) (begin (begin (assert (= x y))))))
             {
-                // (let* ((y (quote 1))) (begin (assert (= x y))))
+                // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
                 {
                     let [y] = [Scm::from(1)];
-                    // (letrec () (let* () (begin (assert (= x y)))))
+                    // (letrec () (begin (begin (assert (= x y)))))
                     {
-                        // (let* () (begin (assert (= x y))))
                         assert!(
                             // (= x y)
                             imports::_e_

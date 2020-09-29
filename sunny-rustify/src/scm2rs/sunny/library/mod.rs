@@ -241,6 +241,8 @@ pub fn initialize() {
                             Scm::False
                         } else {
                             // (let* ((path (string-append (car base-path*) relative-path)) (full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
+
+                            // (let ((path (string-append (car base-path*) relative-path))) (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))))
                             {
                                 let [path] = [
                                     // (string-append (car base-path*) relative-path)
@@ -254,9 +256,9 @@ pub fn initialize() {
                                             relative_minus_path.clone(),
                                         ]),
                                 ];
-                                // (letrec () (let* ((full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
+                                // (letrec () (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))))
                                 {
-                                    // (let* ((full-path (find-library-ext path extension*))) (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
+                                    // (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
                                     {
                                         let [full_minus_path] = [
                                             // (find-library-ext path extension*)
@@ -264,9 +266,8 @@ pub fn initialize() {
                                                 .with(|value| value.get())
                                                 .invoke(&[path.clone(), extension_star_.clone()]),
                                         ];
-                                        // (letrec () (let* () (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
+                                        // (letrec () (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
                                         {
-                                            // (let* () (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))
                                             if (full_minus_path.clone()).is_true() {
                                                 full_minus_path.clone()
                                             } else {
