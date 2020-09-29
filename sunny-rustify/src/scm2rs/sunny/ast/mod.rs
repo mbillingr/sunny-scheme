@@ -66,7 +66,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_nop: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-nop"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ast_minus_node_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ast-node?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static procedure_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL procedure?"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -98,7 +97,7 @@ pub fn initialize() {
                         let obj = args[0].clone();
                         {
                             // (procedure? obj)
-                            globals::procedure_p
+                            imports::procedure_p
                                 .with(|value| value.get())
                                 .invoke(&[obj.clone()])
                         }

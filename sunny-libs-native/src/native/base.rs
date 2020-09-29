@@ -20,6 +20,7 @@ pub mod exports {
     thread_local! {pub static error: Mut<Scm> = Mut::new(Scm::func(_error))}
     thread_local! {pub static null_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_null))}
     thread_local! {pub static pair_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_pair))}
+    thread_local! {pub static procedure_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_procedure))}
     thread_local! {pub static set_minus_car_i: Mut<Scm> = Mut::new(Scm::func(_set_car))}
     thread_local! {pub static set_minus_cdr_i: Mut<Scm> = Mut::new(Scm::func(_set_cdr))}
     thread_local! {pub static symbol_p: Mut<Scm> = Mut::new(Scm::func1(Scm::is_symbol))}

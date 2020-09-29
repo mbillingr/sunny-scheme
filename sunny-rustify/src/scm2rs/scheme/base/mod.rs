@@ -41,6 +41,7 @@ pub mod exports {
     pub use super::imports::list_minus__g_string;
     pub use super::imports::null_p;
     pub use super::imports::pair_p;
+    pub use super::imports::procedure_p;
     pub use super::imports::set_minus_car_i;
     pub use super::imports::set_minus_cdr_i;
     pub use super::imports::string_l__p;

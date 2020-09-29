@@ -21,6 +21,7 @@
     not
     null?
     pair?
+    procedure?
     reverse
     set-car! set-cdr!
     string->list string=? string-append string<?

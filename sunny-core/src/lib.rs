@@ -175,6 +175,13 @@ impl Scm {
         }
     }
 
+    pub fn is_procedure(&self) -> bool {
+        match self {
+            Scm::Func(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn invoke(&self, args: &[Scm]) -> Scm {
         match self {
             Scm::Func(func) => func(args),
