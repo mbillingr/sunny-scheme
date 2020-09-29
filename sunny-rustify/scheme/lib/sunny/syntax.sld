@@ -51,16 +51,17 @@
 
     (define (expand-let exp env tail?)
       (astify-comment exp
-        (error "whats wrong here?")
-        
         ;works
-        ;(sexpr->scope-let (cadr exp) (cddr exp) env tail?)))
-
-        ;dos not work
-        (astify-application
+        (sexpr->fixlet
           (astify-abstraction (let-vars exp) (let-body exp) env)
           (let-args exp)
           env tail?)))
+
+        ;dos not work
+        ;(astify-application
+        ;  (astify-abstraction (let-vars exp) (let-body exp) env)
+        ;  (let-args exp)
+        ;  env tail?)))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

@@ -3,7 +3,7 @@
           sexpr->export
           sexpr->import
           sexpr->sequence
-          sexpr->scope-let)
+          sexpr->fixlet)
 
   (import (scheme base)
           (scheme cxr)

@@ -6,6 +6,7 @@ mod imports {
     pub use crate::sunny::astify::exports::*;
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::scheme_syntax::exports::*;
+    pub use crate::sunny::sexpr_ast::exports::*;
     pub use crate::sunny::variable::exports::*;
 }
 
@@ -22,6 +23,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_define: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-define"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_if: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-if"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_lambda: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-lambda"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_let: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-let"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_quote: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-quote"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_set_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-set!"))}
 }
@@ -39,6 +41,7 @@ pub fn initialize() {
     crate::sunny::astify::initialize();
     crate::sunny::env::initialize();
     crate::sunny::scheme_syntax::initialize();
+    crate::sunny::sexpr_ast::initialize();
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
@@ -49,9 +52,9 @@ pub fn initialize() {
                     if args.len() != 0 {
                         panic!("invalid arity")
                     }
-                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
+                    // (letrec () (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal))))
                     {
-                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                        // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
                         imports::list.with(|value| value.get()).invoke(&[
                             Scm::symbol("GLOBAL-MARKER"),
                             // (new-keyword (quote and) expand-and)
@@ -95,6 +98,13 @@ pub fn initialize() {
                                 .invoke(&[
                                     Scm::symbol("lambda"),
                                     globals::expand_minus_lambda.with(|value| value.get()),
+                                ]),
+                            // (new-keyword (quote let) expand-let)
+                            imports::new_minus_keyword
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    Scm::symbol("let"),
+                                    globals::expand_minus_let.with(|value| value.get()),
                                 ]),
                             // (new-keyword (quote quote) expand-quote)
                             imports::new_minus_keyword
@@ -322,6 +332,53 @@ pub fn initialize() {
                                     .with(|value| value.get())
                                     .invoke(&[exp.clone()]),
                                 env.clone(),
+                            ])
+                    }
+                })
+            })
+        });
+        // (define (expand-let exp env tail?) ...)
+        globals::expand_minus_let.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 3 {
+                        panic!("invalid arity")
+                    }
+                    let exp = args[0].clone();
+                    let env = args[1].clone();
+                    let tail_p = args[2].clone();
+                    // (letrec () (astify-comment exp (sexpr->fixlet (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)))
+                    {
+                        // (astify-comment exp (sexpr->fixlet (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?))
+                        imports::astify_minus_comment
+                            .with(|value| value.get())
+                            .invoke(&[
+                                exp.clone(),
+                                // (sexpr->fixlet (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)
+                                imports::sexpr_minus__g_fixlet
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        // (astify-abstraction (let-vars exp) (let-body exp) env)
+                                        imports::astify_minus_abstraction
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                // (let-vars exp)
+                                                imports::let_minus_vars
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                // (let-body exp)
+                                                imports::let_minus_body
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()]),
+                                                env.clone(),
+                                            ]),
+                                        // (let-args exp)
+                                        imports::let_minus_args
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()]),
+                                        env.clone(),
+                                        tail_p.clone(),
+                                    ]),
                             ])
                     }
                 })

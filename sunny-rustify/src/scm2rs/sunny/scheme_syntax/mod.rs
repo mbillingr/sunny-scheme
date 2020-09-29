@@ -26,6 +26,9 @@ pub mod exports {
     pub use super::globals::import_p;
     pub use super::globals::lambda_minus_body;
     pub use super::globals::lambda_minus_params;
+    pub use super::globals::let_minus_args;
+    pub use super::globals::let_minus_body;
+    pub use super::globals::let_minus_vars;
     pub use super::globals::library_p;
     pub use super::globals::scan_minus_out_minus_defines;
     pub use super::globals::set_i_minus_value;
@@ -38,6 +41,9 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static set_i_minus_variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set!-variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static scan_minus_out_minus_defines: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scan-out-defines"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_vars: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-vars"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_body: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-body"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lambda_minus_params: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lambda-params"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lambda_minus_body: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lambda-body"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_libnames: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-libnames"))}
@@ -617,6 +623,68 @@ pub fn initialize() {
                         imports::cadr
                             .with(|value| value.get())
                             .invoke(&[expr.clone()])
+                    }
+                })
+            })
+        });
+        // (define (let-args expr) ...)
+        globals::let_minus_args.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (map cadr (cadr expr)))
+                    {
+                        // (map cadr (cadr expr))
+                        imports::map.with(|value| value.get()).invoke(&[
+                            imports::cadr.with(|value| value.get()),
+                            // (cadr expr)
+                            imports::cadr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()]),
+                        ])
+                    }
+                })
+            })
+        });
+        // (define (let-body expr) ...)
+        globals::let_minus_body.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (cddr expr))
+                    {
+                        // (cddr expr)
+                        imports::cddr
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
+                    }
+                })
+            })
+        });
+        // (define (let-vars expr) ...)
+        globals::let_minus_vars.with(|value| {
+            value.set({
+                Scm::func(move |args: &[Scm]| {
+                    if args.len() != 1 {
+                        panic!("invalid arity")
+                    }
+                    let expr = args[0].clone();
+                    // (letrec () (map car (cadr expr)))
+                    {
+                        // (map car (cadr expr))
+                        imports::map.with(|value| value.get()).invoke(&[
+                            imports::car.with(|value| value.get()),
+                            // (cadr expr)
+                            imports::cadr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()]),
+                        ])
                     }
                 })
             })

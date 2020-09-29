@@ -31,10 +31,8 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assignment"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-application"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_fixlet: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-fixlet"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_regular_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-regular-application"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-alternative"))}
@@ -243,7 +241,7 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                     let arg_star_ = args[1].clone();
                     let env = args[2].clone();
                     let tail_p = args[3].clone();
-                    // (letrec () (if (eq? (quote ABSTRACTION) (proc (quote kind))) (astify-fixlet proc arg* env tail?) (astify-regular-application proc arg* env tail?)))
+                    // (letrec () (if (eq? (quote ABSTRACTION) (proc (quote kind))) (make-fixlet (proc (quote get-params)) (proc (quote get-body)) (astify-args arg* env)) (make-application proc (astify-args arg* env) tail?)))
                     {
                         if (
                             // (eq? (quote ABSTRACTION) (proc (quote kind)))
@@ -255,93 +253,32 @@ imports::lookup_star_.with(|value| value.get()).invoke(&[param_star_.clone(),loc
                         )
                         .is_true()
                         {
-                            // (astify-fixlet proc arg* env tail?)
-                            globals::astify_minus_fixlet
+                            // (make-fixlet (proc (quote get-params)) (proc (quote get-body)) (astify-args arg* env))
+                            imports::make_minus_fixlet
                                 .with(|value| value.get())
                                 .invoke(&[
-                                    proc.clone(),
-                                    arg_star_.clone(),
-                                    env.clone(),
-                                    tail_p.clone(),
+                                    // (proc (quote get-params))
+                                    proc.clone().invoke(&[Scm::symbol("get-params")]),
+                                    // (proc (quote get-body))
+                                    proc.clone().invoke(&[Scm::symbol("get-body")]),
+                                    // (astify-args arg* env)
+                                    globals::astify_minus_args
+                                        .with(|value| value.get())
+                                        .invoke(&[arg_star_.clone(), env.clone()]),
                                 ])
                         } else {
-                            // (astify-regular-application proc arg* env tail?)
-                            globals::astify_minus_regular_minus_application
+                            // (make-application proc (astify-args arg* env) tail?)
+                            imports::make_minus_application
                                 .with(|value| value.get())
                                 .invoke(&[
                                     proc.clone(),
-                                    arg_star_.clone(),
-                                    env.clone(),
+                                    // (astify-args arg* env)
+                                    globals::astify_minus_args
+                                        .with(|value| value.get())
+                                        .invoke(&[arg_star_.clone(), env.clone()]),
                                     tail_p.clone(),
                                 ])
                         }
-                    }
-                })
-            })
-        });
-        // (define (astify-fixlet proc arg* env tail?) ...)
-        globals::astify_minus_fixlet.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 4 {
-                        panic!("invalid arity")
-                    }
-                    let proc = args[0].clone();
-                    let arg_star_ = args[1].clone();
-                    let env = args[2].clone();
-                    let tail_p = args[3].clone();
-                    // (letrec () (make-fixlet ((proc (quote inner-function)) (quote get-params)) ((proc (quote inner-function)) (quote get-body)) (astify-args arg* env)))
-                    {
-                        // (make-fixlet ((proc (quote inner-function)) (quote get-params)) ((proc (quote inner-function)) (quote get-body)) (astify-args arg* env))
-                        imports::make_minus_fixlet
-                            .with(|value| value.get())
-                            .invoke(&[
-                                // ((proc (quote inner-function)) (quote get-params))
-
-                                // (proc (quote inner-function))
-                                proc.clone()
-                                    .invoke(&[Scm::symbol("inner-function")])
-                                    .invoke(&[Scm::symbol("get-params")]),
-                                // ((proc (quote inner-function)) (quote get-body))
-
-                                // (proc (quote inner-function))
-                                proc.clone()
-                                    .invoke(&[Scm::symbol("inner-function")])
-                                    .invoke(&[Scm::symbol("get-body")]),
-                                // (astify-args arg* env)
-                                globals::astify_minus_args
-                                    .with(|value| value.get())
-                                    .invoke(&[arg_star_.clone(), env.clone()]),
-                            ])
-                    }
-                })
-            })
-        });
-        // (define (astify-regular-application proc arg* env tail?) ...)
-        globals::astify_minus_regular_minus_application.with(|value| {
-            value.set({
-                Scm::func(move |args: &[Scm]| {
-                    if args.len() != 4 {
-                        panic!("invalid arity")
-                    }
-                    let proc = args[0].clone();
-                    let arg_star_ = args[1].clone();
-                    let env = args[2].clone();
-                    let tail_p = args[3].clone();
-                    // (letrec () (make-application proc (astify-args arg* env) arg* tail?))
-                    {
-                        // (make-application proc (astify-args arg* env) arg* tail?)
-                        imports::make_minus_application
-                            .with(|value| value.get())
-                            .invoke(&[
-                                proc.clone(),
-                                // (astify-args arg* env)
-                                globals::astify_minus_args
-                                    .with(|value| value.get())
-                                    .invoke(&[arg_star_.clone(), env.clone()]),
-                                arg_star_.clone(),
-                                tail_p.clone(),
-                            ])
                     }
                 })
             })
