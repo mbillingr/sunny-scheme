@@ -24,6 +24,11 @@
                                           (cons (node 'get-varvar)
                                                 (node 'get-vars))
                                           (node 'get-body)))
+              ((eq? (node 'kind) 'FIXLET)
+               (boxify-fixlet (node 'get-params)
+                              (node 'get-vars)
+                              (node 'get-args)
+                              (node 'get-body)))
               (else (ignore))))
       (node 'transform transform))
 
@@ -45,4 +50,19 @@
                      (boxify-vararg-abstraction params vararg vars varvar
                                                 (cdr param*) (cdr var*)
                                                 (make-boxify (car param*) body)))
-              (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))))
+              (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
+
+    (define (boxify-fixlet params vars args body)
+      (make-fixlet params vars args
+        (boxify-vars! params vars (boxify body))))
+
+    (define (boxify-vars! param* var* body)
+      (cond ((null? var*)
+             body)
+            ((variable-mutable? (car var*))
+             (local-boxify! (car var*))
+             (boxify-vars! (cdr param*)
+                           (cdr var*)
+                           (make-boxify (car param*)
+                                        body)))
+            (else (boxify-vars! (cdr param*) (car var*) body))))))
