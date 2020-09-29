@@ -35,8 +35,8 @@
                                          (lookup var-param local-env)
                                          body-ast))
             (make-abstraction param*
-                                (lookup* param* local-env)
-                                body-ast))))
+                              (lookup* param* local-env)
+                              body-ast))))
 
     (define (astify-alternative condition consequent alternative env tail?)
       (make-alternative
@@ -57,8 +57,9 @@
     (define (astify-application proc arg* env tail?)
       (if (eq? 'ABSTRACTION (proc 'kind))
           (make-fixlet (proc 'get-params)
-                       (proc 'get-body)
-                       (astify-args arg* env))
+                       (proc 'get-vars)
+                       (astify-args arg* env)
+                       (proc 'get-body))
           (make-application proc (astify-args arg* env) tail?)))
 
     (define (astify-args arg* env)

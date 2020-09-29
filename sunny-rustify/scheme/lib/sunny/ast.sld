@@ -177,7 +177,7 @@
                (print module (rustify-identifier name) ".set(")
                (val 'gen-rust module)
                (print module ")"))
-              (else (error "set! on unboxed variable"))))
+              (else (error "set! on unboxed variable" name var))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (repr))
               ((eq? 'transform msg) (transform (car args)))
@@ -353,15 +353,16 @@
               (else (error "Unknown message ARG" msg))))
       self)
 
-    (define (make-fixlet params body args)
+    (define (make-fixlet params vars args body)
       (define (repr)
         (list 'FIXLET params (args 'repr) (body 'repr)))
       (define (transform fnc)
         (fnc self
              (lambda () (make-fixlet
                           params
-                          (body 'transform fnc)
-                          (args 'transform fnc)))))
+                          vars
+                          (args 'transform fnc)
+                          (body 'transform fnc)))))
       (define (free-vars)
         (set-union (set-remove* (body 'free-vars)
                                 params)
@@ -394,13 +395,17 @@
       (define (gen-rust module)
         (rust-block module
           (lambda () (gen-rust-inner module))))
-      (define (self msg . args)
+      (define (self msg . arg*)
         (cond ((eq? 'repr msg) (repr))
-              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'transform msg) (transform (car arg*)))
               ((eq? 'free-vars msg) (free-vars))
               ((eq? 'kind msg) 'FIXLET)
-              ((eq? 'gen-rust msg) (gen-rust (car args)))
-              ((eq? 'gen-rust-inner msg) (gen-rust-inner (car args)))
+              ((eq? 'get-params msg) params)
+              ((eq? 'get-vars msg) vars)
+              ((eq? 'get-args msg) args)
+              ((eq? 'get-body msg) body)
+              ((eq? 'gen-rust msg) (gen-rust (car arg*)))
+              ((eq? 'gen-rust-inner msg) (gen-rust-inner (car arg*)))
               (else (error "Unknown message FIXLET" msg))))
       self)
 

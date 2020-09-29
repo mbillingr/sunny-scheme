@@ -66,7 +66,7 @@
 
     (define (sexpr->fixlet func arg* env tail?)
       (let* ((args      (sexpr->args arg* env)))
-        (make-fixlet (func 'get-params) (func 'get-body) args)))
+        (make-fixlet (func 'get-params) (func 'get-vars) args (func 'get-body))))
 
     (define (sexpr->args arg* env)
       (if (null? arg*)
