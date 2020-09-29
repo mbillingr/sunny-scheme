@@ -15,7 +15,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_begin: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-begin"))}
@@ -605,7 +604,7 @@ imports::let_minus_vars.with(|value| value.get()).invoke(&[exp.clone()])}])},{
 // (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))
 imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
 // (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))
-globals::append.with(|value| value.get()).invoke(&[{
+imports::append.with(|value| value.get()).invoke(&[{
 // (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp))
 imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name = args[0].clone();let val = args[1].clone();{
 // (list (quote set!) name val)

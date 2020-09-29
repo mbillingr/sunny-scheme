@@ -1,6 +1,7 @@
 (define-library (scheme base)
   (export
     = > < - +
+    append
     apply
     assq
     car caar cadr
@@ -65,6 +66,16 @@
               seq
               (memq obj (cdr seq)))
           #f))
+
+    (define (append . seq)
+      (fold-right append2 '() seq))
+
+    (define (append2 list1 list2)
+      (if (null? list1)
+          list2
+          (cons (car list1)
+                (append2 (cdr list1) list2))))
+
 
     ; ====== symbols =======================
 

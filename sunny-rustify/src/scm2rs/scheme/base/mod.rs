@@ -5,6 +5,7 @@ mod imports {
 }
 
 pub mod exports {
+    pub use super::globals::append;
     pub use super::globals::assq;
     pub use super::globals::for_minus_each;
     pub use super::globals::length;
@@ -60,6 +61,8 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static string_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL string=?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static symbol_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL symbol=?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static all_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL all?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static append2: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append2"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
@@ -359,6 +362,77 @@ pub fn initialize() {
                             }
                         } else {
                             Scm::False
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (append . seq) ...)
+            globals::append.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() < 0 {
+                            panic!("not enough args")
+                        }
+                        let seq = Scm::list(&args[0..]);
+                        {
+                            // (fold-right append2 (quote ()) seq)
+                            globals::fold_minus_right
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    globals::append2.with(|value| value.get()),
+                                    Scm::Nil,
+                                    seq.clone(),
+                                ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (append2 list1 list2) ...)
+            globals::append2.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let list1 = args[0].clone();
+                        let list2 = args[1].clone();
+                        if ({
+                            // (null? list1)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[list1.clone()])
+                        })
+                        .is_true()
+                        {
+                            list2.clone()
+                        } else {
+                            {
+                                // (cons (car list1) (append2 (cdr list1) list2))
+                                imports::cons.with(|value| value.get()).invoke(&[
+                                    {
+                                        // (car list1)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[list1.clone()])
+                                    },
+                                    {
+                                        // (append2 (cdr list1) list2)
+                                        globals::append2.with(|value| value.get()).invoke(&[
+                                            {
+                                                // (cdr list1)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[list1.clone()])
+                                            },
+                                            list2.clone(),
+                                        ])
+                                    },
+                                ])
+                            }
                         }
                     })
                 })

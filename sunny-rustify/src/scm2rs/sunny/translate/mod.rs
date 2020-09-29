@@ -35,7 +35,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus_decls_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library-decls->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sort: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sort"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static register_minus_libraries: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL register-libraries"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static scm_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL scm->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static library_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL library->ast"))}
@@ -167,7 +166,7 @@ process_minus_imports.get().invoke(&[{
 // (cdr exp*)
 imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])},{
 // (append imports (sexpr->import (cdar exp*) global-env))
-globals::append.with(|value| value.get()).invoke(&[imports.clone(),{
+imports::append.with(|value| value.get()).invoke(&[imports.clone(),{
 // (sexpr->import (cdar exp*) global-env)
 imports::sexpr_minus__g_import.with(|value| value.get()).invoke(&[{
 // (cdar exp*)
@@ -349,7 +348,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}}}}}}})}))
                                             imports.clone(),
                                             {
                                                 // (append exports (sexpr->export (cdar exp*) global-env))
-                                                globals::append.with(|value| value.get()).invoke(&[
+                                                imports::append.with(|value| value.get()).invoke(&[
                                                     exports.clone(),
                                                     {
                                                         // (sexpr->export (cdar exp*) global-env)
@@ -437,7 +436,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}}}}}}})}))
                                                 library_minus_env.clone(),
                                                 {
                                                     // (append imports (sexpr->import (cdar exp*) global-env))
-                                                    globals::append
+                                                    imports::append
                                                         .with(|value| value.get())
                                                         .invoke(&[imports.clone(), {
                                                             // (sexpr->import (cdar exp*) global-env)
@@ -642,54 +641,6 @@ imports::cdr.with(|value| value.get()).invoke(&[libs.clone()])},library_minus_en
             })
         };
         {
-            // (define (append seq-a seq-b) ...)
-            globals::append.with(|value| {
-                value.set({
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 2 {
-                            panic!("invalid arity")
-                        }
-                        let seq_minus_a = args[0].clone();
-                        let seq_minus_b = args[1].clone();
-                        if ({
-                            // (pair? seq-a)
-                            imports::pair_p
-                                .with(|value| value.get())
-                                .invoke(&[seq_minus_a.clone()])
-                        })
-                        .is_true()
-                        {
-                            {
-                                // (cons (car seq-a) (append (cdr seq-a) seq-b))
-                                imports::cons.with(|value| value.get()).invoke(&[
-                                    {
-                                        // (car seq-a)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[seq_minus_a.clone()])
-                                    },
-                                    {
-                                        // (append (cdr seq-a) seq-b)
-                                        globals::append.with(|value| value.get()).invoke(&[
-                                            {
-                                                // (cdr seq-a)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[seq_minus_a.clone()])
-                                            },
-                                            seq_minus_b.clone(),
-                                        ])
-                                    },
-                                ])
-                            }
-                        } else {
-                            seq_minus_b.clone()
-                        }
-                    })
-                })
-            })
-        };
-        {
             // (define (sort cmp ass) ...)
             globals::sort.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let cmp = args[0].clone();let ass = args[1].clone();if ({
 // (pair? ass)
@@ -699,7 +650,7 @@ imports::pair_p.with(|value| value.get()).invoke(&[ass.clone()])}).is_true() {{
 // (car ass)
 imports::car.with(|value| value.get()).invoke(&[ass.clone()])};{
 // (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))
-globals::append.with(|value| value.get()).invoke(&[{
+imports::append.with(|value| value.get()).invoke(&[{
 // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
 globals::sort.with(|value| value.get()).invoke(&[cmp.clone(),{
 // (filter (lambda (x) (cmp x pivot)) (cdr ass))

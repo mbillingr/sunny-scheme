@@ -21,7 +21,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testcase: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testcase"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_export: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->export"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_import_minus_all: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->import-all"))}
@@ -1080,7 +1079,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])}}}}}}})});then
 // (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))
 imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
 // (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)
-globals::append.with(|value| value.get()).invoke(&[{
+imports::append.with(|value| value.get()).invoke(&[{
 // (map (lambda (pred) (list (quote assert) pred)) (cdr stmt))
 imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let pred = args[0].clone();{
 // (list (quote assert) pred)

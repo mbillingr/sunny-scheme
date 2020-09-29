@@ -147,12 +147,6 @@
               (assoc obj (cdr seq)))
           #f))
 
-    (define (append seq-a seq-b)
-      (if (pair? seq-a)
-          (cons (car seq-a)
-                (append (cdr seq-a) seq-b))
-          seq-b))
-
     (define (sort cmp ass)
       (if (pair? ass)
           (let ((pivot (car ass)))
