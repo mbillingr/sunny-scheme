@@ -823,9 +823,9 @@ pub fn initialize() {
             // (define (scan-out-defines body) ...)
             globals::scan_minus_out_minus_defines.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let body = args[0].clone();{
 // (letrec ((initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body)))))))
-{let initializations = Scm::uninitialized().into_boxed();
-let transform = Scm::uninitialized().into_boxed();
-initializations.set({let initializations = initializations.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+{
+// (let ((initializations (quote *uninitialized*)) (transform (quote *uninitialized*))) (begin (set! initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (set! transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))))
+{let [initializations, transform, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let transform = transform.into_boxed();{let initializations = initializations.into_boxed();{initializations.set({let initializations = initializations.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (cond ...)
 if ({
 // (null? exp*)
@@ -853,8 +853,7 @@ imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}} else
 // (initializations (cdr exp*))
 initializations.get().invoke(&[{
 // (cdr exp*)
-imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}}}})});
-transform.set({let transform = transform.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}}}})});transform.set({let transform = transform.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (cond ...)
 if ({
 // (null? exp*)
@@ -874,8 +873,7 @@ imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])},{
 // (transform (cdr exp*))
 transform.get().invoke(&[{
 // (cdr exp*)
-imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}}}})});
-{
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}}}})});{
 // (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))
 {let ini = {
 // (initializations body)
@@ -889,7 +887,7 @@ imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("letrec"),{
 // (cons ini (transform body))
 imports::cons.with(|value| value.get()).invoke(&[ini.clone(),{
 // (transform body)
-transform.get().invoke(&[body.clone()])}])}])}])}}}}}}})}))
+transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
         };
         {
             // (define (set!-variable expr) ...)

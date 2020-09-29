@@ -2,7 +2,6 @@
   (export make-core-env)
 
   (import (scheme base)
-          (scheme write)
           (sunny astify)
           (sunny env)
           (sunny scheme-syntax)
@@ -20,6 +19,7 @@
             (new-keyword 'lambda expand-lambda)
             (new-keyword 'let expand-let)
             (new-keyword 'let* expand-let*)
+            (new-keyword 'letrec expand-letrec)
             (new-keyword 'quote expand-quote)
             (new-keyword 'set! expand-set!)
             (new-import 'assert-eq)
@@ -65,6 +65,19 @@
       (astify-comment exp
         (expand-let (loop (let*-bindings exp))
                 env tail?)))
+
+    (define (expand-letrec exp env tail?)
+      (astify-comment exp
+        (expand-let
+          (list 'let
+                (map (lambda (name) (list name ''*uninitialized*))
+                     (let-vars exp))
+                (cons 'begin
+                      (append (map (lambda (name val) (list 'set! name val))
+                                   (let-vars exp)
+                                   (let-args exp))
+                              (let-body exp))))
+          env tail?)))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

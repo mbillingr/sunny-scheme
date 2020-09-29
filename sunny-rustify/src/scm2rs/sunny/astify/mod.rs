@@ -357,7 +357,7 @@ pub fn initialize() {
                         .is_true()
                         {
                             {
-                                // (make-fixlet (proc (quote get-params)) (proc (quote get-body)) (astify-args arg* env))
+                                // (make-fixlet (proc (quote get-params)) (proc (quote get-vars)) (astify-args arg* env) (proc (quote get-body)))
                                 imports::make_minus_fixlet
                                     .with(|value| value.get())
                                     .invoke(&[
@@ -366,14 +366,18 @@ pub fn initialize() {
                                             proc.clone().invoke(&[Scm::symbol("get-params")])
                                         },
                                         {
-                                            // (proc (quote get-body))
-                                            proc.clone().invoke(&[Scm::symbol("get-body")])
+                                            // (proc (quote get-vars))
+                                            proc.clone().invoke(&[Scm::symbol("get-vars")])
                                         },
                                         {
                                             // (astify-args arg* env)
                                             globals::astify_minus_args
                                                 .with(|value| value.get())
                                                 .invoke(&[arg_star_.clone(), env.clone()])
+                                        },
+                                        {
+                                            // (proc (quote get-body))
+                                            proc.clone().invoke(&[Scm::symbol("get-body")])
                                         },
                                     ])
                             }

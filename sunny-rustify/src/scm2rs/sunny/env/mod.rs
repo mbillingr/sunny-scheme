@@ -478,106 +478,31 @@ pub fn initialize() {
         };
         {
             // (define (adjoin-import*! name* env) ...)
-            globals::adjoin_minus_import_star__i.with(|value| {
-                value.set({
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 2 {
-                            panic!("invalid arity")
-                        }
-                        let name_star_ = args[0].clone();
-                        let env = args[1].clone();
-                        {
-                            // (letrec ((loop (lambda (name* genv) (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv)))))) (loop name* (find-globals env)))
-                            {
-                                let loop_ = Scm::uninitialized().into_boxed();
-                                loop_.set({
-                                    let loop_ = loop_.clone();
-                                    Scm::func(move |args: &[Scm]| {
-                                        if args.len() != 2 {
-                                            panic!("invalid arity")
-                                        }
-                                        let name_star_ = args[0].clone();
-                                        let genv = args[1].clone();
-                                        if ({
-                                            // (null? name*)
-                                            imports::null_p
-                                                .with(|value| value.get())
-                                                .invoke(&[name_star_.clone()])
-                                        })
-                                        .is_true()
-                                        {
-                                            Scm::Nil
-                                        } else {
-                                            {
-                                                {
-                                                    // (set-cdr! genv (cons (new-import (car name*)) (cdr genv)))
-                                                    imports::set_minus_cdr_i
-                                                        .with(|value| value.get())
-                                                        .invoke(&[genv.clone(), {
-                                                            // (cons (new-import (car name*)) (cdr genv))
-                                                            imports::cons
-                                                                .with(|value| value.get())
-                                                                .invoke(&[
-                                                                    {
-                                                                        // (new-import (car name*))
-                                                                        imports::new_minus_import
-                                                                            .with(|value| {
-                                                                                value.get()
-                                                                            })
-                                                                            .invoke(&[{
-                                                                                // (car name*)
-                                                                                imports::car
-                                                                                    .with(|value| {
-                                                                                        value.get()
-                                                                                    })
-                                                                                    .invoke(&[
-                                                                                        name_star_
-                                                                                            .clone(
-                                                                                            ),
-                                                                                    ])
-                                                                            }])
-                                                                    },
-                                                                    {
-                                                                        // (cdr genv)
-                                                                        imports::cdr
-                                                                            .with(|value| {
-                                                                                value.get()
-                                                                            })
-                                                                            .invoke(&[genv.clone()])
-                                                                    },
-                                                                ])
-                                                        }])
-                                                };
-                                                {
-                                                    // (loop (cdr name*) genv)
-                                                    loop_.get().invoke(&[
-                                                        {
-                                                            // (cdr name*)
-                                                            imports::cdr
-                                                                .with(|value| value.get())
-                                                                .invoke(&[name_star_.clone()])
-                                                        },
-                                                        genv.clone(),
-                                                    ])
-                                                }
-                                            }
-                                        }
-                                    })
-                                });
-                                {
-                                    // (loop name* (find-globals env))
-                                    loop_.get().invoke(&[name_star_.clone(), {
-                                        // (find-globals env)
-                                        globals::find_minus_globals
-                                            .with(|value| value.get())
-                                            .invoke(&[env.clone()])
-                                    }])
-                                }
-                            }
-                        }
-                    })
-                })
-            })
+            globals::adjoin_minus_import_star__i.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name_star_ = args[0].clone();let env = args[1].clone();{
+// (letrec ((loop (lambda (name* genv) (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv)))))) (loop name* (find-globals env)))
+{
+// (let ((loop (quote *uninitialized*))) (begin (set! loop (lambda (name* genv) (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv))))) (loop name* (find-globals env))))
+{let loop_ = Scm::symbol("*uninitialized*");{let loop_ = loop_.into_boxed();{loop_.set({let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name_star_ = args[0].clone();let genv = args[1].clone();if ({
+// (null? name*)
+imports::null_p.with(|value| value.get()).invoke(&[name_star_.clone()])}).is_true() {Scm::Nil} else {{{
+// (set-cdr! genv (cons (new-import (car name*)) (cdr genv)))
+imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[genv.clone(),{
+// (cons (new-import (car name*)) (cdr genv))
+imports::cons.with(|value| value.get()).invoke(&[{
+// (new-import (car name*))
+imports::new_minus_import.with(|value| value.get()).invoke(&[{
+// (car name*)
+imports::car.with(|value| value.get()).invoke(&[name_star_.clone()])}])},{
+// (cdr genv)
+imports::cdr.with(|value| value.get()).invoke(&[genv.clone()])}])}])};{
+// (loop (cdr name*) genv)
+loop_.get().invoke(&[{
+// (cdr name*)
+imports::cdr.with(|value| value.get()).invoke(&[name_star_.clone()])},genv.clone()])}}}})});{
+// (loop name* (find-globals env))
+loop_.get().invoke(&[name_star_.clone(),{
+// (find-globals env)
+globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}}}}}}})}))
         };
         {
             // (define (adjoin-boxed name env) ...)

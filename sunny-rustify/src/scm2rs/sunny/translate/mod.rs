@@ -143,16 +143,13 @@ pub fn initialize() {
             // (define (program->ast exp*) ...)
             globals::program_minus__g_ast.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
-{let global_minus_env = Scm::uninitialized().into_boxed();
-let library_minus_env = Scm::uninitialized().into_boxed();
-let process_minus_imports = Scm::uninitialized().into_boxed();
-global_minus_env.set({
+{
+// (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))) (process-imports exp* (quote ()) (make-set))))
+{let [global_minus_env, library_minus_env, process_minus_imports, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_imports = process_minus_imports.into_boxed();{let library_minus_env = library_minus_env.into_boxed();{let global_minus_env = global_minus_env.into_boxed();{global_minus_env.set({
 // (make-core-env)
-imports::make_minus_core_minus_env.with(|value| value.get()).invoke(&[])});
-library_minus_env.set({
+imports::make_minus_core_minus_env.with(|value| value.get()).invoke(&[])});library_minus_env.set({
 // (list (quote ()))
-imports::list.with(|value| value.get()).invoke(&[Scm::Nil])});
-process_minus_imports.set({let library_minus_env = library_minus_env.clone();let process_minus_imports = process_minus_imports.clone();let global_minus_env = global_minus_env.clone();Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp_star_ = args[0].clone();let imports = args[1].clone();let init = args[2].clone();{
+imports::list.with(|value| value.get()).invoke(&[Scm::Nil])});process_minus_imports.set({let library_minus_env = library_minus_env.clone();let process_minus_imports = process_minus_imports.clone();let global_minus_env = global_minus_env.clone();Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp_star_ = args[0].clone();let imports = args[1].clone();let init = args[2].clone();{
 // (cond ...)
 if ({
 // (import? (car exp*))
@@ -214,12 +211,11 @@ imports::make_minus_program.with(|value| value.get()).invoke(&[globals.clone(),i
 // (filter cdr (car library-env))
 imports::filter.with(|value| value.get()).invoke(&[imports::cdr.with(|value| value.get()),{
 // (car library-env)
-imports::car.with(|value| value.get()).invoke(&[library_minus_env.get()])}])}])}}}}}}})});
-{
+imports::car.with(|value| value.get()).invoke(&[library_minus_env.get()])}])}])}}}}}}})});{
 // (process-imports exp* (quote ()) (make-set))
 process_minus_imports.get().invoke(&[exp_star_.clone(),Scm::Nil,{
 // (make-set)
-imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}})}))
+imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}}}}}}})}))
         };
         {
             // (define (library->ast name exp* library-env) ...)

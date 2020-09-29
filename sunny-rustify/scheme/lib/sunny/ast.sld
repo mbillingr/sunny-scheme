@@ -23,7 +23,6 @@
           make-sequence
           make-testcase
           make-testsuite
-          make-scope
           make-vararg-abstraction)
 
   (import (scheme base)
@@ -407,52 +406,6 @@
               ((eq? 'gen-rust msg) (gen-rust (car arg*)))
               ((eq? 'gen-rust-inner msg) (gen-rust-inner (car arg*)))
               (else (error "Unknown message FIXLET" msg))))
-      self)
-
-    (define (make-scope params body args)
-      (define (repr)
-        (list 'SCOPE
-              params
-              (map (lambda (a) (a 'repr)) args)
-              (body 'repr)))
-      (define (transform fnc)
-        (fnc self
-             (lambda () (make-scope
-                          params
-                          (body 'transform fnc)
-                          (map (lambda (a) (a 'transform fnc)) args)))))
-      (define (free-vars-args args)
-        (if (null? args)
-            (make-set)
-            (set-union ((car args) 'free-vars)
-                       (free-vars-args (cdr args)))))
-      (define (free-vars)
-        (set-remove* (set-union (body 'free-vars)
-                                (free-vars-args args))
-                     params))
-      (define (gen-rust module)
-        (rust-block module
-          (lambda ()
-            (for-each (lambda (p) (println module
-                                    "let "
-                                    (rustify-identifier p)
-                                    " = Scm::uninitialized().into_boxed();"))
-                      params)
-            (for-each (lambda (p a) (print module
-                                           (rustify-identifier p)
-                                           ".set(")
-                                    (a 'gen-rust module)
-                                    (println module ");"))
-                      params
-                      args)
-            (body 'gen-rust module))))
-      (define (self msg . args)
-        (cond ((eq? 'repr msg) (repr))
-              ((eq? 'transform msg) (transform (car args)))
-              ((eq? 'free-vars msg) (free-vars))
-              ((eq? 'kind msg) 'SCOPE)
-              ((eq? 'gen-rust msg) (gen-rust (car args)))
-              (else (error "Unknown message SCOPE" msg))))
       self)
 
     (define (make-closure function)

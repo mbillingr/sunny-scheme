@@ -2,8 +2,7 @@
   (export sexpr->ast
           sexpr->export
           sexpr->import
-          sexpr->sequence
-          sexpr->fixlet)
+          sexpr->sequence)
 
   (import (scheme base)
           (scheme cxr)
@@ -20,11 +19,7 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((eq? 'letrec (car exp)) (wrap-sexpr exp
-                                              (sexpr->scope-rec (cadr exp)
-                                                                (cddr exp)
-                                                                env tail?)))
-                   ((and (eq? 'testsuite (car exp))
+             (cond ((and (eq? 'testsuite (car exp))
                          (not (lookup 'testsuite env)))
                     (sexpr->testsuite (cadr exp) (cddr exp) env))
                    ((and (eq? 'assert (car exp))
@@ -73,15 +68,6 @@
           (make-null-arg)
           (make-args (sexpr->ast (car arg*) env #f)
                      (sexpr->args (cdr arg*) env))))
-
-
-    (define (sexpr->scope-rec bindings body env tail?)
-      (let* ((params (map (lambda (b) (car b)) bindings))
-             (body-env (adjoin-boxed-env params env))
-             (args (map (lambda (b) (sexpr->ast (cadr b) body-env #f)) bindings)))
-        (make-scope params
-                    (sexpr->sequence body body-env tail?)
-                    args)))
 
     (define (sexpr->abstraction param* body env)
       (let ((local-env (adjoin-local-env param* env))
