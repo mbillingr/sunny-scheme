@@ -37,7 +37,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static wrap_minus_sexpr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL wrap-sexpr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->assert"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testsuite"))}
 }
 
@@ -149,54 +148,6 @@ pub fn initialize() {
                                                     {
                                                         // (cddr exp)
                                                         imports::cddr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[exp.clone()])
-                                                    },
-                                                    env.clone(),
-                                                ])
-                                        }
-                                    } else if ({
-                                        // (and (eq? (quote assert) (car exp)) (not (lookup (quote assert) env)))
-                                        if ({
-                                            // (eq? (quote assert) (car exp))
-                                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                                Scm::symbol("assert"),
-                                                {
-                                                    // (car exp)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp.clone()])
-                                                },
-                                            ])
-                                        })
-                                        .is_true()
-                                        {
-                                            {
-                                                // (not (lookup (quote assert) env))
-                                                imports::not.with(|value| value.get()).invoke(&[{
-                                                    // (lookup (quote assert) env)
-                                                    imports::lookup
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            Scm::symbol("assert"),
-                                                            env.clone(),
-                                                        ])
-                                                }])
-                                            }
-                                        } else {
-                                            Scm::False
-                                        }
-                                    })
-                                    .is_true()
-                                    {
-                                        {
-                                            // (sexpr->assert (cadr exp) env)
-                                            globals::sexpr_minus__g_assert
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    {
-                                                        // (cadr exp)
-                                                        imports::cadr
                                                             .with(|value| value.get())
                                                             .invoke(&[exp.clone()])
                                                     },
@@ -1140,31 +1091,6 @@ imports::make_minus_testcase.with(|value| value.get()).invoke(&[{
 imports::cadr.with(|value| value.get()).invoke(&[case.clone()])},{
 // (sexpr->ast body env #f)
 globals::sexpr_minus__g_ast.with(|value| value.get()).invoke(&[body.clone(),env.clone(),Scm::False])}])}}}}}}}}}}}})}))
-        };
-        {
-            // (define (sexpr->assert cond env) ...)
-            globals::sexpr_minus__g_assert.with(|value| {
-                value.set({
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 2 {
-                            panic!("invalid arity")
-                        }
-                        let cond = args[0].clone();
-                        let env = args[1].clone();
-                        {
-                            // (make-assert (sexpr->ast cond env #f))
-                            imports::make_minus_assert
-                                .with(|value| value.get())
-                                .invoke(&[{
-                                    // (sexpr->ast cond env #f)
-                                    globals::sexpr_minus__g_ast
-                                        .with(|value| value.get())
-                                        .invoke(&[cond.clone(), env.clone(), Scm::False])
-                                }])
-                        }
-                    })
-                })
-            })
         };
         {
             // (define (sexpr->import-all lib env) ...)

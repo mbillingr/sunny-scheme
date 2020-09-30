@@ -4,6 +4,7 @@
           astify-alternative
           astify-and
           astify-application
+          astify-assert
           astify-assignment
           astify-comment
           astify-cond
@@ -67,6 +68,9 @@
           (make-null-arg)
           (make-args (astify (car arg*) env #f)
                      (astify-args (cdr arg*) env))))
+
+    (define (astify-assert cond env)
+      (make-assert (astify cond env #f)))
 
     (define (astify-assignment var-name value env)
       (let ((var (ensure-var! var-name env))

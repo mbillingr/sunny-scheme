@@ -17,6 +17,7 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-and"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-assert"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_begin: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-begin"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_define: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-define"))}
@@ -54,7 +55,7 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         {
-                            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
                             imports::list.with(|value| value.get()).invoke(&[
                                 Scm::symbol("GLOBAL-MARKER"),
                                 {
@@ -64,6 +65,15 @@ pub fn initialize() {
                                         .invoke(&[
                                             Scm::symbol("and"),
                                             globals::expand_minus_and.with(|value| value.get()),
+                                        ])
+                                },
+                                {
+                                    // (new-keyword (quote assert) expand-assert)
+                                    imports::new_minus_keyword
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            Scm::symbol("assert"),
+                                            globals::expand_minus_assert.with(|value| value.get()),
                                         ])
                                 },
                                 {
@@ -205,6 +215,35 @@ pub fn initialize() {
                                             tail_p.clone(),
                                         ])
                                 }])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (expand-assert exp env tail?) ...)
+            globals::expand_minus_assert.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 3 {
+                            panic!("invalid arity")
+                        }
+                        let exp = args[0].clone();
+                        let env = args[1].clone();
+                        let tail_p = args[2].clone();
+                        {
+                            // (astify-assert (assert-condition exp) env)
+                            imports::astify_minus_assert
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    {
+                                        // (assert-condition exp)
+                                        imports::assert_minus_condition
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()])
+                                    },
+                                    env.clone(),
+                                ])
                         }
                     })
                 })

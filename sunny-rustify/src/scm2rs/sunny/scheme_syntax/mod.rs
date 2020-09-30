@@ -10,6 +10,7 @@ mod imports {
 pub mod exports {
     pub use super::globals::abstraction_p;
     pub use super::globals::and_minus_args;
+    pub use super::globals::assert_minus_condition;
     pub use super::globals::begin_minus_statements;
     pub use super::globals::cond_minus_clause_minus_condition;
     pub use super::globals::cond_minus_clause_minus_sequence;
@@ -63,6 +64,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clause_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clause-condition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static cond_minus_clauses: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cond-clauses"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static begin_minus_statements: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL begin-statements"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static assert_minus_condition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assert-condition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static and_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL and-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static abstraction_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL abstraction?"))}
 }
@@ -132,6 +134,25 @@ pub fn initialize() {
                         {
                             // (cdr expr)
                             imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone()])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (assert-condition expr) ...)
+            globals::assert_minus_condition.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let expr = args[0].clone();
+                        {
+                            // (cadr expr)
+                            imports::cadr
                                 .with(|value| value.get())
                                 .invoke(&[expr.clone()])
                         }

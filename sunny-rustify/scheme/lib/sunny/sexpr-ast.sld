@@ -22,9 +22,6 @@
              (cond ((and (eq? 'testsuite (car exp))
                          (not (lookup 'testsuite env)))
                     (sexpr->testsuite (cadr exp) (cddr exp) env))
-                   ((and (eq? 'assert (car exp))
-                         (not (lookup 'assert env)))
-                    (sexpr->assert (cadr exp) env))
                    (else
                      (let ((f-obj (sexpr->ast (car exp) env #f)))
                        (if (keyword? f-obj)
@@ -158,9 +155,6 @@
 
       (let ((body (dispatch (cddr case) '())))
         (make-testcase (cadr case) (sexpr->ast body env #f))))
-
-    (define (sexpr->assert cond env)
-      (make-assert (sexpr->ast cond env #f)))
 
     (define (sexpr->import-all lib env)
       (adjoin-import*!

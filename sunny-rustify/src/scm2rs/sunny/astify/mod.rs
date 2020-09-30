@@ -16,6 +16,7 @@ pub mod exports {
     pub use super::globals::astify_minus_alternative;
     pub use super::globals::astify_minus_and;
     pub use super::globals::astify_minus_application;
+    pub use super::globals::astify_minus_assert;
     pub use super::globals::astify_minus_assignment;
     pub use super::globals::astify_minus_comment;
     pub use super::globals::astify_minus_cond;
@@ -31,6 +32,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assignment"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assert"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
@@ -459,6 +461,33 @@ pub fn initialize() {
                                     },
                                 ])
                             }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (astify-assert cond env) ...)
+            globals::astify_minus_assert.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let cond = args[0].clone();
+                        let env = args[1].clone();
+                        {
+                            // (make-assert (astify cond env #f))
+                            imports::make_minus_assert
+                                .with(|value| value.get())
+                                .invoke(&[{
+                                    // (astify cond env #f)
+                                    globals::astify.with(|value| value.get()).invoke(&[
+                                        cond.clone(),
+                                        env.clone(),
+                                        Scm::False,
+                                    ])
+                                }])
                         }
                     })
                 })

@@ -1,6 +1,7 @@
 (define-library (sunny scheme-syntax)
   (export abstraction?
           and-args
+          assert-condition
           begin-statements
           cond-clauses
           cond-clause-condition
@@ -39,6 +40,10 @@
 
     (define (and-args expr)
       (cdr expr))
+
+
+    (define (assert-condition expr)
+      (cadr expr))
 
 
     (define (begin-statements expr)
