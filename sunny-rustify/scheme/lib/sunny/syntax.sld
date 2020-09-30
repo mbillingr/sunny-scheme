@@ -22,9 +22,7 @@
             (new-keyword 'let* expand-let*)
             (new-keyword 'letrec expand-letrec)
             (new-keyword 'quote expand-quote)
-            (new-keyword 'set! expand-set!)
-            (new-import 'assert-eq)
-            (new-import 'assert-equal)))
+            (new-keyword 'set! expand-set!)))
 
     (define (expand-and exp env tail?)
       (astify-comment exp

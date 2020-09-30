@@ -55,7 +55,7 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         {
-                            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
+                            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!))
                             imports::list.with(|value| value.get()).invoke(&[
                                 Scm::symbol("GLOBAL-MARKER"),
                                 {
@@ -166,18 +166,6 @@ pub fn initialize() {
                                             Scm::symbol("set!"),
                                             globals::expand_minus_set_i.with(|value| value.get()),
                                         ])
-                                },
-                                {
-                                    // (new-import (quote assert-eq))
-                                    imports::new_minus_import
-                                        .with(|value| value.get())
-                                        .invoke(&[Scm::symbol("assert-eq")])
-                                },
-                                {
-                                    // (new-import (quote assert-equal))
-                                    imports::new_minus_import
-                                        .with(|value| value.get())
-                                        .invoke(&[Scm::symbol("assert-equal")])
                                 },
                             ])
                         }
