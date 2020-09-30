@@ -24,6 +24,7 @@ pub mod exports {
     pub use super::globals::astify_minus_constant;
     pub use super::globals::astify_minus_definition;
     pub use super::globals::astify_minus_sequence;
+    pub use super::globals::astify_minus_symbol;
     pub use super::globals::astify_minus_testsuite;
 }
 
@@ -34,17 +35,18 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_definition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-definition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assignment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assignment"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-assert"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-and"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_alternative: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-alternative"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_abstraction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-abstraction"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_sequence: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-sequence"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_constant: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-constant"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_symbol: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-symbol"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-application"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_comment: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-comment"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -66,9 +68,111 @@ pub fn initialize() {
     {
         (/*NOP*/);
         {
-            // (define astify sexpr->ast)
-            globals::astify
-                .with(|value| value.set(imports::sexpr_minus__g_ast.with(|value| value.get())))
+            // (define (astify exp env tail?) ...)
+            globals::astify.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 3 {
+                            panic!("invalid arity")
+                        }
+                        let exp = args[0].clone();
+                        let env = args[1].clone();
+                        let tail_p = args[2].clone();
+                        {
+                            // (cond ...)
+                            if ({
+                                // (pair? exp)
+                                imports::pair_p
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (let ((f-obj (astify (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (astify-comment exp (astify-application f-obj (cdr exp) env tail?))))
+                                    {
+                                        let f_minus_obj = {
+                                            // (astify (car exp) env #f)
+                                            globals::astify.with(|value| value.get()).invoke(&[
+                                                {
+                                                    // (car exp)
+                                                    imports::car
+                                                        .with(|value| value.get())
+                                                        .invoke(&[exp.clone()])
+                                                },
+                                                env.clone(),
+                                                Scm::False,
+                                            ])
+                                        };
+                                        if ({
+                                            // (keyword? f-obj)
+                                            imports::keyword_p
+                                                .with(|value| value.get())
+                                                .invoke(&[f_minus_obj.clone()])
+                                        })
+                                        .is_true()
+                                        {
+                                            {
+                                                // ((keyword-handler f-obj) exp env tail?)
+                                                {
+                                                    // (keyword-handler f-obj)
+                                                    imports::keyword_minus_handler
+                                                        .with(|value| value.get())
+                                                        .invoke(&[f_minus_obj.clone()])
+                                                }
+                                                .invoke(&[exp.clone(), env.clone(), tail_p.clone()])
+                                            }
+                                        } else {
+                                            {
+                                                // (astify-comment exp (astify-application f-obj (cdr exp) env tail?))
+                                                globals::astify_minus_comment
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone(), {
+                                                        // (astify-application f-obj (cdr exp) env tail?)
+                                                        globals::astify_minus_application
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                f_minus_obj.clone(),
+                                                                {
+                                                                    // (cdr exp)
+                                                                    imports::cdr
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[exp.clone()])
+                                                                },
+                                                                env.clone(),
+                                                                tail_p.clone(),
+                                                            ])
+                                                    }])
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if ({
+                                // (symbol? exp)
+                                imports::symbol_p
+                                    .with(|value| value.get())
+                                    .invoke(&[exp.clone()])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (astify-symbol exp env)
+                                    globals::astify_minus_symbol
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone(), env.clone()])
+                                }
+                            } else {
+                                {
+                                    // (astify-constant exp env)
+                                    globals::astify_minus_constant
+                                        .with(|value| value.get())
+                                        .invoke(&[exp.clone(), env.clone()])
+                                }
+                            }
+                        }
+                    })
+                })
+            })
         };
         {
             // (define (astify-abstraction param* body env) ...)
@@ -770,6 +874,48 @@ imports::make_minus_alternative.with(|value| value.get()).invoke(&[i.clone(),t.c
                                                     .invoke(&[first.clone(), rest.clone()])
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (astify-symbol name env) ...)
+            globals::astify_minus_symbol.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        let env = args[1].clone();
+                        {
+                            // (let ((var (ensure-var! name env))) (if (keyword? var) var (make-reference name var)))
+                            {
+                                let var = {
+                                    // (ensure-var! name env)
+                                    imports::ensure_minus_var_i
+                                        .with(|value| value.get())
+                                        .invoke(&[name.clone(), env.clone()])
+                                };
+                                if ({
+                                    // (keyword? var)
+                                    imports::keyword_p
+                                        .with(|value| value.get())
+                                        .invoke(&[var.clone()])
+                                })
+                                .is_true()
+                                {
+                                    var.clone()
+                                } else {
+                                    {
+                                        // (make-reference name var)
+                                        imports::make_minus_reference
+                                            .with(|value| value.get())
+                                            .invoke(&[name.clone(), var.clone()])
                                     }
                                 }
                             }

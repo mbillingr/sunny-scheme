@@ -71,24 +71,6 @@ pub fn initialize() {
                         {
                             // (cond ...)
                             if ({
-                                // (keyword? exp)
-                                imports::keyword_p
-                                    .with(|value| value.get())
-                                    .invoke(&[exp.clone()])
-                            })
-                            .is_true()
-                            {
-                                exp.clone()
-                            } else if ({
-                                // (ast-node? exp)
-                                imports::ast_minus_node_p
-                                    .with(|value| value.get())
-                                    .invoke(&[exp.clone()])
-                            })
-                            .is_true()
-                            {
-                                exp.clone()
-                            } else if ({
                                 // (pair? exp)
                                 imports::pair_p
                                     .with(|value| value.get())

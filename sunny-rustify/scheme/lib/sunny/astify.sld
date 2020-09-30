@@ -11,6 +11,7 @@
           astify-constant
           astify-definition
           astify-sequence
+          astify-symbol
           astify-testsuite)
 
   (import (scheme base)
@@ -23,7 +24,15 @@
           (sunny variable))
 
   (begin
-    (define astify sexpr->ast)
+    (define (astify exp env tail?)
+      (cond ((pair? exp)
+             (let ((f-obj (astify (car exp) env #f)))
+               (if (keyword? f-obj)
+                   ((keyword-handler f-obj) exp env tail?)
+                   (astify-comment exp
+                     (astify-application f-obj (cdr exp) env tail?)))))
+            ((symbol? exp) (astify-symbol exp env))
+            (else (astify-constant exp env))))
 
     (define (astify-abstraction param* body env)
       (let* ((local-env (adjoin-local-env param* env))
@@ -111,6 +120,12 @@
             (else (let* ((first (astify (car exp*) env #f))
                          (rest (astify-sequence (cdr exp*) env tail?)))
                     (make-sequence first rest)))))
+
+    (define (astify-symbol name env)
+      (let ((var (ensure-var! name env)))
+        (if (keyword? var)
+            var
+            (make-reference name var))))
 
     (define (astify-testsuite name cases env)
       (make-testsuite name

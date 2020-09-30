@@ -16,9 +16,7 @@
 
   (begin
     (define (sexpr->ast exp env tail?)
-      (cond ((keyword? exp) exp)
-            ((ast-node? exp) exp)
-            ((pair? exp)
+      (cond ((pair? exp)
              (let ((f-obj (sexpr->ast (car exp) env #f)))
                (if (keyword? f-obj)
                    ((keyword-handler f-obj) exp env tail?)
