@@ -10,9 +10,10 @@
                               open-input-file
                               open-output-file)
           (chibi filesystem)
+          (sunny ast)
           (sunny ast-transforms boxify)
           (sunny ast-transforms close-procedures)
-          (sunny ast)
+          (sunny astify)
           (sunny env)
           (sunny library)
           (sunny rust codegen)
@@ -47,7 +48,7 @@
                                         (sexpr->import (cdar exp*) global-env))
                                 (set-add* init (import-libnames (car exp*)))))
 
-              (else (let* ((ast (sexpr->sequence exp* global-env #f))
+              (else (let* ((ast (astify-sequence exp* global-env #f))
                            (main (boxify (close-procedures ast)))
                            (globals (sort (lambda (a b)
                                             (string<? (symbol->string (car a))
@@ -100,7 +101,7 @@
                                  (cdr exp*)
                                  init
                                  (make-sequence body
-                                                (sexpr->sequence (cdar exp*)
+                                                (astify-sequence (cdar exp*)
                                                                  global-env #f))
                                  global-env
                                  library-env

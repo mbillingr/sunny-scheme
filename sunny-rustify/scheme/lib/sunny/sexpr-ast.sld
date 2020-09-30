@@ -1,8 +1,7 @@
 (define-library (sunny sexpr-ast)
   (export sexpr->ast
           sexpr->export
-          sexpr->import
-          sexpr->sequence)
+          sexpr->import)
 
   (import (scheme base)
           (scheme cxr)

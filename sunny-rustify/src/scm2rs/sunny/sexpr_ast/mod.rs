@@ -16,7 +16,6 @@ pub mod exports {
     pub use super::globals::sexpr_minus__g_ast;
     pub use super::globals::sexpr_minus__g_export;
     pub use super::globals::sexpr_minus__g_import;
-    pub use super::globals::sexpr_minus__g_sequence;
 }
 
 mod globals {

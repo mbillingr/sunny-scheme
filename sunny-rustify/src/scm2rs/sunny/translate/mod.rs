@@ -11,6 +11,7 @@ mod imports {
     pub use crate::sunny::ast::exports::*;
     pub use crate::sunny::ast_transforms::boxify::exports::*;
     pub use crate::sunny::ast_transforms::close_procedures::exports::*;
+    pub use crate::sunny::astify::exports::*;
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::library::exports::*;
     pub use crate::sunny::rust::codegen::exports::*;
@@ -54,9 +55,10 @@ pub fn initialize() {
     crate::scheme::read::initialize();
     crate::scheme::file::initialize();
     crate::chibi::filesystem::initialize();
+    crate::sunny::ast::initialize();
     crate::sunny::ast_transforms::boxify::initialize();
     crate::sunny::ast_transforms::close_procedures::initialize();
-    crate::sunny::ast::initialize();
+    crate::sunny::astify::initialize();
     crate::sunny::env::initialize();
     crate::sunny::library::initialize();
     crate::sunny::rust::codegen::initialize();
@@ -141,9 +143,9 @@ pub fn initialize() {
         {
             // (define (program->ast exp*) ...)
             globals::program_minus__g_ast.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
-// (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
+// (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
 {
-// (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))) (process-imports exp* (quote ()) (make-set))))
+// (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (sexpr->import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))) (process-imports exp* (quote ()) (make-set))))
 {let [global_minus_env, library_minus_env, process_minus_imports, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_imports = process_minus_imports.into_boxed();{let library_minus_env = library_minus_env.into_boxed();{let global_minus_env = global_minus_env.into_boxed();{global_minus_env.set({
 // (make-core-env)
 imports::make_minus_core_minus_env.with(|value| value.get()).invoke(&[])});library_minus_env.set({
@@ -177,12 +179,12 @@ imports::set_minus_add_star_.with(|value| value.get()).invoke(&[init.clone(),{
 imports::import_minus_libnames.with(|value| value.get()).invoke(&[{
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}])}}} else {{
-// (let* ((ast (sexpr->sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+// (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {
-// (let ((ast (sexpr->sequence exp* global-env #f))) (let ((main (boxify (close-procedures ast)))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))))
+// (let ((ast (astify-sequence exp* global-env #f))) (let ((main (boxify (close-procedures ast)))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))))
 {let ast = {
-// (sexpr->sequence exp* global-env #f)
-imports::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(),global_minus_env.get(),Scm::False])};
+// (astify-sequence exp* global-env #f)
+imports::astify_minus_sequence.with(|value| value.get()).invoke(&[exp_star_.clone(),global_minus_env.get(),Scm::False])};
 // (let ((main (boxify (close-procedures ast)))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))
 let main = {
 // (boxify (close-procedures ast))
@@ -476,7 +478,7 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}}}}}}})}))
                             .is_true()
                             {
                                 {
-                                    // (library-decls->ast name (cdr exp*) init (make-sequence body (sexpr->sequence (cdar exp*) global-env #f)) global-env library-env imports exports)
+                                    // (library-decls->ast name (cdr exp*) init (make-sequence body (astify-sequence (cdar exp*) global-env #f)) global-env library-env imports exports)
                                     globals::library_minus_decls_minus__g_ast
                                         .with(|value| value.get())
                                         .invoke(&[
@@ -489,12 +491,12 @@ imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}}}}}}})}))
                                             },
                                             init.clone(),
                                             {
-                                                // (make-sequence body (sexpr->sequence (cdar exp*) global-env #f))
+                                                // (make-sequence body (astify-sequence (cdar exp*) global-env #f))
                                                 imports::make_minus_sequence
                                                     .with(|value| value.get())
                                                     .invoke(&[body.clone(), {
-                                                        // (sexpr->sequence (cdar exp*) global-env #f)
-                                                        imports::sexpr_minus__g_sequence
+                                                        // (astify-sequence (cdar exp*) global-env #f)
+                                                        imports::astify_minus_sequence
                                                             .with(|value| value.get())
                                                             .invoke(&[
                                                                 {
