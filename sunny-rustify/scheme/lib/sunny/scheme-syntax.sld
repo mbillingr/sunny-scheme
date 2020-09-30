@@ -25,7 +25,11 @@
           library?
           scan-out-defines
           set!-variable
-          set!-value)
+          set!-value
+          testcase-body
+          testcase-description
+          testsuite-cases
+          testsuite-name)
 
   (import (scheme base)
           (scheme cxr)
@@ -167,4 +171,16 @@
       (cadr expr))
 
     (define (set!-value expr)
-      (caddr expr))))
+      (caddr expr))
+
+    (define (testcase-body expr)
+      (cddr expr))
+
+    (define (testcase-description expr)
+      (cadr expr))
+
+    (define (testsuite-cases expr)
+      (cddr expr))
+
+    (define (testsuite-name expr)
+      (cadr expr))))

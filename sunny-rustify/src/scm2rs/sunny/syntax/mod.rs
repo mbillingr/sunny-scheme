@@ -28,6 +28,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_letrec: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-letrec"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_quote: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-quote"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_set_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-set!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-testsuite"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -55,7 +56,7 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         {
-                            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!))
+                            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-keyword (quote testsuite) expand-testsuite))
                             imports::list.with(|value| value.get()).invoke(&[
                                 Scm::symbol("GLOBAL-MARKER"),
                                 {
@@ -165,6 +166,16 @@ pub fn initialize() {
                                         .invoke(&[
                                             Scm::symbol("set!"),
                                             globals::expand_minus_set_i.with(|value| value.get()),
+                                        ])
+                                },
+                                {
+                                    // (new-keyword (quote testsuite) expand-testsuite)
+                                    imports::new_minus_keyword
+                                        .with(|value| value.get())
+                                        .invoke(&[
+                                            Scm::symbol("testsuite"),
+                                            globals::expand_minus_testsuite
+                                                .with(|value| value.get()),
                                         ])
                                 },
                             ])
@@ -697,6 +708,41 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                                     {
                                         // (set!-value exp)
                                         imports::set_i_minus_value
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()])
+                                    },
+                                    env.clone(),
+                                ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (expand-testsuite exp env tail?) ...)
+            globals::expand_minus_testsuite.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 3 {
+                            panic!("invalid arity")
+                        }
+                        let exp = args[0].clone();
+                        let env = args[1].clone();
+                        let tail_p = args[2].clone();
+                        {
+                            // (astify-testsuite (testsuite-name exp) (testsuite-cases exp) env)
+                            imports::astify_minus_testsuite
+                                .with(|value| value.get())
+                                .invoke(&[
+                                    {
+                                        // (testsuite-name exp)
+                                        imports::testsuite_minus_name
+                                            .with(|value| value.get())
+                                            .invoke(&[exp.clone()])
+                                    },
+                                    {
+                                        // (testsuite-cases exp)
+                                        imports::testsuite_minus_cases
                                             .with(|value| value.get())
                                             .invoke(&[exp.clone()])
                                     },

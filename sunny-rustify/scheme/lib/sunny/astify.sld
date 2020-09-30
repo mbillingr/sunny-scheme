@@ -10,9 +10,11 @@
           astify-cond
           astify-constant
           astify-definition
-          astify-sequence)
+          astify-sequence
+          astify-testsuite)
 
   (import (scheme base)
+          (scheme cxr)
           (sunny ast)
           (sunny env)
           (sunny scheme-syntax)
@@ -109,6 +111,56 @@
             (else (let* ((first (astify (car exp*) env #f))
                          (rest (astify-sequence (cdr exp*) env tail?)))
                     (make-sequence first rest)))))
+
+    (define (astify-testsuite name cases env)
+      (make-testsuite name
+                      (map (lambda (c) (astify-testcase c env))
+                           cases)))
+
+    (define (astify-testcase case env)
+      (define (given stmt body)
+        (list 'let*
+          (map (lambda (assignment)
+                 (list (car assignment)
+                       (caddr assignment)))
+               (cdr stmt))
+          body))
+
+      (define (when stmt body)
+        (define (loop stmt*)
+          (cond ((null? stmt*)
+                 body)
+                ((eq? '<- (cadar stmt*))
+                 (list
+                   'let (list (list (caar stmt*)
+                                    (caddar stmt*)))
+                   (loop (cdr stmt*))))
+                (else
+                  (list 'begin (car stmt*) (loop (cdr stmt*))))))
+        (loop (cdr stmt)))
+
+      (define (then stmt body)
+        (cons 'begin
+              (append
+                (map (lambda (pred)
+                       (list 'assert pred))
+                     (cdr stmt))
+                body)))
+
+      (define (dispatch section* body)
+        (cond ((null? section*)
+               body)
+              ((eq? 'given (caar section*))
+               (given (car section*) (dispatch (cdr section*) body)))
+              ((eq? 'when (caar section*))
+               (when (car section*) (dispatch (cdr section*) body)))
+              ((eq? 'then (caar section*))
+               (then (car section*) (dispatch (cdr section*) body)))
+              (else (error "invalid testcase"))))
+
+      (let ((body (dispatch (testcase-body case) '())))
+        (make-testcase (testcase-description case)
+                       (astify body env #f))))
 
     (define (astify-unspecified)
       (make-constant '*UNSPECIFIED*))))

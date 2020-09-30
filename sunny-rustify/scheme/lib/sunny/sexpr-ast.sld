@@ -19,15 +19,11 @@
       (cond ((keyword? exp) exp)
             ((ast-node? exp) exp)
             ((pair? exp)
-             (cond ((and (eq? 'testsuite (car exp))
-                         (not (lookup 'testsuite env)))
-                    (sexpr->testsuite (cadr exp) (cddr exp) env))
-                   (else
-                     (let ((f-obj (sexpr->ast (car exp) env #f)))
-                       (if (keyword? f-obj)
-                           ((keyword-handler f-obj) exp env tail?)
-                           (wrap-sexpr exp
-                             (sexpr->application f-obj (cdr exp) env tail?)))))))
+             (let ((f-obj (sexpr->ast (car exp) env #f)))
+               (if (keyword? f-obj)
+                   ((keyword-handler f-obj) exp env tail?)
+                   (wrap-sexpr exp
+                     (sexpr->application f-obj (cdr exp) env tail?)))))
             ((symbol? exp) (objectify-symbol exp env))
             (else (sexpr->constant exp env))))
 
@@ -105,56 +101,6 @@
              '())
             (else (cons (make-export env (car export-spec*) (car export-spec*))
                         (sexpr->export (cdr export-spec*) env)))))
-
-    (define (sexpr->testsuite name cases env)
-      (make-testsuite
-        name
-        (map (lambda (case) (sexpr->testcase case env))
-             cases)))
-
-    (define (sexpr->testcase case env)
-      (define (given stmt body)
-        (list 'let*
-          (map (lambda (assignment)
-                 (list (car assignment)
-                       (caddr assignment)))
-               (cdr stmt))
-          body))
-
-      (define (when stmt body)
-        (define (loop stmt*)
-          (cond ((null? stmt*)
-                 body)
-                ((eq? '<- (cadar stmt*))
-                 (list
-                   'let (list (list (caar stmt*)
-                                    (caddar stmt*)))
-                   (loop (cdr stmt*))))
-                (else
-                  (list 'begin (car stmt*) (loop (cdr stmt*))))))
-        (loop (cdr stmt)))
-
-      (define (then stmt body)
-        (cons 'begin
-              (append
-                (map (lambda (pred)
-                       (list 'assert pred))
-                     (cdr stmt))
-                body)))
-
-      (define (dispatch section* body)
-        (cond ((null? section*)
-               body)
-              ((eq? 'given (caar section*))
-               (given (car section*) (dispatch (cdr section*) body)))
-              ((eq? 'when (caar section*))
-               (when (car section*) (dispatch (cdr section*) body)))
-              ((eq? 'then (caar section*))
-               (then (car section*) (dispatch (cdr section*) body)))
-              (else (error "invalid testcase"))))
-
-      (let ((body (dispatch (cddr case) '())))
-        (make-testcase (cadr case) (sexpr->ast body env #f))))
 
     (define (sexpr->import-all lib env)
       (adjoin-import*!

@@ -21,7 +21,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testcase: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testcase"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_export: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->export"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_import_minus_all: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->import-all"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_import_minus_only: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->import-only"))}
@@ -37,7 +36,6 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_application: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->application"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static wrap_minus_sexpr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL wrap-sexpr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static sexpr_minus__g_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sexpr->testsuite"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -99,129 +97,62 @@ pub fn initialize() {
                             .is_true()
                             {
                                 {
-                                    // (cond ...)
-                                    if ({
-                                        // (and (eq? (quote testsuite) (car exp)) (not (lookup (quote testsuite) env)))
-                                        if ({
-                                            // (eq? (quote testsuite) (car exp))
-                                            imports::eq_p.with(|value| value.get()).invoke(&[
-                                                Scm::symbol("testsuite"),
-                                                {
-                                                    // (car exp)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[exp.clone()])
-                                                },
-                                            ])
-                                        })
-                                        .is_true()
-                                        {
-                                            {
-                                                // (not (lookup (quote testsuite) env))
-                                                imports::not.with(|value| value.get()).invoke(&[{
-                                                    // (lookup (quote testsuite) env)
-                                                    imports::lookup
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            Scm::symbol("testsuite"),
-                                                            env.clone(),
-                                                        ])
-                                                }])
-                                            }
-                                        } else {
-                                            Scm::False
-                                        }
-                                    })
-                                    .is_true()
+                                    // (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))
                                     {
-                                        {
-                                            // (sexpr->testsuite (cadr exp) (cddr exp) env)
-                                            globals::sexpr_minus__g_testsuite
+                                        let f_minus_obj = {
+                                            // (sexpr->ast (car exp) env #f)
+                                            globals::sexpr_minus__g_ast
                                                 .with(|value| value.get())
                                                 .invoke(&[
                                                     {
-                                                        // (cadr exp)
-                                                        imports::cadr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[exp.clone()])
-                                                    },
-                                                    {
-                                                        // (cddr exp)
-                                                        imports::cddr
+                                                        // (car exp)
+                                                        imports::car
                                                             .with(|value| value.get())
                                                             .invoke(&[exp.clone()])
                                                     },
                                                     env.clone(),
+                                                    Scm::False,
                                                 ])
-                                        }
-                                    } else {
+                                        };
+                                        if ({
+                                            // (keyword? f-obj)
+                                            imports::keyword_p
+                                                .with(|value| value.get())
+                                                .invoke(&[f_minus_obj.clone()])
+                                        })
+                                        .is_true()
                                         {
-                                            // (let ((f-obj (sexpr->ast (car exp) env #f))) (if (keyword? f-obj) ((keyword-handler f-obj) exp env tail?) (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))))
                                             {
-                                                let f_minus_obj = {
-                                                    // (sexpr->ast (car exp) env #f)
-                                                    globals::sexpr_minus__g_ast
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
-                                                            {
-                                                                // (car exp)
-                                                                imports::car
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[exp.clone()])
-                                                            },
-                                                            env.clone(),
-                                                            Scm::False,
-                                                        ])
-                                                };
-                                                if ({
-                                                    // (keyword? f-obj)
-                                                    imports::keyword_p
+                                                // ((keyword-handler f-obj) exp env tail?)
+                                                {
+                                                    // (keyword-handler f-obj)
+                                                    imports::keyword_minus_handler
                                                         .with(|value| value.get())
                                                         .invoke(&[f_minus_obj.clone()])
-                                                })
-                                                .is_true()
-                                                {
-                                                    {
-                                                        // ((keyword-handler f-obj) exp env tail?)
-                                                        {
-                                                            // (keyword-handler f-obj)
-                                                            imports::keyword_minus_handler
-                                                                .with(|value| value.get())
-                                                                .invoke(&[f_minus_obj.clone()])
-                                                        }
-                                                        .invoke(&[
-                                                            exp.clone(),
-                                                            env.clone(),
-                                                            tail_p.clone(),
-                                                        ])
-                                                    }
-                                                } else {
-                                                    {
-                                                        // (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))
-                                                        globals::wrap_minus_sexpr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[exp.clone(), {
-                                                                // (sexpr->application f-obj (cdr exp) env tail?)
-                                                                globals::sexpr_minus__g_application
-                                                                    .with(|value| value.get())
-                                                                    .invoke(&[
-                                                                        f_minus_obj.clone(),
-                                                                        {
-                                                                            // (cdr exp)
-                                                                            imports::cdr
-                                                                                .with(|value| {
-                                                                                    value.get()
-                                                                                })
-                                                                                .invoke(&[
-                                                                                    exp.clone()
-                                                                                ])
-                                                                        },
-                                                                        env.clone(),
-                                                                        tail_p.clone(),
-                                                                    ])
-                                                            }])
-                                                    }
                                                 }
+                                                .invoke(&[exp.clone(), env.clone(), tail_p.clone()])
+                                            }
+                                        } else {
+                                            {
+                                                // (wrap-sexpr exp (sexpr->application f-obj (cdr exp) env tail?))
+                                                globals::wrap_minus_sexpr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone(), {
+                                                        // (sexpr->application f-obj (cdr exp) env tail?)
+                                                        globals::sexpr_minus__g_application
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                f_minus_obj.clone(),
+                                                                {
+                                                                    // (cdr exp)
+                                                                    imports::cdr
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[exp.clone()])
+                                                                },
+                                                                env.clone(),
+                                                                tail_p.clone(),
+                                                            ])
+                                                    }])
                                             }
                                         }
                                     }
@@ -928,169 +859,6 @@ globals::sexpr_minus__g_sequence.with(|value| value.get()).invoke(&[body.clone()
                     })
                 })
             })
-        };
-        {
-            // (define (sexpr->testsuite name cases env) ...)
-            globals::sexpr_minus__g_testsuite.with(|value| {
-                value.set({
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 3 {
-                            panic!("invalid arity")
-                        }
-                        let name = args[0].clone();
-                        let cases = args[1].clone();
-                        let env = args[2].clone();
-                        {
-                            // (make-testsuite name (map (lambda (case) (sexpr->testcase case env)) cases))
-                            imports::make_minus_testsuite
-                                .with(|value| value.get())
-                                .invoke(&[name.clone(), {
-                                    // (map (lambda (case) (sexpr->testcase case env)) cases)
-                                    imports::map.with(|value| value.get()).invoke(&[
-                                        {
-                                            let env = env.clone();
-                                            Scm::func(move |args: &[Scm]| {
-                                                if args.len() != 1 {
-                                                    panic!("invalid arity")
-                                                }
-                                                let case = args[0].clone();
-                                                {
-                                                    // (sexpr->testcase case env)
-                                                    globals::sexpr_minus__g_testcase
-                                                        .with(|value| value.get())
-                                                        .invoke(&[case.clone(), env.clone()])
-                                                }
-                                            })
-                                        },
-                                        cases.clone(),
-                                    ])
-                                }])
-                        }
-                    })
-                })
-            })
-        };
-        {
-            // (define (sexpr->testcase case env) ...)
-            globals::sexpr_minus__g_testcase.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let case = args[0].clone();let env = args[1].clone();{
-// (letrec ((given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt)))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f))))
-{
-// (let ((given (quote *uninitialized*)) (when (quote *uninitialized*)) (then (quote *uninitialized*)) (dispatch (quote *uninitialized*))) (begin (set! given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (set! when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt)))) (set! then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (set! dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase"))))) (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f)))))
-{let [given, when, then, dispatch, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let dispatch = dispatch.into_boxed();{let then = then.into_boxed();{let when = when.into_boxed();{let given = given.into_boxed();{given.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
-// (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("let*"),{
-// (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt))
-imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let assignment = args[0].clone();{
-// (list (car assignment) (caddr assignment))
-imports::list.with(|value| value.get()).invoke(&[{
-// (car assignment)
-imports::car.with(|value| value.get()).invoke(&[assignment.clone()])},{
-// (caddr assignment)
-imports::caddr.with(|value| value.get()).invoke(&[assignment.clone()])}])}})},{
-// (cdr stmt)
-imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])},body.clone()])}})});when.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
-// (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (loop (cdr stmt)))
-{
-// (let ((loop (quote *uninitialized*))) (begin (set! loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*))))))) (loop (cdr stmt))))
-{let loop_ = Scm::symbol("*uninitialized*");{let loop_ = loop_.into_boxed();{loop_.set({let body = body.clone();let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let stmt_star_ = args[0].clone();{
-// (cond ...)
-if ({
-// (null? stmt*)
-imports::null_p.with(|value| value.get()).invoke(&[stmt_star_.clone()])}).is_true() {body.clone()} else if ({
-// (eq? (quote <-) (cadar stmt*))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("<-"),{
-// (cadar stmt*)
-imports::cadar.with(|value| value.get()).invoke(&[stmt_star_.clone()])}])}).is_true() {{
-// (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("let"),{
-// (list (list (caar stmt*) (caddar stmt*)))
-imports::list.with(|value| value.get()).invoke(&[{
-// (list (caar stmt*) (caddar stmt*))
-imports::list.with(|value| value.get()).invoke(&[{
-// (caar stmt*)
-imports::caar.with(|value| value.get()).invoke(&[stmt_star_.clone()])},{
-// (caddar stmt*)
-imports::caddar.with(|value| value.get()).invoke(&[stmt_star_.clone()])}])}])},{
-// (loop (cdr stmt*))
-loop_.get().invoke(&[{
-// (cdr stmt*)
-imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])}])}])}} else {{
-// (list (quote begin) (car stmt*) (loop (cdr stmt*)))
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
-// (car stmt*)
-imports::car.with(|value| value.get()).invoke(&[stmt_star_.clone()])},{
-// (loop (cdr stmt*))
-loop_.get().invoke(&[{
-// (cdr stmt*)
-imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])}])}])}}}})});{
-// (loop (cdr stmt))
-loop_.get().invoke(&[{
-// (cdr stmt)
-imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])}}}}}}})});then.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
-// (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
-// (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)
-imports::append.with(|value| value.get()).invoke(&[{
-// (map (lambda (pred) (list (quote assert) pred)) (cdr stmt))
-imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let pred = args[0].clone();{
-// (list (quote assert) pred)
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("assert"),pred.clone()])}})},{
-// (cdr stmt)
-imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])},body.clone()])}])}})});dispatch.set({let given = given.clone();let dispatch = dispatch.clone();let when = when.clone();let then = then.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let section_star_ = args[0].clone();let body = args[1].clone();{
-// (cond ...)
-if ({
-// (null? section*)
-imports::null_p.with(|value| value.get()).invoke(&[section_star_.clone()])}).is_true() {body.clone()} else if ({
-// (eq? (quote given) (caar section*))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("given"),{
-// (caar section*)
-imports::caar.with(|value| value.get()).invoke(&[section_star_.clone()])}])}).is_true() {{
-// (given (car section*) (dispatch (cdr section*) body))
-given.get().invoke(&[{
-// (car section*)
-imports::car.with(|value| value.get()).invoke(&[section_star_.clone()])},{
-// (dispatch (cdr section*) body)
-dispatch.get().invoke(&[{
-// (cdr section*)
-imports::cdr.with(|value| value.get()).invoke(&[section_star_.clone()])},body.clone()])}])}} else if ({
-// (eq? (quote when) (caar section*))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("when"),{
-// (caar section*)
-imports::caar.with(|value| value.get()).invoke(&[section_star_.clone()])}])}).is_true() {{
-// (when (car section*) (dispatch (cdr section*) body))
-when.get().invoke(&[{
-// (car section*)
-imports::car.with(|value| value.get()).invoke(&[section_star_.clone()])},{
-// (dispatch (cdr section*) body)
-dispatch.get().invoke(&[{
-// (cdr section*)
-imports::cdr.with(|value| value.get()).invoke(&[section_star_.clone()])},body.clone()])}])}} else if ({
-// (eq? (quote then) (caar section*))
-imports::eq_p.with(|value| value.get()).invoke(&[Scm::symbol("then"),{
-// (caar section*)
-imports::caar.with(|value| value.get()).invoke(&[section_star_.clone()])}])}).is_true() {{
-// (then (car section*) (dispatch (cdr section*) body))
-then.get().invoke(&[{
-// (car section*)
-imports::car.with(|value| value.get()).invoke(&[section_star_.clone()])},{
-// (dispatch (cdr section*) body)
-dispatch.get().invoke(&[{
-// (cdr section*)
-imports::cdr.with(|value| value.get()).invoke(&[section_star_.clone()])},body.clone()])}])}} else {{
-// (error "invalid testcase")
-imports::error.with(|value| value.get()).invoke(&[Scm::from("invalid testcase")])}}}})});{
-// (let ((body (dispatch (cddr case) (quote ())))) (make-testcase (cadr case) (sexpr->ast body env #f)))
-{let body = {
-// (dispatch (cddr case) (quote ()))
-dispatch.get().invoke(&[{
-// (cddr case)
-imports::cddr.with(|value| value.get()).invoke(&[case.clone()])},Scm::Nil])};{
-// (make-testcase (cadr case) (sexpr->ast body env #f))
-imports::make_minus_testcase.with(|value| value.get()).invoke(&[{
-// (cadr case)
-imports::cadr.with(|value| value.get()).invoke(&[case.clone()])},{
-// (sexpr->ast body env #f)
-globals::sexpr_minus__g_ast.with(|value| value.get()).invoke(&[body.clone(),env.clone(),Scm::False])}])}}}}}}}}}}}})}))
         };
         {
             // (define (sexpr->import-all lib env) ...)

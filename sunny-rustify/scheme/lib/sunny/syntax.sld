@@ -22,7 +22,8 @@
             (new-keyword 'let* expand-let*)
             (new-keyword 'letrec expand-letrec)
             (new-keyword 'quote expand-quote)
-            (new-keyword 'set! expand-set!)))
+            (new-keyword 'set! expand-set!)
+            (new-keyword 'testsuite expand-testsuite)))
 
     (define (expand-and exp env tail?)
       (astify-comment exp
@@ -85,4 +86,9 @@
       (astify-constant (cadr exp) env))
 
     (define (expand-set! exp env tail?)
-      (astify-assignment (set!-variable exp) (set!-value exp) env))))
+      (astify-assignment (set!-variable exp) (set!-value exp) env))
+
+    (define (expand-testsuite exp env tail?)
+      (astify-testsuite (testsuite-name exp)
+                        (testsuite-cases exp)
+                        env))))
