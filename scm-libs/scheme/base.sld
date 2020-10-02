@@ -3,7 +3,7 @@
     = > < - +
     append
     apply
-    assq
+    assoc assq
     car caar cadr
     cdr cdar cddr
     char? close-port cons
@@ -57,6 +57,13 @@
     (define (assq obj seq)
       (if (pair? seq)
           (if (eq? obj (caar seq))
+              (car seq)
+              (assq obj (cdr seq)))
+          #f))
+
+    (define (assoc obj seq)
+      (if (pair? seq)
+          (if (equal? obj (caar seq))
               (car seq)
               (assq obj (cdr seq)))
           #f))

@@ -6,6 +6,7 @@ mod imports {
 
 pub mod exports {
     pub use super::globals::append;
+    pub use super::globals::assoc;
     pub use super::globals::assq;
     pub use super::globals::for_minus_each;
     pub use super::globals::length;
@@ -65,6 +66,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static append2: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append2"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_right: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-right"))}
@@ -278,6 +280,64 @@ pub fn initialize() {
                             if ({
                                 // (eq? obj (caar seq))
                                 imports::eq_p
+                                    .with(|value| value.get())
+                                    .invoke(&[obj.clone(), {
+                                        // (caar seq)
+                                        imports::caar
+                                            .with(|value| value.get())
+                                            .invoke(&[seq.clone()])
+                                    }])
+                            })
+                            .is_true()
+                            {
+                                {
+                                    // (car seq)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                }
+                            } else {
+                                {
+                                    // (assq obj (cdr seq))
+                                    globals::assq.with(|value| value.get()).invoke(&[
+                                        obj.clone(),
+                                        {
+                                            // (cdr seq)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[seq.clone()])
+                                        },
+                                    ])
+                                }
+                            }
+                        } else {
+                            Scm::False
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (assoc obj seq) ...)
+            globals::assoc.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        let seq = args[1].clone();
+                        if ({
+                            // (pair? seq)
+                            imports::pair_p
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        })
+                        .is_true()
+                        {
+                            if ({
+                                // (equal? obj (caar seq))
+                                imports::equal_p
                                     .with(|value| value.get())
                                     .invoke(&[obj.clone(), {
                                         // (caar seq)

@@ -22,7 +22,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static register_minus_libraries: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL register-libraries"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_toplevel: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-toplevel"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_library: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-library"))}
@@ -293,7 +292,7 @@ globals::register_minus_libraries.with(|value| value.get()).invoke(&[{
 // (cdr libs)
 imports::cdr.with(|value| value.get()).invoke(&[libs.clone()])},library_minus_env.clone()])}} else if ({
 // (assoc (car libs) (car library-env))
-globals::assoc.with(|value| value.get()).invoke(&[{
+imports::assoc.with(|value| value.get()).invoke(&[{
 // (car libs)
 imports::car.with(|value| value.get()).invoke(&[libs.clone()])},{
 // (car library-env)
