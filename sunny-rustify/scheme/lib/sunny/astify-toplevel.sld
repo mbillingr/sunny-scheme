@@ -24,50 +24,29 @@
           (astify-program exp*)))
 
     (define (astify-library name exp* library-env)
-      (astify-library-decls name exp* (make-set) (make-nop) (make-core-env) library-env '() '()))
-
-    (define (astify-library-decls name exp* init body global-env library-env imports exports)
-      (cond ((null? exp*)
-             (make-library
-               name
-               (cdr global-env)
-               init
-               (boxify (close-procedures body))
-               imports
-               exports))
-            ((eq? 'export (caar exp*))
-             (astify-library-decls name
-                                   (cdr exp*)
-                                   init
-                                   body
-                                   global-env
-                                   library-env
-                                   imports
-                                   (append exports
-                                           (astify-export (cdar exp*) global-env))))
-            ((import? (car exp*))
-             (register-libraries (import-libnames (car exp*))
-                                 library-env)
-             (astify-library-decls name
-                                   (cdr exp*)
-                                   (set-add* init (import-libnames (car exp*)))
-                                   body
-                                   global-env
-                                   library-env
-                                   (append imports
-                                           (astify-import (cdar exp*) global-env))
-                                   exports))
-            ((eq? 'begin (caar exp*))
-             (astify-library-decls name
-                                   (cdr exp*)
-                                   init
-                                   (make-sequence body
-                                                  (astify-sequence (cdar exp*)
-                                                                   global-env #f))
-                                   global-env
-                                   library-env
-                                   imports
-                                   exports))))
+      (define init (make-set))
+      (define body (make-nop))
+      (define global-env (make-core-env))
+      (define imports '())
+      (define exports '())
+      (define (process-library-decls exp*)
+        (cond ((null? exp*)
+               'DONE)
+              ((eq? 'export (caar exp*))
+               (set! exports (append exports (astify-export (cdar exp*) global-env)))
+               (process-library-decls (cdr exp*)))
+              ((import? (car exp*))
+               (register-libraries (import-libnames (car exp*)) library-env)
+               (set! init (set-add* init (import-libnames (car exp*))))
+               (set! imports (append imports (astify-import (cdar exp*) global-env)))
+               (process-library-decls (cdr exp*)))
+              ((eq? 'begin (caar exp*))
+               (set! body (make-sequence body
+                                         (astify-sequence (cdar exp*)
+                                                          global-env #f)))
+               (process-library-decls (cdr exp*)))))
+      (process-library-decls exp*)
+      (make-library name (cdr global-env) init (boxify (close-procedures body)) imports exports))
 
     (define (astify-program exp*)
       (define global-env (make-core-env))
