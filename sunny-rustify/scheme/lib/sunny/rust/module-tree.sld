@@ -49,7 +49,7 @@
 
     (define (module-tree-insert! tree libname libobj)
       (if (null? libname)
-          (error "invalid insert"))
+          (error "invalid insert - empty libname"))
       (let ((child (module-tree-find-child tree (car libname))))
         (if child
             (module-tree-insert! child (cdr libname) libobj)

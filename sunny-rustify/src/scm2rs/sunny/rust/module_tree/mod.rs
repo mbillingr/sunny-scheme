@@ -312,8 +312,8 @@ pub fn initialize() {
             globals::module_minus_tree_minus_insert_i.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let tree = args[0].clone();let libname = args[1].clone();let libobj = args[2].clone();{if ({
 // (null? libname)
 imports::null_p.with(|value| value.get()).invoke(&[libname.clone()])}).is_true() {{
-// (error "invalid insert")
-imports::error.with(|value| value.get()).invoke(&[Scm::from("invalid insert")])}} else {Scm::symbol("*UNSPECIFIED*")};{
+// (error "invalid insert - empty libname")
+imports::error.with(|value| value.get()).invoke(&[Scm::from("invalid insert - empty libname")])}} else {Scm::symbol("*UNSPECIFIED*")};{
 // (let ((child (module-tree-find-child tree (car libname)))) (if child (module-tree-insert! child (cdr libname) libobj) (if (null? (cdr libname)) (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj)) (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node)))))
 {let child = {
 // (module-tree-find-child tree (car libname))
