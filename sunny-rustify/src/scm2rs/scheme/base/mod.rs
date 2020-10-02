@@ -356,8 +356,8 @@ pub fn initialize() {
                                 }
                             } else {
                                 {
-                                    // (assq obj (cdr seq))
-                                    globals::assq.with(|value| value.get()).invoke(&[
+                                    // (assoc obj (cdr seq))
+                                    globals::assoc.with(|value| value.get()).invoke(&[
                                         obj.clone(),
                                         {
                                             // (cdr seq)

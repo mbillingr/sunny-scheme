@@ -65,7 +65,7 @@
       (if (pair? seq)
           (if (equal? obj (caar seq))
               (car seq)
-              (assq obj (cdr seq)))
+              (assoc obj (cdr seq)))
           #f))
 
     (define (memq obj seq)
