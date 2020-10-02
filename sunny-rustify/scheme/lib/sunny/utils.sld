@@ -7,7 +7,8 @@
           filter
           last-cdr
           proper-list-part
-          reduce)
+          reduce
+          sort)
 
   (import (scheme base))
 
@@ -56,4 +57,16 @@
           first
           (if (null? args)
               #f
-              (apply bor args))))))
+              (apply bor args))))
+
+    (define (sort cmp ass)
+      (if (pair? ass)
+          (let ((pivot (car ass)))
+            (append (sort cmp
+                          (filter (lambda (x) (cmp x pivot))
+                                  (cdr ass)))
+                    (cons pivot
+                          (sort cmp
+                                (filter (lambda (x) (not (cmp x pivot)))
+                                        (cdr ass))))))
+          '()))))

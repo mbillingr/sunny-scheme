@@ -25,6 +25,9 @@ pub mod exports {
     pub use super::globals::if_minus_consequence;
     pub use super::globals::import_minus_libnames;
     pub use super::globals::import_p;
+    pub use super::globals::importset_minus_libname;
+    pub use super::globals::importset_minus_only_minus_names;
+    pub use super::globals::importset_minus_only_p;
     pub use super::globals::lambda_minus_body;
     pub use super::globals::lambda_minus_params;
     pub use super::globals::let_minus_args;
@@ -57,6 +60,9 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static let_minus_args: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL let-args"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lambda_minus_params: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lambda-params"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static lambda_minus_body: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL lambda-body"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_only_minus_names: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-only-names"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_except_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-except?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_only_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-only?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_libnames: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-libnames"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static importset_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL importset-libname"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import?"))}
@@ -615,69 +621,126 @@ pub fn initialize() {
             })
         };
         {
-            // (define (importset-libname expr) ...)
+            // (define (importset-libname stmt) ...)
             globals::importset_minus_libname.with(|value| {
                 value.set({
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let expr = args[0].clone();
+                        let stmt = args[0].clone();
                         {
                             // (cond ...)
                             if ({
-                                // (eq? (quote only) (car expr))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("only"),
-                                    {
-                                        // (car expr)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[expr.clone()])
-                                    },
-                                ])
+                                // (importset-only? stmt)
+                                globals::importset_minus_only_p
+                                    .with(|value| value.get())
+                                    .invoke(&[stmt.clone()])
                             })
                             .is_true()
                             {
                                 {
-                                    // (importset-libname (cadr expr))
+                                    // (importset-libname (cadr stmt))
                                     globals::importset_minus_libname
                                         .with(|value| value.get())
                                         .invoke(&[{
-                                            // (cadr expr)
+                                            // (cadr stmt)
                                             imports::cadr
                                                 .with(|value| value.get())
-                                                .invoke(&[expr.clone()])
+                                                .invoke(&[stmt.clone()])
                                         }])
                                 }
                             } else if ({
-                                // (eq? (quote except) (car expr))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("except"),
-                                    {
-                                        // (car expr)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[expr.clone()])
-                                    },
-                                ])
+                                // (importset-except? stmt)
+                                globals::importset_minus_except_p
+                                    .with(|value| value.get())
+                                    .invoke(&[stmt.clone()])
                             })
                             .is_true()
                             {
                                 {
-                                    // (importset-libname (cadr expr))
+                                    // (importset-libname (cadr stmt))
                                     globals::importset_minus_libname
                                         .with(|value| value.get())
                                         .invoke(&[{
-                                            // (cadr expr)
+                                            // (cadr stmt)
                                             imports::cadr
                                                 .with(|value| value.get())
-                                                .invoke(&[expr.clone()])
+                                                .invoke(&[stmt.clone()])
                                         }])
                                 }
                             } else {
-                                expr.clone()
+                                stmt.clone()
                             }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (importset-except? stmt) ...)
+            globals::importset_minus_except_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let stmt = args[0].clone();
+                        {
+                            // (eq? (quote except) (car stmt))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("except"),
+                                {
+                                    // (car stmt)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[stmt.clone()])
+                                },
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (importset-only? stmt) ...)
+            globals::importset_minus_only_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let stmt = args[0].clone();
+                        {
+                            // (eq? (quote only) (car stmt))
+                            imports::eq_p.with(|value| value.get()).invoke(&[
+                                Scm::symbol("only"),
+                                {
+                                    // (car stmt)
+                                    imports::car
+                                        .with(|value| value.get())
+                                        .invoke(&[stmt.clone()])
+                                },
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (importset-only-names stmt) ...)
+            globals::importset_minus_only_minus_names.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let stmt = args[0].clone();
+                        {
+                            // (cddr stmt)
+                            imports::cddr
+                                .with(|value| value.get())
+                                .invoke(&[stmt.clone()])
                         }
                     })
                 })

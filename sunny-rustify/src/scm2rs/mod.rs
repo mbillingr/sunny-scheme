@@ -7,8 +7,9 @@ mod imports {
     pub use crate::scheme::process_context::exports::command_minus_line;
     pub use crate::scheme::read::exports::*;
     pub use crate::scheme::write::exports::*;
+    pub use crate::sunny::astify_toplevel::exports::*;
+    pub use crate::sunny::rust::codegen::exports::*;
     pub use crate::sunny::table::exports::*;
-    pub use crate::sunny::translate::exports::*;
     pub use crate::testsuite::exports::*;
 }
 
@@ -34,7 +35,8 @@ pub fn main() {
     crate::scheme::read::initialize();
     crate::scheme::write::initialize();
     crate::scheme::process_context::initialize();
-    crate::sunny::translate::initialize();
+    crate::sunny::astify_toplevel::initialize();
+    crate::sunny::rust::codegen::initialize();
     crate::sunny::table::initialize();
     crate::testsuite::initialize();
     {
@@ -209,11 +211,11 @@ pub fn main() {
             })
         };
         {
-            // (define ast (scm->ast program))
+            // (define ast (astify-toplevel program))
             globals::ast.with(|value| {
                 value.set({
-                    // (scm->ast program)
-                    imports::scm_minus__g_ast
+                    // (astify-toplevel program)
+                    imports::astify_minus_toplevel
                         .with(|value| value.get())
                         .invoke(&[globals::program.with(|value| value.get())])
                 })

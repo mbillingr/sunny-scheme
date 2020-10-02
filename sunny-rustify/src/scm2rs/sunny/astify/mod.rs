@@ -5,8 +5,8 @@ mod imports {
     pub use crate::scheme::cxr::exports::*;
     pub use crate::sunny::ast::exports::*;
     pub use crate::sunny::env::exports::*;
+    pub use crate::sunny::library::exports::*;
     pub use crate::sunny::scheme_syntax::exports::*;
-    pub use crate::sunny::sexpr_ast::exports::*;
     pub use crate::sunny::utils::exports::*;
     pub use crate::sunny::variable::exports::*;
 }
@@ -23,6 +23,8 @@ pub mod exports {
     pub use super::globals::astify_minus_cond;
     pub use super::globals::astify_minus_constant;
     pub use super::globals::astify_minus_definition;
+    pub use super::globals::astify_minus_export;
+    pub use super::globals::astify_minus_import;
     pub use super::globals::astify_minus_sequence;
     pub use super::globals::astify_minus_symbol;
     pub use super::globals::astify_minus_testsuite;
@@ -32,6 +34,10 @@ mod globals {
     use sunny_core::{Mut, Scm};
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-testsuite"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_testcase: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-testcase"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_import_minus_all: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-import-all"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_import_minus_only: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-import-only"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-import"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_export: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-export"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_definition: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-definition"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_cond: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-cond"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_unspecified: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-unspecified"))}
@@ -60,9 +66,9 @@ pub fn initialize() {
     crate::scheme::base::initialize();
     crate::scheme::cxr::initialize();
     crate::sunny::ast::initialize();
+    crate::sunny::library::initialize();
     crate::sunny::env::initialize();
     crate::sunny::scheme_syntax::initialize();
-    crate::sunny::sexpr_ast::initialize();
     crate::sunny::utils::initialize();
     crate::sunny::variable::initialize();
     {
@@ -775,6 +781,305 @@ imports::make_minus_alternative.with(|value| value.get()).invoke(&[i.clone(),t.c
                                             ])
                                     }
                                 }
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (astify-export export-spec* env) ...)
+            globals::astify_minus_export.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let export_minus_spec_star_ = args[0].clone();
+                        let env = args[1].clone();
+                        {
+                            // (cond ...)
+                            if ({
+                                // (null? export-spec*)
+                                imports::null_p
+                                    .with(|value| value.get())
+                                    .invoke(&[export_minus_spec_star_.clone()])
+                            })
+                            .is_true()
+                            {
+                                Scm::Nil
+                            } else {
+                                {
+                                    // (cons (make-export env (car export-spec*) (car export-spec*)) (astify-export (cdr export-spec*) env))
+                                    imports::cons.with(|value| value.get()).invoke(&[
+                                        {
+                                            // (make-export env (car export-spec*) (car export-spec*))
+                                            imports::make_minus_export
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    env.clone(),
+                                                    {
+                                                        // (car export-spec*)
+                                                        imports::car
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                export_minus_spec_star_.clone()
+                                                            ])
+                                                    },
+                                                    {
+                                                        // (car export-spec*)
+                                                        imports::car
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                export_minus_spec_star_.clone()
+                                                            ])
+                                                    },
+                                                ])
+                                        },
+                                        {
+                                            // (astify-export (cdr export-spec*) env)
+                                            globals::astify_minus_export
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    {
+                                                        // (cdr export-spec*)
+                                                        imports::cdr
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                export_minus_spec_star_.clone()
+                                                            ])
+                                                    },
+                                                    env.clone(),
+                                                ])
+                                        },
+                                    ])
+                                }
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (astify-import stmt* env) ...)
+            globals::astify_minus_import.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let stmt_star_ = args[0].clone();
+                        let env = args[1].clone();
+                        if ({
+                            // (null? stmt*)
+                            imports::null_p
+                                .with(|value| value.get())
+                                .invoke(&[stmt_star_.clone()])
+                        })
+                        .is_true()
+                        {
+                            Scm::Nil
+                        } else {
+                            {
+                                // (let ((libname (importset-libname (car stmt*)))) (cond ((equal? (quote (sunny testing)) libname) (astify-import (cdr stmt*) env)) ((importset-only? (car stmt*)) (cons (astify-import-only libname (importset-only-names (car stmt*)) env) (astify-import (cdr stmt*) env))) (else (cons (astify-import-all libname env) (astify-import (cdr stmt*) env)))))
+                                {
+                                    let libname = {
+                                        // (importset-libname (car stmt*))
+                                        imports::importset_minus_libname
+                                            .with(|value| value.get())
+                                            .invoke(&[{
+                                                // (car stmt*)
+                                                imports::car
+                                                    .with(|value| value.get())
+                                                    .invoke(&[stmt_star_.clone()])
+                                            }])
+                                    };
+                                    {
+                                        // (cond ...)
+                                        if ({
+                                            // (equal? (quote (sunny testing)) libname)
+                                            imports::equal_p.with(|value| value.get()).invoke(&[
+                                                Scm::pair(
+                                                    Scm::symbol("sunny"),
+                                                    Scm::pair(Scm::symbol("testing"), Scm::Nil),
+                                                ),
+                                                libname.clone(),
+                                            ])
+                                        })
+                                        .is_true()
+                                        {
+                                            {
+                                                // (astify-import (cdr stmt*) env)
+                                                globals::astify_minus_import
+                                                    .with(|value| value.get())
+                                                    .invoke(&[
+                                                        {
+                                                            // (cdr stmt*)
+                                                            imports::cdr
+                                                                .with(|value| value.get())
+                                                                .invoke(&[stmt_star_.clone()])
+                                                        },
+                                                        env.clone(),
+                                                    ])
+                                            }
+                                        } else if ({
+                                            // (importset-only? (car stmt*))
+                                            imports::importset_minus_only_p
+                                                .with(|value| value.get())
+                                                .invoke(&[{
+                                                    // (car stmt*)
+                                                    imports::car
+                                                        .with(|value| value.get())
+                                                        .invoke(&[stmt_star_.clone()])
+                                                }])
+                                        })
+                                        .is_true()
+                                        {
+                                            {
+                                                // (cons (astify-import-only libname (importset-only-names (car stmt*)) env) (astify-import (cdr stmt*) env))
+                                                imports::cons.with(|value| value.get()).invoke(&[{
+// (astify-import-only libname (importset-only-names (car stmt*)) env)
+globals::astify_minus_import_minus_only.with(|value| value.get()).invoke(&[libname.clone(),{
+// (importset-only-names (car stmt*))
+imports::importset_minus_only_minus_names.with(|value| value.get()).invoke(&[{
+// (car stmt*)
+imports::car.with(|value| value.get()).invoke(&[stmt_star_.clone()])}])},env.clone()])},{
+// (astify-import (cdr stmt*) env)
+globals::astify_minus_import.with(|value| value.get()).invoke(&[{
+// (cdr stmt*)
+imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone()])}])
+                                            }
+                                        } else {
+                                            {
+                                                // (cons (astify-import-all libname env) (astify-import (cdr stmt*) env))
+                                                imports::cons.with(|value| value.get()).invoke(&[
+                                                    {
+                                                        // (astify-import-all libname env)
+                                                        globals::astify_minus_import_minus_all
+                                                            .with(|value| value.get())
+                                                            .invoke(&[libname.clone(), env.clone()])
+                                                    },
+                                                    {
+                                                        // (astify-import (cdr stmt*) env)
+                                                        globals::astify_minus_import
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                {
+                                                                    // (cdr stmt*)
+                                                                    imports::cdr
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[
+                                                                            stmt_star_.clone()
+                                                                        ])
+                                                                },
+                                                                env.clone(),
+                                                            ])
+                                                    },
+                                                ])
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (astify-import-all libname env) ...)
+            globals::astify_minus_import_minus_all.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let libname = args[0].clone();
+                        let env = args[1].clone();
+                        {
+                            {
+                                // (adjoin-import*! (library-exports (library-decls (get-lib libname))) env)
+                                imports::adjoin_minus_import_star__i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        {
+                                            // (library-exports (library-decls (get-lib libname)))
+                                            imports::library_minus_exports
+                                                .with(|value| value.get())
+                                                .invoke(&[{
+                                                    // (library-decls (get-lib libname))
+                                                    imports::library_minus_decls
+                                                        .with(|value| value.get())
+                                                        .invoke(&[{
+                                                            // (get-lib libname)
+                                                            imports::get_minus_lib
+                                                                .with(|value| value.get())
+                                                                .invoke(&[libname.clone()])
+                                                        }])
+                                                }])
+                                        },
+                                        env.clone(),
+                                    ])
+                            };
+                            {
+                                // (make-import libname)
+                                imports::make_minus_import
+                                    .with(|value| value.get())
+                                    .invoke(&[libname.clone()])
+                            }
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (astify-import-only libname names env) ...)
+            globals::astify_minus_import_minus_only.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 3 {
+                            panic!("invalid arity")
+                        }
+                        let libname = args[0].clone();
+                        let names = args[1].clone();
+                        let env = args[2].clone();
+                        {
+                            {
+                                // (check-imports names (library-exports (library-decls (get-lib libname))) libname)
+                                imports::check_minus_imports
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        names.clone(),
+                                        {
+                                            // (library-exports (library-decls (get-lib libname)))
+                                            imports::library_minus_exports
+                                                .with(|value| value.get())
+                                                .invoke(&[{
+                                                    // (library-decls (get-lib libname))
+                                                    imports::library_minus_decls
+                                                        .with(|value| value.get())
+                                                        .invoke(&[{
+                                                            // (get-lib libname)
+                                                            imports::get_minus_lib
+                                                                .with(|value| value.get())
+                                                                .invoke(&[libname.clone()])
+                                                        }])
+                                                }])
+                                        },
+                                        libname.clone(),
+                                    ])
+                            };
+                            {
+                                // (adjoin-import*! names env)
+                                imports::adjoin_minus_import_star__i
+                                    .with(|value| value.get())
+                                    .invoke(&[names.clone(), env.clone()])
+                            };
+                            {
+                                // (make-import-only libname names)
+                                imports::make_minus_import_minus_only
+                                    .with(|value| value.get())
+                                    .invoke(&[libname.clone(), names.clone()])
                             }
                         }
                     })

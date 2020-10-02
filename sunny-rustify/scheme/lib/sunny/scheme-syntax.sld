@@ -16,6 +16,9 @@
           if-alternative
           import?
           import-libnames
+          importset-only?
+          importset-libname
+          importset-only-names
           lambda-body
           lambda-params
           let-args
@@ -111,12 +114,21 @@
            (not (equal? libname '(sunny testing))))
         (map importset-libname (cdr exp*))))
 
-    (define (importset-libname expr)
-      (cond ((eq? 'only (car expr))
-             (importset-libname (cadr expr)))
-            ((eq? 'except (car expr))
-             (importset-libname (cadr expr)))
-            (else expr)))
+    (define (importset-libname stmt)
+      (cond ((importset-only? stmt)
+             (importset-libname (cadr stmt)))
+            ((importset-except? stmt)
+             (importset-libname (cadr stmt)))
+            (else stmt)))
+
+    (define (importset-except? stmt)
+      (eq? 'except (car stmt)))
+
+    (define (importset-only? stmt)
+      (eq? 'only (car stmt)))
+
+    (define (importset-only-names stmt)
+      (cddr stmt))
 
 
     (define (lambda-body expr)

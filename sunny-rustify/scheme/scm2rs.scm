@@ -4,7 +4,8 @@
         (scheme read)
         (scheme write)
         (only (scheme process-context) command-line)
-        (sunny translate)
+        (sunny astify-toplevel)
+        (sunny rust codegen)
         (sunny table)
         (testsuite))
 
@@ -36,7 +37,7 @@
 
 (define program (load-sexpr))
 
-(define ast (scm->ast program))
+(define ast (astify-toplevel program))
 
 (rust-gen-in-module output-module-name output-dir
   (lambda (module)

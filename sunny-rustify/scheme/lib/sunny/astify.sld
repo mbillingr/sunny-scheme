@@ -10,6 +10,8 @@
           astify-cond
           astify-constant
           astify-definition
+          astify-export
+          astify-import
           astify-sequence
           astify-symbol
           astify-testsuite)
@@ -17,9 +19,9 @@
   (import (scheme base)
           (scheme cxr)
           (sunny ast)
+          (sunny library)
           (sunny env)
           (sunny scheme-syntax)
-          (sunny sexpr-ast)
           (sunny utils)
           (sunny variable))
 
@@ -111,6 +113,37 @@
             (val (astify value env #f)))
         (global-add-definition! var val)
         (make-definition var-name var val)))
+
+    (define (astify-export export-spec* env)
+      (cond ((null? export-spec*)
+             '())
+            (else (cons (make-export env (car export-spec*) (car export-spec*))
+                        (astify-export (cdr export-spec*) env)))))
+
+    (define (astify-import stmt* env)
+      (if (null? stmt*)
+          '()
+          (let ((libname (importset-libname (car stmt*))))
+            (cond ((equal? '(sunny testing) libname)  ; ignore the testing library
+                   (astify-import (cdr stmt*) env))
+                  ((importset-only? (car stmt*))
+                   (cons (astify-import-only libname (importset-only-names (car stmt*)) env)
+                         (astify-import (cdr stmt*) env)))
+                  (else (cons (astify-import-all libname env)
+                              (astify-import (cdr stmt*) env)))))))
+
+    (define (astify-import-all libname env)
+      (adjoin-import*!
+        (library-exports (library-decls (get-lib libname)))
+        env)
+      (make-import libname))
+
+    (define (astify-import-only libname names env)
+      (check-imports names
+                     (library-exports (library-decls (get-lib libname)))
+                     libname)
+      (adjoin-import*! names env)
+      (make-import-only libname names))
 
     (define (astify-sequence exp* env tail?)
       (cond ((null? exp*)

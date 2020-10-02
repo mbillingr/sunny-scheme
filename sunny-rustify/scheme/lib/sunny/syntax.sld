@@ -5,7 +5,6 @@
           (sunny astify)
           (sunny env)
           (sunny scheme-syntax)
-          (sunny sexpr-ast)
           (sunny variable))
 
   (begin

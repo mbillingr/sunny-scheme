@@ -13,10 +13,12 @@ pub mod exports {
     pub use super::globals::last_minus_cdr;
     pub use super::globals::proper_minus_list_minus_part;
     pub use super::globals::reduce;
+    pub use super::globals::sort;
 }
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static sort: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL sort"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static bor: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL bor"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static any: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static reduce: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reduce"))}
@@ -368,6 +370,38 @@ pub fn initialize() {
                     })
                 })
             })
+        };
+        {
+            // (define (sort cmp ass) ...)
+            globals::sort.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let cmp = args[0].clone();let ass = args[1].clone();if ({
+// (pair? ass)
+imports::pair_p.with(|value| value.get()).invoke(&[ass.clone()])}).is_true() {{
+// (let ((pivot (car ass))) (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))))
+{let pivot = {
+// (car ass)
+imports::car.with(|value| value.get()).invoke(&[ass.clone()])};{
+// (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))
+imports::append.with(|value| value.get()).invoke(&[{
+// (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
+globals::sort.with(|value| value.get()).invoke(&[cmp.clone(),{
+// (filter (lambda (x) (cmp x pivot)) (cdr ass))
+globals::filter.with(|value| value.get()).invoke(&[{let cmp = cmp.clone();let pivot = pivot.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();{
+// (cmp x pivot)
+cmp.clone().invoke(&[x.clone(),pivot.clone()])}})},{
+// (cdr ass)
+imports::cdr.with(|value| value.get()).invoke(&[ass.clone()])}])}])},{
+// (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))
+imports::cons.with(|value| value.get()).invoke(&[pivot.clone(),{
+// (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
+globals::sort.with(|value| value.get()).invoke(&[cmp.clone(),{
+// (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
+globals::filter.with(|value| value.get()).invoke(&[{let cmp = cmp.clone();let pivot = pivot.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();{
+// (not (cmp x pivot))
+imports::not.with(|value| value.get()).invoke(&[{
+// (cmp x pivot)
+cmp.clone().invoke(&[x.clone(),pivot.clone()])}])}})},{
+// (cdr ass)
+imports::cdr.with(|value| value.get()).invoke(&[ass.clone()])}])}])}])}])}}}} else {Scm::Nil}})}))
         }
     };
 }

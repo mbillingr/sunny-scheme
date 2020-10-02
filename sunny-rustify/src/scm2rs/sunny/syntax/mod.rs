@@ -5,7 +5,6 @@ mod imports {
     pub use crate::sunny::astify::exports::*;
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::scheme_syntax::exports::*;
-    pub use crate::sunny::sexpr_ast::exports::*;
     pub use crate::sunny::variable::exports::*;
 }
 
@@ -43,7 +42,6 @@ pub fn initialize() {
     crate::sunny::astify::initialize();
     crate::sunny::env::initialize();
     crate::sunny::scheme_syntax::initialize();
-    crate::sunny::sexpr_ast::initialize();
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);
