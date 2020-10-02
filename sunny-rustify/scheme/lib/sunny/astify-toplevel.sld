@@ -46,7 +46,11 @@
                                                           global-env #f)))
                (process-library-decls (cdr exp*)))))
       (process-library-decls exp*)
-      (make-library name (cdr global-env) init (boxify (close-procedures body)) imports exports))
+      (let* ((globals (sort (lambda (a b)
+                              (string<? (symbol->string (car a))
+                                        (symbol->string (car b))))
+                            (cdr global-env))))
+        (make-library name globals init (boxify (close-procedures body)) imports exports)))
 
     (define (astify-program exp*)
       (define global-env (make-core-env))

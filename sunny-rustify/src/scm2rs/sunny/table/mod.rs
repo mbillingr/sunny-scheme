@@ -21,20 +21,20 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static run_minus_tests: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL run-tests"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_table_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL replace-table!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static TABLE_minus_ID: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL TABLE-ID"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static ancestor_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ancestor?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static call_minus_method: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL call-method"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_field_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-field!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_field: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-field"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_fields_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-fields!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static fields: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fields"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_parent_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-parent!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static parent: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL parent"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static clone: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL clone"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static fields: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fields"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static get_minus_field: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL get-field"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_table: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-table"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static parent: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL parent"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_table_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL replace-table!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static run_minus_tests: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL run-tests"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_field_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-field!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_fields_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-fields!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_parent_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-parent!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static table_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL table?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static TABLE_minus_ID: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL TABLE-ID"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

@@ -53,29 +53,29 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static any_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static map_minus_1: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map-1"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static __map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _map"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL for-each"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static __for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _for-each"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static __map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL _map"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static all_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL all?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static any_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL any?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static append2: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append2"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_left: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-left"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_right: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-right"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static for_minus_each: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL for-each"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static length: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL length"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static map: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static map_minus_1: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL map-1"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static not: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL not"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static reverse: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reverse"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static string_minus_append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL string-append"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static string_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL string=?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static symbol_e__p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL symbol=?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static all_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL all?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static append: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static append2: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL append2"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static memq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL memq"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static assoc: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assoc"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static assq: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL assq"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static list_minus_copy: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list-copy"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_right: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-right"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static reverse: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL reverse"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static length: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL length"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static fold_minus_left: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL fold-left"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static list_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL list"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static not: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL not"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

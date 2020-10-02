@@ -17,14 +17,14 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_union: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-union"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove*"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_set: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-set"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add*"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_do_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-do*"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_add: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-add"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_empty_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-empty?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_set: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-set"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_remove_star_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-remove*"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static set_minus_union: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL set-union"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

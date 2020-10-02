@@ -25,18 +25,18 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
+    thread_local! {#[allow(non_upper_case_globals)] pub static as_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL as-port"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static close_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL close-module"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-path"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-port"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static open_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL open-module"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static open_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL open-submodule"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static println: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL println"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_block: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-block"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static show: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL show"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static showln: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL showln"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static println: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL println"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static as_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL as-port"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_block: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-block"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static print: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL print"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static close_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL close-module"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_port: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-port"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static open_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL open-submodule"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_path: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-path"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static open_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL open-module"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module?"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

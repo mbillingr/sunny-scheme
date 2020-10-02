@@ -32,32 +32,32 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL replace-var!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static BoxedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL BoxedVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static GlobalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL GlobalVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static ImportedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ImportedVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static Keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Keyword"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static LocalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL LocalVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Variable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static boxed_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxed-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_add_minus_definition_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-add-definition!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_kind: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-kind"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_handler: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-handler"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-name"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_boxify_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-boxify!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-keyword"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-boxed"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_global: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-global"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-import"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-keyword"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_boxify_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-boxify!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_kind: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-kind"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_add_minus_definition_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-add-definition!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_mutable_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-mutable!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL replace-var!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_mutable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-mutable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static boxed_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxed-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_mutable_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-mutable!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_handler: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-handler"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-name"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-keyword"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static BoxedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL BoxedVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static LocalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL LocalVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static ImportedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ImportedVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static GlobalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL GlobalVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Variable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static Keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Keyword"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

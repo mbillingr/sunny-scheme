@@ -14,7 +14,6 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_and: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-and"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_assert: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-assert"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_begin: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-begin"))}
@@ -28,6 +27,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_quote: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-quote"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_set_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-set!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static expand_minus_testsuite: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL expand-testsuite"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_core_minus_env: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-core-env"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
