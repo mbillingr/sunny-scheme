@@ -76,6 +76,10 @@ impl Scm {
         Scm::Char(ch)
     }
 
+    pub fn char_apostrophe() -> Self {
+        Scm::Char('\'')
+    }
+
     pub fn symbol(s: &str) -> Self {
         Scm::Symbol(Symbol::new(s))
     }

@@ -154,7 +154,7 @@ if ({
 // (eq? ch #\ )
 imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(),Scm::char(' ')])}).is_true() {Scm::from("_")} else if ({
 // (eq? ch #\')
-imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(),Scm::char('\'')])}).is_true() {Scm::False} else {{
+imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(),Scm::char_apostrophe()])}).is_true() {Scm::False} else {{
 // (list->string (list ch))
 imports::list_minus__g_string.with(|value| value.get()).invoke(&[{
 // (list ch)

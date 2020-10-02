@@ -96,7 +96,7 @@
               ((eq? val #t) (print module "Scm::True"))
               ((eq? val #f) (print module "Scm::False"))
               ((symbol? val) (print module "Scm::symbol(\"" val "\")"))
-              ((eq? val #\') (print module "Scm::char('\\'')"))
+              ((eq? val #\') (print module "Scm::char_apostrophe()"))
               ((char? val) (print module "Scm::char('" val "')"))
               ((pair? val) (print module "Scm::pair(")
                            (gen-constant module (car val))
