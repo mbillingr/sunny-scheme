@@ -231,6 +231,9 @@
               ((eq? 'free-vars msg) (free-vars))
               ((eq? 'kind msg) 'DEFINITION)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
+              ((eq? 'get-name msg) name)
+              ((eq? 'get-var msg) var)
+              ((eq? 'get-val msg) val)
               (else (error "Unknown message DEFINITION" msg))))
       self)
 
