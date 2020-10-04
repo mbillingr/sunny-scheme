@@ -31,11 +31,12 @@
                  (rust-gen-global-defs module (cdr g)))
                 ((global-function? (cdar g))
                  (println module
-                          "thread_local!{#[allow(non_upper_case_globals)] pub static "
+                          "pub fn "
                           (rustify-identifier (caar g))
-                          ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL FUNCTION "
-                          (caar g)
-                          "\"))}")
+                          "(args: &[Scm]) { ")
+                 ((global-function-get-value (cdar g)) 'gen-rust module)
+                 (println module
+                          "}")
                  (rust-gen-global-defs module (cdr g)))
                 (else (error "Unexpected entry in global environment" (car g))))))
 

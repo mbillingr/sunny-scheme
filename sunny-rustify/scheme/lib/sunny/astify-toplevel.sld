@@ -8,6 +8,7 @@
           (sunny ast)
           (sunny ast-transforms boxify)
           (sunny ast-transforms close-procedures)
+          (sunny ast-transforms extract-definitions)
           (sunny astify)
           (sunny library)
           (sunny scheme-syntax)
@@ -50,7 +51,7 @@
                               (string<? (symbol->string (car a))
                                         (symbol->string (car b))))
                             (cdr global-env))))
-        (make-library name globals init (boxify (close-procedures body)) imports exports)))
+        (make-library name globals init (extract-definitions (boxify (close-procedures body))) imports exports)))
 
     (define (astify-program exp*)
       (define global-env (make-core-env))
@@ -67,6 +68,7 @@
 
               (else (let* ((ast (astify-sequence exp* global-env #f))
                            (main (boxify (close-procedures ast)))
+                           (main (extract-definitions main))
                            (globals (sort (lambda (a b)
                                             (string<? (symbol->string (car a))
                                                       (symbol->string (car b))))

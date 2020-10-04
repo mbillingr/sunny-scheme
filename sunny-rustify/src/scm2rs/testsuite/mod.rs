@@ -10,7 +10,59 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static run_minus_tests: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION run-tests"))}
+    pub fn run_minus_tests(args: &[Scm]) {
+        {
+            if args.len() != 0 {
+                panic!("invalid arity")
+            }
+            #[cfg(test)]
+            mod tests {
+                use super::*;
+                #[test]
+                fn the_empty_list() {
+                    super::initialize();
+                    {
+                        // (let* ((x (quote ()))) (begin (assert (null? x))))
+                        {
+                            // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
+                            {
+                                let x = Scm::Nil;
+                                assert!({
+                                    // (null? x)
+                                    imports::null_p
+                                        .with(|value| value.get())
+                                        .invoke(&[x.clone()])
+                                }
+                                .is_true());
+                            }
+                        }
+                    }
+                }
+                #[test]
+                fn integers() {
+                    super::initialize();
+                    {
+                        // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
+                        {
+                            // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
+                            {
+                                let x = Scm::from(1);
+                                // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
+                                let y = Scm::from(1);
+                                assert!({
+                                    // (= x y)
+                                    imports::_e_
+                                        .with(|value| value.get())
+                                        .invoke(&[x.clone(), y.clone()])
+                                }
+                                .is_true());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -26,63 +78,7 @@ pub fn initialize() {
         (/*NOP*/);
         {
             // (define (run-tests) ...)
-            globals::run_minus_tests.with(|value| {
-                value.set({
-                    // Closure
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 0 {
-                            panic!("invalid arity")
-                        }
-                        Scm::symbol("*UNSPECIFIED*")
-                    })
-                })
-            })
+            (/*NOP*/)
         }
     };
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn the_empty_list() {
-        super::initialize();
-        {
-            // (let* ((x (quote ()))) (begin (assert (null? x))))
-            {
-                // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
-                {
-                    let x = Scm::Nil;
-                    assert!({
-                        // (null? x)
-                        imports::null_p
-                            .with(|value| value.get())
-                            .invoke(&[x.clone()])
-                    }
-                    .is_true());
-                }
-            }
-        }
-    }
-    #[test]
-    fn integers() {
-        super::initialize();
-        {
-            // (let* ((x 1) (y (quote 1))) (begin (assert (= x y))))
-            {
-                // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
-                {
-                    let x = Scm::from(1);
-                    // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
-                    let y = Scm::from(1);
-                    assert!({
-                        // (= x y)
-                        imports::_e_
-                            .with(|value| value.get())
-                            .invoke(&[x.clone(), y.clone()])
-                    }
-                    .is_true());
-                }
-            }
-        }
-    }
 }

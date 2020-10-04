@@ -1,4 +1,4 @@
-(define-library (sunny ast-transforms)extract-definitions
+(define-library (sunny ast-transforms extract-definitions)
   (export extract-definitions)
 
   (import (scheme base)
@@ -6,32 +6,28 @@
           (sunny variable))
 
   (begin
+    ; This should be the last transform, because it assigns the function
+    ; body to the definitions' variables. Further transformations will
+    ; probably not be applied to these functions.
     (define (extract-definitions node)
+
       (define (transform node transform-children)
         (cond ((eq? (node 'kind) 'DEFINITION)
                (extract-definition node))
               (else (transform-children))))
-      (node 'transform transform))
 
+      (define (extract-definition node)
+        (let ((val (node 'get-val)))
+          (cond ((eq? 'CLOSURE (val 'kind))
+                 (if (not (null? (val 'free-vars)))
+                     (error "Definition with free variables" val))
+                 (global-function-set-value!
+                   (node 'get-var)
+                   (val 'inner-function))
+                 (make-nop))
+                (else
+                  (make-definition (node 'get-name)
+                                   (node 'get-var)
+                                   val)))))
 
-    (define (extract-definition node)
-      (let ((val (node 'get-val)))
-        (cond ((eq? 'ABSTRACTION (val 'kind))
-               (make-nop))
-              ; (make-definition (node 'get-name)
-              ;                  (node 'get-var)
-              ;                  (make-abstraction (val 'get-params)
-              ;                                    (val 'get-vars)
-              ;                                    (close-procedures (val 'get-body)))))
-              ((eq? 'VARARG-ABSTRACTION (val 'kind))
-              ; (make-definition (node 'get-name)
-              ;                  (node 'get-var)
-              ;                  (make-vararg-abstraction (val 'get-params)
-              ;                                           (val 'get-vararg)
-              ;                                           (val 'get-vars)
-              ;                                           (val 'get-varvar)
-              ;                                           (close-procedures (val 'get-body)))))
-               (make-nop))
-              (else (make-definition (node 'get-name)
-                                     (node 'get-var)
-                                     (close-procedures val))))))))
+      (node 'transform transform))))

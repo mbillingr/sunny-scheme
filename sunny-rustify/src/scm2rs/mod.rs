@@ -19,7 +19,46 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input-file"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input-file-name"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static load_minus_sexpr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION load-sexpr"))}
+    pub fn load_minus_sexpr(args: &[Scm]) {
+        {
+            if args.len() != 0 {
+                panic!("invalid arity")
+            }
+            {
+                // (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
+                {
+                    let expr = {
+                        // (read input-file)
+                        imports::read
+                            .with(|value| value.get())
+                            .invoke(&[globals::input_minus_file.with(|value| value.get())])
+                    };
+                    if ({
+                        // (eof-object? expr)
+                        imports::eof_minus_object_p
+                            .with(|value| value.get())
+                            .invoke(&[expr.clone()])
+                    })
+                    .is_true()
+                    {
+                        Scm::Nil
+                    } else {
+                        {
+                            // (cons expr (load-sexpr))
+                            imports::cons
+                                .with(|value| value.get())
+                                .invoke(&[expr.clone(), {
+                                    // (load-sexpr)
+                                    globals::load_minus_sexpr
+                                        .with(|value| value.get())
+                                        .invoke(&[])
+                                }])
+                        }
+                    }
+                }
+            }
+        }
+    }
     thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_dir: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-dir"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_module_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-module-name"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE program"))}
@@ -155,50 +194,7 @@ pub fn main() {
         };
         {
             // (define (load-sexpr) ...)
-            globals::load_minus_sexpr.with(|value| {
-                value.set({
-                    // Closure
-                    Scm::func(move |args: &[Scm]| {
-                        if args.len() != 0 {
-                            panic!("invalid arity")
-                        }
-                        {
-                            // (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
-                            {
-                                let expr = {
-                                    // (read input-file)
-                                    imports::read.with(|value| value.get()).invoke(&[
-                                        globals::input_minus_file.with(|value| value.get()),
-                                    ])
-                                };
-                                if ({
-                                    // (eof-object? expr)
-                                    imports::eof_minus_object_p
-                                        .with(|value| value.get())
-                                        .invoke(&[expr.clone()])
-                                })
-                                .is_true()
-                                {
-                                    Scm::Nil
-                                } else {
-                                    {
-                                        // (cons expr (load-sexpr))
-                                        imports::cons.with(|value| value.get()).invoke(&[
-                                            expr.clone(),
-                                            {
-                                                // (load-sexpr)
-                                                globals::load_minus_sexpr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[])
-                                            },
-                                        ])
-                                    }
-                                }
-                            }
-                        }
-                    })
-                })
-            })
+            (/*NOP*/)
         };
         {
             // (define program (load-sexpr))
