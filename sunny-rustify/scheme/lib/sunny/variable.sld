@@ -11,7 +11,8 @@
           boxed-variable?
           global-add-definition!
           global-function?
-          global-kind
+          global-function-get-value
+          global-function-set-value!
           local-boxify!
           variable-mutable?
           variable-set-mutable!
@@ -119,8 +120,11 @@
     (define (global-add-definition! var val)
       (call-method var 'add-definition! val))
 
-    (define (global-kind var)
-      (get-field var 'status))
+    (define (global-function-get-value var)
+      (get-field var 'value))
+
+    (define (global-function-set-value! var val)
+      (set-field! var 'value val))
 
     (define (local-boxify! var)
       (call-method var 'into-boxed!))

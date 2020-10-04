@@ -10,8 +10,9 @@ mod imports {
 pub mod exports {
     pub use super::globals::boxed_minus_variable_p;
     pub use super::globals::global_minus_add_minus_definition_i;
+    pub use super::globals::global_minus_function_minus_get_minus_value;
+    pub use super::globals::global_minus_function_minus_set_minus_value_i;
     pub use super::globals::global_minus_function_p;
-    pub use super::globals::global_minus_kind;
     pub use super::globals::global_minus_variable_p;
     pub use super::globals::import_minus_variable_p;
     pub use super::globals::keyword_minus_handler;
@@ -44,8 +45,9 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE Variable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static boxed_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION boxed-variable?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_add_minus_definition_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-add-definition!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_function_minus_get_minus_value: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-function-get-value"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_function_minus_set_minus_value_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-function-set-value!"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_function_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-function?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_kind: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-kind"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-variable?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION import-variable?"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_handler: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION keyword-handler"))}
@@ -829,8 +831,8 @@ pub fn initialize() {
             })
         };
         {
-            // (define (global-kind var) ...)
-            globals::global_minus_kind.with(|value| {
+            // (define (global-function-get-value var) ...)
+            globals::global_minus_function_minus_get_minus_value.with(|value| {
                 value.set({
                     // Closure
                     Scm::func(move |args: &[Scm]| {
@@ -839,10 +841,31 @@ pub fn initialize() {
                         }
                         let var = args[0].clone();
                         {
-                            // (get-field var (quote status))
+                            // (get-field var (quote value))
                             imports::get_minus_field
                                 .with(|value| value.get())
-                                .invoke(&[var.clone(), Scm::symbol("status")])
+                                .invoke(&[var.clone(), Scm::symbol("value")])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (global-function-set-value! var val) ...)
+            globals::global_minus_function_minus_set_minus_value_i.with(|value| {
+                value.set({
+                    // Closure
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 2 {
+                            panic!("invalid arity")
+                        }
+                        let var = args[0].clone();
+                        let val = args[1].clone();
+                        {
+                            // (set-field! var (quote value) val)
+                            imports::set_minus_field_i
+                                .with(|value| value.get())
+                                .invoke(&[var.clone(), Scm::symbol("value"), val.clone()])
                         }
                     })
                 })
