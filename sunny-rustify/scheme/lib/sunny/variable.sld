@@ -10,6 +10,7 @@
           local-variable?
           boxed-variable?
           global-add-definition!
+          global-function?
           global-kind
           local-boxify!
           variable-mutable?
@@ -18,7 +19,8 @@
           make-keyword
           keyword?
           keyword-name
-          keyword-handler)
+          keyword-handler
+          undefined-global-variable?)
 
   (import (scheme base)
           (scheme cxr)
@@ -27,28 +29,49 @@
 
   (begin
     (define Keyword (make-table))
+    (set-field! Keyword '__name__ 'Keyword)
 
     (define Variable (make-table))
+    (set-field! Variable '__name__ 'Variable)
     (set-field! Variable 'mut #f)
     (set-field! Variable 'mutable? (lambda (self) (get-field self 'mut)))
     (set-field! Variable 'set-mutable! (lambda (self) (set-field! self 'mut #t)))
 
     (define GlobalVariable (clone Variable))
-    (set-field! GlobalVariable 'status 'UNDEFINED)
-    (set-field! GlobalVariable 'mutable? (lambda (self) (eq? 'MUTABLE (get-field self 'status))))
-    (set-field! GlobalVariable 'set-mutable! (lambda (self) (set-field! self 'status 'MUTABLE)))
+    (set-field! GlobalVariable '__name__ 'GlobalVariable)
+    (set-field! GlobalVariable 'mutable? (lambda (self) #t))
     (set-field! GlobalVariable 'add-definition!
       (lambda (self value)
-        (if (eq? 'UNDEFINED (get-field self 'status))
-            (set-field! self 'status value)
-            (set-field! self 'status 'MUTABLE))))
+        'IGNORED))
+
+    (define GlobalFunction (clone Variable))
+    (set-field! GlobalFunction '__name__ 'GlobalFunction)
+    (set-field! GlobalFunction 'add-definition!
+      (lambda (self value)
+        (set-parent! self GlobalVariable)))
+
+    (define UndefinedGlobal (clone Variable))
+    (set-field! UndefinedGlobal '__name__ 'UndefinedGlobal)
+    (set-field! UndefinedGlobal 'add-definition!
+      (lambda (self value)
+        (cond ((eq? (value 'kind) 'ABSTRACTION)
+               (set-parent! self GlobalFunction)
+               (set-field! self 'value value))
+              ((eq? (value 'kind) 'VARARG-ABSTRACTION)
+               (set-parent! self GlobalFunction)
+               (set-field! self 'value value))
+              (else
+                (set-parent! self GlobalVariable)))))
 
     (define ImportedVariable (clone Variable))
+    (set-field! ImportedVariable '__name__ 'ImportedVariable)
 
     (define LocalVariable (clone Variable))
+    (set-field! LocalVariable '__name__ 'LocalVariable)
     (set-field! LocalVariable 'into-boxed! (lambda (self) (set-parent! self BoxedVariable)))
 
     (define BoxedVariable (clone LocalVariable))
+    (set-field! BoxedVariable '__name__ 'BoxedVariable)
 
     (define (keyword? obj)
       (and (table? obj)
@@ -71,6 +94,12 @@
 
     (define (global-variable? obj)
       (ancestor? obj GlobalVariable))
+
+    (define (undefined-global-variable? obj)
+      (ancestor? obj UndefinedGlobal))
+
+    (define (global-function? obj)
+      (ancestor? obj GlobalFunction))
 
     (define (import-variable? obj)
       (ancestor? obj ImportedVariable))
@@ -103,7 +132,7 @@
       (cons name (clone ImportedVariable)))
 
     (define (new-global name)
-      (cons name (clone GlobalVariable)))
+      (cons name (clone UndefinedGlobal)))
 
     (define (new-local name)
       (cons name (clone LocalVariable)))

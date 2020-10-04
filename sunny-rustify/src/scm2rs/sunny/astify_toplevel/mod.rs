@@ -22,10 +22,10 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_library: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-library"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-program"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_toplevel: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL astify-toplevel"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static register_minus_libraries: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL register-libraries"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_library: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION astify-library"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION astify-program"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static astify_minus_toplevel: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION astify-toplevel"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static register_minus_libraries: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION register-libraries"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

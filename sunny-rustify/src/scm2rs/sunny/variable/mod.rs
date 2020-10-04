@@ -10,6 +10,7 @@ mod imports {
 pub mod exports {
     pub use super::globals::boxed_minus_variable_p;
     pub use super::globals::global_minus_add_minus_definition_i;
+    pub use super::globals::global_minus_function_p;
     pub use super::globals::global_minus_kind;
     pub use super::globals::global_minus_variable_p;
     pub use super::globals::import_minus_variable_p;
@@ -25,6 +26,7 @@ pub mod exports {
     pub use super::globals::new_minus_keyword;
     pub use super::globals::new_minus_local;
     pub use super::globals::replace_minus_var_i;
+    pub use super::globals::undefined_minus_global_minus_variable_p;
     pub use super::globals::variable_minus_mutable_p;
     pub use super::globals::variable_minus_set_minus_mutable_i;
     pub use super::globals::variable_p;
@@ -32,32 +34,36 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static BoxedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL BoxedVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static GlobalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL GlobalVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static ImportedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL ImportedVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static Keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Keyword"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static LocalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL LocalVariable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL Variable"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static boxed_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL boxed-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_add_minus_definition_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-add-definition!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_kind: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-kind"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL global-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL import-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_handler: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-handler"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword-name"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL keyword?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_boxify_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-boxify!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL local-variable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-keyword"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-boxed"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_global: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-global"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-import"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-keyword"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL new-local"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL replace-var!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_mutable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-mutable?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_mutable_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable-set-mutable!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static BoxedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE BoxedVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static GlobalFunction: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE GlobalFunction"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static GlobalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE GlobalVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static ImportedVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE ImportedVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static Keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE Keyword"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static LocalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE LocalVariable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static UndefinedGlobal: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE UndefinedGlobal"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE Variable"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static boxed_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION boxed-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_add_minus_definition_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-add-definition!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_function_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-function?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_kind: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-kind"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION global-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static import_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION import-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_handler: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION keyword-handler"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION keyword-name"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static keyword_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION keyword?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_boxify_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION local-boxify!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static local_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION local-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION make-keyword"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_boxed: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION new-boxed"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_global: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION new-global"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_import: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION new-import"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_keyword: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION new-keyword"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static new_minus_local: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION new-local"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static replace_minus_var_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION replace-var!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static undefined_minus_global_minus_variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION undefined-global-variable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_mutable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION variable-mutable?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static variable_minus_set_minus_mutable_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION variable-set-mutable!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static variable_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION variable?"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -86,6 +92,16 @@ pub fn initialize() {
             })
         };
         {
+            // (set-field! Keyword (quote __name__) (quote Keyword))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::Keyword.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("Keyword"),
+                ])
+        };
+        {
             // (define Variable (make-table))
             globals::Variable.with(|value| {
                 value.set({
@@ -95,6 +111,16 @@ pub fn initialize() {
                         .invoke(&[])
                 })
             })
+        };
+        {
+            // (set-field! Variable (quote __name__) (quote Variable))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::Variable.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("Variable"),
+                ])
         };
         {
             // (set-field! Variable (quote mut) #f)
@@ -164,17 +190,17 @@ pub fn initialize() {
             })
         };
         {
-            // (set-field! GlobalVariable (quote status) (quote UNDEFINED))
+            // (set-field! GlobalVariable (quote __name__) (quote GlobalVariable))
             imports::set_minus_field_i
                 .with(|value| value.get())
                 .invoke(&[
                     globals::GlobalVariable.with(|value| value.get()),
-                    Scm::symbol("status"),
-                    Scm::symbol("UNDEFINED"),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("GlobalVariable"),
                 ])
         };
         {
-            // (set-field! GlobalVariable (quote mutable?) (lambda (self) (eq? (quote MUTABLE) (get-field self (quote status)))))
+            // (set-field! GlobalVariable (quote mutable?) (lambda (self) #t))
             imports::set_minus_field_i
                 .with(|value| value.get())
                 .invoke(&[
@@ -186,51 +212,13 @@ pub fn initialize() {
                                 panic!("invalid arity")
                             }
                             let self_ = args[0].clone();
-                            {
-                                // (eq? (quote MUTABLE) (get-field self (quote status)))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("MUTABLE"),
-                                    {
-                                        // (get-field self (quote status))
-                                        imports::get_minus_field
-                                            .with(|value| value.get())
-                                            .invoke(&[self_.clone(), Scm::symbol("status")])
-                                    },
-                                ])
-                            }
+                            Scm::True
                         })
                     },
                 ])
         };
         {
-            // (set-field! GlobalVariable (quote set-mutable!) (lambda (self) (set-field! self (quote status) (quote MUTABLE))))
-            imports::set_minus_field_i
-                .with(|value| value.get())
-                .invoke(&[
-                    globals::GlobalVariable.with(|value| value.get()),
-                    Scm::symbol("set-mutable!"),
-                    {
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 1 {
-                                panic!("invalid arity")
-                            }
-                            let self_ = args[0].clone();
-                            {
-                                // (set-field! self (quote status) (quote MUTABLE))
-                                imports::set_minus_field_i
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        self_.clone(),
-                                        Scm::symbol("status"),
-                                        Scm::symbol("MUTABLE"),
-                                    ])
-                            }
-                        })
-                    },
-                ])
-        };
-        {
-            // (set-field! GlobalVariable (quote add-definition!) (lambda (self value) (if (eq? (quote UNDEFINED) (get-field self (quote status))) (set-field! self (quote status) value) (set-field! self (quote status) (quote MUTABLE)))))
+            // (set-field! GlobalVariable (quote add-definition!) (lambda (self value) (quote IGNORED)))
             imports::set_minus_field_i
                 .with(|value| value.get())
                 .invoke(&[
@@ -243,40 +231,174 @@ pub fn initialize() {
                             }
                             let self_ = args[0].clone();
                             let value = args[1].clone();
-                            if ({
-                                // (eq? (quote UNDEFINED) (get-field self (quote status)))
-                                imports::eq_p.with(|value| value.get()).invoke(&[
-                                    Scm::symbol("UNDEFINED"),
-                                    {
-                                        // (get-field self (quote status))
-                                        imports::get_minus_field
-                                            .with(|value| value.get())
-                                            .invoke(&[self_.clone(), Scm::symbol("status")])
-                                    },
-                                ])
-                            })
-                            .is_true()
+                            Scm::symbol("IGNORED")
+                        })
+                    },
+                ])
+        };
+        {
+            // (define GlobalFunction (clone Variable))
+            globals::GlobalFunction.with(|value| {
+                value.set({
+                    // (clone Variable)
+                    imports::clone
+                        .with(|value| value.get())
+                        .invoke(&[globals::Variable.with(|value| value.get())])
+                })
+            })
+        };
+        {
+            // (set-field! GlobalFunction (quote __name__) (quote GlobalFunction))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::GlobalFunction.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("GlobalFunction"),
+                ])
+        };
+        {
+            // (set-field! GlobalFunction (quote add-definition!) (lambda (self value) (set-parent! self GlobalVariable)))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::GlobalFunction.with(|value| value.get()),
+                    Scm::symbol("add-definition!"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            let value = args[1].clone();
                             {
+                                // (set-parent! self GlobalVariable)
+                                imports::set_minus_parent_i
+                                    .with(|value| value.get())
+                                    .invoke(&[
+                                        self_.clone(),
+                                        globals::GlobalVariable.with(|value| value.get()),
+                                    ])
+                            }
+                        })
+                    },
+                ])
+        };
+        {
+            // (define UndefinedGlobal (clone Variable))
+            globals::UndefinedGlobal.with(|value| {
+                value.set({
+                    // (clone Variable)
+                    imports::clone
+                        .with(|value| value.get())
+                        .invoke(&[globals::Variable.with(|value| value.get())])
+                })
+            })
+        };
+        {
+            // (set-field! UndefinedGlobal (quote __name__) (quote UndefinedGlobal))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::UndefinedGlobal.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("UndefinedGlobal"),
+                ])
+        };
+        {
+            // (set-field! UndefinedGlobal (quote add-definition!) (lambda (self value) (cond ((eq? (value (quote kind)) (quote ABSTRACTION)) (set-parent! self GlobalFunction) (set-field! self (quote value) value)) ((eq? (value (quote kind)) (quote VARARG-ABSTRACTION)) (set-parent! self GlobalFunction) (set-field! self (quote value) value)) (else (set-parent! self GlobalVariable)))))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::UndefinedGlobal.with(|value| value.get()),
+                    Scm::symbol("add-definition!"),
+                    {
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let self_ = args[0].clone();
+                            let value = args[1].clone();
+                            {
+                                // (cond ...)
+                                if ({
+                                    // (eq? (value (quote kind)) (quote ABSTRACTION))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        {
+                                            // (value (quote kind))
+                                            value.clone().invoke(&[Scm::symbol("kind")])
+                                        },
+                                        Scm::symbol("ABSTRACTION"),
+                                    ])
+                                })
+                                .is_true()
                                 {
-                                    // (set-field! self (quote status) value)
-                                    imports::set_minus_field_i
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            self_.clone(),
-                                            Scm::symbol("status"),
-                                            value.clone(),
-                                        ])
-                                }
-                            } else {
+                                    {
+                                        {
+                                            // (set-parent! self GlobalFunction)
+                                            imports::set_minus_parent_i
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    self_.clone(),
+                                                    globals::GlobalFunction
+                                                        .with(|value| value.get()),
+                                                ])
+                                        };
+                                        {
+                                            // (set-field! self (quote value) value)
+                                            imports::set_minus_field_i
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    self_.clone(),
+                                                    Scm::symbol("value"),
+                                                    value.clone(),
+                                                ])
+                                        }
+                                    }
+                                } else if ({
+                                    // (eq? (value (quote kind)) (quote VARARG-ABSTRACTION))
+                                    imports::eq_p.with(|value| value.get()).invoke(&[
+                                        {
+                                            // (value (quote kind))
+                                            value.clone().invoke(&[Scm::symbol("kind")])
+                                        },
+                                        Scm::symbol("VARARG-ABSTRACTION"),
+                                    ])
+                                })
+                                .is_true()
                                 {
-                                    // (set-field! self (quote status) (quote MUTABLE))
-                                    imports::set_minus_field_i
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            self_.clone(),
-                                            Scm::symbol("status"),
-                                            Scm::symbol("MUTABLE"),
-                                        ])
+                                    {
+                                        {
+                                            // (set-parent! self GlobalFunction)
+                                            imports::set_minus_parent_i
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    self_.clone(),
+                                                    globals::GlobalFunction
+                                                        .with(|value| value.get()),
+                                                ])
+                                        };
+                                        {
+                                            // (set-field! self (quote value) value)
+                                            imports::set_minus_field_i
+                                                .with(|value| value.get())
+                                                .invoke(&[
+                                                    self_.clone(),
+                                                    Scm::symbol("value"),
+                                                    value.clone(),
+                                                ])
+                                        }
+                                    }
+                                } else {
+                                    {
+                                        // (set-parent! self GlobalVariable)
+                                        imports::set_minus_parent_i
+                                            .with(|value| value.get())
+                                            .invoke(&[
+                                                self_.clone(),
+                                                globals::GlobalVariable.with(|value| value.get()),
+                                            ])
+                                    }
                                 }
                             }
                         })
@@ -295,6 +417,16 @@ pub fn initialize() {
             })
         };
         {
+            // (set-field! ImportedVariable (quote __name__) (quote ImportedVariable))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::ImportedVariable.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("ImportedVariable"),
+                ])
+        };
+        {
             // (define LocalVariable (clone Variable))
             globals::LocalVariable.with(|value| {
                 value.set({
@@ -304,6 +436,16 @@ pub fn initialize() {
                         .invoke(&[globals::Variable.with(|value| value.get())])
                 })
             })
+        };
+        {
+            // (set-field! LocalVariable (quote __name__) (quote LocalVariable))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::LocalVariable.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("LocalVariable"),
+                ])
         };
         {
             // (set-field! LocalVariable (quote into-boxed!) (lambda (self) (set-parent! self BoxedVariable)))
@@ -341,6 +483,16 @@ pub fn initialize() {
                         .invoke(&[globals::LocalVariable.with(|value| value.get())])
                 })
             })
+        };
+        {
+            // (set-field! BoxedVariable (quote __name__) (quote BoxedVariable))
+            imports::set_minus_field_i
+                .with(|value| value.get())
+                .invoke(&[
+                    globals::BoxedVariable.with(|value| value.get()),
+                    Scm::symbol("__name__"),
+                    Scm::symbol("BoxedVariable"),
+                ])
         };
         {
             // (define (keyword? obj) ...)
@@ -491,6 +643,46 @@ pub fn initialize() {
                             imports::ancestor_p.with(|value| value.get()).invoke(&[
                                 obj.clone(),
                                 globals::GlobalVariable.with(|value| value.get()),
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (undefined-global-variable? obj) ...)
+            globals::undefined_minus_global_minus_variable_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj UndefinedGlobal)
+                            imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                globals::UndefinedGlobal.with(|value| value.get()),
+                            ])
+                        }
+                    })
+                })
+            })
+        };
+        {
+            // (define (global-function? obj) ...)
+            globals::global_minus_function_p.with(|value| {
+                value.set({
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let obj = args[0].clone();
+                        {
+                            // (ancestor? obj GlobalFunction)
+                            imports::ancestor_p.with(|value| value.get()).invoke(&[
+                                obj.clone(),
+                                globals::GlobalFunction.with(|value| value.get()),
                             ])
                         }
                     })
@@ -712,13 +904,13 @@ pub fn initialize() {
                         }
                         let name = args[0].clone();
                         {
-                            // (cons name (clone GlobalVariable))
+                            // (cons name (clone UndefinedGlobal))
                             imports::cons
                                 .with(|value| value.get())
                                 .invoke(&[name.clone(), {
-                                    // (clone GlobalVariable)
+                                    // (clone UndefinedGlobal)
                                     imports::clone.with(|value| value.get()).invoke(&[
-                                        globals::GlobalVariable.with(|value| value.get()),
+                                        globals::UndefinedGlobal.with(|value| value.get()),
                                     ])
                                 }])
                         }

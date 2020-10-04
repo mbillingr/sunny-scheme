@@ -10,7 +10,9 @@ pub mod exports {
     pub use super::imports::open_minus_output_minus_file;
 }
 
-mod globals {}
+mod globals {
+    use sunny_core::{Mut, Scm};
+}
 
 pub fn initialize() {
     crate::native::file::initialize();

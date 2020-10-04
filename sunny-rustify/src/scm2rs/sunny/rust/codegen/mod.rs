@@ -20,12 +20,12 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_global_minus_defs: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-global-defs"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-in-module"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-in-submodule"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-module-tree-list"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_modules: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rust-gen-modules"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_global_minus_defs: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rust-gen-global-defs"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_module: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rust-gen-in-module"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_in_minus_submodule: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rust-gen-in-submodule"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rust-gen-module-tree"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_module_minus_tree_minus_list: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rust-gen-module-tree-list"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rust_minus_gen_minus_modules: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rust-gen-modules"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
@@ -73,12 +73,28 @@ imports::cdr.with(|value| value.get()).invoke(&[g.clone()])}])}} else if ({
 imports::global_minus_variable_p.with(|value| value.get()).invoke(&[{
 // (cdar g)
 imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}).is_true() {{{
-// (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL " (caar g) "\"))}")
+// (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE " (caar g) "\"))}")
 imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
 // (rustify-identifier (caar g))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[{
 // (caar g)
-imports::caar.with(|value| value.get()).invoke(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "),{
+imports::caar.with(|value| value.get()).invoke(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "),{
+// (caar g)
+imports::caar.with(|value| value.get()).invoke(&[g.clone()])},Scm::from("\"))}")])};{
+// (rust-gen-global-defs module (cdr g))
+globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.get()).invoke(&[module.clone(),{
+// (cdr g)
+imports::cdr.with(|value| value.get()).invoke(&[g.clone()])}])}}} else if ({
+// (global-function? (cdar g))
+imports::global_minus_function_p.with(|value| value.get()).invoke(&[{
+// (cdar g)
+imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}).is_true() {{{
+// (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL FUNCTION " (caar g) "\"))}")
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
+// (rustify-identifier (caar g))
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[{
+// (caar g)
+imports::caar.with(|value| value.get()).invoke(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL FUNCTION "),{
 // (caar g)
 imports::caar.with(|value| value.get()).invoke(&[g.clone()])},Scm::from("\"))}")])};{
 // (rust-gen-global-defs module (cdr g))

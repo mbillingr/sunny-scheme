@@ -19,16 +19,16 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_module_minus_tree_minus_leaf: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-module-tree-leaf"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_module_minus_tree_minus_node: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL make-module-tree-node"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_append_minus_child_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-append-child!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_children: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-children"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_find_minus_child: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-find-child"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_insert_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-insert!"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_leaf_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-leaf?"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_libobj: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-libobj"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-name"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_set_minus_children_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL module-tree-set-children!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_module_minus_tree_minus_leaf: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION make-module-tree-leaf"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static make_minus_module_minus_tree_minus_node: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION make-module-tree-node"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_append_minus_child_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-append-child!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_children: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-children"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_find_minus_child: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-find-child"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_insert_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-insert!"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_leaf_p: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-leaf?"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_libobj: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-libobj"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-name"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static module_minus_tree_minus_set_minus_children_i: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION module-tree-set-children!"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

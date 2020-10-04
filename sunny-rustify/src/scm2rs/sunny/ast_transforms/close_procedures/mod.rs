@@ -12,7 +12,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static close_minus_procedures: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL close-procedures"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static close_minus_procedures: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION close-procedures"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

@@ -13,9 +13,9 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_identifier: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rustify-identifier"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rustify-libname"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_testname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL rustify-testname"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_identifier: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rustify-identifier"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_libname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rustify-libname"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static rustify_minus_testname: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION rustify-testname"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

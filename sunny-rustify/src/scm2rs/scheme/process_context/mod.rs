@@ -8,7 +8,9 @@ pub mod exports {
     pub use super::imports::command_minus_line;
 }
 
-mod globals {}
+mod globals {
+    use sunny_core::{Mut, Scm};
+}
 
 pub fn initialize() {
     crate::native::process_context::initialize();

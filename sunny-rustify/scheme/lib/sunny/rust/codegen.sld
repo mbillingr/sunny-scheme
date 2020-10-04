@@ -25,7 +25,15 @@
                  (println module
                           "thread_local!{#[allow(non_upper_case_globals)] pub static "
                           (rustify-identifier (caar g))
-                          ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL "
+                          ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "
+                          (caar g)
+                          "\"))}")
+                 (rust-gen-global-defs module (cdr g)))
+                ((global-function? (cdar g))
+                 (println module
+                          "thread_local!{#[allow(non_upper_case_globals)] pub static "
+                          (rustify-identifier (caar g))
+                          ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL FUNCTION "
                           (caar g)
                           "\"))}")
                  (rust-gen-global-defs module (cdr g)))

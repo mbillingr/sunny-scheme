@@ -23,7 +23,8 @@
           make-sequence
           make-testcase
           make-testsuite
-          make-vararg-abstraction)
+          make-vararg-abstraction
+          procedure-node?)
 
   (import (scheme base)
           (sunny env)
@@ -37,6 +38,11 @@
   (begin
     (define (ast-node? obj)
       (procedure? obj))
+
+    (define (procedure-node? obj)
+      (if (eq? (obj 'kind) 'ABSTRACTION)
+          #t
+          (eq? (obj 'kind) 'VARARG-ABSTRACTION)))
 
     (define (make-comment comment node)
       (define (repr)
@@ -124,12 +130,18 @@
         (func self (lambda () self)))
       (define (free-vars)
         (if (bor (global-variable? var)
+                 (global-function? var)
                  (import-variable? var))
             (make-set)
             (set-add (make-set)
                      name)))
       (define (gen-rust module)
         (cond ((global-variable? var)
+               (print module
+                      "globals::"
+                      (rustify-identifier name)
+                      ".with(|value| value.get())"))
+              ((global-function? var)
                (print module
                       "globals::"
                       (rustify-identifier name)
@@ -199,6 +211,13 @@
                  name))
       (define (gen-rust module)
         (cond ((global-variable? var)
+               (print module
+                      "globals::"
+                      (rustify-identifier name)
+                      ".with(|value| value.set(")
+               (val 'gen-rust module)
+               (print module "))"))
+              ((global-function? var)
                (print module
                       "globals::"
                       (rustify-identifier name)
@@ -551,9 +570,7 @@
         (print module "mod globals")
         (rust-block module
           (lambda ()
-            (if (any (lambda (g) (global-variable? (cdr g)))
-                     globals)
-                (println module "use sunny_core::{Mut, Scm};"))
+            (println module "use sunny_core::{Mut, Scm};")
             (rust-gen-global-defs module globals)))
         (println module)
         (println module)
@@ -617,9 +634,7 @@
         (print module "mod globals")
         (rust-block module
           (lambda ()
-            (if (any (lambda (g) (global-variable? (cdr g)))
-                     globals)
-                (println module "use sunny_core::{Mut, Scm};"))
+            (println module "use sunny_core::{Mut, Scm};")
             (rust-gen-global-defs module globals)))
         (println module)
         (println module)
@@ -695,6 +710,8 @@
           (cond ((not var)
                  (error "undefined export" name))
                 ((global-variable? var)
+                 (print module "globals::"))
+                ((global-function? var)
                  (print module "globals::"))
                 ((import-variable? var)
                  (print module "imports::"))

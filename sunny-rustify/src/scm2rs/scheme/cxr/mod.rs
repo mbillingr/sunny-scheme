@@ -33,30 +33,30 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    thread_local! {#[allow(non_upper_case_globals)] pub static caaaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caaaar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caaadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caaadr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caaar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caadar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caadar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caaddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caaddr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caadr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cadaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cadaar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cadadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cadadr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cadar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cadar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caddar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caddar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cadddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cadddr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static caddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL caddr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdaaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdaaar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdaadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdaadr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdaar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdadar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdadar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdaddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdaddr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdadr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cddaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cddaar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cddadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cddadr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cddar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cddar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdddar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdddar"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cddddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cddddr"))}
-    thread_local! {#[allow(non_upper_case_globals)] pub static cdddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL cdddr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caaaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caaaar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caaadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caaadr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caaar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caadar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caadar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caaddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caaddr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caadr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cadaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cadaar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cadadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cadadr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cadar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cadar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caddar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caddar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cadddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cadddr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static caddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION caddr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdaaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdaaar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdaadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdaadr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdaar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdadar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdadar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdaddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdaddr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdadr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cddaar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cddaar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cddadr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cddadr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cddar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cddar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdddar: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdddar"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cddddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cddddr"))}
+    thread_local! {#[allow(non_upper_case_globals)] pub static cdddr: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL FUNCTION cdddr"))}
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
