@@ -17,15 +17,16 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn make_minus_set(args: &[Scm]) {
+    pub fn make_minus_set(args: &[Scm]) -> Scm {
         {
             if args.len() != 0 {
                 panic!("invalid arity")
             }
             Scm::Nil
         }
+        .into()
     }
-    pub fn set_minus_add(args: &[Scm]) {
+    pub fn set_minus_add(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -75,7 +76,7 @@ mod globals {
                             },
                             {
                                 // (set-add (cdr set) item)
-                                globals::set_minus_add.with(|value| value.get()).invoke(&[
+                                Scm::func(globals::set_minus_add).invoke(&[
                                     {
                                         // (cdr set)
                                         imports::cdr
@@ -90,8 +91,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn set_minus_add_star_(args: &[Scm]) {
+    pub fn set_minus_add_star_(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -100,17 +102,16 @@ mod globals {
             let item_star_ = args[1].clone();
             {
                 // (set-do* set-add set item*)
-                globals::set_minus_do_star_
-                    .with(|value| value.get())
-                    .invoke(&[
-                        globals::set_minus_add.with(|value| value.get()),
-                        set.clone(),
-                        item_star_.clone(),
-                    ])
+                Scm::func(globals::set_minus_do_star_).invoke(&[
+                    Scm::func(globals::set_minus_add),
+                    set.clone(),
+                    item_star_.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn set_minus_do_star_(args: &[Scm]) {
+    pub fn set_minus_do_star_(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -130,31 +131,30 @@ mod globals {
             } else {
                 {
                     // (set-do* func (func set (car item*)) (cdr item*))
-                    globals::set_minus_do_star_
-                        .with(|value| value.get())
-                        .invoke(&[
-                            func.clone(),
-                            {
-                                // (func set (car item*))
-                                func.clone().invoke(&[set.clone(), {
-                                    // (car item*)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[item_star_.clone()])
-                                }])
-                            },
-                            {
-                                // (cdr item*)
-                                imports::cdr
+                    Scm::func(globals::set_minus_do_star_).invoke(&[
+                        func.clone(),
+                        {
+                            // (func set (car item*))
+                            func.clone().invoke(&[set.clone(), {
+                                // (car item*)
+                                imports::car
                                     .with(|value| value.get())
                                     .invoke(&[item_star_.clone()])
-                            },
-                        ])
+                            }])
+                        },
+                        {
+                            // (cdr item*)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[item_star_.clone()])
+                        },
+                    ])
                 }
             }
         }
+        .into()
     }
-    pub fn set_minus_empty_p(args: &[Scm]) {
+    pub fn set_minus_empty_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -167,8 +167,9 @@ mod globals {
                     .invoke(&[set.clone()])
             }
         }
+        .into()
     }
-    pub fn set_minus_remove(args: &[Scm]) {
+    pub fn set_minus_remove(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -218,25 +219,24 @@ mod globals {
                             },
                             {
                                 // (set-remove (cdr set) item)
-                                globals::set_minus_remove
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        {
-                                            // (cdr set)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[set.clone()])
-                                        },
-                                        item.clone(),
-                                    ])
+                                Scm::func(globals::set_minus_remove).invoke(&[
+                                    {
+                                        // (cdr set)
+                                        imports::cdr
+                                            .with(|value| value.get())
+                                            .invoke(&[set.clone()])
+                                    },
+                                    item.clone(),
+                                ])
                             },
                         ])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn set_minus_remove_star_(args: &[Scm]) {
+    pub fn set_minus_remove_star_(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -245,17 +245,16 @@ mod globals {
             let item_star_ = args[1].clone();
             {
                 // (set-do* set-remove set item*)
-                globals::set_minus_do_star_
-                    .with(|value| value.get())
-                    .invoke(&[
-                        globals::set_minus_remove.with(|value| value.get()),
-                        set.clone(),
-                        item_star_.clone(),
-                    ])
+                Scm::func(globals::set_minus_do_star_).invoke(&[
+                    Scm::func(globals::set_minus_remove),
+                    set.clone(),
+                    item_star_.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn set_minus_union(args: &[Scm]) {
+    pub fn set_minus_union(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -285,13 +284,13 @@ mod globals {
                 } else {
                     {
                         // (set-add* set1 set2)
-                        globals::set_minus_add_star_
-                            .with(|value| value.get())
+                        Scm::func(globals::set_minus_add_star_)
                             .invoke(&[set1.clone(), set2.clone()])
                     }
                 }
             }
         }
+        .into()
     }
 }
 

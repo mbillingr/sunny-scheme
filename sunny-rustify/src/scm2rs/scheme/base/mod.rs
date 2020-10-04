@@ -53,7 +53,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn __for_minus_each(args: &[Scm]) {
+    pub fn __for_minus_each(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -62,8 +62,7 @@ mod globals {
             let seq_star_ = args[1].clone();
             if ({
                 // (any? null? seq*)
-                globals::any_p
-                    .with(|value| value.get())
+                Scm::func(globals::any_p)
                     .invoke(&[imports::null_p.with(|value| value.get()), seq_star_.clone()])
             })
             .is_true()
@@ -77,7 +76,7 @@ mod globals {
                             .with(|value| value.get())
                             .invoke(&[proc.clone(), {
                                 // (map-1 car seq*)
-                                globals::map_minus_1.with(|value| value.get()).invoke(&[
+                                Scm::func(globals::map_minus_1).invoke(&[
                                     imports::car.with(|value| value.get()),
                                     seq_star_.clone(),
                                 ])
@@ -85,21 +84,20 @@ mod globals {
                     };
                     {
                         // (_for-each proc (map-1 cdr seq*))
-                        globals::__for_minus_each
-                            .with(|value| value.get())
-                            .invoke(&[proc.clone(), {
-                                // (map-1 cdr seq*)
-                                globals::map_minus_1.with(|value| value.get()).invoke(&[
-                                    imports::cdr.with(|value| value.get()),
-                                    seq_star_.clone(),
-                                ])
-                            }])
+                        Scm::func(globals::__for_minus_each).invoke(&[proc.clone(), {
+                            // (map-1 cdr seq*)
+                            Scm::func(globals::map_minus_1).invoke(&[
+                                imports::cdr.with(|value| value.get()),
+                                seq_star_.clone(),
+                            ])
+                        }])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn __map(args: &[Scm]) {
+    pub fn __map(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -108,8 +106,7 @@ mod globals {
             let seq_star_ = args[1].clone();
             if ({
                 // (any? null? seq*)
-                globals::any_p
-                    .with(|value| value.get())
+                Scm::func(globals::any_p)
                     .invoke(&[imports::null_p.with(|value| value.get()), seq_star_.clone()])
             })
             .is_true()
@@ -125,7 +122,7 @@ mod globals {
                                 .with(|value| value.get())
                                 .invoke(&[func.clone(), {
                                     // (map-1 car seq*)
-                                    globals::map_minus_1.with(|value| value.get()).invoke(&[
+                                    Scm::func(globals::map_minus_1).invoke(&[
                                         imports::car.with(|value| value.get()),
                                         seq_star_.clone(),
                                     ])
@@ -133,22 +130,21 @@ mod globals {
                         },
                         {
                             // (_map func (map-1 cdr seq*))
-                            globals::__map
-                                .with(|value| value.get())
-                                .invoke(&[func.clone(), {
-                                    // (map-1 cdr seq*)
-                                    globals::map_minus_1.with(|value| value.get()).invoke(&[
-                                        imports::cdr.with(|value| value.get()),
-                                        seq_star_.clone(),
-                                    ])
-                                }])
+                            Scm::func(globals::__map).invoke(&[func.clone(), {
+                                // (map-1 cdr seq*)
+                                Scm::func(globals::map_minus_1).invoke(&[
+                                    imports::cdr.with(|value| value.get()),
+                                    seq_star_.clone(),
+                                ])
+                            }])
                         },
                     ])
                 }
             }
         }
+        .into()
     }
-    pub fn all_p(args: &[Scm]) {
+    pub fn all_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -179,22 +175,21 @@ mod globals {
                 {
                     {
                         // (all? pred (cdr seq))
-                        globals::all_p
-                            .with(|value| value.get())
-                            .invoke(&[pred.clone(), {
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            }])
+                        Scm::func(globals::all_p).invoke(&[pred.clone(), {
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        }])
                     }
                 } else {
                     Scm::False
                 }
             }
         }
+        .into()
     }
-    pub fn any_p(args: &[Scm]) {
+    pub fn any_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -227,20 +222,19 @@ mod globals {
                 } else {
                     {
                         // (any? pred (cdr seq))
-                        globals::any_p
-                            .with(|value| value.get())
-                            .invoke(&[pred.clone(), {
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            }])
+                        Scm::func(globals::any_p).invoke(&[pred.clone(), {
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        }])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn append(args: &[Scm]) {
+    pub fn append(args: &[Scm]) -> Scm {
         {
             if args.len() < 0 {
                 panic!("not enough args")
@@ -248,17 +242,16 @@ mod globals {
             let seq = Scm::list(&args[0..]);
             {
                 // (fold-right append2 (quote ()) seq)
-                globals::fold_minus_right
-                    .with(|value| value.get())
-                    .invoke(&[
-                        globals::append2.with(|value| value.get()),
-                        Scm::Nil,
-                        seq.clone(),
-                    ])
+                Scm::func(globals::fold_minus_right).invoke(&[
+                    Scm::func(globals::append2),
+                    Scm::Nil,
+                    seq.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn append2(args: &[Scm]) {
+    pub fn append2(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -286,7 +279,7 @@ mod globals {
                         },
                         {
                             // (append2 (cdr list1) list2)
-                            globals::append2.with(|value| value.get()).invoke(&[
+                            Scm::func(globals::append2).invoke(&[
                                 {
                                     // (cdr list1)
                                     imports::cdr
@@ -300,8 +293,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn assoc(args: &[Scm]) {
+    pub fn assoc(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -338,22 +332,21 @@ mod globals {
                 } else {
                     {
                         // (assoc obj (cdr seq))
-                        globals::assoc
-                            .with(|value| value.get())
-                            .invoke(&[obj.clone(), {
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            }])
+                        Scm::func(globals::assoc).invoke(&[obj.clone(), {
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        }])
                     }
                 }
             } else {
                 Scm::False
             }
         }
+        .into()
     }
-    pub fn assq(args: &[Scm]) {
+    pub fn assq(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -390,22 +383,21 @@ mod globals {
                 } else {
                     {
                         // (assq obj (cdr seq))
-                        globals::assq
-                            .with(|value| value.get())
-                            .invoke(&[obj.clone(), {
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            }])
+                        Scm::func(globals::assq).invoke(&[obj.clone(), {
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        }])
                     }
                 }
             } else {
                 Scm::False
             }
         }
+        .into()
     }
-    pub fn fold_minus_left(args: &[Scm]) {
+    pub fn fold_minus_left(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -425,7 +417,7 @@ mod globals {
             } else {
                 {
                     // (fold-left op (op init (car seq)) (cdr seq))
-                    globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                    Scm::func(globals::fold_minus_left).invoke(&[
                         op.clone(),
                         {
                             // (op init (car seq))
@@ -446,8 +438,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn fold_minus_right(args: &[Scm]) {
+    pub fn fold_minus_right(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -476,21 +469,24 @@ mod globals {
                         },
                         {
                             // (fold-right op init (cdr seq))
-                            globals::fold_minus_right
-                                .with(|value| value.get())
-                                .invoke(&[op.clone(), init.clone(), {
+                            Scm::func(globals::fold_minus_right).invoke(&[
+                                op.clone(),
+                                init.clone(),
+                                {
                                     // (cdr seq)
                                     imports::cdr
                                         .with(|value| value.get())
                                         .invoke(&[seq.clone()])
-                                }])
+                                },
+                            ])
                         },
                     ])
                 }
             }
         }
+        .into()
     }
-    pub fn for_minus_each(args: &[Scm]) {
+    pub fn for_minus_each(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -499,13 +495,12 @@ mod globals {
             let seq_star_ = Scm::list(&args[1..]);
             {
                 // (_for-each proc seq*)
-                globals::__for_minus_each
-                    .with(|value| value.get())
-                    .invoke(&[proc.clone(), seq_star_.clone()])
+                Scm::func(globals::__for_minus_each).invoke(&[proc.clone(), seq_star_.clone()])
             }
         }
+        .into()
     }
-    pub fn length(args: &[Scm]) {
+    pub fn length(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -513,7 +508,7 @@ mod globals {
             let seq = args[0].clone();
             {
                 // (fold-left (lambda (acc _) (+ acc 1)) 0 seq)
-                globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                Scm::func(globals::fold_minus_left).invoke(&[
                     {
                         // Closure
                         Scm::func(move |args: &[Scm]| {
@@ -535,8 +530,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn list(args: &[Scm]) {
+    pub fn list(args: &[Scm]) -> Scm {
         {
             if args.len() < 0 {
                 panic!("not enough args")
@@ -544,8 +540,9 @@ mod globals {
             let x = Scm::list(&args[0..]);
             x.clone()
         }
+        .into()
     }
-    pub fn list_minus_copy(args: &[Scm]) {
+    pub fn list_minus_copy(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -553,17 +550,16 @@ mod globals {
             let seq = args[0].clone();
             {
                 // (fold-right cons (quote ()) seq)
-                globals::fold_minus_right
-                    .with(|value| value.get())
-                    .invoke(&[
-                        imports::cons.with(|value| value.get()),
-                        Scm::Nil,
-                        seq.clone(),
-                    ])
+                Scm::func(globals::fold_minus_right).invoke(&[
+                    imports::cons.with(|value| value.get()),
+                    Scm::Nil,
+                    seq.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn list_p(args: &[Scm]) {
+    pub fn list_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -590,7 +586,7 @@ mod globals {
                 {
                     {
                         // (list? (cdr seq))
-                        globals::list_p.with(|value| value.get()).invoke(&[{
+                        Scm::func(globals::list_p).invoke(&[{
                             // (cdr seq)
                             imports::cdr
                                 .with(|value| value.get())
@@ -602,8 +598,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn map(args: &[Scm]) {
+    pub fn map(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -612,13 +609,12 @@ mod globals {
             let seq_star_ = Scm::list(&args[1..]);
             {
                 // (_map func seq*)
-                globals::__map
-                    .with(|value| value.get())
-                    .invoke(&[func.clone(), seq_star_.clone()])
+                Scm::func(globals::__map).invoke(&[func.clone(), seq_star_.clone()])
             }
         }
+        .into()
     }
-    pub fn map_minus_1(args: &[Scm]) {
+    pub fn map_minus_1(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -627,37 +623,36 @@ mod globals {
             let seq = args[1].clone();
             {
                 // (fold-right (lambda (x acc) (cons (func x) acc)) (quote ()) seq)
-                globals::fold_minus_right
-                    .with(|value| value.get())
-                    .invoke(&[
-                        {
-                            // Closure
-                            let func = func.clone();
-                            Scm::func(move |args: &[Scm]| {
-                                if args.len() != 2 {
-                                    panic!("invalid arity")
-                                }
-                                let x = args[0].clone();
-                                let acc = args[1].clone();
-                                {
-                                    // (cons (func x) acc)
-                                    imports::cons.with(|value| value.get()).invoke(&[
-                                        {
-                                            // (func x)
-                                            func.clone().invoke(&[x.clone()])
-                                        },
-                                        acc.clone(),
-                                    ])
-                                }
-                            })
-                        },
-                        Scm::Nil,
-                        seq.clone(),
-                    ])
+                Scm::func(globals::fold_minus_right).invoke(&[
+                    {
+                        // Closure
+                        let func = func.clone();
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let x = args[0].clone();
+                            let acc = args[1].clone();
+                            {
+                                // (cons (func x) acc)
+                                imports::cons.with(|value| value.get()).invoke(&[
+                                    {
+                                        // (func x)
+                                        func.clone().invoke(&[x.clone()])
+                                    },
+                                    acc.clone(),
+                                ])
+                            }
+                        })
+                    },
+                    Scm::Nil,
+                    seq.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn memq(args: &[Scm]) {
+    pub fn memq(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -689,22 +684,21 @@ mod globals {
                 } else {
                     {
                         // (memq obj (cdr seq))
-                        globals::memq
-                            .with(|value| value.get())
-                            .invoke(&[obj.clone(), {
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            }])
+                        Scm::func(globals::memq).invoke(&[obj.clone(), {
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        }])
                     }
                 }
             } else {
                 Scm::False
             }
         }
+        .into()
     }
-    pub fn not(args: &[Scm]) {
+    pub fn not(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -716,8 +710,9 @@ mod globals {
                 Scm::True
             }
         }
+        .into()
     }
-    pub fn reverse(args: &[Scm]) {
+    pub fn reverse(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -725,7 +720,7 @@ mod globals {
             let seq = args[0].clone();
             {
                 // (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq)
-                globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                Scm::func(globals::fold_minus_left).invoke(&[
                     {
                         // Closure
                         Scm::func(move |args: &[Scm]| {
@@ -747,8 +742,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn string_minus_append(args: &[Scm]) {
+    pub fn string_minus_append(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -757,15 +753,16 @@ mod globals {
             let args_ = Scm::list(&args[1..]);
             {
                 // (fold-left string-cons s1 args)
-                globals::fold_minus_left.with(|value| value.get()).invoke(&[
+                Scm::func(globals::fold_minus_left).invoke(&[
                     imports::string_minus_cons.with(|value| value.get()),
                     s1.clone(),
                     args_.clone(),
                 ])
             }
         }
+        .into()
     }
-    pub fn string_e__p(args: &[Scm]) {
+    pub fn string_e__p(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -774,7 +771,7 @@ mod globals {
             let args_ = Scm::list(&args[1..]);
             {
                 // (all? (lambda (s) (equal? s1 s)) args)
-                globals::all_p.with(|value| value.get()).invoke(&[
+                Scm::func(globals::all_p).invoke(&[
                     {
                         // Closure
                         let s1 = s1.clone();
@@ -795,8 +792,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn symbol_e__p(args: &[Scm]) {
+    pub fn symbol_e__p(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -805,7 +803,7 @@ mod globals {
             let args_ = Scm::list(&args[1..]);
             {
                 // (all? (lambda (s) (eq? s1 s)) args)
-                globals::all_p.with(|value| value.get()).invoke(&[
+                Scm::func(globals::all_p).invoke(&[
                     {
                         // Closure
                         let s1 = s1.clone();
@@ -826,6 +824,7 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
 }
 

@@ -43,7 +43,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static LocalVariable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE LocalVariable"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static UndefinedGlobal: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE UndefinedGlobal"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static Variable: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE Variable"))}
-    pub fn boxed_minus_variable_p(args: &[Scm]) {
+    pub fn boxed_minus_variable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -57,8 +57,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn global_minus_add_minus_definition_i(args: &[Scm]) {
+    pub fn global_minus_add_minus_definition_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -72,8 +73,9 @@ mod globals {
                     .invoke(&[var.clone(), Scm::symbol("add-definition!"), val.clone()])
             }
         }
+        .into()
     }
-    pub fn global_minus_function_minus_get_minus_value(args: &[Scm]) {
+    pub fn global_minus_function_minus_get_minus_value(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -86,8 +88,9 @@ mod globals {
                     .invoke(&[var.clone(), Scm::symbol("value")])
             }
         }
+        .into()
     }
-    pub fn global_minus_function_minus_set_minus_value_i(args: &[Scm]) {
+    pub fn global_minus_function_minus_set_minus_value_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -101,8 +104,9 @@ mod globals {
                     .invoke(&[var.clone(), Scm::symbol("value"), val.clone()])
             }
         }
+        .into()
     }
-    pub fn global_minus_function_p(args: &[Scm]) {
+    pub fn global_minus_function_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -116,8 +120,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn global_minus_variable_p(args: &[Scm]) {
+    pub fn global_minus_variable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -131,8 +136,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn import_minus_variable_p(args: &[Scm]) {
+    pub fn import_minus_variable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -146,8 +152,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn keyword_minus_handler(args: &[Scm]) {
+    pub fn keyword_minus_handler(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -160,8 +167,9 @@ mod globals {
                     .invoke(&[kw.clone(), Scm::symbol("handler")])
             }
         }
+        .into()
     }
-    pub fn keyword_minus_name(args: &[Scm]) {
+    pub fn keyword_minus_name(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -174,8 +182,9 @@ mod globals {
                     .invoke(&[kw.clone(), Scm::symbol("name")])
             }
         }
+        .into()
     }
-    pub fn keyword_p(args: &[Scm]) {
+    pub fn keyword_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -202,8 +211,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn local_minus_boxify_i(args: &[Scm]) {
+    pub fn local_minus_boxify_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -216,8 +226,9 @@ mod globals {
                     .invoke(&[var.clone(), Scm::symbol("into-boxed!")])
             }
         }
+        .into()
     }
-    pub fn local_minus_variable_p(args: &[Scm]) {
+    pub fn local_minus_variable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -231,8 +242,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn make_minus_keyword(args: &[Scm]) {
+    pub fn make_minus_keyword(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -266,8 +278,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn new_minus_boxed(args: &[Scm]) {
+    pub fn new_minus_boxed(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -285,8 +298,9 @@ mod globals {
                     }])
             }
         }
+        .into()
     }
-    pub fn new_minus_global(args: &[Scm]) {
+    pub fn new_minus_global(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -304,8 +318,9 @@ mod globals {
                     }])
             }
         }
+        .into()
     }
-    pub fn new_minus_import(args: &[Scm]) {
+    pub fn new_minus_import(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -323,8 +338,9 @@ mod globals {
                     }])
             }
         }
+        .into()
     }
-    pub fn new_minus_keyword(args: &[Scm]) {
+    pub fn new_minus_keyword(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -337,14 +353,14 @@ mod globals {
                     .with(|value| value.get())
                     .invoke(&[name.clone(), {
                         // (make-keyword name handler)
-                        globals::make_minus_keyword
-                            .with(|value| value.get())
+                        Scm::func(globals::make_minus_keyword)
                             .invoke(&[name.clone(), handler.clone()])
                     }])
             }
         }
+        .into()
     }
-    pub fn new_minus_local(args: &[Scm]) {
+    pub fn new_minus_local(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -362,8 +378,9 @@ mod globals {
                     }])
             }
         }
+        .into()
     }
-    pub fn replace_minus_var_i(args: &[Scm]) {
+    pub fn replace_minus_var_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -377,8 +394,9 @@ mod globals {
                     .invoke(&[var.clone(), new_minus_var.clone()])
             }
         }
+        .into()
     }
-    pub fn undefined_minus_global_minus_variable_p(args: &[Scm]) {
+    pub fn undefined_minus_global_minus_variable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -392,8 +410,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn variable_minus_mutable_p(args: &[Scm]) {
+    pub fn variable_minus_mutable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -406,8 +425,9 @@ mod globals {
                     .invoke(&[var.clone(), Scm::symbol("mutable?")])
             }
         }
+        .into()
     }
-    pub fn variable_minus_set_minus_mutable_i(args: &[Scm]) {
+    pub fn variable_minus_set_minus_mutable_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -420,8 +440,9 @@ mod globals {
                     .invoke(&[var.clone(), Scm::symbol("set-mutable!")])
             }
         }
+        .into()
     }
-    pub fn variable_p(args: &[Scm]) {
+    pub fn variable_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -434,6 +455,7 @@ mod globals {
                     .invoke(&[obj.clone(), globals::Variable.with(|value| value.get())])
             }
         }
+        .into()
     }
 }
 

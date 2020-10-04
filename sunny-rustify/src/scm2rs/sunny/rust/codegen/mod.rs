@@ -20,179 +20,74 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn rust_minus_gen_minus_global_minus_defs(args: &[Scm]) {
-        {
-            if args.len() != 2 {
-                panic!("invalid arity")
-            }
-            let module = args[0].clone();
-            let g = args[1].clone();
-            if ({
-                // (null? g)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[g.clone()])
-            })
-            .is_true()
-            {
-                {
-                    // (println module)
-                    imports::println
-                        .with(|value| value.get())
-                        .invoke(&[module.clone()])
-                }
-            } else {
-                {
-                    // (cond ...)
-                    if ({
-                        // (import-variable? (cdar g))
-                        imports::import_minus_variable_p
-                            .with(|value| value.get())
-                            .invoke(&[{
-                                // (cdar g)
-                                imports::cdar.with(|value| value.get()).invoke(&[g.clone()])
-                            }])
-                    })
-                    .is_true()
-                    {
-                        {
-                            // (rust-gen-global-defs module (cdr g))
-                            globals::rust_minus_gen_minus_global_minus_defs
-                                .with(|value| value.get())
-                                .invoke(&[module.clone(), {
-                                    // (cdr g)
-                                    imports::cdr.with(|value| value.get()).invoke(&[g.clone()])
-                                }])
-                        }
-                    } else if ({
-                        // (keyword? (cdar g))
-                        imports::keyword_p.with(|value| value.get()).invoke(&[{
-                            // (cdar g)
-                            imports::cdar.with(|value| value.get()).invoke(&[g.clone()])
-                        }])
-                    })
-                    .is_true()
-                    {
-                        {
-                            // (rust-gen-global-defs module (cdr g))
-                            globals::rust_minus_gen_minus_global_minus_defs
-                                .with(|value| value.get())
-                                .invoke(&[module.clone(), {
-                                    // (cdr g)
-                                    imports::cdr.with(|value| value.get()).invoke(&[g.clone()])
-                                }])
-                        }
-                    } else if ({
-                        // (global-variable? (cdar g))
-                        imports::global_minus_variable_p
-                            .with(|value| value.get())
-                            .invoke(&[{
-                                // (cdar g)
-                                imports::cdar.with(|value| value.get()).invoke(&[g.clone()])
-                            }])
-                    })
-                    .is_true()
-                    {
-                        {
-                            {
-                                // (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE " (caar g) "\"))}")
-                                imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
+    pub fn rust_minus_gen_minus_global_minus_defs(args: &[Scm]) -> Scm {
+        {if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let g = args[1].clone();if ({
+// (null? g)
+imports::null_p.with(|value| value.get()).invoke(&[g.clone()])}).is_true() {{
+// (println module)
+imports::println.with(|value| value.get()).invoke(&[module.clone()])}} else {{
+// (cond ...)
+if ({
+// (import-variable? (cdar g))
+imports::import_minus_variable_p.with(|value| value.get()).invoke(&[{
+// (cdar g)
+imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}).is_true() {{
+// (rust-gen-global-defs module (cdr g))
+Scm::func(globals::rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
+// (cdr g)
+imports::cdr.with(|value| value.get()).invoke(&[g.clone()])}])}} else if ({
+// (keyword? (cdar g))
+imports::keyword_p.with(|value| value.get()).invoke(&[{
+// (cdar g)
+imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}).is_true() {{
+// (rust-gen-global-defs module (cdr g))
+Scm::func(globals::rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
+// (cdr g)
+imports::cdr.with(|value| value.get()).invoke(&[g.clone()])}])}} else if ({
+// (global-variable? (cdar g))
+imports::global_minus_variable_p.with(|value| value.get()).invoke(&[{
+// (cdar g)
+imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}).is_true() {{{
+// (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE " (caar g) "\"))}")
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
 // (rustify-identifier (caar g))
 imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[{
 // (caar g)
 imports::caar.with(|value| value.get()).invoke(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "),{
 // (caar g)
-imports::caar.with(|value| value.get()).invoke(&[g.clone()])},Scm::from("\"))}")])
-                            };
-                            {
-                                // (rust-gen-global-defs module (cdr g))
-                                globals::rust_minus_gen_minus_global_minus_defs
-                                    .with(|value| value.get())
-                                    .invoke(&[module.clone(), {
-                                        // (cdr g)
-                                        imports::cdr.with(|value| value.get()).invoke(&[g.clone()])
-                                    }])
-                            }
-                        }
-                    } else if ({
-                        // (global-function? (cdar g))
-                        imports::global_minus_function_p
-                            .with(|value| value.get())
-                            .invoke(&[{
-                                // (cdar g)
-                                imports::cdar.with(|value| value.get()).invoke(&[g.clone()])
-                            }])
-                    })
-                    .is_true()
-                    {
-                        {
-                            {
-                                // (println module "pub fn " (rustify-identifier (caar g)) "(args: &[Scm]) { ")
-                                imports::println.with(|value| value.get()).invoke(&[
-                                    module.clone(),
-                                    Scm::from("pub fn "),
-                                    {
-                                        // (rustify-identifier (caar g))
-                                        imports::rustify_minus_identifier
-                                            .with(|value| value.get())
-                                            .invoke(&[{
-                                                // (caar g)
-                                                imports::caar
-                                                    .with(|value| value.get())
-                                                    .invoke(&[g.clone()])
-                                            }])
-                                    },
-                                    Scm::from("(args: &[Scm]) { "),
-                                ])
-                            };
-                            {
-                                // ((global-function-get-value (cdar g)) (quote gen-rust) module)
-                                {
-                                    // (global-function-get-value (cdar g))
-                                    imports::global_minus_function_minus_get_minus_value
-                                        .with(|value| value.get())
-                                        .invoke(&[{
-                                            // (cdar g)
-                                            imports::cdar
-                                                .with(|value| value.get())
-                                                .invoke(&[g.clone()])
-                                        }])
-                                }
-                                .invoke(&[Scm::symbol("gen-rust"), module.clone()])
-                            };
-                            {
-                                // (println module "}")
-                                imports::println
-                                    .with(|value| value.get())
-                                    .invoke(&[module.clone(), Scm::from("}")])
-                            };
-                            {
-                                // (rust-gen-global-defs module (cdr g))
-                                globals::rust_minus_gen_minus_global_minus_defs
-                                    .with(|value| value.get())
-                                    .invoke(&[module.clone(), {
-                                        // (cdr g)
-                                        imports::cdr.with(|value| value.get()).invoke(&[g.clone()])
-                                    }])
-                            }
-                        }
-                    } else {
-                        {
-                            // (error "Unexpected entry in global environment" (car g))
-                            imports::error.with(|value| value.get()).invoke(&[
-                                Scm::from("Unexpected entry in global environment"),
-                                {
-                                    // (car g)
-                                    imports::car.with(|value| value.get()).invoke(&[g.clone()])
-                                },
-                            ])
-                        }
-                    }
-                }
-            }
-        }
+imports::caar.with(|value| value.get()).invoke(&[g.clone()])},Scm::from("\"))}")])};{
+// (rust-gen-global-defs module (cdr g))
+Scm::func(globals::rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
+// (cdr g)
+imports::cdr.with(|value| value.get()).invoke(&[g.clone()])}])}}} else if ({
+// (global-function? (cdar g))
+imports::global_minus_function_p.with(|value| value.get()).invoke(&[{
+// (cdar g)
+imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}).is_true() {{{
+// (println module "pub fn " (rustify-identifier (caar g)) "(args: &[Scm]) -> Scm { ")
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub fn "),{
+// (rustify-identifier (caar g))
+imports::rustify_minus_identifier.with(|value| value.get()).invoke(&[{
+// (caar g)
+imports::caar.with(|value| value.get()).invoke(&[g.clone()])}])},Scm::from("(args: &[Scm]) -> Scm { ")])};{
+// ((global-function-get-value (cdar g)) (quote gen-rust) module)
+{
+// (global-function-get-value (cdar g))
+imports::global_minus_function_minus_get_minus_value.with(|value| value.get()).invoke(&[{
+// (cdar g)
+imports::cdar.with(|value| value.get()).invoke(&[g.clone()])}])}.invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
+// (println module ".into()}")
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from(".into()}")])};{
+// (rust-gen-global-defs module (cdr g))
+Scm::func(globals::rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
+// (cdr g)
+imports::cdr.with(|value| value.get()).invoke(&[g.clone()])}])}}} else {{
+// (error "Unexpected entry in global environment" (car g))
+imports::error.with(|value| value.get()).invoke(&[Scm::from("Unexpected entry in global environment"),{
+// (car g)
+imports::car.with(|value| value.get()).invoke(&[g.clone()])}])}}}}}.into()
     }
-    pub fn rust_minus_gen_minus_in_minus_module(args: &[Scm]) {
+    pub fn rust_minus_gen_minus_in_minus_module(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -224,8 +119,9 @@ imports::caar.with(|value| value.get()).invoke(&[g.clone()])},Scm::from("\"))}")
                 }
             }
         }
+        .into()
     }
-    pub fn rust_minus_gen_minus_in_minus_submodule(args: &[Scm]) {
+    pub fn rust_minus_gen_minus_in_minus_submodule(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -257,93 +153,38 @@ imports::caar.with(|value| value.get()).invoke(&[g.clone()])},Scm::from("\"))}")
                 }
             }
         }
+        .into()
     }
-    pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) {
-        {
-            if args.len() != 2 {
-                panic!("invalid arity")
-            }
-            let module = args[0].clone();
-            let node = args[1].clone();
-            {
-                {
-                    // (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
-                    imports::println.with(|value| value.get()).invoke(&[
-                        module.clone(),
-                        Scm::from("pub mod "),
-                        {
-                            // (rustify-libname (module-tree-name node))
-                            imports::rustify_minus_libname
-                                .with(|value| value.get())
-                                .invoke(&[{
-                                    // (module-tree-name node)
-                                    imports::module_minus_tree_minus_name
-                                        .with(|value| value.get())
-                                        .invoke(&[node.clone()])
-                                }])
-                        },
-                        Scm::from(";"),
-                    ])
-                };
-                if ({
-                    // (module-tree-leaf? node)
-                    imports::module_minus_tree_minus_leaf_p
-                        .with(|value| value.get())
-                        .invoke(&[node.clone()])
-                })
-                .is_true()
-                {
-                    {
-                        // (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod)))
-                        globals::rust_minus_gen_minus_in_minus_submodule
-                            .with(|value| value.get())
-                            .invoke(&[
-                                {
-                                    // (module-tree-name node)
-                                    imports::module_minus_tree_minus_name
-                                        .with(|value| value.get())
-                                        .invoke(&[node.clone()])
-                                },
-                                module.clone(),
-                                {
-                                    // Closure
-                                    let node = node.clone();
-                                    Scm::func(move |args: &[Scm]| {
-                                        if args.len() != 1 {
-                                            panic!("invalid arity")
-                                        }
-                                        let submod = args[0].clone();
-                                        {
-                                            // ((module-tree-libobj node) (quote gen-rust) submod)
-                                            {
-                                                // (module-tree-libobj node)
-                                                imports::module_minus_tree_minus_libobj
-                                                    .with(|value| value.get())
-                                                    .invoke(&[node.clone()])
-                                            }
-                                            .invoke(&[Scm::symbol("gen-rust"), submod.clone()])
-                                        }
-                                    })
-                                },
-                            ])
-                    }
-                } else {
-                    {
-                        // (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))
-                        globals::rust_minus_gen_minus_in_minus_submodule.with(|value| value.get()).invoke(&[{
+    pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
+        {if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let node = args[1].clone();{{
+// (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
+imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod "),{
+// (rustify-libname (module-tree-name node))
+imports::rustify_minus_libname.with(|value| value.get()).invoke(&[{
+// (module-tree-name node)
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])}])},Scm::from(";")])};if ({
+// (module-tree-leaf? node)
+imports::module_minus_tree_minus_leaf_p.with(|value| value.get()).invoke(&[node.clone()])}).is_true() {{
+// (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod)))
+Scm::func(globals::rust_minus_gen_minus_in_minus_submodule).invoke(&[{
+// (module-tree-name node)
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])},module.clone(),{// Closure
+let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();{
+// ((module-tree-libobj node) (quote gen-rust) submod)
+{
+// (module-tree-libobj node)
+imports::module_minus_tree_minus_libobj.with(|value| value.get()).invoke(&[node.clone()])}.invoke(&[Scm::symbol("gen-rust"),submod.clone()])}})}])}} else {{
+// (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))
+Scm::func(globals::rust_minus_gen_minus_in_minus_submodule).invoke(&[{
 // (module-tree-name node)
 imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])},module.clone(),{// Closure
 let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();{
 // (rust-gen-module-tree-list submod (module-tree-children node))
-globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[submod.clone(),{
+Scm::func(globals::rust_minus_gen_minus_module_minus_tree_minus_list).invoke(&[submod.clone(),{
 // (module-tree-children node)
-imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[node.clone()])}])}})}])
-                    }
-                }
-            }
-        }
+imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[node.clone()])}])}})}])}}}}.into()
     }
-    pub fn rust_minus_gen_minus_module_minus_tree_minus_list(args: &[Scm]) {
+    pub fn rust_minus_gen_minus_module_minus_tree_minus_list(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -363,8 +204,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                             let child = args[0].clone();
                             {
                                 // (rust-gen-module-tree module child)
-                                globals::rust_minus_gen_minus_module_minus_tree
-                                    .with(|value| value.get())
+                                Scm::func(globals::rust_minus_gen_minus_module_minus_tree)
                                     .invoke(&[module.clone(), child.clone()])
                             }
                         })
@@ -373,8 +213,9 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                 ])
             }
         }
+        .into()
     }
-    pub fn rust_minus_gen_minus_modules(args: &[Scm]) {
+    pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -429,8 +270,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                         };
                         {
                             // (rust-gen-module-tree-list module (module-tree-children module-tree))
-                            globals::rust_minus_gen_minus_module_minus_tree_minus_list
-                                .with(|value| value.get())
+                            Scm::func(globals::rust_minus_gen_minus_module_minus_tree_minus_list)
                                 .invoke(&[module.clone(), {
                                     // (module-tree-children module-tree)
                                     imports::module_minus_tree_minus_children
@@ -442,6 +282,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                 }
             }
         }
+        .into()
     }
 }
 

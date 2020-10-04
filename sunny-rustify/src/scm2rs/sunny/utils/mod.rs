@@ -18,7 +18,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn any(args: &[Scm]) {
+    pub fn any(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -48,7 +48,7 @@ mod globals {
                 } else {
                     {
                         // (any f (cdr seq))
-                        globals::any.with(|value| value.get()).invoke(&[f.clone(), {
+                        Scm::func(globals::any).invoke(&[f.clone(), {
                             // (cdr seq)
                             imports::cdr
                                 .with(|value| value.get())
@@ -60,8 +60,9 @@ mod globals {
                 Scm::False
             }
         }
+        .into()
     }
-    pub fn atom_p(args: &[Scm]) {
+    pub fn atom_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -80,8 +81,9 @@ mod globals {
                 Scm::True
             }
         }
+        .into()
     }
-    pub fn bor(args: &[Scm]) {
+    pub fn bor(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -104,12 +106,13 @@ mod globals {
                     // (apply bor args)
                     imports::apply
                         .with(|value| value.get())
-                        .invoke(&[globals::bor.with(|value| value.get()), args_.clone()])
+                        .invoke(&[Scm::func(globals::bor), args_.clone()])
                 }
             }
         }
+        .into()
     }
-    pub fn dotted_minus_list_p(args: &[Scm]) {
+    pub fn dotted_minus_list_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -121,15 +124,14 @@ mod globals {
                     // (null? (last-cdr seq))
                     imports::null_p.with(|value| value.get()).invoke(&[{
                         // (last-cdr seq)
-                        globals::last_minus_cdr
-                            .with(|value| value.get())
-                            .invoke(&[seq.clone()])
+                        Scm::func(globals::last_minus_cdr).invoke(&[seq.clone()])
                     }])
                 }])
             }
         }
+        .into()
     }
-    pub fn filter(args: &[Scm]) {
+    pub fn filter(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -166,36 +168,33 @@ mod globals {
                             },
                             {
                                 // (filter f (cdr seq))
-                                globals::filter
-                                    .with(|value| value.get())
-                                    .invoke(&[f.clone(), {
-                                        // (cdr seq)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[seq.clone()])
-                                    }])
+                                Scm::func(globals::filter).invoke(&[f.clone(), {
+                                    // (cdr seq)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[seq.clone()])
+                                }])
                             },
                         ])
                     }
                 } else {
                     {
                         // (filter f (cdr seq))
-                        globals::filter
-                            .with(|value| value.get())
-                            .invoke(&[f.clone(), {
-                                // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
-                            }])
+                        Scm::func(globals::filter).invoke(&[f.clone(), {
+                            // (cdr seq)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[seq.clone()])
+                        }])
                     }
                 }
             } else {
                 Scm::Nil
             }
         }
+        .into()
     }
-    pub fn last_minus_cdr(args: &[Scm]) {
+    pub fn last_minus_cdr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -211,7 +210,7 @@ mod globals {
             {
                 {
                     // (last-cdr (cdr seq))
-                    globals::last_minus_cdr.with(|value| value.get()).invoke(&[{
+                    Scm::func(globals::last_minus_cdr).invoke(&[{
                         // (cdr seq)
                         imports::cdr
                             .with(|value| value.get())
@@ -222,8 +221,9 @@ mod globals {
                 seq.clone()
             }
         }
+        .into()
     }
-    pub fn proper_minus_list_minus_part(args: &[Scm]) {
+    pub fn proper_minus_list_minus_part(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -248,14 +248,12 @@ mod globals {
                         },
                         {
                             // (proper-list-part (cdr seq))
-                            globals::proper_minus_list_minus_part
-                                .with(|value| value.get())
-                                .invoke(&[{
-                                    // (cdr seq)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[seq.clone()])
-                                }])
+                            Scm::func(globals::proper_minus_list_minus_part).invoke(&[{
+                                // (cdr seq)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[seq.clone()])
+                            }])
                         },
                     ])
                 }
@@ -263,8 +261,9 @@ mod globals {
                 Scm::Nil
             }
         }
+        .into()
     }
-    pub fn reduce(args: &[Scm]) {
+    pub fn reduce(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -282,7 +281,7 @@ mod globals {
             {
                 {
                     // (reduce f (f init (car seq)) (cdr seq))
-                    globals::reduce.with(|value| value.get()).invoke(&[
+                    Scm::func(globals::reduce).invoke(&[
                         f.clone(),
                         {
                             // (f init (car seq))
@@ -305,8 +304,9 @@ mod globals {
                 init.clone()
             }
         }
+        .into()
     }
-    pub fn sort(args: &[Scm]) {
+    pub fn sort(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -335,36 +335,33 @@ mod globals {
                             imports::append.with(|value| value.get()).invoke(&[
                                 {
                                     // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
-                                    globals::sort.with(|value| value.get()).invoke(&[
-                                        cmp.clone(),
-                                        {
-                                            // (filter (lambda (x) (cmp x pivot)) (cdr ass))
-                                            globals::filter.with(|value| value.get()).invoke(&[
-                                                {
-                                                    // Closure
-                                                    let cmp = cmp.clone();
-                                                    let pivot = pivot.clone();
-                                                    Scm::func(move |args: &[Scm]| {
-                                                        if args.len() != 1 {
-                                                            panic!("invalid arity")
-                                                        }
-                                                        let x = args[0].clone();
-                                                        {
-                                                            // (cmp x pivot)
-                                                            cmp.clone()
-                                                                .invoke(&[x.clone(), pivot.clone()])
-                                                        }
-                                                    })
-                                                },
-                                                {
-                                                    // (cdr ass)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[ass.clone()])
-                                                },
-                                            ])
-                                        },
-                                    ])
+                                    Scm::func(globals::sort).invoke(&[cmp.clone(), {
+                                        // (filter (lambda (x) (cmp x pivot)) (cdr ass))
+                                        Scm::func(globals::filter).invoke(&[
+                                            {
+                                                // Closure
+                                                let cmp = cmp.clone();
+                                                let pivot = pivot.clone();
+                                                Scm::func(move |args: &[Scm]| {
+                                                    if args.len() != 1 {
+                                                        panic!("invalid arity")
+                                                    }
+                                                    let x = args[0].clone();
+                                                    {
+                                                        // (cmp x pivot)
+                                                        cmp.clone()
+                                                            .invoke(&[x.clone(), pivot.clone()])
+                                                    }
+                                                })
+                                            },
+                                            {
+                                                // (cdr ass)
+                                                imports::cdr
+                                                    .with(|value| value.get())
+                                                    .invoke(&[ass.clone()])
+                                            },
+                                        ])
+                                    }])
                                 },
                                 {
                                     // (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))
@@ -372,51 +369,40 @@ mod globals {
                                         pivot.clone(),
                                         {
                                             // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
-                                            globals::sort.with(|value| value.get()).invoke(&[
-                                                cmp.clone(),
-                                                {
-                                                    // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
-                                                    globals::filter
-                                                        .with(|value| value.get())
-                                                        .invoke(&[
+                                            Scm::func(globals::sort).invoke(&[cmp.clone(), {
+                                                // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
+                                                Scm::func(globals::filter).invoke(&[
+                                                    {
+                                                        // Closure
+                                                        let cmp = cmp.clone();
+                                                        let pivot = pivot.clone();
+                                                        Scm::func(move |args: &[Scm]| {
+                                                            if args.len() != 1 {
+                                                                panic!("invalid arity")
+                                                            }
+                                                            let x = args[0].clone();
                                                             {
-                                                                // Closure
-                                                                let cmp = cmp.clone();
-                                                                let pivot = pivot.clone();
-                                                                Scm::func(move |args: &[Scm]| {
-                                                                    if args.len() != 1 {
-                                                                        panic!("invalid arity")
-                                                                    }
-                                                                    let x = args[0].clone();
-                                                                    {
-                                                                        // (not (cmp x pivot))
-                                                                        imports::not
-                                                                            .with(|value| {
-                                                                                value.get()
-                                                                            })
-                                                                            .invoke(&[{
-                                                                                // (cmp x pivot)
-                                                                                cmp.clone().invoke(
-                                                                                    &[
-                                                                                        x.clone(),
-                                                                                        pivot
-                                                                                            .clone(
-                                                                                            ),
-                                                                                    ],
-                                                                                )
-                                                                            }])
-                                                                    }
-                                                                })
-                                                            },
-                                                            {
-                                                                // (cdr ass)
-                                                                imports::cdr
+                                                                // (not (cmp x pivot))
+                                                                imports::not
                                                                     .with(|value| value.get())
-                                                                    .invoke(&[ass.clone()])
-                                                            },
-                                                        ])
-                                                },
-                                            ])
+                                                                    .invoke(&[{
+                                                                        // (cmp x pivot)
+                                                                        cmp.clone().invoke(&[
+                                                                            x.clone(),
+                                                                            pivot.clone(),
+                                                                        ])
+                                                                    }])
+                                                            }
+                                                        })
+                                                    },
+                                                    {
+                                                        // (cdr ass)
+                                                        imports::cdr
+                                                            .with(|value| value.get())
+                                                            .invoke(&[ass.clone()])
+                                                    },
+                                                ])
+                                            }])
                                         },
                                     ])
                                 },
@@ -428,6 +414,7 @@ mod globals {
                 Scm::Nil
             }
         }
+        .into()
     }
 }
 

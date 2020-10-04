@@ -143,9 +143,9 @@
                       ".with(|value| value.get())"))
               ((global-function? var)
                (print module
-                      "globals::"
+                      "Scm::func(globals::"
                       (rustify-identifier name)
-                      ".with(|value| value.get())"))
+                      ")"))
               ((import-variable? var)
                (print module
                       "imports::"

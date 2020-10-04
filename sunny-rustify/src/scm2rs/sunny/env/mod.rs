@@ -20,7 +20,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn adjoin_minus_boxed(args: &[Scm]) {
+    pub fn adjoin_minus_boxed(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -40,8 +40,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_boxed_minus_env(args: &[Scm]) {
+    pub fn adjoin_minus_boxed_minus_env(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -69,43 +70,39 @@ mod globals {
                 {
                     {
                         // (adjoin-boxed-env (cdr name*) (adjoin-boxed (car name*) env))
-                        globals::adjoin_minus_boxed_minus_env
-                            .with(|value| value.get())
-                            .invoke(&[
-                                {
-                                    // (cdr name*)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[name_star_.clone()])
-                                },
-                                {
-                                    // (adjoin-boxed (car name*) env)
-                                    globals::adjoin_minus_boxed
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            {
-                                                // (car name*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[name_star_.clone()])
-                                            },
-                                            env.clone(),
-                                        ])
-                                },
-                            ])
+                        Scm::func(globals::adjoin_minus_boxed_minus_env).invoke(&[
+                            {
+                                // (cdr name*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[name_star_.clone()])
+                            },
+                            {
+                                // (adjoin-boxed (car name*) env)
+                                Scm::func(globals::adjoin_minus_boxed).invoke(&[
+                                    {
+                                        // (car name*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[name_star_.clone()])
+                                    },
+                                    env.clone(),
+                                ])
+                            },
+                        ])
                     }
                 } else {
                     {
                         // (adjoin-boxed name* env)
-                        globals::adjoin_minus_boxed
-                            .with(|value| value.get())
+                        Scm::func(globals::adjoin_minus_boxed)
                             .invoke(&[name_star_.clone(), env.clone()])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_global_i(args: &[Scm]) {
+    pub fn adjoin_minus_global_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -114,21 +111,20 @@ mod globals {
             let env = args[1].clone();
             {
                 // (adjoin-global-var! (new-global name) env)
-                globals::adjoin_minus_global_minus_var_i
-                    .with(|value| value.get())
-                    .invoke(&[
-                        {
-                            // (new-global name)
-                            imports::new_minus_global
-                                .with(|value| value.get())
-                                .invoke(&[name.clone()])
-                        },
-                        env.clone(),
-                    ])
+                Scm::func(globals::adjoin_minus_global_minus_var_i).invoke(&[
+                    {
+                        // (new-global name)
+                        imports::new_minus_global
+                            .with(|value| value.get())
+                            .invoke(&[name.clone()])
+                    },
+                    env.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_global_minus_var_i(args: &[Scm]) {
+    pub fn adjoin_minus_global_minus_var_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -140,9 +136,7 @@ mod globals {
                 {
                     let genv = {
                         // (find-globals env)
-                        globals::find_minus_globals
-                            .with(|value| value.get())
-                            .invoke(&[env.clone()])
+                        Scm::func(globals::find_minus_globals).invoke(&[env.clone()])
                     };
                     {
                         {
@@ -173,8 +167,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_import_i(args: &[Scm]) {
+    pub fn adjoin_minus_import_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -183,21 +178,20 @@ mod globals {
             let env = args[1].clone();
             {
                 // (adjoin-global-var! (new-import name) env)
-                globals::adjoin_minus_global_minus_var_i
-                    .with(|value| value.get())
-                    .invoke(&[
-                        {
-                            // (new-import name)
-                            imports::new_minus_import
-                                .with(|value| value.get())
-                                .invoke(&[name.clone()])
-                        },
-                        env.clone(),
-                    ])
+                Scm::func(globals::adjoin_minus_global_minus_var_i).invoke(&[
+                    {
+                        // (new-import name)
+                        imports::new_minus_import
+                            .with(|value| value.get())
+                            .invoke(&[name.clone()])
+                    },
+                    env.clone(),
+                ])
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_import_star__i(args: &[Scm]) {
+    pub fn adjoin_minus_import_star__i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -292,8 +286,7 @@ mod globals {
                                     // (loop name* (find-globals env))
                                     loop_.get().invoke(&[name_star_.clone(), {
                                         // (find-globals env)
-                                        globals::find_minus_globals
-                                            .with(|value| value.get())
+                                        Scm::func(globals::find_minus_globals)
                                             .invoke(&[env.clone()])
                                     }])
                                 }
@@ -303,8 +296,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_local(args: &[Scm]) {
+    pub fn adjoin_minus_local(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -324,8 +318,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn adjoin_minus_local_minus_env(args: &[Scm]) {
+    pub fn adjoin_minus_local_minus_env(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -353,43 +348,39 @@ mod globals {
                 {
                     {
                         // (adjoin-local-env (cdr name*) (adjoin-local (car name*) env))
-                        globals::adjoin_minus_local_minus_env
-                            .with(|value| value.get())
-                            .invoke(&[
-                                {
-                                    // (cdr name*)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[name_star_.clone()])
-                                },
-                                {
-                                    // (adjoin-local (car name*) env)
-                                    globals::adjoin_minus_local
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            {
-                                                // (car name*)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[name_star_.clone()])
-                                            },
-                                            env.clone(),
-                                        ])
-                                },
-                            ])
+                        Scm::func(globals::adjoin_minus_local_minus_env).invoke(&[
+                            {
+                                // (cdr name*)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[name_star_.clone()])
+                            },
+                            {
+                                // (adjoin-local (car name*) env)
+                                Scm::func(globals::adjoin_minus_local).invoke(&[
+                                    {
+                                        // (car name*)
+                                        imports::car
+                                            .with(|value| value.get())
+                                            .invoke(&[name_star_.clone()])
+                                    },
+                                    env.clone(),
+                                ])
+                            },
+                        ])
                     }
                 } else {
                     {
                         // (adjoin-local name* env)
-                        globals::adjoin_minus_local
-                            .with(|value| value.get())
+                        Scm::func(globals::adjoin_minus_local)
                             .invoke(&[name_star_.clone(), env.clone()])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn ensure_minus_var_i(args: &[Scm]) {
+    pub fn ensure_minus_var_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -401,25 +392,23 @@ mod globals {
                 {
                     let var = {
                         // (lookup name env)
-                        globals::lookup
-                            .with(|value| value.get())
-                            .invoke(&[name.clone(), env.clone()])
+                        Scm::func(globals::lookup).invoke(&[name.clone(), env.clone()])
                     };
                     if (var.clone()).is_true() {
                         var.clone()
                     } else {
                         {
                             // (adjoin-global! name env)
-                            globals::adjoin_minus_global_i
-                                .with(|value| value.get())
+                            Scm::func(globals::adjoin_minus_global_i)
                                 .invoke(&[name.clone(), env.clone()])
                         }
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn env_minus_for_minus_each(args: &[Scm]) {
+    pub fn env_minus_for_minus_each(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -458,8 +447,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn find_minus_globals(args: &[Scm]) {
+    pub fn find_minus_globals(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -482,19 +472,18 @@ mod globals {
             } else {
                 {
                     // (find-globals (cdr env))
-                    globals::find_minus_globals
-                        .with(|value| value.get())
-                        .invoke(&[{
-                            // (cdr env)
-                            imports::cdr
-                                .with(|value| value.get())
-                                .invoke(&[env.clone()])
-                        }])
+                    Scm::func(globals::find_minus_globals).invoke(&[{
+                        // (cdr env)
+                        imports::cdr
+                            .with(|value| value.get())
+                            .invoke(&[env.clone()])
+                    }])
                 }
             }
         }
+        .into()
     }
-    pub fn lookup(args: &[Scm]) {
+    pub fn lookup(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -528,14 +517,12 @@ mod globals {
                 {
                     {
                         // (lookup name (cdr env))
-                        globals::lookup
-                            .with(|value| value.get())
-                            .invoke(&[name.clone(), {
-                                // (cdr env)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()])
-                            }])
+                        Scm::func(globals::lookup).invoke(&[name.clone(), {
+                            // (cdr env)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()])
+                        }])
                     }
                 } else if ({
                     // (eq? name (caar env))
@@ -559,20 +546,19 @@ mod globals {
                 } else {
                     {
                         // (lookup name (cdr env))
-                        globals::lookup
-                            .with(|value| value.get())
-                            .invoke(&[name.clone(), {
-                                // (cdr env)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[env.clone()])
-                            }])
+                        Scm::func(globals::lookup).invoke(&[name.clone(), {
+                            // (cdr env)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[env.clone()])
+                        }])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn lookup_star_(args: &[Scm]) {
+    pub fn lookup_star_(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -592,9 +578,7 @@ mod globals {
                             let name = args[0].clone();
                             {
                                 // (lookup name env)
-                                globals::lookup
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone(), env.clone()])
+                                Scm::func(globals::lookup).invoke(&[name.clone(), env.clone()])
                             }
                         })
                     },
@@ -602,8 +586,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn make_minus_global_minus_env(args: &[Scm]) {
+    pub fn make_minus_global_minus_env(args: &[Scm]) -> Scm {
         {
             if args.len() != 0 {
                 panic!("invalid arity")
@@ -627,8 +612,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn map_minus_env(args: &[Scm]) {
+    pub fn map_minus_env(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -667,6 +653,7 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
 }
 

@@ -14,7 +14,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn expand_minus_and(args: &[Scm]) {
+    pub fn expand_minus_and(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -43,8 +43,9 @@ mod globals {
                     }])
             }
         }
+        .into()
     }
-    pub fn expand_minus_assert(args: &[Scm]) {
+    pub fn expand_minus_assert(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -67,8 +68,9 @@ mod globals {
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_begin(args: &[Scm]) {
+    pub fn expand_minus_begin(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -92,8 +94,9 @@ mod globals {
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_cond(args: &[Scm]) {
+    pub fn expand_minus_cond(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -125,8 +128,9 @@ mod globals {
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_define(args: &[Scm]) {
+    pub fn expand_minus_define(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -174,8 +178,9 @@ mod globals {
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_if(args: &[Scm]) {
+    pub fn expand_minus_if(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -211,8 +216,9 @@ mod globals {
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_lambda(args: &[Scm]) {
+    pub fn expand_minus_lambda(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -241,8 +247,9 @@ mod globals {
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_let(args: &[Scm]) {
+    pub fn expand_minus_let(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -291,8 +298,9 @@ mod globals {
                     }])
             }
         }
+        .into()
     }
-    pub fn expand_minus_let_star_(args: &[Scm]) {
+    pub fn expand_minus_let_star_(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -374,21 +382,19 @@ mod globals {
                                         .with(|value| value.get())
                                         .invoke(&[exp.clone(), {
                                             // (expand-let (loop (let*-bindings exp)) env tail?)
-                                            globals::expand_minus_let
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    {
-                                                        // (loop (let*-bindings exp))
-                                                        loop_.get().invoke(&[{
-                                                            // (let*-bindings exp)
-                                                            imports::let_star__minus_bindings
-                                                                .with(|value| value.get())
-                                                                .invoke(&[exp.clone()])
-                                                        }])
-                                                    },
-                                                    env.clone(),
-                                                    tail_p.clone(),
-                                                ])
+                                            Scm::func(globals::expand_minus_let).invoke(&[
+                                                {
+                                                    // (loop (let*-bindings exp))
+                                                    loop_.get().invoke(&[{
+                                                        // (let*-bindings exp)
+                                                        imports::let_star__minus_bindings
+                                                            .with(|value| value.get())
+                                                            .invoke(&[exp.clone()])
+                                                    }])
+                                                },
+                                                env.clone(),
+                                                tail_p.clone(),
+                                            ])
                                         }])
                                 }
                             }
@@ -397,8 +403,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn expand_minus_letrec(args: &[Scm]) {
+    pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -408,37 +415,130 @@ mod globals {
             let tail_p = args[2].clone();
             {
                 // (astify-comment exp (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?))
-                imports::astify_minus_comment.with(|value| value.get()).invoke(&[exp.clone(),{
-// (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?)
-globals::expand_minus_let.with(|value| value.get()).invoke(&[{
-// (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))))
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("let"),{
-// (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp))
-imports::map.with(|value| value.get()).invoke(&[{// Closure
-Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
-// (list name (quote (quote *uninitialized*)))
-imports::list.with(|value| value.get()).invoke(&[name.clone(),Scm::pair(Scm::symbol("quote"), Scm::pair(Scm::symbol("*uninitialized*"), Scm::Nil))])}})},{
-// (let-vars exp)
-imports::let_minus_vars.with(|value| value.get()).invoke(&[exp.clone()])}])},{
-// (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
-// (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))
-imports::append.with(|value| value.get()).invoke(&[{
-// (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp))
-imports::map.with(|value| value.get()).invoke(&[{// Closure
-Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name = args[0].clone();let val = args[1].clone();{
-// (list (quote set!) name val)
-imports::list.with(|value| value.get()).invoke(&[Scm::symbol("set!"),name.clone(),val.clone()])}})},{
-// (let-vars exp)
-imports::let_minus_vars.with(|value| value.get()).invoke(&[exp.clone()])},{
-// (let-args exp)
-imports::let_minus_args.with(|value| value.get()).invoke(&[exp.clone()])}])},{
-// (let-body exp)
-imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}])},env.clone(),tail_p.clone()])}])
+                imports::astify_minus_comment
+                    .with(|value| value.get())
+                    .invoke(&[exp.clone(), {
+                        // (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?)
+                        Scm::func(globals::expand_minus_let).invoke(&[
+                            {
+                                // (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))))
+                                imports::list.with(|value| value.get()).invoke(&[
+                                    Scm::symbol("let"),
+                                    {
+                                        // (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp))
+                                        imports::map.with(|value| value.get()).invoke(&[
+                                            {
+                                                // Closure
+                                                Scm::func(move |args: &[Scm]| {
+                                                    if args.len() != 1 {
+                                                        panic!("invalid arity")
+                                                    }
+                                                    let name = args[0].clone();
+                                                    {
+                                                        // (list name (quote (quote *uninitialized*)))
+                                                        imports::list
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                name.clone(),
+                                                                Scm::pair(
+                                                                    Scm::symbol("quote"),
+                                                                    Scm::pair(
+                                                                        Scm::symbol(
+                                                                            "*uninitialized*",
+                                                                        ),
+                                                                        Scm::Nil,
+                                                                    ),
+                                                                ),
+                                                            ])
+                                                    }
+                                                })
+                                            },
+                                            {
+                                                // (let-vars exp)
+                                                imports::let_minus_vars
+                                                    .with(|value| value.get())
+                                                    .invoke(&[exp.clone()])
+                                            },
+                                        ])
+                                    },
+                                    {
+                                        // (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))
+                                        imports::cons.with(|value| value.get()).invoke(&[
+                                            Scm::symbol("begin"),
+                                            {
+                                                // (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))
+                                                imports::append.with(|value| value.get()).invoke(&[
+                                                    {
+                                                        // (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp))
+                                                        imports::map
+                                                            .with(|value| value.get())
+                                                            .invoke(&[
+                                                                {
+                                                                    // Closure
+                                                                    Scm::func(
+                                                                        move |args: &[Scm]| {
+                                                                            if args.len() != 2 {
+                                                                                panic!(
+                                                                                    "invalid arity"
+                                                                                )
+                                                                            }
+                                                                            let name =
+                                                                                args[0].clone();
+                                                                            let val =
+                                                                                args[1].clone();
+                                                                            {
+                                                                                // (list (quote set!) name val)
+                                                                                imports::list
+                                                                                    .with(|value| {
+                                                                                        value.get()
+                                                                                    })
+                                                                                    .invoke(&[
+                                                                                        Scm::symbol(
+                                                                                            "set!",
+                                                                                        ),
+                                                                                        name.clone(
+                                                                                        ),
+                                                                                        val.clone(),
+                                                                                    ])
+                                                                            }
+                                                                        },
+                                                                    )
+                                                                },
+                                                                {
+                                                                    // (let-vars exp)
+                                                                    imports::let_minus_vars
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[exp.clone()])
+                                                                },
+                                                                {
+                                                                    // (let-args exp)
+                                                                    imports::let_minus_args
+                                                                        .with(|value| value.get())
+                                                                        .invoke(&[exp.clone()])
+                                                                },
+                                                            ])
+                                                    },
+                                                    {
+                                                        // (let-body exp)
+                                                        imports::let_minus_body
+                                                            .with(|value| value.get())
+                                                            .invoke(&[exp.clone()])
+                                                    },
+                                                ])
+                                            },
+                                        ])
+                                    },
+                                ])
+                            },
+                            env.clone(),
+                            tail_p.clone(),
+                        ])
+                    }])
             }
         }
+        .into()
     }
-    pub fn expand_minus_quote(args: &[Scm]) {
+    pub fn expand_minus_quote(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -461,8 +561,9 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_set_i(args: &[Scm]) {
+    pub fn expand_minus_set_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -491,8 +592,9 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                     ])
             }
         }
+        .into()
     }
-    pub fn expand_minus_testsuite(args: &[Scm]) {
+    pub fn expand_minus_testsuite(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -521,8 +623,9 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                     ])
             }
         }
+        .into()
     }
-    pub fn make_minus_core_minus_env(args: &[Scm]) {
+    pub fn make_minus_core_minus_env(args: &[Scm]) -> Scm {
         {
             if args.len() != 0 {
                 panic!("invalid arity")
@@ -535,10 +638,7 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                         // (new-keyword (quote and) expand-and)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("and"),
-                                globals::expand_minus_and.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("and"), Scm::func(globals::expand_minus_and)])
                     },
                     {
                         // (new-keyword (quote assert) expand-assert)
@@ -546,26 +646,20 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                             .with(|value| value.get())
                             .invoke(&[
                                 Scm::symbol("assert"),
-                                globals::expand_minus_assert.with(|value| value.get()),
+                                Scm::func(globals::expand_minus_assert),
                             ])
                     },
                     {
                         // (new-keyword (quote begin) expand-begin)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("begin"),
-                                globals::expand_minus_begin.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("begin"), Scm::func(globals::expand_minus_begin)])
                     },
                     {
                         // (new-keyword (quote cond) expand-cond)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("cond"),
-                                globals::expand_minus_cond.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("cond"), Scm::func(globals::expand_minus_cond)])
                     },
                     {
                         // (new-keyword (quote define) expand-define)
@@ -573,17 +667,14 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                             .with(|value| value.get())
                             .invoke(&[
                                 Scm::symbol("define"),
-                                globals::expand_minus_define.with(|value| value.get()),
+                                Scm::func(globals::expand_minus_define),
                             ])
                     },
                     {
                         // (new-keyword (quote if) expand-if)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("if"),
-                                globals::expand_minus_if.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("if"), Scm::func(globals::expand_minus_if)])
                     },
                     {
                         // (new-keyword (quote lambda) expand-lambda)
@@ -591,17 +682,14 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                             .with(|value| value.get())
                             .invoke(&[
                                 Scm::symbol("lambda"),
-                                globals::expand_minus_lambda.with(|value| value.get()),
+                                Scm::func(globals::expand_minus_lambda),
                             ])
                     },
                     {
                         // (new-keyword (quote let) expand-let)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("let"),
-                                globals::expand_minus_let.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("let"), Scm::func(globals::expand_minus_let)])
                     },
                     {
                         // (new-keyword (quote let*) expand-let*)
@@ -609,7 +697,7 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                             .with(|value| value.get())
                             .invoke(&[
                                 Scm::symbol("let*"),
-                                globals::expand_minus_let_star_.with(|value| value.get()),
+                                Scm::func(globals::expand_minus_let_star_),
                             ])
                     },
                     {
@@ -618,26 +706,20 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                             .with(|value| value.get())
                             .invoke(&[
                                 Scm::symbol("letrec"),
-                                globals::expand_minus_letrec.with(|value| value.get()),
+                                Scm::func(globals::expand_minus_letrec),
                             ])
                     },
                     {
                         // (new-keyword (quote quote) expand-quote)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("quote"),
-                                globals::expand_minus_quote.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("quote"), Scm::func(globals::expand_minus_quote)])
                     },
                     {
                         // (new-keyword (quote set!) expand-set!)
                         imports::new_minus_keyword
                             .with(|value| value.get())
-                            .invoke(&[
-                                Scm::symbol("set!"),
-                                globals::expand_minus_set_i.with(|value| value.get()),
-                            ])
+                            .invoke(&[Scm::symbol("set!"), Scm::func(globals::expand_minus_set_i)])
                     },
                     {
                         // (new-keyword (quote testsuite) expand-testsuite)
@@ -645,12 +727,13 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
                             .with(|value| value.get())
                             .invoke(&[
                                 Scm::symbol("testsuite"),
-                                globals::expand_minus_testsuite.with(|value| value.get()),
+                                Scm::func(globals::expand_minus_testsuite),
                             ])
                     },
                 ])
             }
         }
+        .into()
     }
 }
 

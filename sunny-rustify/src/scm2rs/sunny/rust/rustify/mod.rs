@@ -13,7 +13,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn rustify_minus_identifier(args: &[Scm]) {
+    pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -285,8 +285,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn rustify_minus_libname(args: &[Scm]) {
+    pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -449,8 +450,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn rustify_minus_testname(args: &[Scm]) {
+    pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -592,6 +594,7 @@ mod globals {
                 }
             }
         }
+        .into()
     }
 }
 

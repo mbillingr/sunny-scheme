@@ -12,7 +12,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn close_minus_procedures(args: &[Scm]) {
+    pub fn close_minus_procedures(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -116,6 +116,7 @@ mod globals {
                 }
             }
         }
+        .into()
     }
 }
 

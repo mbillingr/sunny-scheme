@@ -19,7 +19,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn make_minus_module_minus_tree_minus_leaf(args: &[Scm]) {
+    pub fn make_minus_module_minus_tree_minus_leaf(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -33,8 +33,9 @@ mod globals {
                     .invoke(&[name.clone(), lib.clone()])
             }
         }
+        .into()
     }
-    pub fn make_minus_module_minus_tree_minus_node(args: &[Scm]) {
+    pub fn make_minus_module_minus_tree_minus_node(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -47,8 +48,9 @@ mod globals {
                     .invoke(&[name.clone(), Scm::Nil])
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_append_minus_child_i(args: &[Scm]) {
+    pub fn module_minus_tree_minus_append_minus_child_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -57,23 +59,24 @@ mod globals {
             let child = args[1].clone();
             {
                 // (module-tree-set-children! node (cons child (module-tree-children node)))
-                globals::module_minus_tree_minus_set_minus_children_i
-                    .with(|value| value.get())
-                    .invoke(&[node.clone(), {
+                Scm::func(globals::module_minus_tree_minus_set_minus_children_i).invoke(&[
+                    node.clone(),
+                    {
                         // (cons child (module-tree-children node))
                         imports::cons
                             .with(|value| value.get())
                             .invoke(&[child.clone(), {
                                 // (module-tree-children node)
-                                globals::module_minus_tree_minus_children
-                                    .with(|value| value.get())
+                                Scm::func(globals::module_minus_tree_minus_children)
                                     .invoke(&[node.clone()])
                             }])
-                    }])
+                    },
+                ])
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_children(args: &[Scm]) {
+    pub fn module_minus_tree_minus_children(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -86,8 +89,9 @@ mod globals {
                     .invoke(&[node.clone()])
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_find_minus_child(args: &[Scm]) {
+    pub fn module_minus_tree_minus_find_minus_child(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -97,9 +101,7 @@ mod globals {
             {
                 if ({
                     // (module-tree-leaf? node)
-                    globals::module_minus_tree_minus_leaf_p
-                        .with(|value| value.get())
-                        .invoke(&[node.clone()])
+                    Scm::func(globals::module_minus_tree_minus_leaf_p).invoke(&[node.clone()])
                 })
                 .is_true()
                 {
@@ -120,147 +122,54 @@ mod globals {
                         .with(|value| value.get())
                         .invoke(&[name.clone(), {
                             // (module-tree-children node)
-                            globals::module_minus_tree_minus_children
-                                .with(|value| value.get())
+                            Scm::func(globals::module_minus_tree_minus_children)
                                 .invoke(&[node.clone()])
                         }])
                 }
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_insert_i(args: &[Scm]) {
-        {
-            if args.len() != 3 {
-                panic!("invalid arity")
-            }
-            let tree = args[0].clone();
-            let libname = args[1].clone();
-            let libobj = args[2].clone();
-            {
-                if ({
-                    // (null? libname)
-                    imports::null_p
-                        .with(|value| value.get())
-                        .invoke(&[libname.clone()])
-                })
-                .is_true()
-                {
-                    {
-                        // (error "invalid insert - empty libname")
-                        imports::error
-                            .with(|value| value.get())
-                            .invoke(&[Scm::from("invalid insert - empty libname")])
-                    }
-                } else {
-                    Scm::symbol("*UNSPECIFIED*")
-                };
-                {
-                    // (let ((child (module-tree-find-child tree (car libname)))) (if child (module-tree-insert! child (cdr libname) libobj) (if (null? (cdr libname)) (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj)) (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node)))))
-                    {
-                        let child = {
-                            // (module-tree-find-child tree (car libname))
-                            globals::module_minus_tree_minus_find_minus_child
-                                .with(|value| value.get())
-                                .invoke(&[tree.clone(), {
-                                    // (car libname)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[libname.clone()])
-                                }])
-                        };
-                        if (child.clone()).is_true() {
-                            {
-                                // (module-tree-insert! child (cdr libname) libobj)
-                                globals::module_minus_tree_minus_insert_i
-                                    .with(|value| value.get())
-                                    .invoke(&[
-                                        child.clone(),
-                                        {
-                                            // (cdr libname)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[libname.clone()])
-                                        },
-                                        libobj.clone(),
-                                    ])
-                            }
-                        } else if ({
-                            // (null? (cdr libname))
-                            imports::null_p.with(|value| value.get()).invoke(&[{
-                                // (cdr libname)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[libname.clone()])
-                            }])
-                        })
-                        .is_true()
-                        {
-                            {
-                                // (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj))
-                                globals::module_minus_tree_minus_append_minus_child_i
-                                    .with(|value| value.get())
-                                    .invoke(&[tree.clone(), {
-                                        // (make-module-tree-leaf (car libname) libobj)
-                                        globals::make_minus_module_minus_tree_minus_leaf
-                                            .with(|value| value.get())
-                                            .invoke(&[
-                                                {
-                                                    // (car libname)
-                                                    imports::car
-                                                        .with(|value| value.get())
-                                                        .invoke(&[libname.clone()])
-                                                },
-                                                libobj.clone(),
-                                            ])
-                                    }])
-                            }
-                        } else {
-                            {
-                                // (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node))
-                                {
-                                    let new_minus_node = {
-                                        // (make-module-tree-node (car libname))
-                                        globals::make_minus_module_minus_tree_minus_node
-                                            .with(|value| value.get())
-                                            .invoke(&[{
-                                                // (car libname)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[libname.clone()])
-                                            }])
-                                    };
-                                    {
-                                        {
-                                            // (module-tree-insert! new-node (cdr libname) libobj)
-                                            globals::module_minus_tree_minus_insert_i
-                                                .with(|value| value.get())
-                                                .invoke(&[
-                                                    new_minus_node.clone(),
-                                                    {
-                                                        // (cdr libname)
-                                                        imports::cdr
-                                                            .with(|value| value.get())
-                                                            .invoke(&[libname.clone()])
-                                                    },
-                                                    libobj.clone(),
-                                                ])
-                                        };
-                                        {
-                                            // (module-tree-append-child! tree new-node)
-                                            globals::module_minus_tree_minus_append_minus_child_i
-                                                .with(|value| value.get())
-                                                .invoke(&[tree.clone(), new_minus_node.clone()])
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
+        {if args.len() != 3{panic!("invalid arity")}let tree = args[0].clone();let libname = args[1].clone();let libobj = args[2].clone();{if ({
+// (null? libname)
+imports::null_p.with(|value| value.get()).invoke(&[libname.clone()])}).is_true() {{
+// (error "invalid insert - empty libname")
+imports::error.with(|value| value.get()).invoke(&[Scm::from("invalid insert - empty libname")])}} else {Scm::symbol("*UNSPECIFIED*")};{
+// (let ((child (module-tree-find-child tree (car libname)))) (if child (module-tree-insert! child (cdr libname) libobj) (if (null? (cdr libname)) (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj)) (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node)))))
+{let child = {
+// (module-tree-find-child tree (car libname))
+Scm::func(globals::module_minus_tree_minus_find_minus_child).invoke(&[tree.clone(),{
+// (car libname)
+imports::car.with(|value| value.get()).invoke(&[libname.clone()])}])};if (child.clone()).is_true() {{
+// (module-tree-insert! child (cdr libname) libobj)
+Scm::func(globals::module_minus_tree_minus_insert_i).invoke(&[child.clone(),{
+// (cdr libname)
+imports::cdr.with(|value| value.get()).invoke(&[libname.clone()])},libobj.clone()])}} else if ({
+// (null? (cdr libname))
+imports::null_p.with(|value| value.get()).invoke(&[{
+// (cdr libname)
+imports::cdr.with(|value| value.get()).invoke(&[libname.clone()])}])}).is_true() {{
+// (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj))
+Scm::func(globals::module_minus_tree_minus_append_minus_child_i).invoke(&[tree.clone(),{
+// (make-module-tree-leaf (car libname) libobj)
+Scm::func(globals::make_minus_module_minus_tree_minus_leaf).invoke(&[{
+// (car libname)
+imports::car.with(|value| value.get()).invoke(&[libname.clone()])},libobj.clone()])}])}} else {{
+// (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node))
+{let new_minus_node = {
+// (make-module-tree-node (car libname))
+Scm::func(globals::make_minus_module_minus_tree_minus_node).invoke(&[{
+// (car libname)
+imports::car.with(|value| value.get()).invoke(&[libname.clone()])}])};{{
+// (module-tree-insert! new-node (cdr libname) libobj)
+Scm::func(globals::module_minus_tree_minus_insert_i).invoke(&[new_minus_node.clone(),{
+// (cdr libname)
+imports::cdr.with(|value| value.get()).invoke(&[libname.clone()])},libobj.clone()])};{
+// (module-tree-append-child! tree new-node)
+Scm::func(globals::module_minus_tree_minus_append_minus_child_i).invoke(&[tree.clone(),new_minus_node.clone()])}}}}}}}}}.into()
     }
-    pub fn module_minus_tree_minus_leaf_p(args: &[Scm]) {
+    pub fn module_minus_tree_minus_leaf_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -324,8 +233,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_libobj(args: &[Scm]) {
+    pub fn module_minus_tree_minus_libobj(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -338,8 +248,9 @@ mod globals {
                     .invoke(&[node.clone()])
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_name(args: &[Scm]) {
+    pub fn module_minus_tree_minus_name(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -352,8 +263,9 @@ mod globals {
                     .invoke(&[node.clone()])
             }
         }
+        .into()
     }
-    pub fn module_minus_tree_minus_set_minus_children_i(args: &[Scm]) {
+    pub fn module_minus_tree_minus_set_minus_children_i(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -367,6 +279,7 @@ mod globals {
                     .invoke(&[node.clone(), children.clone()])
             }
         }
+        .into()
     }
 }
 

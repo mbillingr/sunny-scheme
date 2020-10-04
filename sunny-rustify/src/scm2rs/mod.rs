@@ -19,7 +19,7 @@ mod globals {
     thread_local! {#[allow(non_upper_case_globals)] pub static ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE ast"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input-file"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input-file-name"))}
-    pub fn load_minus_sexpr(args: &[Scm]) {
+    pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
         {
             if args.len() != 0 {
                 panic!("invalid arity")
@@ -49,15 +49,14 @@ mod globals {
                                 .with(|value| value.get())
                                 .invoke(&[expr.clone(), {
                                     // (load-sexpr)
-                                    globals::load_minus_sexpr
-                                        .with(|value| value.get())
-                                        .invoke(&[])
+                                    Scm::func(globals::load_minus_sexpr).invoke(&[])
                                 }])
                         }
                     }
                 }
             }
         }
+        .into()
     }
     thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_dir: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-dir"))}
     thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_module_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-module-name"))}
@@ -201,9 +200,7 @@ pub fn main() {
             globals::program.with(|value| {
                 value.set({
                     // (load-sexpr)
-                    globals::load_minus_sexpr
-                        .with(|value| value.get())
-                        .invoke(&[])
+                    Scm::func(globals::load_minus_sexpr).invoke(&[])
                 })
             })
         };

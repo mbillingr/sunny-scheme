@@ -10,7 +10,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn run_minus_tests(args: &[Scm]) {
+    pub fn run_minus_tests(args: &[Scm]) -> Scm {
         {
             if args.len() != 0 {
                 panic!("invalid arity")
@@ -62,6 +62,7 @@ mod globals {
                 }
             }
         }
+        .into()
     }
 }
 

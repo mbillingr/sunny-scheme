@@ -33,10 +33,10 @@
                  (println module
                           "pub fn "
                           (rustify-identifier (caar g))
-                          "(args: &[Scm]) { ")
+                          "(args: &[Scm]) -> Scm { ")
                  ((global-function-get-value (cdar g)) 'gen-rust module)
                  (println module
-                          "}")
+                          ".into()}")
                  (rust-gen-global-defs module (cdr g)))
                 (else (error "Unexpected entry in global environment" (car g))))))
 

@@ -33,7 +33,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn caaaar(args: &[Scm]) {
+    pub fn caaaar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -47,8 +47,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caaadr(args: &[Scm]) {
+    pub fn caaadr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -62,8 +63,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caaar(args: &[Scm]) {
+    pub fn caaar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -77,8 +79,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caadar(args: &[Scm]) {
+    pub fn caadar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -92,8 +95,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caaddr(args: &[Scm]) {
+    pub fn caaddr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -107,8 +111,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caadr(args: &[Scm]) {
+    pub fn caadr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -122,8 +127,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cadaar(args: &[Scm]) {
+    pub fn cadaar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -137,8 +143,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cadadr(args: &[Scm]) {
+    pub fn cadadr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -152,8 +159,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cadar(args: &[Scm]) {
+    pub fn cadar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -167,8 +175,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caddar(args: &[Scm]) {
+    pub fn caddar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -182,8 +191,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cadddr(args: &[Scm]) {
+    pub fn cadddr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -197,8 +207,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn caddr(args: &[Scm]) {
+    pub fn caddr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -212,8 +223,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdaaar(args: &[Scm]) {
+    pub fn cdaaar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -227,8 +239,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdaadr(args: &[Scm]) {
+    pub fn cdaadr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -242,8 +255,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdaar(args: &[Scm]) {
+    pub fn cdaar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -257,8 +271,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdadar(args: &[Scm]) {
+    pub fn cdadar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -272,8 +287,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdaddr(args: &[Scm]) {
+    pub fn cdaddr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -287,8 +303,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdadr(args: &[Scm]) {
+    pub fn cdadr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -302,8 +319,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cddaar(args: &[Scm]) {
+    pub fn cddaar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -317,8 +335,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cddadr(args: &[Scm]) {
+    pub fn cddadr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -332,8 +351,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cddar(args: &[Scm]) {
+    pub fn cddar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -347,8 +367,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdddar(args: &[Scm]) {
+    pub fn cdddar(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -362,8 +383,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cddddr(args: &[Scm]) {
+    pub fn cddddr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -377,8 +399,9 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
-    pub fn cdddr(args: &[Scm]) {
+    pub fn cdddr(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -392,6 +415,7 @@ mod globals {
                 }])
             }
         }
+        .into()
     }
 }
 

@@ -25,7 +25,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn as_minus_port(args: &[Scm]) {
+    pub fn as_minus_port(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -33,24 +33,22 @@ mod globals {
             let port_minus_or_minus_module = args[0].clone();
             if ({
                 // (module? port-or-module)
-                globals::module_p
-                    .with(|value| value.get())
-                    .invoke(&[port_minus_or_minus_module.clone()])
+                Scm::func(globals::module_p).invoke(&[port_minus_or_minus_module.clone()])
             })
             .is_true()
             {
                 {
                     // (module-port port-or-module)
-                    globals::module_minus_port
-                        .with(|value| value.get())
+                    Scm::func(globals::module_minus_port)
                         .invoke(&[port_minus_or_minus_module.clone()])
                 }
             } else {
                 port_minus_or_minus_module.clone()
             }
         }
+        .into()
     }
-    pub fn close_minus_module(args: &[Scm]) {
+    pub fn close_minus_module(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -62,14 +60,13 @@ mod globals {
                     .with(|value| value.get())
                     .invoke(&[{
                         // (module-port module)
-                        globals::module_minus_port
-                            .with(|value| value.get())
-                            .invoke(&[module.clone()])
+                        Scm::func(globals::module_minus_port).invoke(&[module.clone()])
                     }])
             }
         }
+        .into()
     }
-    pub fn module_minus_path(args: &[Scm]) {
+    pub fn module_minus_path(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -82,8 +79,9 @@ mod globals {
                     .invoke(&[module.clone()])
             }
         }
+        .into()
     }
-    pub fn module_minus_port(args: &[Scm]) {
+    pub fn module_minus_port(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -96,8 +94,9 @@ mod globals {
                     .invoke(&[module.clone()])
             }
         }
+        .into()
     }
-    pub fn module_p(args: &[Scm]) {
+    pub fn module_p(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -129,8 +128,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn open_minus_module(args: &[Scm]) {
+    pub fn open_minus_module(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -180,8 +180,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn open_minus_submodule(args: &[Scm]) {
+    pub fn open_minus_submodule(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -190,18 +191,15 @@ mod globals {
             let module = args[1].clone();
             {
                 // (open-module name (module-path module))
-                globals::open_minus_module
-                    .with(|value| value.get())
-                    .invoke(&[name.clone(), {
-                        // (module-path module)
-                        globals::module_minus_path
-                            .with(|value| value.get())
-                            .invoke(&[module.clone()])
-                    }])
+                Scm::func(globals::open_minus_module).invoke(&[name.clone(), {
+                    // (module-path module)
+                    Scm::func(globals::module_minus_path).invoke(&[module.clone()])
+                }])
             }
         }
+        .into()
     }
-    pub fn print(args: &[Scm]) {
+    pub fn print(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -225,9 +223,7 @@ mod globals {
                                     .with(|value| value.get())
                                     .invoke(&[a.clone(), {
                                         // (as-port f)
-                                        globals::as_minus_port
-                                            .with(|value| value.get())
-                                            .invoke(&[f.clone()])
+                                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
                                     }])
                             }
                         })
@@ -236,8 +232,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn println(args: &[Scm]) {
+    pub fn println(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -262,9 +259,7 @@ mod globals {
                                         a.clone(),
                                         {
                                             // (as-port f)
-                                            globals::as_minus_port
-                                                .with(|value| value.get())
-                                                .invoke(&[f.clone()])
+                                            Scm::func(globals::as_minus_port).invoke(&[f.clone()])
                                         },
                                     ])
                                 }
@@ -277,15 +272,14 @@ mod globals {
                     // (newline (as-port f))
                     imports::newline.with(|value| value.get()).invoke(&[{
                         // (as-port f)
-                        globals::as_minus_port
-                            .with(|value| value.get())
-                            .invoke(&[f.clone()])
+                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
                     }])
                 }
             }
         }
+        .into()
     }
-    pub fn rust_minus_block(args: &[Scm]) {
+    pub fn rust_minus_block(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -295,9 +289,7 @@ mod globals {
             {
                 {
                     // (print module "{")
-                    globals::print
-                        .with(|value| value.get())
-                        .invoke(&[module.clone(), Scm::from("{")])
+                    Scm::func(globals::print).invoke(&[module.clone(), Scm::from("{")])
                 };
                 {
                     // (code)
@@ -305,14 +297,13 @@ mod globals {
                 };
                 {
                     // (print module "}")
-                    globals::print
-                        .with(|value| value.get())
-                        .invoke(&[module.clone(), Scm::from("}")])
+                    Scm::func(globals::print).invoke(&[module.clone(), Scm::from("}")])
                 }
             }
         }
+        .into()
     }
-    pub fn show(args: &[Scm]) {
+    pub fn show(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -336,9 +327,7 @@ mod globals {
                                     .with(|value| value.get())
                                     .invoke(&[a.clone(), {
                                         // (as-port f)
-                                        globals::as_minus_port
-                                            .with(|value| value.get())
-                                            .invoke(&[f.clone()])
+                                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
                                     }])
                             }
                         })
@@ -347,8 +336,9 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
-    pub fn showln(args: &[Scm]) {
+    pub fn showln(args: &[Scm]) -> Scm {
         {
             if args.len() < 1 {
                 panic!("not enough args")
@@ -373,9 +363,7 @@ mod globals {
                                         .with(|value| value.get())
                                         .invoke(&[a.clone(), {
                                             // (as-port f)
-                                            globals::as_minus_port
-                                                .with(|value| value.get())
-                                                .invoke(&[f.clone()])
+                                            Scm::func(globals::as_minus_port).invoke(&[f.clone()])
                                         }])
                                 }
                             })
@@ -387,13 +375,12 @@ mod globals {
                     // (newline (as-port f))
                     imports::newline.with(|value| value.get()).invoke(&[{
                         // (as-port f)
-                        globals::as_minus_port
-                            .with(|value| value.get())
-                            .invoke(&[f.clone()])
+                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
                     }])
                 }
             }
         }
+        .into()
     }
 }
 

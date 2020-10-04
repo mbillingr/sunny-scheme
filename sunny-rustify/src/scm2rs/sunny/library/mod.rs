@@ -20,7 +20,7 @@ pub mod exports {
 
 mod globals {
     use sunny_core::{Mut, Scm};
-    pub fn check_minus_imports(args: &[Scm]) {
+    pub fn check_minus_imports(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -53,18 +53,16 @@ mod globals {
             {
                 {
                     // (check-imports (cdr imports) exports lib)
-                    globals::check_minus_imports
-                        .with(|value| value.get())
-                        .invoke(&[
-                            {
-                                // (cdr imports)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[imports.clone()])
-                            },
-                            exports.clone(),
-                            lib.clone(),
-                        ])
+                    Scm::func(globals::check_minus_imports).invoke(&[
+                        {
+                            // (cdr imports)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[imports.clone()])
+                        },
+                        exports.clone(),
+                        lib.clone(),
+                    ])
                 }
             } else {
                 {
@@ -82,8 +80,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn find_minus_library(args: &[Scm]) {
+    pub fn find_minus_library(args: &[Scm]) -> Scm {
         {
             if args.len() != 3 {
                 panic!("invalid arity")
@@ -123,8 +122,7 @@ mod globals {
                             // (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
                             let full_minus_path = {
                                 // (find-library-ext path extension*)
-                                globals::find_minus_library_minus_ext
-                                    .with(|value| value.get())
+                                Scm::func(globals::find_minus_library_minus_ext)
                                     .invoke(&[path.clone(), extension_star_.clone()])
                             };
                             if (full_minus_path.clone()).is_true() {
@@ -132,18 +130,16 @@ mod globals {
                             } else {
                                 {
                                     // (find-library (cdr base-path*) relative-path extension*)
-                                    globals::find_minus_library
-                                        .with(|value| value.get())
-                                        .invoke(&[
-                                            {
-                                                // (cdr base-path*)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[base_minus_path_star_.clone()])
-                                            },
-                                            relative_minus_path.clone(),
-                                            extension_star_.clone(),
-                                        ])
+                                    Scm::func(globals::find_minus_library).invoke(&[
+                                        {
+                                            // (cdr base-path*)
+                                            imports::cdr
+                                                .with(|value| value.get())
+                                                .invoke(&[base_minus_path_star_.clone()])
+                                        },
+                                        relative_minus_path.clone(),
+                                        extension_star_.clone(),
+                                    ])
                                 }
                             }
                         }
@@ -151,8 +147,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn find_minus_library_minus_ext(args: &[Scm]) {
+    pub fn find_minus_library_minus_ext(args: &[Scm]) -> Scm {
         {
             if args.len() != 2 {
                 panic!("invalid arity")
@@ -195,22 +192,24 @@ mod globals {
                         } else {
                             {
                                 // (find-library-ext path (cdr extension*))
-                                globals::find_minus_library_minus_ext
-                                    .with(|value| value.get())
-                                    .invoke(&[path.clone(), {
+                                Scm::func(globals::find_minus_library_minus_ext).invoke(&[
+                                    path.clone(),
+                                    {
                                         // (cdr extension*)
                                         imports::cdr
                                             .with(|value| value.get())
                                             .invoke(&[extension_star_.clone()])
-                                    }])
+                                    },
+                                ])
                             }
                         }
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn get_minus_lib(args: &[Scm]) {
+    pub fn get_minus_lib(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -221,42 +220,35 @@ mod globals {
                 {
                     let full_minus_path = {
                         // (find-library (quote ("." "./lib" "./scheme/lib" "scm-libs" "../scheme/lib" "../scm-libs" "../../scm-libs")) (library-path lib) (quote (".sld" ".slx")))
-                        globals::find_minus_library
-                            .with(|value| value.get())
-                            .invoke(&[
+                        Scm::func(globals::find_minus_library).invoke(&[
+                            Scm::pair(
+                                Scm::from("."),
                                 Scm::pair(
-                                    Scm::from("."),
+                                    Scm::from("./lib"),
                                     Scm::pair(
-                                        Scm::from("./lib"),
+                                        Scm::from("./scheme/lib"),
                                         Scm::pair(
-                                            Scm::from("./scheme/lib"),
+                                            Scm::from("scm-libs"),
                                             Scm::pair(
-                                                Scm::from("scm-libs"),
+                                                Scm::from("../scheme/lib"),
                                                 Scm::pair(
-                                                    Scm::from("../scheme/lib"),
+                                                    Scm::from("../scm-libs"),
                                                     Scm::pair(
-                                                        Scm::from("../scm-libs"),
-                                                        Scm::pair(
-                                                            Scm::from("../../scm-libs"),
-                                                            Scm::Nil,
-                                                        ),
+                                                        Scm::from("../../scm-libs"),
+                                                        Scm::Nil,
                                                     ),
                                                 ),
                                             ),
                                         ),
                                     ),
                                 ),
-                                {
-                                    // (library-path lib)
-                                    globals::library_minus_path
-                                        .with(|value| value.get())
-                                        .invoke(&[lib.clone()])
-                                },
-                                Scm::pair(
-                                    Scm::from(".sld"),
-                                    Scm::pair(Scm::from(".slx"), Scm::Nil),
-                                ),
-                            ])
+                            ),
+                            {
+                                // (library-path lib)
+                                Scm::func(globals::library_minus_path).invoke(&[lib.clone()])
+                            },
+                            Scm::pair(Scm::from(".sld"), Scm::pair(Scm::from(".slx"), Scm::Nil)),
+                        ])
                     };
                     if (full_minus_path.clone()).is_true() {
                         {
@@ -279,8 +271,9 @@ mod globals {
                 }
             }
         }
+        .into()
     }
-    pub fn library_minus_decls(args: &[Scm]) {
+    pub fn library_minus_decls(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -293,8 +286,9 @@ mod globals {
                     .invoke(&[expr.clone()])
             }
         }
+        .into()
     }
-    pub fn library_minus_exports(args: &[Scm]) {
+    pub fn library_minus_exports(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -335,34 +329,31 @@ mod globals {
                             },
                             {
                                 // (library-exports (cdr lib-decl*))
-                                globals::library_minus_exports
-                                    .with(|value| value.get())
-                                    .invoke(&[{
-                                        // (cdr lib-decl*)
-                                        imports::cdr
-                                            .with(|value| value.get())
-                                            .invoke(&[lib_minus_decl_star_.clone()])
-                                    }])
+                                Scm::func(globals::library_minus_exports).invoke(&[{
+                                    // (cdr lib-decl*)
+                                    imports::cdr
+                                        .with(|value| value.get())
+                                        .invoke(&[lib_minus_decl_star_.clone()])
+                                }])
                             },
                         ])
                     }
                 } else {
                     {
                         // (library-exports (cdr lib-decl*))
-                        globals::library_minus_exports
-                            .with(|value| value.get())
-                            .invoke(&[{
-                                // (cdr lib-decl*)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[lib_minus_decl_star_.clone()])
-                            }])
+                        Scm::func(globals::library_minus_exports).invoke(&[{
+                            // (cdr lib-decl*)
+                            imports::cdr
+                                .with(|value| value.get())
+                                .invoke(&[lib_minus_decl_star_.clone()])
+                        }])
                     }
                 }
             }
         }
+        .into()
     }
-    pub fn library_minus_name(args: &[Scm]) {
+    pub fn library_minus_name(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -375,8 +366,9 @@ mod globals {
                     .invoke(&[expr.clone()])
             }
         }
+        .into()
     }
-    pub fn library_minus_path(args: &[Scm]) {
+    pub fn library_minus_path(args: &[Scm]) -> Scm {
         {
             if args.len() != 1 {
                 panic!("invalid arity")
@@ -417,6 +409,7 @@ mod globals {
                 ])
             }
         }
+        .into()
     }
 }
 
