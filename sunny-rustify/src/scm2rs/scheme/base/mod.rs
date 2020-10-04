@@ -93,6 +93,7 @@ pub fn initialize() {
             // (define (not x) ...)
             globals::not.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -111,6 +112,7 @@ pub fn initialize() {
             // (define (list . x) ...)
             globals::list.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 0 {
                             panic!("not enough args")
@@ -125,6 +127,7 @@ pub fn initialize() {
             // (define (list? seq) ...)
             globals::list_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -170,6 +173,7 @@ pub fn initialize() {
             // (define (length seq) ...)
             globals::length.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -179,6 +183,7 @@ pub fn initialize() {
                             // (fold-left (lambda (acc _) (+ acc 1)) 0 seq)
                             globals::fold_minus_left.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 2 {
                                             panic!("invalid arity")
@@ -205,6 +210,7 @@ pub fn initialize() {
             // (define (reverse seq) ...)
             globals::reverse.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -214,6 +220,7 @@ pub fn initialize() {
                             // (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq)
                             globals::fold_minus_left.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 2 {
                                             panic!("invalid arity")
@@ -240,6 +247,7 @@ pub fn initialize() {
             // (define (list-copy seq) ...)
             globals::list_minus_copy.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -263,6 +271,7 @@ pub fn initialize() {
             // (define (assq obj seq) ...)
             globals::assq.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -321,6 +330,7 @@ pub fn initialize() {
             // (define (assoc obj seq) ...)
             globals::assoc.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -379,6 +389,7 @@ pub fn initialize() {
             // (define (memq obj seq) ...)
             globals::memq.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -432,6 +443,7 @@ pub fn initialize() {
             // (define (append . seq) ...)
             globals::append.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 0 {
                             panic!("not enough args")
@@ -455,6 +467,7 @@ pub fn initialize() {
             // (define (append2 list1 list2) ...)
             globals::append2.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -503,6 +516,7 @@ pub fn initialize() {
             // (define (symbol=? s1 . args) ...)
             globals::symbol_e__p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -513,6 +527,7 @@ pub fn initialize() {
                             // (all? (lambda (s) (eq? s1 s)) args)
                             globals::all_p.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let s1 = s1.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -538,6 +553,7 @@ pub fn initialize() {
             // (define (string=? s1 . args) ...)
             globals::string_e__p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -548,6 +564,7 @@ pub fn initialize() {
                             // (all? (lambda (s) (equal? s1 s)) args)
                             globals::all_p.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let s1 = s1.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -573,6 +590,7 @@ pub fn initialize() {
             // (define (string-append s1 . args) ...)
             globals::string_minus_append.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -595,6 +613,7 @@ pub fn initialize() {
             // (define (for-each proc . seq*) ...)
             globals::for_minus_each.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -615,6 +634,7 @@ pub fn initialize() {
             // (define (map func . seq*) ...)
             globals::map.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -635,6 +655,7 @@ pub fn initialize() {
             // (define (_for-each proc seq*) ...)
             globals::__for_minus_each.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -692,6 +713,7 @@ pub fn initialize() {
             // (define (_map func seq*) ...)
             globals::__map.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -753,6 +775,7 @@ pub fn initialize() {
             // (define (all? pred seq) ...)
             globals::all_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -805,6 +828,7 @@ pub fn initialize() {
             // (define (any? pred seq) ...)
             globals::any_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -857,6 +881,7 @@ pub fn initialize() {
             // (define (map-1 func seq) ...)
             globals::map_minus_1.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -869,6 +894,7 @@ pub fn initialize() {
                                 .with(|value| value.get())
                                 .invoke(&[
                                     {
+                                        // Closure
                                         let func = func.clone();
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 2 {
@@ -900,6 +926,7 @@ pub fn initialize() {
             // (define (fold-right op init seq) ...)
             globals::fold_minus_right.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -948,6 +975,7 @@ pub fn initialize() {
             // (define (fold-left op init seq) ...)
             globals::fold_minus_left.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")

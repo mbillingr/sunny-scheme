@@ -53,6 +53,7 @@ pub fn initialize() {
             // (define (make-global-env) ...)
             globals::make_minus_global_minus_env.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")
@@ -83,6 +84,7 @@ pub fn initialize() {
             // (define (ensure-var! name env) ...)
             globals::ensure_minus_var_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -118,6 +120,7 @@ pub fn initialize() {
             // (define (lookup* name* env) ...)
             globals::lookup_star_.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -128,6 +131,7 @@ pub fn initialize() {
                             // (map (lambda (name) (lookup name env)) name*)
                             imports::map.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let env = env.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -153,6 +157,7 @@ pub fn initialize() {
             // (define (lookup name env) ...)
             globals::lookup.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -238,6 +243,7 @@ pub fn initialize() {
             // (define (find-globals env) ...)
             globals::find_minus_globals.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -279,6 +285,7 @@ pub fn initialize() {
             // (define (adjoin-global! name env) ...)
             globals::adjoin_minus_global_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -307,6 +314,7 @@ pub fn initialize() {
             // (define (adjoin-import! name env) ...)
             globals::adjoin_minus_import_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -335,6 +343,7 @@ pub fn initialize() {
             // (define (adjoin-global-var! var env) ...)
             globals::adjoin_minus_global_minus_var_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -385,6 +394,7 @@ pub fn initialize() {
             // (define (adjoin-local name env) ...)
             globals::adjoin_minus_local.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -411,6 +421,7 @@ pub fn initialize() {
             // (define (adjoin-local-env name* env) ...)
             globals::adjoin_minus_local_minus_env.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -478,11 +489,13 @@ pub fn initialize() {
         };
         {
             // (define (adjoin-import*! name* env) ...)
-            globals::adjoin_minus_import_star__i.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name_star_ = args[0].clone();let env = args[1].clone();{
+            globals::adjoin_minus_import_star__i.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name_star_ = args[0].clone();let env = args[1].clone();{
 // (letrec ((loop (lambda (name* genv) (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv)))))) (loop name* (find-globals env)))
 {
 // (let ((loop (quote *uninitialized*))) (begin (set! loop (lambda (name* genv) (if (null? name*) (quote ()) (begin (set-cdr! genv (cons (new-import (car name*)) (cdr genv))) (loop (cdr name*) genv))))) (loop name* (find-globals env))))
-{let loop_ = Scm::symbol("*uninitialized*");{let loop_ = loop_.into_boxed();{loop_.set({let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name_star_ = args[0].clone();let genv = args[1].clone();if ({
+{let loop_ = Scm::symbol("*uninitialized*");{let loop_ = loop_.into_boxed();{loop_.set({// Closure
+let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name_star_ = args[0].clone();let genv = args[1].clone();if ({
 // (null? name*)
 imports::null_p.with(|value| value.get()).invoke(&[name_star_.clone()])}).is_true() {Scm::Nil} else {{{
 // (set-cdr! genv (cons (new-import (car name*)) (cdr genv)))
@@ -508,6 +521,7 @@ globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}
             // (define (adjoin-boxed name env) ...)
             globals::adjoin_minus_boxed.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -534,6 +548,7 @@ globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}
             // (define (adjoin-boxed-env name* env) ...)
             globals::adjoin_minus_boxed_minus_env.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -603,6 +618,7 @@ globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}
             // (define (map-env func env) ...)
             globals::map_minus_env.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -613,6 +629,7 @@ globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}
                             // (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
                             imports::map.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let func = func.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -648,6 +665,7 @@ globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}
             // (define (env-for-each func env) ...)
             globals::env_minus_for_minus_each.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -658,6 +676,7 @@ globals::find_minus_globals.with(|value| value.get()).invoke(&[env.clone()])}])}
                             // (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
                             imports::for_minus_each.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let func = func.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {

@@ -157,6 +157,7 @@ pub fn main() {
             // (define (load-sexpr) ...)
             globals::load_minus_sexpr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")
@@ -229,6 +230,7 @@ pub fn main() {
                     globals::output_minus_module_minus_name.with(|value| value.get()),
                     globals::output_minus_dir.with(|value| value.get()),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")

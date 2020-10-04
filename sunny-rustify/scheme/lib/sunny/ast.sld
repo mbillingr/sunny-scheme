@@ -448,6 +448,7 @@
       (define (gen-rust module)
         (rust-block module
           (lambda ()
+            (println module "// Closure")
             (prepare-closure module (free-vars))
             (print module "Scm::func(move |args: &[Scm]|")
             (function 'gen-rust module)

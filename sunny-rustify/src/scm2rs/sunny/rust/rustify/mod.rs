@@ -32,11 +32,13 @@ pub fn initialize() {
         (/*NOP*/);
         {
             // (define (rustify-identifier name) ...)
-            globals::rustify_minus_identifier.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
+            globals::rustify_minus_identifier.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
 // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (cond ((eq? name (quote args)) "args_") ((eq? name (quote fn)) "fn_") ((eq? name (quote loop)) "loop_") ((eq? name (quote let)) "let_") ((eq? name (quote mut)) "mut_") ((eq? name (quote ref)) "ref_") ((eq? name (quote self)) "self_") (else (append-all (map char-map (string->list (symbol->string name)))))))
 {
 // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (cond ((eq? name (quote args)) "args_") ((eq? name (quote fn)) "fn_") ((eq? name (quote loop)) "loop_") ((eq? name (quote let)) "let_") ((eq? name (quote mut)) "mut_") ((eq? name (quote ref)) "ref_") ((eq? name (quote self)) "self_") (else (append-all (map char-map (string->list (symbol->string name))))))))
-{let [char_minus_map, append_minus_all, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let append_minus_all = append_minus_all.into_boxed();{let char_minus_map = char_minus_map.into_boxed();{char_minus_map.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let ch = args[0].clone();{
+{let [char_minus_map, append_minus_all, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let append_minus_all = append_minus_all.into_boxed();{let char_minus_map = char_minus_map.into_boxed();{char_minus_map.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let ch = args[0].clone();{
 // (cond ...)
 if ({
 // (eq? ch #\_)
@@ -62,7 +64,8 @@ imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(),Scm::char('/')])}).i
 // (list->string (list ch))
 imports::list_minus__g_string.with(|value| value.get()).invoke(&[{
 // (list ch)
-imports::list.with(|value| value.get()).invoke(&[ch.clone()])}])}}}})});append_minus_all.set({let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();if ({
+imports::list.with(|value| value.get()).invoke(&[ch.clone()])}])}}}})});append_minus_all.set({// Closure
+let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();if ({
 // (null? strs)
 imports::null_p.with(|value| value.get()).invoke(&[strs.clone()])}).is_true() {Scm::from("")} else {{
 // (string-append (car strs) (append-all (cdr strs)))
@@ -100,11 +103,13 @@ imports::symbol_minus__g_string.with(|value| value.get()).invoke(&[name.clone()]
         };
         {
             // (define (rustify-libname name) ...)
-            globals::rustify_minus_libname.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
+            globals::rustify_minus_libname.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
 // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))))
 {
 // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))))
-{let [char_minus_map, append_minus_all, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let append_minus_all = append_minus_all.into_boxed();{let char_minus_map = char_minus_map.into_boxed();{char_minus_map.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let ch = args[0].clone();{
+{let [char_minus_map, append_minus_all, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let append_minus_all = append_minus_all.into_boxed();{let char_minus_map = char_minus_map.into_boxed();{char_minus_map.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let ch = args[0].clone();{
 // (cond ...)
 if ({
 // (eq? ch #\_)
@@ -114,7 +119,8 @@ imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(),Scm::char('-')])}).i
 // (list->string (list ch))
 imports::list_minus__g_string.with(|value| value.get()).invoke(&[{
 // (list ch)
-imports::list.with(|value| value.get()).invoke(&[ch.clone()])}])}}}})});append_minus_all.set({let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();if ({
+imports::list.with(|value| value.get()).invoke(&[ch.clone()])}])}}}})});append_minus_all.set({// Closure
+let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();if ({
 // (null? strs)
 imports::null_p.with(|value| value.get()).invoke(&[strs.clone()])}).is_true() {Scm::from("")} else {{
 // (string-append (car strs) (append-all (cdr strs)))
@@ -144,11 +150,13 @@ imports::string_minus__g_list.with(|value| value.get()).invoke(&[name.clone()])}
         };
         {
             // (define (rustify-testname name) ...)
-            globals::rustify_minus_testname.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
+            globals::rustify_minus_testname.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
 // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (append-all (filter (lambda (x) x) (map char-map (string->list name)))))
 {
 // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (append-all (filter (lambda (x) x) (map char-map (string->list name))))))
-{let [char_minus_map, append_minus_all, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let append_minus_all = append_minus_all.into_boxed();{let char_minus_map = char_minus_map.into_boxed();{char_minus_map.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let ch = args[0].clone();{
+{let [char_minus_map, append_minus_all, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let append_minus_all = append_minus_all.into_boxed();{let char_minus_map = char_minus_map.into_boxed();{char_minus_map.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let ch = args[0].clone();{
 // (cond ...)
 if ({
 // (eq? ch #\ )
@@ -158,7 +166,8 @@ imports::eq_p.with(|value| value.get()).invoke(&[ch.clone(),Scm::char_apostrophe
 // (list->string (list ch))
 imports::list_minus__g_string.with(|value| value.get()).invoke(&[{
 // (list ch)
-imports::list.with(|value| value.get()).invoke(&[ch.clone()])}])}}}})});append_minus_all.set({let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();if ({
+imports::list.with(|value| value.get()).invoke(&[ch.clone()])}])}}}})});append_minus_all.set({// Closure
+let append_minus_all = append_minus_all.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let strs = args[0].clone();if ({
 // (null? strs)
 imports::null_p.with(|value| value.get()).invoke(&[strs.clone()])}).is_true() {Scm::from("")} else {{
 // (string-append (car strs) (append-all (cdr strs)))
@@ -172,7 +181,8 @@ imports::cdr.with(|value| value.get()).invoke(&[strs.clone()])}])}])}}})});{
 // (append-all (filter (lambda (x) x) (map char-map (string->list name))))
 append_minus_all.get().invoke(&[{
 // (filter (lambda (x) x) (map char-map (string->list name)))
-imports::filter.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();x.clone()})},{
+imports::filter.with(|value| value.get()).invoke(&[{// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();x.clone()})},{
 // (map char-map (string->list name))
 imports::map.with(|value| value.get()).invoke(&[char_minus_map.get(),{
 // (string->list name)

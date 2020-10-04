@@ -28,6 +28,7 @@ pub fn initialize() {
             // (define (run-tests) ...)
             globals::run_minus_tests.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")

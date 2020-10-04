@@ -46,7 +46,8 @@ pub fn initialize() {
         (/*NOP*/);
         {
             // (define (rust-gen-global-defs module g) ...)
-            globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let g = args[1].clone();if ({
+            globals::rust_minus_gen_minus_global_minus_defs.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let g = args[1].clone();if ({
 // (null? g)
 imports::null_p.with(|value| value.get()).invoke(&[g.clone()])}).is_true() {{
 // (println module)
@@ -110,6 +111,7 @@ imports::car.with(|value| value.get()).invoke(&[g.clone()])}])}}}}})}))
             // (define (rust-gen-modules module libs) ...)
             globals::rust_minus_gen_minus_modules.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -130,6 +132,7 @@ imports::car.with(|value| value.get()).invoke(&[g.clone()])}])}}}}})}))
                                         // (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs)
                                         imports::for_minus_each.with(|value| value.get()).invoke(&[
                                             {
+                                                // Closure
                                                 let module_minus_tree = module_minus_tree.clone();
                                                 Scm::func(move |args: &[Scm]| {
                                                     if args.len() != 1 {
@@ -181,7 +184,8 @@ imports::car.with(|value| value.get()).invoke(&[g.clone()])}])}}}}})}))
         };
         {
             // (define (rust-gen-module-tree module node) ...)
-            globals::rust_minus_gen_minus_module_minus_tree.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let node = args[1].clone();{{
+            globals::rust_minus_gen_minus_module_minus_tree.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let node = args[1].clone();{{
 // (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
 imports::println.with(|value| value.get()).invoke(&[module.clone(),Scm::from("pub mod "),{
 // (rustify-libname (module-tree-name node))
@@ -193,7 +197,8 @@ imports::module_minus_tree_minus_leaf_p.with(|value| value.get()).invoke(&[node.
 // (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) ((module-tree-libobj node) (quote gen-rust) submod)))
 globals::rust_minus_gen_minus_in_minus_submodule.with(|value| value.get()).invoke(&[{
 // (module-tree-name node)
-imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])},module.clone(),{let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();{
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])},module.clone(),{// Closure
+let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();{
 // ((module-tree-libobj node) (quote gen-rust) submod)
 {
 // (module-tree-libobj node)
@@ -201,7 +206,8 @@ imports::module_minus_tree_minus_libobj.with(|value| value.get()).invoke(&[node.
 // (rust-gen-in-submodule (module-tree-name node) module (lambda (submod) (rust-gen-module-tree-list submod (module-tree-children node))))
 globals::rust_minus_gen_minus_in_minus_submodule.with(|value| value.get()).invoke(&[{
 // (module-tree-name node)
-imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])},module.clone(),{let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();{
+imports::module_minus_tree_minus_name.with(|value| value.get()).invoke(&[node.clone()])},module.clone(),{// Closure
+let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let submod = args[0].clone();{
 // (rust-gen-module-tree-list submod (module-tree-children node))
 globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| value.get()).invoke(&[submod.clone(),{
 // (module-tree-children node)
@@ -211,6 +217,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
             // (define (rust-gen-module-tree-list module nodes) ...)
             globals::rust_minus_gen_minus_module_minus_tree_minus_list.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -221,6 +228,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
                             // (for-each (lambda (child) (rust-gen-module-tree module child)) nodes)
                             imports::for_minus_each.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let module = module.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -246,6 +254,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
             // (define (rust-gen-in-module name base-path body) ...)
             globals::rust_minus_gen_minus_in_minus_module.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -284,6 +293,7 @@ imports::module_minus_tree_minus_children.with(|value| value.get()).invoke(&[nod
             // (define (rust-gen-in-submodule name parent body) ...)
             globals::rust_minus_gen_minus_in_minus_submodule.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")

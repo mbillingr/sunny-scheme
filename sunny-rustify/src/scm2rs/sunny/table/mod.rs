@@ -64,6 +64,7 @@ pub fn initialize() {
                 // (define (table? obj) ...)
                 globals::table_p.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -103,6 +104,7 @@ pub fn initialize() {
                 // (define (make-table) ...)
                 globals::make_minus_table.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 0 {
                                 panic!("invalid arity")
@@ -122,6 +124,7 @@ pub fn initialize() {
                 // (define (clone table) ...)
                 globals::clone.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -142,6 +145,7 @@ pub fn initialize() {
                 // (define (parent table) ...)
                 globals::parent.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -161,6 +165,7 @@ pub fn initialize() {
                 // (define (set-parent! table parent) ...)
                 globals::set_minus_parent_i.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -187,6 +192,7 @@ pub fn initialize() {
                 // (define (fields table) ...)
                 globals::fields.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -206,6 +212,7 @@ pub fn initialize() {
                 // (define (set-fields! table fields) ...)
                 globals::set_minus_fields_i.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -232,6 +239,7 @@ pub fn initialize() {
                 // (define (get-field table key) ...)
                 globals::get_minus_field.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -298,6 +306,7 @@ pub fn initialize() {
                 // (define (set-field! table key value) ...)
                 globals::set_minus_field_i.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 3 {
                                 panic!("invalid arity")
@@ -366,6 +375,7 @@ pub fn initialize() {
                 // (define (call-method table key . args) ...)
                 globals::call_minus_method.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() < 2 {
                                 panic!("not enough args")
@@ -394,6 +404,7 @@ pub fn initialize() {
                 // (define (ancestor? obj ancestor) ...)
                 globals::ancestor_p.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -451,6 +462,7 @@ pub fn initialize() {
                 // (define (replace-table! table source) ...)
                 globals::replace_minus_table_i.with(|value| {
                     value.set({
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -490,6 +502,7 @@ pub fn initialize() {
             // (define (run-tests) ...)
             globals::run_minus_tests.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")
@@ -866,6 +879,7 @@ mod tests {
                                     globals::set_minus_field_i
                                         .with(|value| value.get())
                                         .invoke(&[t.clone(), Scm::symbol("inc"), {
+                                            // Closure
                                             Scm::func(move |args: &[Scm]| {
                                                 if args.len() != 1 {
                                                     panic!("invalid arity")
@@ -959,6 +973,7 @@ mod tests {
                                     globals::set_minus_field_i
                                         .with(|value| value.get())
                                         .invoke(&[t.clone(), Scm::symbol("add"), {
+                                            // Closure
                                             Scm::func(move |args: &[Scm]| {
                                                 if args.len() != 2 {
                                                     panic!("invalid arity")
@@ -1082,6 +1097,7 @@ mod tests {
                                     globals::set_minus_field_i
                                         .with(|value| value.get())
                                         .invoke(&[goblin.clone(), Scm::symbol("alive?"), {
+                                            // Closure
                                             Scm::func(move |args: &[Scm]| {
                                                 if args.len() != 1 {
                                                     panic!("invalid arity")
@@ -1109,7 +1125,8 @@ mod tests {
                                 };
                                 {
                                     // (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor))))))))
-                                    globals::set_minus_field_i.with(|value| value.get()).invoke(&[goblin.clone(),Scm::symbol("take-damage!"),{Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let self_ = args[0].clone();let amount = args[1].clone();if ({
+                                    globals::set_minus_field_i.with(|value| value.get()).invoke(&[goblin.clone(),Scm::symbol("take-damage!"),{// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let self_ = args[0].clone();let amount = args[1].clone();if ({
 // (> amount (get-field self (quote armor)))
 imports::_g_.with(|value| value.get()).invoke(&[amount.clone(),{
 // (get-field self (quote armor))
@@ -1130,6 +1147,7 @@ globals::get_minus_field.with(|value| value.get()).invoke(&[self_.clone(),Scm::s
                                     globals::set_minus_field_i
                                         .with(|value| value.get())
                                         .invoke(&[goblin.clone(), Scm::symbol("spawn"), {
+                                            // Closure
                                             Scm::func(move |args: &[Scm]| {
                                                 if args.len() != 1 {
                                                     panic!("invalid arity")

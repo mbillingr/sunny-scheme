@@ -34,11 +34,13 @@ pub fn initialize() {
         (/*NOP*/);
         {
             // (define (boxify node) ...)
-            globals::boxify.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let node = args[0].clone();{
+            globals::boxify.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let node = args[0].clone();{
 // (letrec ((transform (lambda (node ignore) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (boxify-abstraction (node (quote get-params)) (node (quote get-vars)) (node (quote get-params)) (node (quote get-vars)) (node (quote get-body)))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))) ((eq? (node (quote kind)) (quote FIXLET)) (boxify-fixlet (node (quote get-params)) (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))) (else (ignore)))))) (node (quote transform) transform))
 {
 // (let ((transform (quote *uninitialized*))) (begin (set! transform (lambda (node ignore) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (boxify-abstraction (node (quote get-params)) (node (quote get-vars)) (node (quote get-params)) (node (quote get-vars)) (node (quote get-body)))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))) ((eq? (node (quote kind)) (quote FIXLET)) (boxify-fixlet (node (quote get-params)) (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))) (else (ignore))))) (node (quote transform) transform)))
-{let transform = Scm::symbol("*uninitialized*");{let transform = transform.into_boxed();{transform.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let node = args[0].clone();let ignore = args[1].clone();{
+{let transform = Scm::symbol("*uninitialized*");{let transform = transform.into_boxed();{transform.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let node = args[0].clone();let ignore = args[1].clone();{
 // (cond ...)
 if ({
 // (eq? (node (quote kind)) (quote ABSTRACTION))
@@ -108,6 +110,7 @@ node.clone().invoke(&[Scm::symbol("transform"),transform.get()])}}}}}}})}))
             // (define (boxify-abstraction params vars param* var* body) ...)
             globals::boxify_minus_abstraction.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 5 {
                             panic!("invalid arity")
@@ -274,6 +277,7 @@ node.clone().invoke(&[Scm::symbol("transform"),transform.get()])}}}}}}})}))
             // (define (boxify-vararg-abstraction params vararg vars varvar param* var* body) ...)
             globals::boxify_minus_vararg_minus_abstraction.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 7 {
                             panic!("invalid arity")
@@ -407,6 +411,7 @@ node.clone().invoke(&[Scm::symbol("transform"),transform.get()])}}}}}}})}))
             // (define (boxify-fixlet params vars args body) ...)
             globals::boxify_minus_fixlet.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 4 {
                             panic!("invalid arity")
@@ -439,6 +444,7 @@ node.clone().invoke(&[Scm::symbol("transform"),transform.get()])}}}}}}})}))
             // (define (boxify-vars! param* var* body) ...)
             globals::boxify_minus_vars_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")

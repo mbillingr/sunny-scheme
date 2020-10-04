@@ -59,6 +59,7 @@ pub fn initialize() {
             // (define (module? obj) ...)
             globals::module_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -98,6 +99,7 @@ pub fn initialize() {
             // (define (open-module name base-path) ...)
             globals::open_minus_module.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -157,6 +159,7 @@ pub fn initialize() {
             // (define (open-submodule name module) ...)
             globals::open_minus_submodule.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -182,6 +185,7 @@ pub fn initialize() {
             // (define (close-module module) ...)
             globals::close_minus_module.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -206,6 +210,7 @@ pub fn initialize() {
             // (define (module-port module) ...)
             globals::module_minus_port.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -225,6 +230,7 @@ pub fn initialize() {
             // (define (module-path module) ...)
             globals::module_minus_path.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -244,6 +250,7 @@ pub fn initialize() {
             // (define (rust-block module code) ...)
             globals::rust_minus_block.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -276,6 +283,7 @@ pub fn initialize() {
             // (define (println f . args) ...)
             globals::println.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -287,6 +295,7 @@ pub fn initialize() {
                                 // (for-each (lambda (a) (display a (as-port f))) args)
                                 imports::for_minus_each.with(|value| value.get()).invoke(&[
                                     {
+                                        // Closure
                                         let f = f.clone();
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 1 {
@@ -327,6 +336,7 @@ pub fn initialize() {
             // (define (print f . args) ...)
             globals::print.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -337,6 +347,7 @@ pub fn initialize() {
                             // (for-each (lambda (a) (display a (as-port f))) args)
                             imports::for_minus_each.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let f = f.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -368,6 +379,7 @@ pub fn initialize() {
             // (define (showln f . args) ...)
             globals::showln.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -379,6 +391,7 @@ pub fn initialize() {
                                 // (for-each (lambda (a) (write a (as-port f))) args)
                                 imports::for_minus_each.with(|value| value.get()).invoke(&[
                                     {
+                                        // Closure
                                         let f = f.clone();
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 1 {
@@ -420,6 +433,7 @@ pub fn initialize() {
             // (define (show f . args) ...)
             globals::show.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -430,6 +444,7 @@ pub fn initialize() {
                             // (for-each (lambda (a) (write a (as-port f))) args)
                             imports::for_minus_each.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     let f = f.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
@@ -461,6 +476,7 @@ pub fn initialize() {
             // (define (as-port port-or-module) ...)
             globals::as_minus_port.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")

@@ -101,6 +101,7 @@ pub fn initialize() {
             // (define (abstraction? expr) ...)
             globals::abstraction_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -140,6 +141,7 @@ pub fn initialize() {
             // (define (and-args expr) ...)
             globals::and_minus_args.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -159,6 +161,7 @@ pub fn initialize() {
             // (define (assert-condition expr) ...)
             globals::assert_minus_condition.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -178,6 +181,7 @@ pub fn initialize() {
             // (define (begin-statements expr) ...)
             globals::begin_minus_statements.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -197,6 +201,7 @@ pub fn initialize() {
             // (define (cond-clauses expr) ...)
             globals::cond_minus_clauses.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -216,6 +221,7 @@ pub fn initialize() {
             // (define (cond-clause-condition clause) ...)
             globals::cond_minus_clause_minus_condition.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -235,6 +241,7 @@ pub fn initialize() {
             // (define (cond-clause-sequence clause) ...)
             globals::cond_minus_clause_minus_sequence.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -254,6 +261,7 @@ pub fn initialize() {
             // (define (cond-else-clause? clause) ...)
             globals::cond_minus_else_minus_clause_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -279,6 +287,7 @@ pub fn initialize() {
             // (define (definition? expr) ...)
             globals::definition_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -318,6 +327,7 @@ pub fn initialize() {
             // (define (definition-signature expr) ...)
             globals::definition_minus_signature.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -362,6 +372,7 @@ pub fn initialize() {
             // (define (definition-variable expr) ...)
             globals::definition_minus_variable.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -400,6 +411,7 @@ pub fn initialize() {
             // (define (definition-value expr) ...)
             globals::definition_minus_value.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -455,6 +467,7 @@ pub fn initialize() {
             // (define (if-condition expr) ...)
             globals::if_minus_condition.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -474,6 +487,7 @@ pub fn initialize() {
             // (define (if-consequence expr) ...)
             globals::if_minus_consequence.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -493,6 +507,7 @@ pub fn initialize() {
             // (define (if-alternative expr) ...)
             globals::if_minus_alternative.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -529,6 +544,7 @@ pub fn initialize() {
             // (define (import? expr) ...)
             globals::import_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -568,6 +584,7 @@ pub fn initialize() {
             // (define (import-libnames exp*) ...)
             globals::import_minus_libnames.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -577,6 +594,7 @@ pub fn initialize() {
                             // (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*)))
                             imports::filter.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
@@ -624,6 +642,7 @@ pub fn initialize() {
             // (define (importset-libname stmt) ...)
             globals::importset_minus_libname.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -681,6 +700,7 @@ pub fn initialize() {
             // (define (importset-except? stmt) ...)
             globals::importset_minus_except_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -706,6 +726,7 @@ pub fn initialize() {
             // (define (importset-only? stmt) ...)
             globals::importset_minus_only_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -731,6 +752,7 @@ pub fn initialize() {
             // (define (importset-only-names stmt) ...)
             globals::importset_minus_only_minus_names.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -750,6 +772,7 @@ pub fn initialize() {
             // (define (lambda-body expr) ...)
             globals::lambda_minus_body.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -769,6 +792,7 @@ pub fn initialize() {
             // (define (lambda-params expr) ...)
             globals::lambda_minus_params.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -788,6 +812,7 @@ pub fn initialize() {
             // (define (let-args expr) ...)
             globals::let_minus_args.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -813,6 +838,7 @@ pub fn initialize() {
             // (define (let-body expr) ...)
             globals::let_minus_body.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -832,6 +858,7 @@ pub fn initialize() {
             // (define (let-vars expr) ...)
             globals::let_minus_vars.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -857,6 +884,7 @@ pub fn initialize() {
             // (define (let*-bindings expr) ...)
             globals::let_star__minus_bindings.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -876,6 +904,7 @@ pub fn initialize() {
             // (define (library? exp*) ...)
             globals::library_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -913,11 +942,13 @@ pub fn initialize() {
         };
         {
             // (define (scan-out-defines body) ...)
-            globals::scan_minus_out_minus_defines.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let body = args[0].clone();{
+            globals::scan_minus_out_minus_defines.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let body = args[0].clone();{
 // (letrec ((initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body)))))))
 {
 // (let ((initializations (quote *uninitialized*)) (transform (quote *uninitialized*))) (begin (set! initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (set! transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))))
-{let [initializations, transform, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let transform = transform.into_boxed();{let initializations = initializations.into_boxed();{initializations.set({let initializations = initializations.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+{let [initializations, transform, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let transform = transform.into_boxed();{let initializations = initializations.into_boxed();{initializations.set({// Closure
+let initializations = initializations.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (cond ...)
 if ({
 // (null? exp*)
@@ -945,7 +976,8 @@ imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}])}} else
 // (initializations (cdr exp*))
 initializations.get().invoke(&[{
 // (cdr exp*)
-imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}}}})});transform.set({let transform = transform.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+imports::cdr.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}}}})});transform.set({// Closure
+let transform = transform.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (cond ...)
 if ({
 // (null? exp*)
@@ -985,6 +1017,7 @@ transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
             // (define (set!-variable expr) ...)
             globals::set_i_minus_variable.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -1004,6 +1037,7 @@ transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
             // (define (set!-value expr) ...)
             globals::set_i_minus_value.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -1023,6 +1057,7 @@ transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
             // (define (testcase-body expr) ...)
             globals::testcase_minus_body.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -1042,6 +1077,7 @@ transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
             // (define (testcase-description expr) ...)
             globals::testcase_minus_description.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -1061,6 +1097,7 @@ transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
             // (define (testsuite-cases expr) ...)
             globals::testsuite_minus_cases.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -1080,6 +1117,7 @@ transform.get().invoke(&[body.clone()])}])}])}])}}}}}}}}}}})}))
             // (define (testsuite-name expr) ...)
             globals::testsuite_minus_name.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")

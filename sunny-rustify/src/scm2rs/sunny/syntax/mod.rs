@@ -49,6 +49,7 @@ pub fn initialize() {
             // (define (make-core-env) ...)
             globals::make_minus_core_minus_env.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")
@@ -186,6 +187,7 @@ pub fn initialize() {
             // (define (expand-and exp env tail?) ...)
             globals::expand_minus_and.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -221,6 +223,7 @@ pub fn initialize() {
             // (define (expand-assert exp env tail?) ...)
             globals::expand_minus_assert.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -250,6 +253,7 @@ pub fn initialize() {
             // (define (expand-begin exp env tail?) ...)
             globals::expand_minus_begin.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -280,6 +284,7 @@ pub fn initialize() {
             // (define (expand-cond exp env tail?) ...)
             globals::expand_minus_cond.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -321,6 +326,7 @@ pub fn initialize() {
             // (define (expand-define exp env tail?) ...)
             globals::expand_minus_define.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -375,6 +381,7 @@ pub fn initialize() {
             // (define (expand-if exp env tail?) ...)
             globals::expand_minus_if.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -417,6 +424,7 @@ pub fn initialize() {
             // (define (expand-lambda exp env tail?) ...)
             globals::expand_minus_lambda.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -452,6 +460,7 @@ pub fn initialize() {
             // (define (expand-let exp env tail?) ...)
             globals::expand_minus_let.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -507,6 +516,7 @@ pub fn initialize() {
             // (define (expand-let* exp env tail?) ...)
             globals::expand_minus_let_star_.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -524,6 +534,7 @@ pub fn initialize() {
                                         let loop_ = loop_.into_boxed();
                                         {
                                             loop_.set({
+                                                // Closure
                                                 let exp = exp.clone();
                                                 let loop_ = loop_.clone();
                                                 Scm::func(move |args: &[Scm]| {
@@ -624,7 +635,8 @@ imports::let_star__minus_bindings.with(|value| value.get()).invoke(&[exp.clone()
         };
         {
             // (define (expand-letrec exp env tail?) ...)
-            globals::expand_minus_letrec.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp = args[0].clone();let env = args[1].clone();let tail_p = args[2].clone();{
+            globals::expand_minus_letrec.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp = args[0].clone();let env = args[1].clone();let tail_p = args[2].clone();{
 // (astify-comment exp (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?))
 imports::astify_minus_comment.with(|value| value.get()).invoke(&[exp.clone(),{
 // (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?)
@@ -632,7 +644,8 @@ globals::expand_minus_let.with(|value| value.get()).invoke(&[{
 // (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))))
 imports::list.with(|value| value.get()).invoke(&[Scm::symbol("let"),{
 // (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp))
-imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
+imports::map.with(|value| value.get()).invoke(&[{// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let name = args[0].clone();{
 // (list name (quote (quote *uninitialized*)))
 imports::list.with(|value| value.get()).invoke(&[name.clone(),Scm::pair(Scm::symbol("quote"), Scm::pair(Scm::symbol("*uninitialized*"), Scm::Nil))])}})},{
 // (let-vars exp)
@@ -642,7 +655,8 @@ imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
 // (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))
 imports::append.with(|value| value.get()).invoke(&[{
 // (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp))
-imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name = args[0].clone();let val = args[1].clone();{
+imports::map.with(|value| value.get()).invoke(&[{// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let name = args[0].clone();let val = args[1].clone();{
 // (list (quote set!) name val)
 imports::list.with(|value| value.get()).invoke(&[Scm::symbol("set!"),name.clone(),val.clone()])}})},{
 // (let-vars exp)
@@ -656,6 +670,7 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
             // (define (expand-quote exp env tail?) ...)
             globals::expand_minus_quote.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -685,6 +700,7 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
             // (define (expand-set! exp env tail?) ...)
             globals::expand_minus_set_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -720,6 +736,7 @@ imports::let_minus_body.with(|value| value.get()).invoke(&[exp.clone()])}])}])}]
             // (define (expand-testsuite exp env tail?) ...)
             globals::expand_minus_testsuite.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")

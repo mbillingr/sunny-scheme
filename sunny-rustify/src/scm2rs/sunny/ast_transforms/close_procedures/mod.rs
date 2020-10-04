@@ -32,6 +32,7 @@ pub fn initialize() {
             // (define (close-procedures node) ...)
             globals::close_minus_procedures.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -47,6 +48,7 @@ pub fn initialize() {
                                         let transform = transform.into_boxed();
                                         {
                                             transform.set({
+                                                // Closure
                                                 Scm::func(move |args: &[Scm]| {
                                                     if args.len() != 2 {
                                                         panic!("invalid arity")

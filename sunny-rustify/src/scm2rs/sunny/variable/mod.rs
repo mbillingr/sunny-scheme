@@ -140,6 +140,7 @@ pub fn initialize() {
                     globals::Variable.with(|value| value.get()),
                     Scm::symbol("mutable?"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -163,6 +164,7 @@ pub fn initialize() {
                     globals::Variable.with(|value| value.get()),
                     Scm::symbol("set-mutable!"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -207,6 +209,7 @@ pub fn initialize() {
                     globals::GlobalVariable.with(|value| value.get()),
                     Scm::symbol("mutable?"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -225,6 +228,7 @@ pub fn initialize() {
                     globals::GlobalVariable.with(|value| value.get()),
                     Scm::symbol("add-definition!"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -265,6 +269,7 @@ pub fn initialize() {
                     globals::GlobalFunction.with(|value| value.get()),
                     Scm::symbol("add-definition!"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -313,6 +318,7 @@ pub fn initialize() {
                     globals::UndefinedGlobal.with(|value| value.get()),
                     Scm::symbol("add-definition!"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 2 {
                                 panic!("invalid arity")
@@ -455,6 +461,7 @@ pub fn initialize() {
                     globals::LocalVariable.with(|value| value.get()),
                     Scm::symbol("into-boxed!"),
                     {
+                        // Closure
                         Scm::func(move |args: &[Scm]| {
                             if args.len() != 1 {
                                 panic!("invalid arity")
@@ -498,6 +505,7 @@ pub fn initialize() {
             // (define (keyword? obj) ...)
             globals::keyword_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -532,6 +540,7 @@ pub fn initialize() {
             // (define (make-keyword name handler) ...)
             globals::make_minus_keyword.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -576,6 +585,7 @@ pub fn initialize() {
             // (define (keyword-name kw) ...)
             globals::keyword_minus_name.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -595,6 +605,7 @@ pub fn initialize() {
             // (define (keyword-handler kw) ...)
             globals::keyword_minus_handler.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -614,6 +625,7 @@ pub fn initialize() {
             // (define (variable? obj) ...)
             globals::variable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -633,6 +645,7 @@ pub fn initialize() {
             // (define (global-variable? obj) ...)
             globals::global_minus_variable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -653,6 +666,7 @@ pub fn initialize() {
             // (define (undefined-global-variable? obj) ...)
             globals::undefined_minus_global_minus_variable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -673,6 +687,7 @@ pub fn initialize() {
             // (define (global-function? obj) ...)
             globals::global_minus_function_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -693,6 +708,7 @@ pub fn initialize() {
             // (define (import-variable? obj) ...)
             globals::import_minus_variable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -713,6 +729,7 @@ pub fn initialize() {
             // (define (local-variable? obj) ...)
             globals::local_minus_variable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -733,6 +750,7 @@ pub fn initialize() {
             // (define (boxed-variable? obj) ...)
             globals::boxed_minus_variable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -753,6 +771,7 @@ pub fn initialize() {
             // (define (variable-mutable? var) ...)
             globals::variable_minus_mutable_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -772,6 +791,7 @@ pub fn initialize() {
             // (define (variable-set-mutable! var) ...)
             globals::variable_minus_set_minus_mutable_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -791,6 +811,7 @@ pub fn initialize() {
             // (define (global-add-definition! var val) ...)
             globals::global_minus_add_minus_definition_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -811,6 +832,7 @@ pub fn initialize() {
             // (define (global-kind var) ...)
             globals::global_minus_kind.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -830,6 +852,7 @@ pub fn initialize() {
             // (define (local-boxify! var) ...)
             globals::local_minus_boxify_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -849,6 +872,7 @@ pub fn initialize() {
             // (define (new-keyword name handler) ...)
             globals::new_minus_keyword.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -874,6 +898,7 @@ pub fn initialize() {
             // (define (new-import name) ...)
             globals::new_minus_import.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -898,6 +923,7 @@ pub fn initialize() {
             // (define (new-global name) ...)
             globals::new_minus_global.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -922,6 +948,7 @@ pub fn initialize() {
             // (define (new-local name) ...)
             globals::new_minus_local.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -946,6 +973,7 @@ pub fn initialize() {
             // (define (new-boxed name) ...)
             globals::new_minus_boxed.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -970,6 +998,7 @@ pub fn initialize() {
             // (define (replace-var! var new-var) ...)
             globals::replace_minus_var_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")

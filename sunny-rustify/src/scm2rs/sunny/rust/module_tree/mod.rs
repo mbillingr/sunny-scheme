@@ -46,6 +46,7 @@ pub fn initialize() {
             // (define (make-module-tree-node name) ...)
             globals::make_minus_module_minus_tree_minus_node.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -65,6 +66,7 @@ pub fn initialize() {
             // (define (make-module-tree-leaf name lib) ...)
             globals::make_minus_module_minus_tree_minus_leaf.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -85,6 +87,7 @@ pub fn initialize() {
             // (define (module-tree-leaf? node) ...)
             globals::module_minus_tree_minus_leaf_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -157,6 +160,7 @@ pub fn initialize() {
             // (define (module-tree-name node) ...)
             globals::module_minus_tree_minus_name.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -176,6 +180,7 @@ pub fn initialize() {
             // (define (module-tree-children node) ...)
             globals::module_minus_tree_minus_children.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -195,6 +200,7 @@ pub fn initialize() {
             // (define (module-tree-libobj node) ...)
             globals::module_minus_tree_minus_libobj.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -214,6 +220,7 @@ pub fn initialize() {
             // (define (module-tree-set-children! node children) ...)
             globals::module_minus_tree_minus_set_minus_children_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -234,6 +241,7 @@ pub fn initialize() {
             // (define (module-tree-find-child node name) ...)
             globals::module_minus_tree_minus_find_minus_child.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -280,6 +288,7 @@ pub fn initialize() {
             // (define (module-tree-append-child! node child) ...)
             globals::module_minus_tree_minus_append_minus_child_i.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -309,7 +318,8 @@ pub fn initialize() {
         };
         {
             // (define (module-tree-insert! tree libname libobj) ...)
-            globals::module_minus_tree_minus_insert_i.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let tree = args[0].clone();let libname = args[1].clone();let libobj = args[2].clone();{if ({
+            globals::module_minus_tree_minus_insert_i.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let tree = args[0].clone();let libname = args[1].clone();let libobj = args[2].clone();{if ({
 // (null? libname)
 imports::null_p.with(|value| value.get()).invoke(&[libname.clone()])}).is_true() {{
 // (error "invalid insert - empty libname")

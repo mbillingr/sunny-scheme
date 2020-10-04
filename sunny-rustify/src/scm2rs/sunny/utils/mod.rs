@@ -44,6 +44,7 @@ pub fn initialize() {
             // (define (atom? x) ...)
             globals::atom_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -69,6 +70,7 @@ pub fn initialize() {
             // (define (dotted-list? seq) ...)
             globals::dotted_minus_list_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -94,6 +96,7 @@ pub fn initialize() {
             // (define (last-cdr seq) ...)
             globals::last_minus_cdr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -127,6 +130,7 @@ pub fn initialize() {
             // (define (proper-list-part seq) ...)
             globals::proper_minus_list_minus_part.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -173,6 +177,7 @@ pub fn initialize() {
             // (define (filter f seq) ...)
             globals::filter.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -246,6 +251,7 @@ pub fn initialize() {
             // (define (reduce f init seq) ...)
             globals::reduce.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -293,6 +299,7 @@ pub fn initialize() {
             // (define (any f seq) ...)
             globals::any.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -341,6 +348,7 @@ pub fn initialize() {
             // (define (bor first . args) ...)
             globals::bor.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() < 1 {
                             panic!("not enough args")
@@ -373,7 +381,8 @@ pub fn initialize() {
         };
         {
             // (define (sort cmp ass) ...)
-            globals::sort.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let cmp = args[0].clone();let ass = args[1].clone();if ({
+            globals::sort.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let cmp = args[0].clone();let ass = args[1].clone();if ({
 // (pair? ass)
 imports::pair_p.with(|value| value.get()).invoke(&[ass.clone()])}).is_true() {{
 // (let ((pivot (car ass))) (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))))
@@ -385,7 +394,8 @@ imports::append.with(|value| value.get()).invoke(&[{
 // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
 globals::sort.with(|value| value.get()).invoke(&[cmp.clone(),{
 // (filter (lambda (x) (cmp x pivot)) (cdr ass))
-globals::filter.with(|value| value.get()).invoke(&[{let cmp = cmp.clone();let pivot = pivot.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();{
+globals::filter.with(|value| value.get()).invoke(&[{// Closure
+let cmp = cmp.clone();let pivot = pivot.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();{
 // (cmp x pivot)
 cmp.clone().invoke(&[x.clone(),pivot.clone()])}})},{
 // (cdr ass)
@@ -395,7 +405,8 @@ imports::cons.with(|value| value.get()).invoke(&[pivot.clone(),{
 // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
 globals::sort.with(|value| value.get()).invoke(&[cmp.clone(),{
 // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
-globals::filter.with(|value| value.get()).invoke(&[{let cmp = cmp.clone();let pivot = pivot.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();{
+globals::filter.with(|value| value.get()).invoke(&[{// Closure
+let cmp = cmp.clone();let pivot = pivot.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let x = args[0].clone();{
 // (not (cmp x pivot))
 imports::not.with(|value| value.get()).invoke(&[{
 // (cmp x pivot)

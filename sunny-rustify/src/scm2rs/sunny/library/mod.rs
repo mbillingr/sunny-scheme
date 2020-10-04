@@ -51,6 +51,7 @@ pub fn initialize() {
             // (define (library-name expr) ...)
             globals::library_minus_name.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -70,6 +71,7 @@ pub fn initialize() {
             // (define (library-decls expr) ...)
             globals::library_minus_decls.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -89,6 +91,7 @@ pub fn initialize() {
             // (define (library-exports lib-decl*) ...)
             globals::library_minus_exports.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -163,6 +166,7 @@ pub fn initialize() {
             // (define (get-lib lib) ...)
             globals::get_minus_lib.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -238,6 +242,7 @@ pub fn initialize() {
             // (define (find-library base-path* relative-path extension*) ...)
             globals::find_minus_library.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -316,6 +321,7 @@ pub fn initialize() {
             // (define (find-library-ext path extension*) ...)
             globals::find_minus_library_minus_ext.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -379,6 +385,7 @@ pub fn initialize() {
             // (define (library-path lib) ...)
             globals::library_minus_path.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -388,6 +395,7 @@ pub fn initialize() {
                             // (reduce (lambda (left right) (string-append left (string-append "/" right))) "" (map symbol->string lib))
                             imports::reduce.with(|value| value.get()).invoke(&[
                                 {
+                                    // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 2 {
                                             panic!("invalid arity")
@@ -425,6 +433,7 @@ pub fn initialize() {
             // (define (check-imports imports exports lib) ...)
             globals::check_minus_imports.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")

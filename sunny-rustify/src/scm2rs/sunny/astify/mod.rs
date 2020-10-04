@@ -77,6 +77,7 @@ pub fn initialize() {
             // (define (astify exp env tail?) ...)
             globals::astify.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -184,6 +185,7 @@ pub fn initialize() {
             // (define (astify-abstraction param* body env) ...)
             globals::astify_minus_abstraction.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -306,6 +308,7 @@ pub fn initialize() {
             // (define (astify-alternative condition consequent alternative env tail?) ...)
             globals::astify_minus_alternative.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 5 {
                             panic!("invalid arity")
@@ -354,6 +357,7 @@ pub fn initialize() {
             // (define (astify-and arg* env tail?) ...)
             globals::astify_minus_and.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -453,6 +457,7 @@ pub fn initialize() {
             // (define (astify-application proc arg* env tail?) ...)
             globals::astify_minus_application.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 4 {
                             panic!("invalid arity")
@@ -523,6 +528,7 @@ pub fn initialize() {
             // (define (astify-args arg* env) ...)
             globals::astify_minus_args.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -585,6 +591,7 @@ pub fn initialize() {
             // (define (astify-assert cond env) ...)
             globals::astify_minus_assert.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -612,6 +619,7 @@ pub fn initialize() {
             // (define (astify-assignment var-name value env) ...)
             globals::astify_minus_assignment.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -669,7 +677,8 @@ pub fn initialize() {
         };
         {
             // (define (astify-cond clause* env tail?) ...)
-            globals::astify_minus_cond.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let clause_star_ = args[0].clone();let env = args[1].clone();let tail_p = args[2].clone();{
+            globals::astify_minus_cond.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let clause_star_ = args[0].clone();let env = args[1].clone();let tail_p = args[2].clone();{
 // (cond ...)
 if ({
 // (null? clause*)
@@ -717,6 +726,7 @@ imports::make_minus_alternative.with(|value| value.get()).invoke(&[i.clone(),t.c
             // (define (astify-constant exp env) ...)
             globals::astify_minus_constant.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -737,6 +747,7 @@ imports::make_minus_alternative.with(|value| value.get()).invoke(&[i.clone(),t.c
             // (define (astify-definition var-name value env) ...)
             globals::astify_minus_definition.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -791,6 +802,7 @@ imports::make_minus_alternative.with(|value| value.get()).invoke(&[i.clone(),t.c
             // (define (astify-export export-spec* env) ...)
             globals::astify_minus_export.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -864,6 +876,7 @@ imports::make_minus_alternative.with(|value| value.get()).invoke(&[i.clone(),t.c
             // (define (astify-import stmt* env) ...)
             globals::astify_minus_import.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -990,6 +1003,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
             // (define (astify-import-all libname env) ...)
             globals::astify_minus_import_minus_all.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -1036,6 +1050,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
             // (define (astify-import-only libname names env) ...)
             globals::astify_minus_import_minus_only.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -1090,6 +1105,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
             // (define (astify-sequence exp* env tail?) ...)
             globals::astify_minus_sequence.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -1191,6 +1207,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
             // (define (astify-symbol name env) ...)
             globals::astify_minus_symbol.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -1233,6 +1250,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
             // (define (astify-testsuite name cases env) ...)
             globals::astify_minus_testsuite.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -1248,6 +1266,7 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
                                     // (map (lambda (c) (astify-testcase c env)) cases)
                                     imports::map.with(|value| value.get()).invoke(&[
                                         {
+                                            // Closure
                                             let env = env.clone();
                                             Scm::func(move |args: &[Scm]| {
                                                 if args.len() != 1 {
@@ -1272,15 +1291,18 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])},env.clone(
         };
         {
             // (define (astify-testcase case env) ...)
-            globals::astify_minus_testcase.with(|value| value.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let case = args[0].clone();let env = args[1].clone();{
+            globals::astify_minus_testcase.with(|value| value.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let case = args[0].clone();let env = args[1].clone();{
 // (letrec ((given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt)))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (testcase-body case) (quote ())))) (make-testcase (testcase-description case) (astify body env #f))))
 {
 // (let ((given (quote *uninitialized*)) (when (quote *uninitialized*)) (then (quote *uninitialized*)) (dispatch (quote *uninitialized*))) (begin (set! given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (set! when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt)))) (set! then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (set! dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase"))))) (let ((body (dispatch (testcase-body case) (quote ())))) (make-testcase (testcase-description case) (astify body env #f)))))
-{let [given, when, then, dispatch, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let dispatch = dispatch.into_boxed();{let then = then.into_boxed();{let when = when.into_boxed();{let given = given.into_boxed();{given.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
+{let [given, when, then, dispatch, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let dispatch = dispatch.into_boxed();{let then = then.into_boxed();{let when = when.into_boxed();{let given = given.into_boxed();{given.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)
 imports::list.with(|value| value.get()).invoke(&[Scm::symbol("let*"),{
 // (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt))
-imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let assignment = args[0].clone();{
+imports::map.with(|value| value.get()).invoke(&[{// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let assignment = args[0].clone();{
 // (list (car assignment) (caddr assignment))
 imports::list.with(|value| value.get()).invoke(&[{
 // (car assignment)
@@ -1288,11 +1310,13 @@ imports::car.with(|value| value.get()).invoke(&[assignment.clone()])},{
 // (caddr assignment)
 imports::caddr.with(|value| value.get()).invoke(&[assignment.clone()])}])}})},{
 // (cdr stmt)
-imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])},body.clone()])}})});when.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
+imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])},body.clone()])}})});when.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (loop (cdr stmt)))
 {
 // (let ((loop (quote *uninitialized*))) (begin (set! loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*))))))) (loop (cdr stmt))))
-{let loop_ = Scm::symbol("*uninitialized*");{let loop_ = loop_.into_boxed();{loop_.set({let body = body.clone();let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let stmt_star_ = args[0].clone();{
+{let loop_ = Scm::symbol("*uninitialized*");{let loop_ = loop_.into_boxed();{loop_.set({// Closure
+let body = body.clone();let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let stmt_star_ = args[0].clone();{
 // (cond ...)
 if ({
 // (null? stmt*)
@@ -1326,17 +1350,20 @@ imports::cdr.with(|value| value.get()).invoke(&[stmt_star_.clone()])}])}])}}}})}
 // (loop (cdr stmt))
 loop_.get().invoke(&[{
 // (cdr stmt)
-imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])}}}}}}})});then.set({Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
+imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])}}}}}}})});then.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))
 imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("begin"),{
 // (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)
 imports::append.with(|value| value.get()).invoke(&[{
 // (map (lambda (pred) (list (quote assert) pred)) (cdr stmt))
-imports::map.with(|value| value.get()).invoke(&[{Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let pred = args[0].clone();{
+imports::map.with(|value| value.get()).invoke(&[{// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let pred = args[0].clone();{
 // (list (quote assert) pred)
 imports::list.with(|value| value.get()).invoke(&[Scm::symbol("assert"),pred.clone()])}})},{
 // (cdr stmt)
-imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])},body.clone()])}])}})});dispatch.set({let given = given.clone();let dispatch = dispatch.clone();let when = when.clone();let then = then.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let section_star_ = args[0].clone();let body = args[1].clone();{
+imports::cdr.with(|value| value.get()).invoke(&[stmt.clone()])}])},body.clone()])}])}})});dispatch.set({// Closure
+let given = given.clone();let dispatch = dispatch.clone();let when = when.clone();let then = then.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let section_star_ = args[0].clone();let body = args[1].clone();{
 // (cond ...)
 if ({
 // (null? section*)
@@ -1396,6 +1423,7 @@ globals::astify.with(|value| value.get()).invoke(&[body.clone(),env.clone(),Scm:
             // (define (astify-unspecified) ...)
             globals::astify_minus_unspecified.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")

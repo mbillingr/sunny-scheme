@@ -74,6 +74,7 @@ pub fn initialize() {
             // (define (caaar x) ...)
             globals::caaar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -94,6 +95,7 @@ pub fn initialize() {
             // (define (caadr x) ...)
             globals::caadr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -114,6 +116,7 @@ pub fn initialize() {
             // (define (cadar x) ...)
             globals::cadar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -134,6 +137,7 @@ pub fn initialize() {
             // (define (caddr x) ...)
             globals::caddr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -154,6 +158,7 @@ pub fn initialize() {
             // (define (cdaar x) ...)
             globals::cdaar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -174,6 +179,7 @@ pub fn initialize() {
             // (define (cdadr x) ...)
             globals::cdadr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -194,6 +200,7 @@ pub fn initialize() {
             // (define (cddar x) ...)
             globals::cddar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -214,6 +221,7 @@ pub fn initialize() {
             // (define (cdddr x) ...)
             globals::cdddr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -234,6 +242,7 @@ pub fn initialize() {
             // (define (caaaar x) ...)
             globals::caaaar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -254,6 +263,7 @@ pub fn initialize() {
             // (define (caaadr x) ...)
             globals::caaadr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -274,6 +284,7 @@ pub fn initialize() {
             // (define (caadar x) ...)
             globals::caadar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -294,6 +305,7 @@ pub fn initialize() {
             // (define (caaddr x) ...)
             globals::caaddr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -314,6 +326,7 @@ pub fn initialize() {
             // (define (cadaar x) ...)
             globals::cadaar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -334,6 +347,7 @@ pub fn initialize() {
             // (define (cadadr x) ...)
             globals::cadadr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -354,6 +368,7 @@ pub fn initialize() {
             // (define (caddar x) ...)
             globals::caddar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -374,6 +389,7 @@ pub fn initialize() {
             // (define (cadddr x) ...)
             globals::cadddr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -394,6 +410,7 @@ pub fn initialize() {
             // (define (cdaaar x) ...)
             globals::cdaaar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -414,6 +431,7 @@ pub fn initialize() {
             // (define (cdaadr x) ...)
             globals::cdaadr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -434,6 +452,7 @@ pub fn initialize() {
             // (define (cdadar x) ...)
             globals::cdadar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -454,6 +473,7 @@ pub fn initialize() {
             // (define (cdaddr x) ...)
             globals::cdaddr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -474,6 +494,7 @@ pub fn initialize() {
             // (define (cddaar x) ...)
             globals::cddaar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -494,6 +515,7 @@ pub fn initialize() {
             // (define (cddadr x) ...)
             globals::cddadr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -514,6 +536,7 @@ pub fn initialize() {
             // (define (cdddar x) ...)
             globals::cdddar.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -534,6 +557,7 @@ pub fn initialize() {
             // (define (cddddr x) ...)
             globals::cddddr.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")

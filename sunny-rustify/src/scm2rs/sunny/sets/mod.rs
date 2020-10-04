@@ -42,6 +42,7 @@ pub fn initialize() {
             // (define (make-set) ...)
             globals::make_minus_set.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 0 {
                             panic!("invalid arity")
@@ -55,6 +56,7 @@ pub fn initialize() {
             // (define (set-empty? set) ...)
             globals::set_minus_empty_p.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -74,6 +76,7 @@ pub fn initialize() {
             // (define (set-add set item) ...)
             globals::set_minus_add.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -147,6 +150,7 @@ pub fn initialize() {
             // (define (set-remove set item) ...)
             globals::set_minus_remove.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -220,6 +224,7 @@ pub fn initialize() {
             // (define (set-add* set item*) ...)
             globals::set_minus_add_star_.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -244,6 +249,7 @@ pub fn initialize() {
             // (define (set-remove* set item*) ...)
             globals::set_minus_remove_star_.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
@@ -268,6 +274,7 @@ pub fn initialize() {
             // (define (set-do* func set item*) ...)
             globals::set_minus_do_star_.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 3 {
                             panic!("invalid arity")
@@ -317,6 +324,7 @@ pub fn initialize() {
             // (define (set-union set1 set2) ...)
             globals::set_minus_union.with(|value| {
                 value.set({
+                    // Closure
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
