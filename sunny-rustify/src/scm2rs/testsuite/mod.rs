@@ -27,9 +27,7 @@ pub fn run_minus_tests(args: &[Scm]) -> Scm {
                             let x = Scm::Nil;
                             assert!({
                                 // (null? x)
-                                imports::null_p
-                                    .with(|value| value.get())
-                                    .invoke(&[x.clone()])
+                                Scm::func(imports::null_p).invoke(&[x.clone()])
                             }
                             .is_true());
                         }
@@ -49,9 +47,7 @@ pub fn run_minus_tests(args: &[Scm]) -> Scm {
                             let y = Scm::from(1);
                             assert!({
                                 // (= x y)
-                                imports::_e_
-                                    .with(|value| value.get())
-                                    .invoke(&[x.clone(), y.clone()])
+                                Scm::func(imports::_e_).invoke(&[x.clone(), y.clone()])
                             }
                             .is_true());
                         }

@@ -35,26 +35,20 @@ pub fn set_minus_add(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? set)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[set.clone()])
+                Scm::func(imports::null_p).invoke(&[set.clone()])
             })
             .is_true()
             {
                 {
                     // (cons item (quote ()))
-                    imports::cons
-                        .with(|value| value.get())
-                        .invoke(&[item.clone(), Scm::Nil])
+                    Scm::func(imports::cons).invoke(&[item.clone(), Scm::Nil])
                 }
             } else if ({
                 // (equal? (car set) item)
-                imports::equal_p.with(|value| value.get()).invoke(&[
+                Scm::func(imports::equal_p).invoke(&[
                     {
                         // (car set)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[set.clone()])
+                        Scm::func(imports::car).invoke(&[set.clone()])
                     },
                     item.clone(),
                 ])
@@ -65,21 +59,17 @@ pub fn set_minus_add(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (cons (car set) (set-add (cdr set) item))
-                    imports::cons.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::cons).invoke(&[
                         {
                             // (car set)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[set.clone()])
+                            Scm::func(imports::car).invoke(&[set.clone()])
                         },
                         {
                             // (set-add (cdr set) item)
                             Scm::func(set_minus_add).invoke(&[
                                 {
                                     // (cdr set)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[set.clone()])
+                                    Scm::func(imports::cdr).invoke(&[set.clone()])
                                 },
                                 item.clone(),
                             ])
@@ -119,9 +109,7 @@ pub fn set_minus_do_star_(args: &[Scm]) -> Scm {
         let item_star_ = args[2].clone();
         if ({
             // (null? item*)
-            imports::null_p
-                .with(|value| value.get())
-                .invoke(&[item_star_.clone()])
+            Scm::func(imports::null_p).invoke(&[item_star_.clone()])
         })
         .is_true()
         {
@@ -135,16 +123,12 @@ pub fn set_minus_do_star_(args: &[Scm]) -> Scm {
                         // (func set (car item*))
                         func.clone().invoke(&[set.clone(), {
                             // (car item*)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[item_star_.clone()])
+                            Scm::func(imports::car).invoke(&[item_star_.clone()])
                         }])
                     },
                     {
                         // (cdr item*)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[item_star_.clone()])
+                        Scm::func(imports::cdr).invoke(&[item_star_.clone()])
                     },
                 ])
             }
@@ -160,9 +144,7 @@ pub fn set_minus_empty_p(args: &[Scm]) -> Scm {
         let set = args[0].clone();
         {
             // (null? set)
-            imports::null_p
-                .with(|value| value.get())
-                .invoke(&[set.clone()])
+            Scm::func(imports::null_p).invoke(&[set.clone()])
         }
     }
     .into()
@@ -178,21 +160,17 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? set)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[set.clone()])
+                Scm::func(imports::null_p).invoke(&[set.clone()])
             })
             .is_true()
             {
                 Scm::Nil
             } else if ({
                 // (equal? (car set) item)
-                imports::equal_p.with(|value| value.get()).invoke(&[
+                Scm::func(imports::equal_p).invoke(&[
                     {
                         // (car set)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[set.clone()])
+                        Scm::func(imports::car).invoke(&[set.clone()])
                     },
                     item.clone(),
                 ])
@@ -201,28 +179,22 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
             {
                 {
                     // (cdr set)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[set.clone()])
+                    Scm::func(imports::cdr).invoke(&[set.clone()])
                 }
             } else {
                 {
                     // (cons (car set) (set-remove (cdr set) item))
-                    imports::cons.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::cons).invoke(&[
                         {
                             // (car set)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[set.clone()])
+                            Scm::func(imports::car).invoke(&[set.clone()])
                         },
                         {
                             // (set-remove (cdr set) item)
                             Scm::func(set_minus_remove).invoke(&[
                                 {
                                     // (cdr set)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[set.clone()])
+                                    Scm::func(imports::cdr).invoke(&[set.clone()])
                                 },
                                 item.clone(),
                             ])
@@ -263,18 +235,14 @@ pub fn set_minus_union(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? set1)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[set1.clone()])
+                Scm::func(imports::null_p).invoke(&[set1.clone()])
             })
             .is_true()
             {
                 set2.clone()
             } else if ({
                 // (null? set2)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[set2.clone()])
+                Scm::func(imports::null_p).invoke(&[set2.clone()])
             })
             .is_true()
             {

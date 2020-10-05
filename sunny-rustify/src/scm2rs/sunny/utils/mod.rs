@@ -25,9 +25,7 @@ pub fn any(args: &[Scm]) -> Scm {
         let seq = args[1].clone();
         if ({
             // (pair? seq)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[seq.clone()])
+            Scm::func(imports::pair_p).invoke(&[seq.clone()])
         })
         .is_true()
         {
@@ -35,9 +33,7 @@ pub fn any(args: &[Scm]) -> Scm {
                 // (f (car seq))
                 f.clone().invoke(&[{
                     // (car seq)
-                    imports::car
-                        .with(|value| value.get())
-                        .invoke(&[seq.clone()])
+                    Scm::func(imports::car).invoke(&[seq.clone()])
                 }])
             })
             .is_true()
@@ -48,9 +44,7 @@ pub fn any(args: &[Scm]) -> Scm {
                     // (any f (cdr seq))
                     Scm::func(any).invoke(&[f.clone(), {
                         // (cdr seq)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[seq.clone()])
+                        Scm::func(imports::cdr).invoke(&[seq.clone()])
                     }])
                 }
             }
@@ -68,9 +62,7 @@ pub fn atom_p(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         if ({
             // (pair? x)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[x.clone()])
+            Scm::func(imports::pair_p).invoke(&[x.clone()])
         })
         .is_true()
         {
@@ -92,9 +84,7 @@ pub fn bor(args: &[Scm]) -> Scm {
             first.clone()
         } else if ({
             // (null? args)
-            imports::null_p
-                .with(|value| value.get())
-                .invoke(&[args_.clone()])
+            Scm::func(imports::null_p).invoke(&[args_.clone()])
         })
         .is_true()
         {
@@ -102,9 +92,7 @@ pub fn bor(args: &[Scm]) -> Scm {
         } else {
             {
                 // (apply bor args)
-                imports::apply
-                    .with(|value| value.get())
-                    .invoke(&[Scm::func(bor), args_.clone()])
+                Scm::func(imports::apply).invoke(&[Scm::func(bor), args_.clone()])
             }
         }
     }
@@ -118,9 +106,9 @@ pub fn dotted_minus_list_p(args: &[Scm]) -> Scm {
         let seq = args[0].clone();
         {
             // (not (null? (last-cdr seq)))
-            imports::not.with(|value| value.get()).invoke(&[{
+            Scm::func(imports::not).invoke(&[{
                 // (null? (last-cdr seq))
-                imports::null_p.with(|value| value.get()).invoke(&[{
+                Scm::func(imports::null_p).invoke(&[{
                     // (last-cdr seq)
                     Scm::func(last_minus_cdr).invoke(&[seq.clone()])
                 }])
@@ -138,9 +126,7 @@ pub fn filter(args: &[Scm]) -> Scm {
         let seq = args[1].clone();
         if ({
             // (pair? seq)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[seq.clone()])
+            Scm::func(imports::pair_p).invoke(&[seq.clone()])
         })
         .is_true()
         {
@@ -148,29 +134,23 @@ pub fn filter(args: &[Scm]) -> Scm {
                 // (f (car seq))
                 f.clone().invoke(&[{
                     // (car seq)
-                    imports::car
-                        .with(|value| value.get())
-                        .invoke(&[seq.clone()])
+                    Scm::func(imports::car).invoke(&[seq.clone()])
                 }])
             })
             .is_true()
             {
                 {
                     // (cons (car seq) (filter f (cdr seq)))
-                    imports::cons.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::cons).invoke(&[
                         {
                             // (car seq)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
+                            Scm::func(imports::car).invoke(&[seq.clone()])
                         },
                         {
                             // (filter f (cdr seq))
                             Scm::func(filter).invoke(&[f.clone(), {
                                 // (cdr seq)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[seq.clone()])
+                                Scm::func(imports::cdr).invoke(&[seq.clone()])
                             }])
                         },
                     ])
@@ -180,9 +160,7 @@ pub fn filter(args: &[Scm]) -> Scm {
                     // (filter f (cdr seq))
                     Scm::func(filter).invoke(&[f.clone(), {
                         // (cdr seq)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[seq.clone()])
+                        Scm::func(imports::cdr).invoke(&[seq.clone()])
                     }])
                 }
             }
@@ -200,9 +178,7 @@ pub fn last_minus_cdr(args: &[Scm]) -> Scm {
         let seq = args[0].clone();
         if ({
             // (pair? seq)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[seq.clone()])
+            Scm::func(imports::pair_p).invoke(&[seq.clone()])
         })
         .is_true()
         {
@@ -210,9 +186,7 @@ pub fn last_minus_cdr(args: &[Scm]) -> Scm {
                 // (last-cdr (cdr seq))
                 Scm::func(last_minus_cdr).invoke(&[{
                     // (cdr seq)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[seq.clone()])
+                    Scm::func(imports::cdr).invoke(&[seq.clone()])
                 }])
             }
         } else {
@@ -229,28 +203,22 @@ pub fn proper_minus_list_minus_part(args: &[Scm]) -> Scm {
         let seq = args[0].clone();
         if ({
             // (pair? seq)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[seq.clone()])
+            Scm::func(imports::pair_p).invoke(&[seq.clone()])
         })
         .is_true()
         {
             {
                 // (cons (car seq) (proper-list-part (cdr seq)))
-                imports::cons.with(|value| value.get()).invoke(&[
+                Scm::func(imports::cons).invoke(&[
                     {
                         // (car seq)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[seq.clone()])
+                        Scm::func(imports::car).invoke(&[seq.clone()])
                     },
                     {
                         // (proper-list-part (cdr seq))
                         Scm::func(proper_minus_list_minus_part).invoke(&[{
                             // (cdr seq)
-                            imports::cdr
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
+                            Scm::func(imports::cdr).invoke(&[seq.clone()])
                         }])
                     },
                 ])
@@ -271,9 +239,7 @@ pub fn reduce(args: &[Scm]) -> Scm {
         let seq = args[2].clone();
         if ({
             // (pair? seq)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[seq.clone()])
+            Scm::func(imports::pair_p).invoke(&[seq.clone()])
         })
         .is_true()
         {
@@ -285,16 +251,12 @@ pub fn reduce(args: &[Scm]) -> Scm {
                         // (f init (car seq))
                         f.clone().invoke(&[init.clone(), {
                             // (car seq)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[seq.clone()])
+                            Scm::func(imports::car).invoke(&[seq.clone()])
                         }])
                     },
                     {
                         // (cdr seq)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[seq.clone()])
+                        Scm::func(imports::cdr).invoke(&[seq.clone()])
                     },
                 ])
             }
@@ -313,9 +275,7 @@ pub fn sort(args: &[Scm]) -> Scm {
         let ass = args[1].clone();
         if ({
             // (pair? ass)
-            imports::pair_p
-                .with(|value| value.get())
-                .invoke(&[ass.clone()])
+            Scm::func(imports::pair_p).invoke(&[ass.clone()])
         })
         .is_true()
         {
@@ -324,13 +284,11 @@ pub fn sort(args: &[Scm]) -> Scm {
                 {
                     let pivot = {
                         // (car ass)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[ass.clone()])
+                        Scm::func(imports::car).invoke(&[ass.clone()])
                     };
                     {
                         // (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))
-                        imports::append.with(|value| value.get()).invoke(&[
+                        Scm::func(imports::append).invoke(&[
                             {
                                 // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
                                 Scm::func(sort).invoke(&[cmp.clone(), {
@@ -353,54 +311,44 @@ pub fn sort(args: &[Scm]) -> Scm {
                                         },
                                         {
                                             // (cdr ass)
-                                            imports::cdr
-                                                .with(|value| value.get())
-                                                .invoke(&[ass.clone()])
+                                            Scm::func(imports::cdr).invoke(&[ass.clone()])
                                         },
                                     ])
                                 }])
                             },
                             {
                                 // (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))
-                                imports::cons
-                                    .with(|value| value.get())
-                                    .invoke(&[pivot.clone(), {
-                                        // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
-                                        Scm::func(sort).invoke(&[cmp.clone(), {
-                                            // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
-                                            Scm::func(filter).invoke(&[
-                                                {
-                                                    // Closure
-                                                    let cmp = cmp.clone();
-                                                    let pivot = pivot.clone();
-                                                    Scm::func(move |args: &[Scm]| {
-                                                        if args.len() != 1 {
-                                                            panic!("invalid arity")
-                                                        }
-                                                        let x = args[0].clone();
-                                                        {
-                                                            // (not (cmp x pivot))
-                                                            imports::not
-                                                                .with(|value| value.get())
-                                                                .invoke(&[{
-                                                                    // (cmp x pivot)
-                                                                    cmp.clone().invoke(&[
-                                                                        x.clone(),
-                                                                        pivot.clone(),
-                                                                    ])
-                                                                }])
-                                                        }
-                                                    })
-                                                },
-                                                {
-                                                    // (cdr ass)
-                                                    imports::cdr
-                                                        .with(|value| value.get())
-                                                        .invoke(&[ass.clone()])
-                                                },
-                                            ])
-                                        }])
+                                Scm::func(imports::cons).invoke(&[pivot.clone(), {
+                                    // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
+                                    Scm::func(sort).invoke(&[cmp.clone(), {
+                                        // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
+                                        Scm::func(filter).invoke(&[
+                                            {
+                                                // Closure
+                                                let cmp = cmp.clone();
+                                                let pivot = pivot.clone();
+                                                Scm::func(move |args: &[Scm]| {
+                                                    if args.len() != 1 {
+                                                        panic!("invalid arity")
+                                                    }
+                                                    let x = args[0].clone();
+                                                    {
+                                                        // (not (cmp x pivot))
+                                                        Scm::func(imports::not).invoke(&[{
+                                                            // (cmp x pivot)
+                                                            cmp.clone()
+                                                                .invoke(&[x.clone(), pivot.clone()])
+                                                        }])
+                                                    }
+                                                })
+                                            },
+                                            {
+                                                // (cdr ass)
+                                                Scm::func(imports::cdr).invoke(&[ass.clone()])
+                                            },
+                                        ])
                                     }])
+                                }])
                             },
                         ])
                     }

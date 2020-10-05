@@ -147,9 +147,9 @@
                       ")"))
               ((import-variable? var)
                (print module
-                      "imports::"
+                      "Scm::func(imports::"
                       (rustify-identifier name)
-                      ".with(|value| value.get())"))
+                      ")"))
               ((boxed-variable? var)
                (print module (rustify-identifier name) ".get()"))
               (else

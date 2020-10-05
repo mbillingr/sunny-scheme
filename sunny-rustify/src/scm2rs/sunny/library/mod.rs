@@ -28,21 +28,17 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
         let lib = args[2].clone();
         if ({
             // (null? imports)
-            imports::null_p
-                .with(|value| value.get())
-                .invoke(&[imports.clone()])
+            Scm::func(imports::null_p).invoke(&[imports.clone()])
         })
         .is_true()
         {
             Scm::True
         } else if ({
             // (memq (car imports) exports)
-            imports::memq.with(|value| value.get()).invoke(&[
+            Scm::func(imports::memq).invoke(&[
                 {
                     // (car imports)
-                    imports::car
-                        .with(|value| value.get())
-                        .invoke(&[imports.clone()])
+                    Scm::func(imports::car).invoke(&[imports.clone()])
                 },
                 exports.clone(),
             ])
@@ -54,9 +50,7 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
                 Scm::func(check_minus_imports).invoke(&[
                     {
                         // (cdr imports)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[imports.clone()])
+                        Scm::func(imports::cdr).invoke(&[imports.clone()])
                     },
                     exports.clone(),
                     lib.clone(),
@@ -65,13 +59,11 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
         } else {
             {
                 // (error "Invalid import" (car imports) lib)
-                imports::error.with(|value| value.get()).invoke(&[
+                Scm::func(imports::error).invoke(&[
                     Scm::from("Invalid import"),
                     {
                         // (car imports)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[imports.clone()])
+                        Scm::func(imports::car).invoke(&[imports.clone()])
                     },
                     lib.clone(),
                 ])
@@ -90,9 +82,7 @@ pub fn find_minus_library(args: &[Scm]) -> Scm {
         let extension_star_ = args[2].clone();
         if ({
             // (null? base-path*)
-            imports::null_p
-                .with(|value| value.get())
-                .invoke(&[base_minus_path_star_.clone()])
+            Scm::func(imports::null_p).invoke(&[base_minus_path_star_.clone()])
         })
         .is_true()
         {
@@ -105,17 +95,13 @@ pub fn find_minus_library(args: &[Scm]) -> Scm {
                     {
                         let path = {
                             // (string-append (car base-path*) relative-path)
-                            imports::string_minus_append
-                                .with(|value| value.get())
-                                .invoke(&[
-                                    {
-                                        // (car base-path*)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[base_minus_path_star_.clone()])
-                                    },
-                                    relative_minus_path.clone(),
-                                ])
+                            Scm::func(imports::string_minus_append).invoke(&[
+                                {
+                                    // (car base-path*)
+                                    Scm::func(imports::car).invoke(&[base_minus_path_star_.clone()])
+                                },
+                                relative_minus_path.clone(),
+                            ])
                         };
                         // (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
                         let full_minus_path = {
@@ -131,8 +117,7 @@ pub fn find_minus_library(args: &[Scm]) -> Scm {
                                 Scm::func(find_minus_library).invoke(&[
                                     {
                                         // (cdr base-path*)
-                                        imports::cdr
-                                            .with(|value| value.get())
+                                        Scm::func(imports::cdr)
                                             .invoke(&[base_minus_path_star_.clone()])
                                     },
                                     relative_minus_path.clone(),
@@ -156,9 +141,7 @@ pub fn find_minus_library_minus_ext(args: &[Scm]) -> Scm {
         let extension_star_ = args[1].clone();
         if ({
             // (null? extension*)
-            imports::null_p
-                .with(|value| value.get())
-                .invoke(&[extension_star_.clone()])
+            Scm::func(imports::null_p).invoke(&[extension_star_.clone()])
         })
         .is_true()
         {
@@ -169,20 +152,14 @@ pub fn find_minus_library_minus_ext(args: &[Scm]) -> Scm {
                 {
                     let full_minus_path = {
                         // (string-append path (car extension*))
-                        imports::string_minus_append
-                            .with(|value| value.get())
-                            .invoke(&[path.clone(), {
-                                // (car extension*)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[extension_star_.clone()])
-                            }])
+                        Scm::func(imports::string_minus_append).invoke(&[path.clone(), {
+                            // (car extension*)
+                            Scm::func(imports::car).invoke(&[extension_star_.clone()])
+                        }])
                     };
                     if ({
                         // (file-exists? full-path)
-                        imports::file_minus_exists_p
-                            .with(|value| value.get())
-                            .invoke(&[full_minus_path.clone()])
+                        Scm::func(imports::file_minus_exists_p).invoke(&[full_minus_path.clone()])
                     })
                     .is_true()
                     {
@@ -192,9 +169,7 @@ pub fn find_minus_library_minus_ext(args: &[Scm]) -> Scm {
                             // (find-library-ext path (cdr extension*))
                             Scm::func(find_minus_library_minus_ext).invoke(&[path.clone(), {
                                 // (cdr extension*)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[extension_star_.clone()])
+                                Scm::func(imports::cdr).invoke(&[extension_star_.clone()])
                             }])
                         }
                     }
@@ -245,18 +220,16 @@ pub fn get_minus_lib(args: &[Scm]) -> Scm {
                 if (full_minus_path.clone()).is_true() {
                     {
                         // (read (open-input-file full-path))
-                        imports::read.with(|value| value.get()).invoke(&[{
+                        Scm::func(imports::read).invoke(&[{
                             // (open-input-file full-path)
-                            imports::open_minus_input_minus_file
-                                .with(|value| value.get())
+                            Scm::func(imports::open_minus_input_minus_file)
                                 .invoke(&[full_minus_path.clone()])
                         }])
                     }
                 } else {
                     {
                         // (error "Unknown library" lib)
-                        imports::error
-                            .with(|value| value.get())
+                        Scm::func(imports::error)
                             .invoke(&[Scm::from("Unknown library"), lib.clone()])
                     }
                 }
@@ -273,9 +246,7 @@ pub fn library_minus_decls(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cddr expr)
-            imports::cddr
-                .with(|value| value.get())
-                .invoke(&[expr.clone()])
+            Scm::func(imports::cddr).invoke(&[expr.clone()])
         }
     }
     .into()
@@ -290,42 +261,32 @@ pub fn library_minus_exports(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? lib-decl*)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[lib_minus_decl_star_.clone()])
+                Scm::func(imports::null_p).invoke(&[lib_minus_decl_star_.clone()])
             })
             .is_true()
             {
                 Scm::Nil
             } else if ({
                 // (eq? (quote export) (caar lib-decl*))
-                imports::eq_p
-                    .with(|value| value.get())
-                    .invoke(&[Scm::symbol("export"), {
-                        // (caar lib-decl*)
-                        imports::caar
-                            .with(|value| value.get())
-                            .invoke(&[lib_minus_decl_star_.clone()])
-                    }])
+                Scm::func(imports::eq_p).invoke(&[Scm::symbol("export"), {
+                    // (caar lib-decl*)
+                    Scm::func(imports::caar).invoke(&[lib_minus_decl_star_.clone()])
+                }])
             })
             .is_true()
             {
                 {
                     // (append (cdar lib-decl*) (library-exports (cdr lib-decl*)))
-                    imports::append.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::append).invoke(&[
                         {
                             // (cdar lib-decl*)
-                            imports::cdar
-                                .with(|value| value.get())
-                                .invoke(&[lib_minus_decl_star_.clone()])
+                            Scm::func(imports::cdar).invoke(&[lib_minus_decl_star_.clone()])
                         },
                         {
                             // (library-exports (cdr lib-decl*))
                             Scm::func(library_minus_exports).invoke(&[{
                                 // (cdr lib-decl*)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[lib_minus_decl_star_.clone()])
+                                Scm::func(imports::cdr).invoke(&[lib_minus_decl_star_.clone()])
                             }])
                         },
                     ])
@@ -335,9 +296,7 @@ pub fn library_minus_exports(args: &[Scm]) -> Scm {
                     // (library-exports (cdr lib-decl*))
                     Scm::func(library_minus_exports).invoke(&[{
                         // (cdr lib-decl*)
-                        imports::cdr
-                            .with(|value| value.get())
-                            .invoke(&[lib_minus_decl_star_.clone()])
+                        Scm::func(imports::cdr).invoke(&[lib_minus_decl_star_.clone()])
                     }])
                 }
             }
@@ -353,9 +312,7 @@ pub fn library_minus_name(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr
-                .with(|value| value.get())
-                .invoke(&[expr.clone()])
+            Scm::func(imports::cadr).invoke(&[expr.clone()])
         }
     }
     .into()
@@ -368,7 +325,7 @@ pub fn library_minus_path(args: &[Scm]) -> Scm {
         let lib = args[0].clone();
         {
             // (reduce (lambda (left right) (string-append left (string-append "/" right))) "" (map symbol->string lib))
-            imports::reduce.with(|value| value.get()).invoke(&[
+            Scm::func(imports::reduce).invoke(&[
                 {
                     // Closure
                     Scm::func(move |args: &[Scm]| {
@@ -379,24 +336,19 @@ pub fn library_minus_path(args: &[Scm]) -> Scm {
                         let right = args[1].clone();
                         {
                             // (string-append left (string-append "/" right))
-                            imports::string_minus_append
-                                .with(|value| value.get())
-                                .invoke(&[left.clone(), {
-                                    // (string-append "/" right)
-                                    imports::string_minus_append
-                                        .with(|value| value.get())
-                                        .invoke(&[Scm::from("/"), right.clone()])
-                                }])
+                            Scm::func(imports::string_minus_append).invoke(&[left.clone(), {
+                                // (string-append "/" right)
+                                Scm::func(imports::string_minus_append)
+                                    .invoke(&[Scm::from("/"), right.clone()])
+                            }])
                         }
                     })
                 },
                 Scm::from(""),
                 {
                     // (map symbol->string lib)
-                    imports::map.with(|value| value.get()).invoke(&[
-                        imports::symbol_minus__g_string.with(|value| value.get()),
-                        lib.clone(),
-                    ])
+                    Scm::func(imports::map)
+                        .invoke(&[Scm::func(imports::symbol_minus__g_string), lib.clone()])
                 },
             ])
         }

@@ -37,7 +37,7 @@ pub fn ancestor_p(args: &[Scm]) -> Scm {
             {
                 if ({
                     // (eq? (parent obj) ancestor)
-                    imports::eq_p.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::eq_p).invoke(&[
                         {
                             // (parent obj)
                             Scm::func(parent).invoke(&[obj.clone()])
@@ -77,7 +77,7 @@ pub fn call_minus_method(args: &[Scm]) -> Scm {
         let args_ = Scm::list(&args[2..]);
         {
             // (apply (get-field table key) table args)
-            imports::apply.with(|value| value.get()).invoke(&[
+            Scm::func(imports::apply).invoke(&[
                 {
                     // (get-field table key)
                     Scm::func(get_minus_field).invoke(&[table.clone(), key.clone()])
@@ -97,8 +97,7 @@ pub fn clone(args: &[Scm]) -> Scm {
         let table = args[0].clone();
         {
             // (list TABLE-ID table)
-            imports::list
-                .with(|value| value.get())
+            Scm::func(imports::list)
                 .invoke(&[TABLE_minus_ID.with(|value| value.get()), table.clone()])
         }
     }
@@ -112,9 +111,7 @@ pub fn fields(args: &[Scm]) -> Scm {
         let table = args[0].clone();
         {
             // (cddr table)
-            imports::cddr
-                .with(|value| value.get())
-                .invoke(&[table.clone()])
+            Scm::func(imports::cddr).invoke(&[table.clone()])
         }
     }
     .into()
@@ -131,21 +128,17 @@ pub fn get_minus_field(args: &[Scm]) -> Scm {
             {
                 let entry = {
                     // (assq key (fields table))
-                    imports::assq
-                        .with(|value| value.get())
-                        .invoke(&[key.clone(), {
-                            // (fields table)
-                            Scm::func(fields).invoke(&[table.clone()])
-                        }])
+                    Scm::func(imports::assq).invoke(&[key.clone(), {
+                        // (fields table)
+                        Scm::func(fields).invoke(&[table.clone()])
+                    }])
                 };
                 {
                     // (cond ...)
                     if (entry.clone()).is_true() {
                         {
                             // (cdr entry)
-                            imports::cdr
-                                .with(|value| value.get())
-                                .invoke(&[entry.clone()])
+                            Scm::func(imports::cdr).invoke(&[entry.clone()])
                         }
                     } else if ({
                         // (parent table)
@@ -179,9 +172,7 @@ pub fn make_minus_table(args: &[Scm]) -> Scm {
         }
         {
             // (list TABLE-ID #f)
-            imports::list
-                .with(|value| value.get())
-                .invoke(&[TABLE_minus_ID.with(|value| value.get()), Scm::False])
+            Scm::func(imports::list).invoke(&[TABLE_minus_ID.with(|value| value.get()), Scm::False])
         }
     }
     .into()
@@ -194,9 +185,7 @@ pub fn parent(args: &[Scm]) -> Scm {
         let table = args[0].clone();
         {
             // (cadr table)
-            imports::cadr
-                .with(|value| value.get())
-                .invoke(&[table.clone()])
+            Scm::func(imports::cadr).invoke(&[table.clone()])
         }
     }
     .into()
@@ -253,11 +242,11 @@ super::initialize();
 // (let ((t (list (cons (quote <table>) (quote ()))))) (begin (begin (assert (not (table? t))))))
 {let t = {
 // (list (cons (quote <table>) (quote ())))
-imports::list.with(|value| value.get()).invoke(&[{
+Scm::func(imports::list).invoke(&[{
 // (cons (quote <table>) (quote ()))
-imports::cons.with(|value| value.get()).invoke(&[Scm::symbol("<table>"),Scm::Nil])}])};assert!({
+Scm::func(imports::cons).invoke(&[Scm::symbol("<table>"),Scm::Nil])}])};assert!({
 // (not (table? t))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (table? t)
 Scm::func(table_p).invoke(&[t.clone()])}])}.is_true());
 }}}}
@@ -272,7 +261,7 @@ super::initialize();
 // (make-table)
 Scm::func(make_minus_table).invoke(&[])};assert!({
 // (not (parent t))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (parent t)
 Scm::func(parent).invoke(&[t.clone()])}])}.is_true());
 }}}}
@@ -291,7 +280,7 @@ let s = {
 // (clone t)
 Scm::func(clone).invoke(&[t.clone()])};assert!({
 // (eq? (parent s) t)
-imports::eq_p.with(|value| value.get()).invoke(&[{
+Scm::func(imports::eq_p).invoke(&[{
 // (parent s)
 Scm::func(parent).invoke(&[s.clone()])},t.clone()])}.is_true());
 }}}}
@@ -310,7 +299,7 @@ let f = {
 // (fields t)
 Scm::func(fields).invoke(&[t.clone()])};assert!({
 // (null? f)
-imports::null_p.with(|value| value.get()).invoke(&[f.clone()])}.is_true());
+Scm::func(imports::null_p).invoke(&[f.clone()])}.is_true());
 }}}}
 #[test]
 fn access_missing_field() {
@@ -327,7 +316,7 @@ let value = {
 // (get-field t (quote x))
 Scm::func(get_minus_field).invoke(&[t.clone(),Scm::symbol("x")])};assert!({
 // (not value)
-imports::not.with(|value| value.get()).invoke(&[value.clone()])}.is_true());
+Scm::func(imports::not).invoke(&[value.clone()])}.is_true());
 }}}}
 #[test]
 fn insert_and_retrieve_field() {
@@ -342,7 +331,7 @@ Scm::func(make_minus_table).invoke(&[])};{{
 // (set-field! t (quote x) 1)
 Scm::func(set_minus_field_i).invoke(&[t.clone(),Scm::symbol("x"),Scm::from(1)])};assert!({
 // (= (get-field t (quote x)) 1)
-imports::_e_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_e_).invoke(&[{
 // (get-field t (quote x))
 Scm::func(get_minus_field).invoke(&[t.clone(),Scm::symbol("x")])},Scm::from(1)])}.is_true());
 }}}}}
@@ -363,7 +352,7 @@ Scm::func(set_minus_field_i).invoke(&[t.clone(),Scm::symbol("x"),Scm::from(1)])}
 // (clone t)
 Scm::func(clone).invoke(&[t.clone()])};assert!({
 // (= (get-field s (quote x)) 1)
-imports::_e_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_e_).invoke(&[{
 // (get-field s (quote x))
 Scm::func(get_minus_field).invoke(&[s.clone(),Scm::symbol("x")])},Scm::from(1)])}.is_true());
 }}}}}}}
@@ -386,7 +375,7 @@ Scm::func(clone).invoke(&[t.clone()])};{{
 // (set-field! s (quote x) 2)
 Scm::func(set_minus_field_i).invoke(&[s.clone(),Scm::symbol("x"),Scm::from(2)])};assert!({
 // (= (get-field t (quote x)) 1)
-imports::_e_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_e_).invoke(&[{
 // (get-field t (quote x))
 Scm::func(get_minus_field).invoke(&[t.clone(),Scm::symbol("x")])},Scm::from(1)])}.is_true());
 }}}}}}}}
@@ -410,13 +399,13 @@ Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let sel
 // (set-field! self (quote count) (+ 1 (get-field self (quote count))))
 Scm::func(set_minus_field_i).invoke(&[self_.clone(),Scm::symbol("count"),{
 // (+ 1 (get-field self (quote count)))
-imports::_plus_.with(|value| value.get()).invoke(&[Scm::from(1),{
+Scm::func(imports::_plus_).invoke(&[Scm::from(1),{
 // (get-field self (quote count))
 Scm::func(get_minus_field).invoke(&[self_.clone(),Scm::symbol("count")])}])}])}})}])};t.clone()}}};{{
 // (call-method t (quote inc))
 Scm::func(call_minus_method).invoke(&[t.clone(),Scm::symbol("inc")])};assert!({
 // (= (get-field t (quote count)) 1)
-imports::_e_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_e_).invoke(&[{
 // (get-field t (quote count))
 Scm::func(get_minus_field).invoke(&[t.clone(),Scm::symbol("count")])},Scm::from(1)])}.is_true());
 }}}}}
@@ -440,7 +429,7 @@ Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let sel
 // (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value))))
 Scm::func(set_minus_field_i).invoke(&[self_.clone(),Scm::symbol("value"),{
 // (+ (get-field self (quote value)) (get-field other (quote value)))
-imports::_plus_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_plus_).invoke(&[{
 // (get-field self (quote value))
 Scm::func(get_minus_field).invoke(&[self_.clone(),Scm::symbol("value")])},{
 // (get-field other (quote value))
@@ -448,7 +437,7 @@ Scm::func(get_minus_field).invoke(&[other.clone(),Scm::symbol("value")])}])}])}}
 // (call-method t (quote add) t)
 Scm::func(call_minus_method).invoke(&[t.clone(),Scm::symbol("add"),t.clone()])};assert!({
 // (= (get-field t (quote value)) 2)
-imports::_e_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_e_).invoke(&[{
 // (get-field t (quote value))
 Scm::func(get_minus_field).invoke(&[t.clone(),Scm::symbol("value")])},Scm::from(2)])}.is_true());
 }}}}}
@@ -472,24 +461,24 @@ Scm::func(set_minus_field_i).invoke(&[goblin.clone(),Scm::symbol("armor"),Scm::f
 Scm::func(set_minus_field_i).invoke(&[goblin.clone(),Scm::symbol("alive?"),{// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let self_ = args[0].clone();{
 // (> (get-field self (quote health)) 0)
-imports::_g_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_g_).invoke(&[{
 // (get-field self (quote health))
 Scm::func(get_minus_field).invoke(&[self_.clone(),Scm::symbol("health")])},Scm::from(0)])}})}])};{
 // (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor))))))))
 Scm::func(set_minus_field_i).invoke(&[goblin.clone(),Scm::symbol("take-damage!"),{// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let self_ = args[0].clone();let amount = args[1].clone();if ({
 // (> amount (get-field self (quote armor)))
-imports::_g_.with(|value| value.get()).invoke(&[amount.clone(),{
+Scm::func(imports::_g_).invoke(&[amount.clone(),{
 // (get-field self (quote armor))
 Scm::func(get_minus_field).invoke(&[self_.clone(),Scm::symbol("armor")])}])}).is_true() {{
 // (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))
 Scm::func(set_minus_field_i).invoke(&[self_.clone(),Scm::symbol("health"),{
 // (- (get-field self (quote health)) (- amount (get-field self (quote armor))))
-imports::_minus_.with(|value| value.get()).invoke(&[{
+Scm::func(imports::_minus_).invoke(&[{
 // (get-field self (quote health))
 Scm::func(get_minus_field).invoke(&[self_.clone(),Scm::symbol("health")])},{
 // (- amount (get-field self (quote armor)))
-imports::_minus_.with(|value| value.get()).invoke(&[amount.clone(),{
+Scm::func(imports::_minus_).invoke(&[amount.clone(),{
 // (get-field self (quote armor))
 Scm::func(get_minus_field).invoke(&[self_.clone(),Scm::symbol("armor")])}])}])}])}} else {Scm::symbol("*UNSPECIFIED*")}})}])};{
 // (set-field! goblin (quote spawn) (lambda (self) (clone self)))
@@ -538,12 +527,12 @@ Scm::func(call_minus_method).invoke(&[krog.clone(),Scm::symbol("alive?")])}.is_t
 Scm::func(call_minus_method).invoke(&[kold.clone(),Scm::symbol("alive?")])}.is_true());
 ;assert!({
 // (not (call-method vard (quote alive?)))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (call-method vard (quote alive?))
 Scm::func(call_minus_method).invoke(&[vard.clone(),Scm::symbol("alive?")])}])}.is_true());
 ;assert!({
 // (not (call-method dega (quote alive?)))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (call-method dega (quote alive?))
 Scm::func(call_minus_method).invoke(&[dega.clone(),Scm::symbol("alive?")])}])}.is_true());
 }}}}}
@@ -560,7 +549,7 @@ Scm::func(make_minus_table).invoke(&[])};
 // (let ((obj (quote not-a-table))) (begin (begin (assert (not (ancestor? obj t0))))))
 let obj = Scm::symbol("not-a-table");assert!({
 // (not (ancestor? obj t0))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (ancestor? obj t0)
 Scm::func(ancestor_p).invoke(&[obj.clone(),t0.clone()])}])}.is_true());
 }}}}
@@ -579,7 +568,7 @@ let t1 = {
 // (make-table)
 Scm::func(make_minus_table).invoke(&[])};assert!({
 // (not (ancestor? t1 t0))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (ancestor? t1 t0)
 Scm::func(ancestor_p).invoke(&[t1.clone(),t0.clone()])}])}.is_true());
 }}}}
@@ -601,7 +590,7 @@ Scm::func(clone).invoke(&[t0.clone()])};{assert!({
 Scm::func(ancestor_p).invoke(&[t1.clone(),t0.clone()])}.is_true());
 ;assert!({
 // (not (ancestor? t0 t1))
-imports::not.with(|value| value.get()).invoke(&[{
+Scm::func(imports::not).invoke(&[{
 // (ancestor? t0 t1)
 Scm::func(ancestor_p).invoke(&[t0.clone(),t1.clone()])}])}.is_true());
 }}}}}
@@ -646,31 +635,25 @@ pub fn set_minus_field_i(args: &[Scm]) -> Scm {
             {
                 let entry = {
                     // (assq key (fields table))
-                    imports::assq
-                        .with(|value| value.get())
-                        .invoke(&[key.clone(), {
-                            // (fields table)
-                            Scm::func(fields).invoke(&[table.clone()])
-                        }])
+                    Scm::func(imports::assq).invoke(&[key.clone(), {
+                        // (fields table)
+                        Scm::func(fields).invoke(&[table.clone()])
+                    }])
                 };
                 if (entry.clone()).is_true() {
                     {
                         // (set-cdr! entry value)
-                        imports::set_minus_cdr_i
-                            .with(|value| value.get())
-                            .invoke(&[entry.clone(), value.clone()])
+                        Scm::func(imports::set_minus_cdr_i).invoke(&[entry.clone(), value.clone()])
                     }
                 } else {
                     {
                         // (set-fields! table (cons (cons key value) (fields table)))
                         Scm::func(set_minus_fields_i).invoke(&[table.clone(), {
                             // (cons (cons key value) (fields table))
-                            imports::cons.with(|value| value.get()).invoke(&[
+                            Scm::func(imports::cons).invoke(&[
                                 {
                                     // (cons key value)
-                                    imports::cons
-                                        .with(|value| value.get())
-                                        .invoke(&[key.clone(), value.clone()])
+                                    Scm::func(imports::cons).invoke(&[key.clone(), value.clone()])
                                 },
                                 {
                                     // (fields table)
@@ -694,12 +677,10 @@ pub fn set_minus_fields_i(args: &[Scm]) -> Scm {
         let fields = args[1].clone();
         {
             // (set-cdr! (cdr table) fields)
-            imports::set_minus_cdr_i.with(|value| value.get()).invoke(&[
+            Scm::func(imports::set_minus_cdr_i).invoke(&[
                 {
                     // (cdr table)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[table.clone()])
+                    Scm::func(imports::cdr).invoke(&[table.clone()])
                 },
                 fields.clone(),
             ])
@@ -716,12 +697,10 @@ pub fn set_minus_parent_i(args: &[Scm]) -> Scm {
         let parent = args[1].clone();
         {
             // (set-car! (cdr table) parent)
-            imports::set_minus_car_i.with(|value| value.get()).invoke(&[
+            Scm::func(imports::set_minus_car_i).invoke(&[
                 {
                     // (cdr table)
-                    imports::cdr
-                        .with(|value| value.get())
-                        .invoke(&[table.clone()])
+                    Scm::func(imports::cdr).invoke(&[table.clone()])
                 },
                 parent.clone(),
             ])
@@ -739,20 +718,16 @@ pub fn table_p(args: &[Scm]) -> Scm {
             // (and (pair? obj) (eq? (car obj) TABLE-ID))
             if ({
                 // (pair? obj)
-                imports::pair_p
-                    .with(|value| value.get())
-                    .invoke(&[obj.clone()])
+                Scm::func(imports::pair_p).invoke(&[obj.clone()])
             })
             .is_true()
             {
                 {
                     // (eq? (car obj) TABLE-ID)
-                    imports::eq_p.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::eq_p).invoke(&[
                         {
                             // (car obj)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[obj.clone()])
+                            Scm::func(imports::car).invoke(&[obj.clone()])
                         },
                         TABLE_minus_ID.with(|value| value.get()),
                     ])
@@ -782,9 +757,7 @@ pub fn initialize() {
                 TABLE_minus_ID.with(|value| {
                     value.set({
                         // (cons (quote <table>) (quote ()))
-                        imports::cons
-                            .with(|value| value.get())
-                            .invoke(&[Scm::symbol("<table>"), Scm::Nil])
+                        Scm::func(imports::cons).invoke(&[Scm::symbol("<table>"), Scm::Nil])
                     })
                 })
             };

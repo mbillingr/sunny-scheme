@@ -26,9 +26,7 @@ pub fn make_minus_module_minus_tree_minus_leaf(args: &[Scm]) -> Scm {
         let lib = args[1].clone();
         {
             // (cons name lib)
-            imports::cons
-                .with(|value| value.get())
-                .invoke(&[name.clone(), lib.clone()])
+            Scm::func(imports::cons).invoke(&[name.clone(), lib.clone()])
         }
     }
     .into()
@@ -41,9 +39,7 @@ pub fn make_minus_module_minus_tree_minus_node(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         {
             // (cons name (quote ()))
-            imports::cons
-                .with(|value| value.get())
-                .invoke(&[name.clone(), Scm::Nil])
+            Scm::func(imports::cons).invoke(&[name.clone(), Scm::Nil])
         }
     }
     .into()
@@ -59,12 +55,10 @@ pub fn module_minus_tree_minus_append_minus_child_i(args: &[Scm]) -> Scm {
             // (module-tree-set-children! node (cons child (module-tree-children node)))
             Scm::func(module_minus_tree_minus_set_minus_children_i).invoke(&[node.clone(), {
                 // (cons child (module-tree-children node))
-                imports::cons
-                    .with(|value| value.get())
-                    .invoke(&[child.clone(), {
-                        // (module-tree-children node)
-                        Scm::func(module_minus_tree_minus_children).invoke(&[node.clone()])
-                    }])
+                Scm::func(imports::cons).invoke(&[child.clone(), {
+                    // (module-tree-children node)
+                    Scm::func(module_minus_tree_minus_children).invoke(&[node.clone()])
+                }])
             }])
         }
     }
@@ -78,9 +72,7 @@ pub fn module_minus_tree_minus_children(args: &[Scm]) -> Scm {
         let node = args[0].clone();
         {
             // (cdr node)
-            imports::cdr
-                .with(|value| value.get())
-                .invoke(&[node.clone()])
+            Scm::func(imports::cdr).invoke(&[node.clone()])
         }
     }
     .into()
@@ -101,7 +93,7 @@ pub fn module_minus_tree_minus_find_minus_child(args: &[Scm]) -> Scm {
             {
                 {
                     // (error "called (module-tree-find-child) on leaf node" name node)
-                    imports::error.with(|value| value.get()).invoke(&[
+                    Scm::func(imports::error).invoke(&[
                         Scm::from("called (module-tree-find-child) on leaf node"),
                         name.clone(),
                         node.clone(),
@@ -112,12 +104,10 @@ pub fn module_minus_tree_minus_find_minus_child(args: &[Scm]) -> Scm {
             };
             {
                 // (assq name (module-tree-children node))
-                imports::assq
-                    .with(|value| value.get())
-                    .invoke(&[name.clone(), {
-                        // (module-tree-children node)
-                        Scm::func(module_minus_tree_minus_children).invoke(&[node.clone()])
-                    }])
+                Scm::func(imports::assq).invoke(&[name.clone(), {
+                    // (module-tree-children node)
+                    Scm::func(module_minus_tree_minus_children).invoke(&[node.clone()])
+                }])
             }
         }
     }
@@ -134,17 +124,13 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
         {
             if ({
                 // (null? libname)
-                imports::null_p
-                    .with(|value| value.get())
-                    .invoke(&[libname.clone()])
+                Scm::func(imports::null_p).invoke(&[libname.clone()])
             })
             .is_true()
             {
                 {
                     // (error "invalid insert - empty libname")
-                    imports::error
-                        .with(|value| value.get())
-                        .invoke(&[Scm::from("invalid insert - empty libname")])
+                    Scm::func(imports::error).invoke(&[Scm::from("invalid insert - empty libname")])
                 }
             } else {
                 Scm::symbol("*UNSPECIFIED*")
@@ -158,9 +144,7 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                             tree.clone(),
                             {
                                 // (car libname)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[libname.clone()])
+                                Scm::func(imports::car).invoke(&[libname.clone()])
                             },
                         ])
                     };
@@ -171,20 +155,16 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                 child.clone(),
                                 {
                                     // (cdr libname)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[libname.clone()])
+                                    Scm::func(imports::cdr).invoke(&[libname.clone()])
                                 },
                                 libobj.clone(),
                             ])
                         }
                     } else if ({
                         // (null? (cdr libname))
-                        imports::null_p.with(|value| value.get()).invoke(&[{
+                        Scm::func(imports::null_p).invoke(&[{
                             // (cdr libname)
-                            imports::cdr
-                                .with(|value| value.get())
-                                .invoke(&[libname.clone()])
+                            Scm::func(imports::cdr).invoke(&[libname.clone()])
                         }])
                     })
                     .is_true()
@@ -198,9 +178,7 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                     Scm::func(make_minus_module_minus_tree_minus_leaf).invoke(&[
                                         {
                                             // (car libname)
-                                            imports::car
-                                                .with(|value| value.get())
-                                                .invoke(&[libname.clone()])
+                                            Scm::func(imports::car).invoke(&[libname.clone()])
                                         },
                                         libobj.clone(),
                                     ])
@@ -215,9 +193,7 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                     // (make-module-tree-node (car libname))
                                     Scm::func(make_minus_module_minus_tree_minus_node).invoke(&[{
                                         // (car libname)
-                                        imports::car
-                                            .with(|value| value.get())
-                                            .invoke(&[libname.clone()])
+                                        Scm::func(imports::car).invoke(&[libname.clone()])
                                     }])
                                 };
                                 {
@@ -227,9 +203,7 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                             new_minus_node.clone(),
                                             {
                                                 // (cdr libname)
-                                                imports::cdr
-                                                    .with(|value| value.get())
-                                                    .invoke(&[libname.clone()])
+                                                Scm::func(imports::cdr).invoke(&[libname.clone()])
                                             },
                                             libobj.clone(),
                                         ])
@@ -259,32 +233,26 @@ pub fn module_minus_tree_minus_leaf_p(args: &[Scm]) -> Scm {
             // (and (pair? node) (symbol? (car node)) (not (null? (cdr node))) (not (pair? (cdr node))))
             if ({
                 // (pair? node)
-                imports::pair_p
-                    .with(|value| value.get())
-                    .invoke(&[node.clone()])
+                Scm::func(imports::pair_p).invoke(&[node.clone()])
             })
             .is_true()
             {
                 if ({
                     // (symbol? (car node))
-                    imports::symbol_p.with(|value| value.get()).invoke(&[{
+                    Scm::func(imports::symbol_p).invoke(&[{
                         // (car node)
-                        imports::car
-                            .with(|value| value.get())
-                            .invoke(&[node.clone()])
+                        Scm::func(imports::car).invoke(&[node.clone()])
                     }])
                 })
                 .is_true()
                 {
                     if ({
                         // (not (null? (cdr node)))
-                        imports::not.with(|value| value.get()).invoke(&[{
+                        Scm::func(imports::not).invoke(&[{
                             // (null? (cdr node))
-                            imports::null_p.with(|value| value.get()).invoke(&[{
+                            Scm::func(imports::null_p).invoke(&[{
                                 // (cdr node)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[node.clone()])
+                                Scm::func(imports::cdr).invoke(&[node.clone()])
                             }])
                         }])
                     })
@@ -292,13 +260,11 @@ pub fn module_minus_tree_minus_leaf_p(args: &[Scm]) -> Scm {
                     {
                         {
                             // (not (pair? (cdr node)))
-                            imports::not.with(|value| value.get()).invoke(&[{
+                            Scm::func(imports::not).invoke(&[{
                                 // (pair? (cdr node))
-                                imports::pair_p.with(|value| value.get()).invoke(&[{
+                                Scm::func(imports::pair_p).invoke(&[{
                                     // (cdr node)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[node.clone()])
+                                    Scm::func(imports::cdr).invoke(&[node.clone()])
                                 }])
                             }])
                         }
@@ -323,9 +289,7 @@ pub fn module_minus_tree_minus_libobj(args: &[Scm]) -> Scm {
         let node = args[0].clone();
         {
             // (cdr node)
-            imports::cdr
-                .with(|value| value.get())
-                .invoke(&[node.clone()])
+            Scm::func(imports::cdr).invoke(&[node.clone()])
         }
     }
     .into()
@@ -338,9 +302,7 @@ pub fn module_minus_tree_minus_name(args: &[Scm]) -> Scm {
         let node = args[0].clone();
         {
             // (car node)
-            imports::car
-                .with(|value| value.get())
-                .invoke(&[node.clone()])
+            Scm::func(imports::car).invoke(&[node.clone()])
         }
     }
     .into()
@@ -354,9 +316,7 @@ pub fn module_minus_tree_minus_set_minus_children_i(args: &[Scm]) -> Scm {
         let children = args[1].clone();
         {
             // (set-cdr! node children)
-            imports::set_minus_cdr_i
-                .with(|value| value.get())
-                .invoke(&[node.clone(), children.clone()])
+            Scm::func(imports::set_minus_cdr_i).invoke(&[node.clone(), children.clone()])
         }
     }
     .into()

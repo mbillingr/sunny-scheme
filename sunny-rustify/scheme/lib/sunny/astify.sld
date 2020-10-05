@@ -91,7 +91,8 @@
         (variable-set-mutable! var)
         (make-assignment var-name var val)))
 
-    (define astify-comment make-comment)
+    (define (astify-comment exp node)
+      (make-comment exp node))
 
     (define (astify-cond clause* env tail?)
       (cond ((null? clause*)

@@ -27,15 +27,11 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
             {
                 let expr = {
                     // (read input-file)
-                    imports::read
-                        .with(|value| value.get())
-                        .invoke(&[input_minus_file.with(|value| value.get())])
+                    Scm::func(imports::read).invoke(&[input_minus_file.with(|value| value.get())])
                 };
                 if ({
                     // (eof-object? expr)
-                    imports::eof_minus_object_p
-                        .with(|value| value.get())
-                        .invoke(&[expr.clone()])
+                    Scm::func(imports::eof_minus_object_p).invoke(&[expr.clone()])
                 })
                 .is_true()
                 {
@@ -43,12 +39,10 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
                 } else {
                     {
                         // (cons expr (load-sexpr))
-                        imports::cons
-                            .with(|value| value.get())
-                            .invoke(&[expr.clone(), {
-                                // (load-sexpr)
-                                Scm::func(load_minus_sexpr).invoke(&[])
-                            }])
+                        Scm::func(imports::cons).invoke(&[expr.clone(), {
+                            // (load-sexpr)
+                            Scm::func(load_minus_sexpr).invoke(&[])
+                        }])
                     }
                 }
             }
@@ -80,9 +74,7 @@ pub fn main() {
             args_.with(|value| {
                 value.set({
                     // (command-line)
-                    imports::command_minus_line
-                        .with(|value| value.get())
-                        .invoke(&[])
+                    Scm::func(imports::command_minus_line).invoke(&[])
                 })
             })
         };
@@ -91,9 +83,7 @@ pub fn main() {
             input_minus_file_minus_name.with(|value| {
                 value.set({
                     // (cadr args)
-                    imports::cadr
-                        .with(|value| value.get())
-                        .invoke(&[args_.with(|value| value.get())])
+                    Scm::func(imports::cadr).invoke(&[args_.with(|value| value.get())])
                 })
             })
         };
@@ -102,9 +92,7 @@ pub fn main() {
             output_minus_module_minus_name.with(|value| {
                 value.set({
                     // (caddr args)
-                    imports::caddr
-                        .with(|value| value.get())
-                        .invoke(&[args_.with(|value| value.get())])
+                    Scm::func(imports::caddr).invoke(&[args_.with(|value| value.get())])
                 })
             })
         };
@@ -114,20 +102,16 @@ pub fn main() {
                 value.set(
                     if ({
                         // (pair? (cdddr args))
-                        imports::pair_p.with(|value| value.get()).invoke(&[{
+                        Scm::func(imports::pair_p).invoke(&[{
                             // (cdddr args)
-                            imports::cdddr
-                                .with(|value| value.get())
-                                .invoke(&[args_.with(|value| value.get())])
+                            Scm::func(imports::cdddr).invoke(&[args_.with(|value| value.get())])
                         }])
                     })
                     .is_true()
                     {
                         {
                             // (cadddr args)
-                            imports::cadddr
-                                .with(|value| value.get())
-                                .invoke(&[args_.with(|value| value.get())])
+                            Scm::func(imports::cadddr).invoke(&[args_.with(|value| value.get())])
                         }
                     } else {
                         Scm::from(".")
@@ -137,53 +121,44 @@ pub fn main() {
         };
         {
             // (newline)
-            imports::newline.with(|value| value.get()).invoke(&[])
+            Scm::func(imports::newline).invoke(&[])
         };
         {
             // (display input-file-name)
-            imports::display
-                .with(|value| value.get())
+            Scm::func(imports::display)
                 .invoke(&[input_minus_file_minus_name.with(|value| value.get())])
         };
         {
             // (display " --> ")
-            imports::display
-                .with(|value| value.get())
-                .invoke(&[Scm::from(" --> ")])
+            Scm::func(imports::display).invoke(&[Scm::from(" --> ")])
         };
         {
             // (display output-dir)
-            imports::display
-                .with(|value| value.get())
-                .invoke(&[output_minus_dir.with(|value| value.get())])
+            Scm::func(imports::display).invoke(&[output_minus_dir.with(|value| value.get())])
         };
         {
             // (display "/")
-            imports::display
-                .with(|value| value.get())
-                .invoke(&[Scm::from("/")])
+            Scm::func(imports::display).invoke(&[Scm::from("/")])
         };
         {
             // (display output-module-name)
-            imports::display
-                .with(|value| value.get())
+            Scm::func(imports::display)
                 .invoke(&[output_minus_module_minus_name.with(|value| value.get())])
         };
         {
             // (newline)
-            imports::newline.with(|value| value.get()).invoke(&[])
+            Scm::func(imports::newline).invoke(&[])
         };
         {
             // (newline)
-            imports::newline.with(|value| value.get()).invoke(&[])
+            Scm::func(imports::newline).invoke(&[])
         };
         {
             // (define input-file (open-input-file input-file-name))
             input_minus_file.with(|value| {
                 value.set({
                     // (open-input-file input-file-name)
-                    imports::open_minus_input_minus_file
-                        .with(|value| value.get())
+                    Scm::func(imports::open_minus_input_minus_file)
                         .invoke(&[input_minus_file_minus_name.with(|value| value.get())])
                 })
             })
@@ -206,34 +181,31 @@ pub fn main() {
             ast.with(|value| {
                 value.set({
                     // (astify-toplevel program)
-                    imports::astify_minus_toplevel
-                        .with(|value| value.get())
+                    Scm::func(imports::astify_minus_toplevel)
                         .invoke(&[program.with(|value| value.get())])
                 })
             })
         };
         {
             // (rust-gen-in-module output-module-name output-dir (lambda (module) (ast (quote gen-rust) module)))
-            imports::rust_minus_gen_minus_in_minus_module
-                .with(|value| value.get())
-                .invoke(&[
-                    output_minus_module_minus_name.with(|value| value.get()),
-                    output_minus_dir.with(|value| value.get()),
-                    {
-                        // Closure
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 1 {
-                                panic!("invalid arity")
-                            }
-                            let module = args[0].clone();
-                            {
-                                // (ast (quote gen-rust) module)
-                                ast.with(|value| value.get())
-                                    .invoke(&[Scm::symbol("gen-rust"), module.clone()])
-                            }
-                        })
-                    },
-                ])
+            Scm::func(imports::rust_minus_gen_minus_in_minus_module).invoke(&[
+                output_minus_module_minus_name.with(|value| value.get()),
+                output_minus_dir.with(|value| value.get()),
+                {
+                    // Closure
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let module = args[0].clone();
+                        {
+                            // (ast (quote gen-rust) module)
+                            ast.with(|value| value.get())
+                                .invoke(&[Scm::symbol("gen-rust"), module.clone()])
+                        }
+                    })
+                },
+            ])
         }
     };
 }

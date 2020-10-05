@@ -4,9 +4,7 @@ pub mod exports {
     use sunny_core::{self, Mut, Scm};
     use sunny_parse::from_reader;
 
-    thread_local! {pub static read: Mut<Scm> = Mut::new(Scm::func(_read))}
-
-    fn _read(args: &[Scm]) -> Scm {
+    pub fn read(args: &[Scm]) -> Scm {
         if args.len() == 0 {
             match from_reader(stdin()) {
                 Ok(x) => x,
