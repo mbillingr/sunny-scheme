@@ -138,12 +138,11 @@
       (define (gen-rust module)
         (cond ((global-variable? var)
                (print module
-                      "globals::"
                       (rustify-identifier name)
                       ".with(|value| value.get())"))
               ((global-function? var)
                (print module
-                      "Scm::func(globals::"
+                      "Scm::func("
                       (rustify-identifier name)
                       ")"))
               ((import-variable? var)
@@ -179,7 +178,6 @@
       (define (gen-rust module)
         (cond ((global-variable? var)
                (print module
-                      "globals::"
                       (rustify-identifier name)
                       ".with(|value| value.set(")
                (val 'gen-rust module)
@@ -212,14 +210,12 @@
       (define (gen-rust module)
         (cond ((global-variable? var)
                (print module
-                      "globals::"
                       (rustify-identifier name)
                       ".with(|value| value.set(")
                (val 'gen-rust module)
                (print module "))"))
               ((global-function? var)
                (print module
-                      "globals::"
                       (rustify-identifier name)
                       ".with(|value| value.set(")
                (val 'gen-rust module)
@@ -571,11 +567,7 @@
             (gen-imports module)))
         (println module)
         (println module)
-        (print module "mod globals")
-        (rust-block module
-          (lambda ()
-            (println module "use sunny_core::{Mut, Scm};")
-            (rust-gen-global-defs module globals)))
+        (rust-gen-global-defs module globals)
         (println module)
         (println module)
         (print module "pub fn main()")
@@ -635,11 +627,7 @@
             (gen-exports module exports)))
         (println module)
         (println module)
-        (print module "mod globals")
-        (rust-block module
-          (lambda ()
-            (println module "use sunny_core::{Mut, Scm};")
-            (rust-gen-global-defs module globals)))
+        (rust-gen-global-defs module globals)
         (println module)
         (println module)
         (if (eq? 'NOP (body 'kind))
@@ -714,9 +702,9 @@
           (cond ((not var)
                  (error "undefined export" name))
                 ((global-variable? var)
-                 (print module "globals::"))
+                 (print module ""))
                 ((global-function? var)
-                 (print module "globals::"))
+                 (print module ""))
                 ((import-variable? var)
                  (print module "imports::"))
                 (else (error "invalid export variable" var name))))

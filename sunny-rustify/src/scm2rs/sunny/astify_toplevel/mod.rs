@@ -16,15 +16,13 @@ mod imports {
 }
 
 pub mod exports {
-    pub use super::globals::astify_minus_library;
-    pub use super::globals::astify_minus_program;
-    pub use super::globals::astify_minus_toplevel;
+    pub use super::astify_minus_library;
+    pub use super::astify_minus_program;
+    pub use super::astify_minus_toplevel;
 }
 
-mod globals {
-    use sunny_core::{Mut, Scm};
-    pub fn astify_minus_library(args: &[Scm]) -> Scm {
-        {if args.len() != 3{panic!("invalid arity")}let name = args[0].clone();let exp_star_ = args[1].clone();let library_minus_env = args[2].clone();{
+pub fn astify_minus_library(args: &[Scm]) -> Scm {
+    {if args.len() != 3{panic!("invalid arity")}let name = args[0].clone();let exp_star_ = args[1].clone();let library_minus_env = args[2].clone();{
 // (letrec ((init (make-set)) (body (make-nop)) (global-env (make-core-env)) (imports (quote ())) (exports (quote ())) (process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*))))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-library name globals init (extract-definitions (boxify (close-procedures body))) imports exports)))
 {
 // (let ((init (quote *uninitialized*)) (body (quote *uninitialized*)) (global-env (quote *uninitialized*)) (imports (quote *uninitialized*)) (exports (quote *uninitialized*)) (process-library-decls (quote *uninitialized*))) (begin (set! init (make-set)) (set! body (make-nop)) (set! global-env (make-core-env)) (set! imports (quote ())) (set! exports (quote ())) (set! process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*)))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-library name globals init (extract-definitions (boxify (close-procedures body))) imports exports))))
@@ -59,7 +57,7 @@ imports::import_p.with(|value| value.get()).invoke(&[{
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}).is_true() {{{
 // (register-libraries (import-libnames (car exp*)) library-env)
-Scm::func(globals::register_minus_libraries).invoke(&[{
+Scm::func(register_minus_libraries).invoke(&[{
 // (import-libnames (car exp*))
 imports::import_minus_libnames.with(|value| value.get()).invoke(&[{
 // (car exp*)
@@ -123,9 +121,9 @@ imports::extract_minus_definitions.with(|value| value.get()).invoke(&[{
 imports::boxify.with(|value| value.get()).invoke(&[{
 // (close-procedures body)
 imports::close_minus_procedures.with(|value| value.get()).invoke(&[body.get()])}])}])},imports.get(),exports.get()])}}}}}}}}}}}}}}}.into()
-    }
-    pub fn astify_minus_program(args: &[Scm]) -> Scm {
-        {if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
+}
+pub fn astify_minus_program(args: &[Scm]) -> Scm {
+    {if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
 {
 // (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))) (process-imports exp* (quote ()) (make-set))))
@@ -142,7 +140,7 @@ imports::import_p.with(|value| value.get()).invoke(&[{
 // (car exp*)
 imports::car.with(|value| value.get()).invoke(&[exp_star_.clone()])}])}).is_true() {{{
 // (register-libraries (import-libnames (car exp*)) library-env)
-Scm::func(globals::register_minus_libraries).invoke(&[{
+Scm::func(register_minus_libraries).invoke(&[{
 // (import-libnames (car exp*))
 imports::import_minus_libnames.with(|value| value.get()).invoke(&[{
 // (car exp*)
@@ -206,241 +204,239 @@ imports::car.with(|value| value.get()).invoke(&[library_minus_env.get()])}])}])}
 process_minus_imports.get().invoke(&[exp_star_.clone(),Scm::Nil,{
 // (make-set)
 imports::make_minus_set.with(|value| value.get()).invoke(&[])}])}}}}}}}}}.into()
-    }
-    pub fn astify_minus_toplevel(args: &[Scm]) -> Scm {
+}
+pub fn astify_minus_toplevel(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let exp_star_ = args[0].clone();
+        if ({
+            // (library? (car exp*))
+            imports::library_p.with(|value| value.get()).invoke(&[{
+                // (car exp*)
+                imports::car
+                    .with(|value| value.get())
+                    .invoke(&[exp_star_.clone()])
+            }])
+        })
+        .is_true()
         {
-            if args.len() != 1 {
-                panic!("invalid arity")
+            {
+                // (astify-library (library-name (car exp*)) (library-decls (car exp*)) (list (quote ())))
+                Scm::func(astify_minus_library).invoke(&[
+                    {
+                        // (library-name (car exp*))
+                        imports::library_minus_name
+                            .with(|value| value.get())
+                            .invoke(&[{
+                                // (car exp*)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()])
+                            }])
+                    },
+                    {
+                        // (library-decls (car exp*))
+                        imports::library_minus_decls
+                            .with(|value| value.get())
+                            .invoke(&[{
+                                // (car exp*)
+                                imports::car
+                                    .with(|value| value.get())
+                                    .invoke(&[exp_star_.clone()])
+                            }])
+                    },
+                    {
+                        // (list (quote ()))
+                        imports::list.with(|value| value.get()).invoke(&[Scm::Nil])
+                    },
+                ])
             }
-            let exp_star_ = args[0].clone();
+        } else {
+            {
+                // (astify-program exp*)
+                Scm::func(astify_minus_program).invoke(&[exp_star_.clone()])
+            }
+        }
+    }
+    .into()
+}
+pub fn register_minus_libraries(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 2 {
+            panic!("invalid arity")
+        }
+        let libs = args[0].clone();
+        let library_minus_env = args[1].clone();
+        {
+            // (cond ...)
             if ({
-                // (library? (car exp*))
-                imports::library_p.with(|value| value.get()).invoke(&[{
-                    // (car exp*)
-                    imports::car
-                        .with(|value| value.get())
-                        .invoke(&[exp_star_.clone()])
-                }])
+                // (null? libs)
+                imports::null_p
+                    .with(|value| value.get())
+                    .invoke(&[libs.clone()])
+            })
+            .is_true()
+            {
+                Scm::symbol("DONE")
+            } else if ({
+                // (equal? (quote (sunny testing)) (car libs))
+                imports::equal_p.with(|value| value.get()).invoke(&[
+                    Scm::pair(
+                        Scm::symbol("sunny"),
+                        Scm::pair(Scm::symbol("testing"), Scm::Nil),
+                    ),
+                    {
+                        // (car libs)
+                        imports::car
+                            .with(|value| value.get())
+                            .invoke(&[libs.clone()])
+                    },
+                ])
             })
             .is_true()
             {
                 {
-                    // (astify-library (library-name (car exp*)) (library-decls (car exp*)) (list (quote ())))
-                    Scm::func(globals::astify_minus_library).invoke(&[
+                    // (register-libraries (cdr libs) library-env)
+                    Scm::func(register_minus_libraries).invoke(&[
                         {
-                            // (library-name (car exp*))
-                            imports::library_minus_name
+                            // (cdr libs)
+                            imports::cdr
                                 .with(|value| value.get())
-                                .invoke(&[{
-                                    // (car exp*)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[exp_star_.clone()])
-                                }])
+                                .invoke(&[libs.clone()])
                         },
+                        library_minus_env.clone(),
+                    ])
+                }
+            } else if ({
+                // (assoc (car libs) (car library-env))
+                imports::assoc.with(|value| value.get()).invoke(&[
+                    {
+                        // (car libs)
+                        imports::car
+                            .with(|value| value.get())
+                            .invoke(&[libs.clone()])
+                    },
+                    {
+                        // (car library-env)
+                        imports::car
+                            .with(|value| value.get())
+                            .invoke(&[library_minus_env.clone()])
+                    },
+                ])
+            })
+            .is_true()
+            {
+                {
+                    // (register-libraries (cdr libs) library-env)
+                    Scm::func(register_minus_libraries).invoke(&[
                         {
-                            // (library-decls (car exp*))
-                            imports::library_minus_decls
+                            // (cdr libs)
+                            imports::cdr
                                 .with(|value| value.get())
-                                .invoke(&[{
-                                    // (car exp*)
-                                    imports::car
-                                        .with(|value| value.get())
-                                        .invoke(&[exp_star_.clone()])
-                                }])
+                                .invoke(&[libs.clone()])
                         },
-                        {
-                            // (list (quote ()))
-                            imports::list.with(|value| value.get()).invoke(&[Scm::Nil])
-                        },
+                        library_minus_env.clone(),
                     ])
                 }
             } else {
                 {
-                    // (astify-program exp*)
-                    Scm::func(globals::astify_minus_program).invoke(&[exp_star_.clone()])
-                }
-            }
-        }
-        .into()
-    }
-    pub fn register_minus_libraries(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 2 {
-                panic!("invalid arity")
-            }
-            let libs = args[0].clone();
-            let library_minus_env = args[1].clone();
-            {
-                // (cond ...)
-                if ({
-                    // (null? libs)
-                    imports::null_p
-                        .with(|value| value.get())
-                        .invoke(&[libs.clone()])
-                })
-                .is_true()
-                {
-                    Scm::symbol("DONE")
-                } else if ({
-                    // (equal? (quote (sunny testing)) (car libs))
-                    imports::equal_p.with(|value| value.get()).invoke(&[
-                        Scm::pair(
-                            Scm::symbol("sunny"),
-                            Scm::pair(Scm::symbol("testing"), Scm::Nil),
-                        ),
-                        {
-                            // (car libs)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[libs.clone()])
-                        },
-                    ])
-                })
-                .is_true()
-                {
                     {
-                        // (register-libraries (cdr libs) library-env)
-                        Scm::func(globals::register_minus_libraries).invoke(&[
-                            {
-                                // (cdr libs)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[libs.clone()])
-                            },
-                            library_minus_env.clone(),
-                        ])
-                    }
-                } else if ({
-                    // (assoc (car libs) (car library-env))
-                    imports::assoc.with(|value| value.get()).invoke(&[
+                        // (let* ((lib (get-lib (car libs))) (libast (if (library? lib) (astify-library (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
                         {
-                            // (car libs)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[libs.clone()])
-                        },
-                        {
-                            // (car library-env)
-                            imports::car
-                                .with(|value| value.get())
-                                .invoke(&[library_minus_env.clone()])
-                        },
-                    ])
-                })
-                .is_true()
-                {
-                    {
-                        // (register-libraries (cdr libs) library-env)
-                        Scm::func(globals::register_minus_libraries).invoke(&[
+                            // (let ((lib (get-lib (car libs)))) (let ((libast (if (library? lib) (astify-library (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env))))))
                             {
-                                // (cdr libs)
-                                imports::cdr
-                                    .with(|value| value.get())
-                                    .invoke(&[libs.clone()])
-                            },
-                            library_minus_env.clone(),
-                        ])
-                    }
-                } else {
-                    {
-                        {
-                            // (let* ((lib (get-lib (car libs))) (libast (if (library? lib) (astify-library (library-name lib) (library-decls lib) library-env) #f))) (set-car! library-env (cons (cons (car libs) libast) (car library-env))))
-                            {
-                                // (let ((lib (get-lib (car libs)))) (let ((libast (if (library? lib) (astify-library (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env))))))
-                                {
-                                    let lib = {
-                                        // (get-lib (car libs))
-                                        imports::get_minus_lib.with(|value| value.get()).invoke(&[
-                                            {
-                                                // (car libs)
-                                                imports::car
-                                                    .with(|value| value.get())
-                                                    .invoke(&[libs.clone()])
-                                            },
-                                        ])
-                                    };
-                                    // (let ((libast (if (library? lib) (astify-library (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
-                                    let libast = if ({
-                                        // (library? lib)
-                                        imports::library_p
+                                let lib = {
+                                    // (get-lib (car libs))
+                                    imports::get_minus_lib.with(|value| value.get()).invoke(&[{
+                                        // (car libs)
+                                        imports::car
                                             .with(|value| value.get())
-                                            .invoke(&[lib.clone()])
-                                    })
-                                    .is_true()
+                                            .invoke(&[libs.clone()])
+                                    }])
+                                };
+                                // (let ((libast (if (library? lib) (astify-library (library-name lib) (library-decls lib) library-env) #f))) (begin (set-car! library-env (cons (cons (car libs) libast) (car library-env)))))
+                                let libast = if ({
+                                    // (library? lib)
+                                    imports::library_p
+                                        .with(|value| value.get())
+                                        .invoke(&[lib.clone()])
+                                })
+                                .is_true()
+                                {
                                     {
-                                        {
-                                            // (astify-library (library-name lib) (library-decls lib) library-env)
-                                            Scm::func(globals::astify_minus_library).invoke(&[
-                                                {
-                                                    // (library-name lib)
-                                                    imports::library_minus_name
-                                                        .with(|value| value.get())
-                                                        .invoke(&[lib.clone()])
-                                                },
-                                                {
-                                                    // (library-decls lib)
-                                                    imports::library_minus_decls
-                                                        .with(|value| value.get())
-                                                        .invoke(&[lib.clone()])
-                                                },
-                                                library_minus_env.clone(),
-                                            ])
-                                        }
-                                    } else {
-                                        Scm::False
-                                    };
-                                    {
-                                        // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
-                                        imports::set_minus_car_i.with(|value| value.get()).invoke(
-                                            &[library_minus_env.clone(), {
-                                                // (cons (cons (car libs) libast) (car library-env))
-                                                imports::cons.with(|value| value.get()).invoke(&[
-                                                    {
-                                                        // (cons (car libs) libast)
-                                                        imports::cons
-                                                            .with(|value| value.get())
-                                                            .invoke(&[
-                                                                {
-                                                                    // (car libs)
-                                                                    imports::car
-                                                                        .with(|value| value.get())
-                                                                        .invoke(&[libs.clone()])
-                                                                },
-                                                                libast.clone(),
-                                                            ])
-                                                    },
-                                                    {
-                                                        // (car library-env)
-                                                        imports::car
-                                                            .with(|value| value.get())
-                                                            .invoke(&[library_minus_env.clone()])
-                                                    },
-                                                ])
-                                            }],
-                                        )
+                                        // (astify-library (library-name lib) (library-decls lib) library-env)
+                                        Scm::func(astify_minus_library).invoke(&[
+                                            {
+                                                // (library-name lib)
+                                                imports::library_minus_name
+                                                    .with(|value| value.get())
+                                                    .invoke(&[lib.clone()])
+                                            },
+                                            {
+                                                // (library-decls lib)
+                                                imports::library_minus_decls
+                                                    .with(|value| value.get())
+                                                    .invoke(&[lib.clone()])
+                                            },
+                                            library_minus_env.clone(),
+                                        ])
                                     }
+                                } else {
+                                    Scm::False
+                                };
+                                {
+                                    // (set-car! library-env (cons (cons (car libs) libast) (car library-env)))
+                                    imports::set_minus_car_i.with(|value| value.get()).invoke(&[
+                                        library_minus_env.clone(),
+                                        {
+                                            // (cons (cons (car libs) libast) (car library-env))
+                                            imports::cons.with(|value| value.get()).invoke(&[
+                                                {
+                                                    // (cons (car libs) libast)
+                                                    imports::cons.with(|value| value.get()).invoke(
+                                                        &[
+                                                            {
+                                                                // (car libs)
+                                                                imports::car
+                                                                    .with(|value| value.get())
+                                                                    .invoke(&[libs.clone()])
+                                                            },
+                                                            libast.clone(),
+                                                        ],
+                                                    )
+                                                },
+                                                {
+                                                    // (car library-env)
+                                                    imports::car
+                                                        .with(|value| value.get())
+                                                        .invoke(&[library_minus_env.clone()])
+                                                },
+                                            ])
+                                        },
+                                    ])
                                 }
                             }
-                        };
-                        {
-                            // (register-libraries (cdr libs) library-env)
-                            Scm::func(globals::register_minus_libraries).invoke(&[
-                                {
-                                    // (cdr libs)
-                                    imports::cdr
-                                        .with(|value| value.get())
-                                        .invoke(&[libs.clone()])
-                                },
-                                library_minus_env.clone(),
-                            ])
                         }
+                    };
+                    {
+                        // (register-libraries (cdr libs) library-env)
+                        Scm::func(register_minus_libraries).invoke(&[
+                            {
+                                // (cdr libs)
+                                imports::cdr
+                                    .with(|value| value.get())
+                                    .invoke(&[libs.clone()])
+                            },
+                            library_minus_env.clone(),
+                        ])
                     }
                 }
             }
         }
-        .into()
     }
+    .into()
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

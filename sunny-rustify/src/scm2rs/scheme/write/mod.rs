@@ -10,10 +10,6 @@ pub mod exports {
     pub use super::imports::write;
 }
 
-mod globals {
-    use sunny_core::{Mut, Scm};
-}
-
 pub fn initialize() {
     crate::native::write::initialize();
     (/*NOP*/);

@@ -7,13 +7,11 @@ mod imports {
 }
 
 pub mod exports {
-    pub use super::globals::extract_minus_definitions;
+    pub use super::extract_minus_definitions;
 }
 
-mod globals {
-    use sunny_core::{Mut, Scm};
-    pub fn extract_minus_definitions(args: &[Scm]) -> Scm {
-        {if args.len() != 1{panic!("invalid arity")}let node = args[0].clone();{
+pub fn extract_minus_definitions(args: &[Scm]) -> Scm {
+    {if args.len() != 1{panic!("invalid arity")}let node = args[0].clone();{
 // (letrec ((transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote DEFINITION)) (extract-definition node)) (else (transform-children))))) (extract-definition (lambda (node) (let ((val (node (quote get-val)))) (cond ((eq? (quote CLOSURE) (val (quote kind))) (if (not (null? (val (quote free-vars)))) (error "Definition with free variables" val)) (global-function-set-value! (node (quote get-var)) (val (quote inner-function))) (make-nop)) (else (make-definition (node (quote get-name)) (node (quote get-var)) val))))))) (node (quote transform) transform))
 {
 // (let ((transform (quote *uninitialized*)) (extract-definition (quote *uninitialized*))) (begin (set! transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote DEFINITION)) (extract-definition node)) (else (transform-children))))) (set! extract-definition (lambda (node) (let ((val (node (quote get-val)))) (cond ((eq? (quote CLOSURE) (val (quote kind))) (if (not (null? (val (quote free-vars)))) (error "Definition with free variables" val)) (global-function-set-value! (node (quote get-var)) (val (quote inner-function))) (make-nop)) (else (make-definition (node (quote get-name)) (node (quote get-var)) val)))))) (node (quote transform) transform)))
@@ -64,7 +62,6 @@ node.clone().invoke(&[Scm::symbol("get-name")])},{
 node.clone().invoke(&[Scm::symbol("get-var")])},val.clone()])}}}}}})});{
 // (node (quote transform) transform)
 node.clone().invoke(&[Scm::symbol("transform"),transform.get()])}}}}}}}}.into()
-    }
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }

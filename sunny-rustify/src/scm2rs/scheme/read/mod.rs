@@ -8,10 +8,6 @@ pub mod exports {
     pub use super::imports::read;
 }
 
-mod globals {
-    use sunny_core::{Mut, Scm};
-}
-
 pub fn initialize() {
     crate::native::read::initialize();
     (/*NOP*/);

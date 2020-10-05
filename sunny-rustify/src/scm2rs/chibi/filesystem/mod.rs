@@ -8,10 +8,6 @@ pub mod exports {
     pub use super::imports::create_minus_directory_star_;
 }
 
-mod globals {
-    use sunny_core::{Mut, Scm};
-}
-
 pub fn initialize() {
     crate::native::filesystem::initialize();
     (/*NOP*/);

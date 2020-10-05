@@ -10,202 +10,235 @@ mod imports {
 }
 
 pub mod exports {
-    pub use super::globals::close_minus_module;
-    pub use super::globals::module_minus_path;
-    pub use super::globals::module_minus_port;
-    pub use super::globals::module_p;
-    pub use super::globals::open_minus_module;
-    pub use super::globals::open_minus_submodule;
-    pub use super::globals::print;
-    pub use super::globals::println;
-    pub use super::globals::rust_minus_block;
-    pub use super::globals::show;
-    pub use super::globals::showln;
+    pub use super::close_minus_module;
+    pub use super::module_minus_path;
+    pub use super::module_minus_port;
+    pub use super::module_p;
+    pub use super::open_minus_module;
+    pub use super::open_minus_submodule;
+    pub use super::print;
+    pub use super::println;
+    pub use super::rust_minus_block;
+    pub use super::show;
+    pub use super::showln;
 }
 
-mod globals {
-    use sunny_core::{Mut, Scm};
-    pub fn as_minus_port(args: &[Scm]) -> Scm {
+pub fn as_minus_port(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let port_minus_or_minus_module = args[0].clone();
+        if ({
+            // (module? port-or-module)
+            Scm::func(module_p).invoke(&[port_minus_or_minus_module.clone()])
+        })
+        .is_true()
         {
-            if args.len() != 1 {
-                panic!("invalid arity")
+            {
+                // (module-port port-or-module)
+                Scm::func(module_minus_port).invoke(&[port_minus_or_minus_module.clone()])
             }
-            let port_minus_or_minus_module = args[0].clone();
+        } else {
+            port_minus_or_minus_module.clone()
+        }
+    }
+    .into()
+}
+pub fn close_minus_module(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let module = args[0].clone();
+        {
+            // (close-port (module-port module))
+            imports::close_minus_port
+                .with(|value| value.get())
+                .invoke(&[{
+                    // (module-port module)
+                    Scm::func(module_minus_port).invoke(&[module.clone()])
+                }])
+        }
+    }
+    .into()
+}
+pub fn module_minus_path(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let module = args[0].clone();
+        {
+            // (caddr module)
+            imports::caddr
+                .with(|value| value.get())
+                .invoke(&[module.clone()])
+        }
+    }
+    .into()
+}
+pub fn module_minus_port(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let module = args[0].clone();
+        {
+            // (cadr module)
+            imports::cadr
+                .with(|value| value.get())
+                .invoke(&[module.clone()])
+        }
+    }
+    .into()
+}
+pub fn module_p(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let obj = args[0].clone();
+        {
+            // (and (pair? obj) (eq? (quote module) (car obj)))
             if ({
-                // (module? port-or-module)
-                Scm::func(globals::module_p).invoke(&[port_minus_or_minus_module.clone()])
+                // (pair? obj)
+                imports::pair_p
+                    .with(|value| value.get())
+                    .invoke(&[obj.clone()])
             })
             .is_true()
             {
                 {
-                    // (module-port port-or-module)
-                    Scm::func(globals::module_minus_port)
-                        .invoke(&[port_minus_or_minus_module.clone()])
+                    // (eq? (quote module) (car obj))
+                    imports::eq_p
+                        .with(|value| value.get())
+                        .invoke(&[Scm::symbol("module"), {
+                            // (car obj)
+                            imports::car
+                                .with(|value| value.get())
+                                .invoke(&[obj.clone()])
+                        }])
                 }
             } else {
-                port_minus_or_minus_module.clone()
+                Scm::False
             }
         }
-        .into()
     }
-    pub fn close_minus_module(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 1 {
-                panic!("invalid arity")
-            }
-            let module = args[0].clone();
-            {
-                // (close-port (module-port module))
-                imports::close_minus_port
-                    .with(|value| value.get())
-                    .invoke(&[{
-                        // (module-port module)
-                        Scm::func(globals::module_minus_port).invoke(&[module.clone()])
-                    }])
-            }
+    .into()
+}
+pub fn open_minus_module(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 2 {
+            panic!("invalid arity")
         }
-        .into()
-    }
-    pub fn module_minus_path(args: &[Scm]) -> Scm {
+        let name = args[0].clone();
+        let base_minus_path = args[1].clone();
         {
-            if args.len() != 1 {
-                panic!("invalid arity")
-            }
-            let module = args[0].clone();
+            // (let ((path (string-append base-path "/" (rustify-libname name)))) (create-directory* path) (list (quote module) (open-output-file (string-append path "/mod.rs")) path))
             {
-                // (caddr module)
-                imports::caddr
-                    .with(|value| value.get())
-                    .invoke(&[module.clone()])
-            }
-        }
-        .into()
-    }
-    pub fn module_minus_port(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 1 {
-                panic!("invalid arity")
-            }
-            let module = args[0].clone();
-            {
-                // (cadr module)
-                imports::cadr
-                    .with(|value| value.get())
-                    .invoke(&[module.clone()])
-            }
-        }
-        .into()
-    }
-    pub fn module_p(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 1 {
-                panic!("invalid arity")
-            }
-            let obj = args[0].clone();
-            {
-                // (and (pair? obj) (eq? (quote module) (car obj)))
-                if ({
-                    // (pair? obj)
-                    imports::pair_p
+                let path = {
+                    // (string-append base-path "/" (rustify-libname name))
+                    imports::string_minus_append
                         .with(|value| value.get())
-                        .invoke(&[obj.clone()])
-                })
-                .is_true()
+                        .invoke(&[base_minus_path.clone(), Scm::from("/"), {
+                            // (rustify-libname name)
+                            imports::rustify_minus_libname
+                                .with(|value| value.get())
+                                .invoke(&[name.clone()])
+                        }])
+                };
                 {
                     {
-                        // (eq? (quote module) (car obj))
-                        imports::eq_p
+                        // (create-directory* path)
+                        imports::create_minus_directory_star_
                             .with(|value| value.get())
-                            .invoke(&[Scm::symbol("module"), {
-                                // (car obj)
-                                imports::car
-                                    .with(|value| value.get())
-                                    .invoke(&[obj.clone()])
-                            }])
-                    }
-                } else {
-                    Scm::False
-                }
-            }
-        }
-        .into()
-    }
-    pub fn open_minus_module(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 2 {
-                panic!("invalid arity")
-            }
-            let name = args[0].clone();
-            let base_minus_path = args[1].clone();
-            {
-                // (let ((path (string-append base-path "/" (rustify-libname name)))) (create-directory* path) (list (quote module) (open-output-file (string-append path "/mod.rs")) path))
-                {
-                    let path = {
-                        // (string-append base-path "/" (rustify-libname name))
-                        imports::string_minus_append
-                            .with(|value| value.get())
-                            .invoke(&[base_minus_path.clone(), Scm::from("/"), {
-                                // (rustify-libname name)
-                                imports::rustify_minus_libname
-                                    .with(|value| value.get())
-                                    .invoke(&[name.clone()])
-                            }])
+                            .invoke(&[path.clone()])
                     };
                     {
-                        {
-                            // (create-directory* path)
-                            imports::create_minus_directory_star_
-                                .with(|value| value.get())
-                                .invoke(&[path.clone()])
-                        };
-                        {
-                            // (list (quote module) (open-output-file (string-append path "/mod.rs")) path)
-                            imports::list.with(|value| value.get()).invoke(&[
-                                Scm::symbol("module"),
-                                {
-                                    // (open-output-file (string-append path "/mod.rs"))
-                                    imports::open_minus_output_minus_file
-                                        .with(|value| value.get())
-                                        .invoke(&[{
-                                            // (string-append path "/mod.rs")
-                                            imports::string_minus_append
-                                                .with(|value| value.get())
-                                                .invoke(&[path.clone(), Scm::from("/mod.rs")])
-                                        }])
-                                },
-                                path.clone(),
-                            ])
-                        }
+                        // (list (quote module) (open-output-file (string-append path "/mod.rs")) path)
+                        imports::list.with(|value| value.get()).invoke(&[
+                            Scm::symbol("module"),
+                            {
+                                // (open-output-file (string-append path "/mod.rs"))
+                                imports::open_minus_output_minus_file
+                                    .with(|value| value.get())
+                                    .invoke(&[{
+                                        // (string-append path "/mod.rs")
+                                        imports::string_minus_append
+                                            .with(|value| value.get())
+                                            .invoke(&[path.clone(), Scm::from("/mod.rs")])
+                                    }])
+                            },
+                            path.clone(),
+                        ])
                     }
                 }
             }
         }
-        .into()
     }
-    pub fn open_minus_submodule(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 2 {
-                panic!("invalid arity")
-            }
-            let name = args[0].clone();
-            let module = args[1].clone();
-            {
-                // (open-module name (module-path module))
-                Scm::func(globals::open_minus_module).invoke(&[name.clone(), {
-                    // (module-path module)
-                    Scm::func(globals::module_minus_path).invoke(&[module.clone()])
-                }])
-            }
+    .into()
+}
+pub fn open_minus_submodule(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 2 {
+            panic!("invalid arity")
         }
-        .into()
-    }
-    pub fn print(args: &[Scm]) -> Scm {
+        let name = args[0].clone();
+        let module = args[1].clone();
         {
-            if args.len() < 1 {
-                panic!("not enough args")
-            }
-            let f = args[0].clone();
-            let args_ = Scm::list(&args[1..]);
+            // (open-module name (module-path module))
+            Scm::func(open_minus_module).invoke(&[name.clone(), {
+                // (module-path module)
+                Scm::func(module_minus_path).invoke(&[module.clone()])
+            }])
+        }
+    }
+    .into()
+}
+pub fn print(args: &[Scm]) -> Scm {
+    {
+        if args.len() < 1 {
+            panic!("not enough args")
+        }
+        let f = args[0].clone();
+        let args_ = Scm::list(&args[1..]);
+        {
+            // (for-each (lambda (a) (display a (as-port f))) args)
+            imports::for_minus_each.with(|value| value.get()).invoke(&[
+                {
+                    // Closure
+                    let f = f.clone();
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let a = args[0].clone();
+                        {
+                            // (display a (as-port f))
+                            imports::display
+                                .with(|value| value.get())
+                                .invoke(&[a.clone(), {
+                                    // (as-port f)
+                                    Scm::func(as_minus_port).invoke(&[f.clone()])
+                                }])
+                        }
+                    })
+                },
+                args_.clone(),
+            ])
+        }
+    }
+    .into()
+}
+pub fn println(args: &[Scm]) -> Scm {
+    {
+        if args.len() < 1 {
+            panic!("not enough args")
+        }
+        let f = args[0].clone();
+        let args_ = Scm::list(&args[1..]);
+        {
             {
                 // (for-each (lambda (a) (display a (as-port f))) args)
                 imports::for_minus_each.with(|value| value.get()).invoke(&[
@@ -223,93 +256,92 @@ mod globals {
                                     .with(|value| value.get())
                                     .invoke(&[a.clone(), {
                                         // (as-port f)
-                                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
+                                        Scm::func(as_minus_port).invoke(&[f.clone()])
                                     }])
                             }
                         })
                     },
                     args_.clone(),
                 ])
+            };
+            {
+                // (newline (as-port f))
+                imports::newline.with(|value| value.get()).invoke(&[{
+                    // (as-port f)
+                    Scm::func(as_minus_port).invoke(&[f.clone()])
+                }])
             }
         }
-        .into()
     }
-    pub fn println(args: &[Scm]) -> Scm {
+    .into()
+}
+pub fn rust_minus_block(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 2 {
+            panic!("invalid arity")
+        }
+        let module = args[0].clone();
+        let code = args[1].clone();
         {
-            if args.len() < 1 {
-                panic!("not enough args")
-            }
-            let f = args[0].clone();
-            let args_ = Scm::list(&args[1..]);
             {
+                // (print module "{")
+                Scm::func(print).invoke(&[module.clone(), Scm::from("{")])
+            };
+            {
+                // (code)
+                code.clone().invoke(&[])
+            };
+            {
+                // (print module "}")
+                Scm::func(print).invoke(&[module.clone(), Scm::from("}")])
+            }
+        }
+    }
+    .into()
+}
+pub fn show(args: &[Scm]) -> Scm {
+    {
+        if args.len() < 1 {
+            panic!("not enough args")
+        }
+        let f = args[0].clone();
+        let args_ = Scm::list(&args[1..]);
+        {
+            // (for-each (lambda (a) (write a (as-port f))) args)
+            imports::for_minus_each.with(|value| value.get()).invoke(&[
                 {
-                    // (for-each (lambda (a) (display a (as-port f))) args)
-                    imports::for_minus_each.with(|value| value.get()).invoke(&[
+                    // Closure
+                    let f = f.clone();
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let a = args[0].clone();
                         {
-                            // Closure
-                            let f = f.clone();
-                            Scm::func(move |args: &[Scm]| {
-                                if args.len() != 1 {
-                                    panic!("invalid arity")
-                                }
-                                let a = args[0].clone();
-                                {
-                                    // (display a (as-port f))
-                                    imports::display.with(|value| value.get()).invoke(&[
-                                        a.clone(),
-                                        {
-                                            // (as-port f)
-                                            Scm::func(globals::as_minus_port).invoke(&[f.clone()])
-                                        },
-                                    ])
-                                }
-                            })
-                        },
-                        args_.clone(),
-                    ])
-                };
-                {
-                    // (newline (as-port f))
-                    imports::newline.with(|value| value.get()).invoke(&[{
-                        // (as-port f)
-                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
-                    }])
-                }
-            }
+                            // (write a (as-port f))
+                            imports::write
+                                .with(|value| value.get())
+                                .invoke(&[a.clone(), {
+                                    // (as-port f)
+                                    Scm::func(as_minus_port).invoke(&[f.clone()])
+                                }])
+                        }
+                    })
+                },
+                args_.clone(),
+            ])
         }
-        .into()
     }
-    pub fn rust_minus_block(args: &[Scm]) -> Scm {
-        {
-            if args.len() != 2 {
-                panic!("invalid arity")
-            }
-            let module = args[0].clone();
-            let code = args[1].clone();
-            {
-                {
-                    // (print module "{")
-                    Scm::func(globals::print).invoke(&[module.clone(), Scm::from("{")])
-                };
-                {
-                    // (code)
-                    code.clone().invoke(&[])
-                };
-                {
-                    // (print module "}")
-                    Scm::func(globals::print).invoke(&[module.clone(), Scm::from("}")])
-                }
-            }
+    .into()
+}
+pub fn showln(args: &[Scm]) -> Scm {
+    {
+        if args.len() < 1 {
+            panic!("not enough args")
         }
-        .into()
-    }
-    pub fn show(args: &[Scm]) -> Scm {
+        let f = args[0].clone();
+        let args_ = Scm::list(&args[1..]);
         {
-            if args.len() < 1 {
-                panic!("not enough args")
-            }
-            let f = args[0].clone();
-            let args_ = Scm::list(&args[1..]);
             {
                 // (for-each (lambda (a) (write a (as-port f))) args)
                 imports::for_minus_each.with(|value| value.get()).invoke(&[
@@ -327,61 +359,24 @@ mod globals {
                                     .with(|value| value.get())
                                     .invoke(&[a.clone(), {
                                         // (as-port f)
-                                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
+                                        Scm::func(as_minus_port).invoke(&[f.clone()])
                                     }])
                             }
                         })
                     },
                     args_.clone(),
                 ])
-            }
-        }
-        .into()
-    }
-    pub fn showln(args: &[Scm]) -> Scm {
-        {
-            if args.len() < 1 {
-                panic!("not enough args")
-            }
-            let f = args[0].clone();
-            let args_ = Scm::list(&args[1..]);
+            };
             {
-                {
-                    // (for-each (lambda (a) (write a (as-port f))) args)
-                    imports::for_minus_each.with(|value| value.get()).invoke(&[
-                        {
-                            // Closure
-                            let f = f.clone();
-                            Scm::func(move |args: &[Scm]| {
-                                if args.len() != 1 {
-                                    panic!("invalid arity")
-                                }
-                                let a = args[0].clone();
-                                {
-                                    // (write a (as-port f))
-                                    imports::write
-                                        .with(|value| value.get())
-                                        .invoke(&[a.clone(), {
-                                            // (as-port f)
-                                            Scm::func(globals::as_minus_port).invoke(&[f.clone()])
-                                        }])
-                                }
-                            })
-                        },
-                        args_.clone(),
-                    ])
-                };
-                {
-                    // (newline (as-port f))
-                    imports::newline.with(|value| value.get()).invoke(&[{
-                        // (as-port f)
-                        Scm::func(globals::as_minus_port).invoke(&[f.clone()])
-                    }])
-                }
+                // (newline (as-port f))
+                imports::newline.with(|value| value.get()).invoke(&[{
+                    // (as-port f)
+                    Scm::func(as_minus_port).invoke(&[f.clone()])
+                }])
             }
         }
-        .into()
     }
+    .into()
 }
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
