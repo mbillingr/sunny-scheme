@@ -51,7 +51,8 @@
                               (string<? (symbol->string (car a))
                                         (symbol->string (car b))))
                             (cdr global-env))))
-        (make-library name globals init (extract-definitions (boxify (close-procedures body))) imports exports)))
+        (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
+
 
     (define (astify-program exp*)
       (define global-env (make-core-env))

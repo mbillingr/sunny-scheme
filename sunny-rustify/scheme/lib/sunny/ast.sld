@@ -599,16 +599,31 @@
       self)
 
     (define (make-library name globals init body imports exports)
+      (let* ((tests (list 'dummy))
+             (new-body (body
+                        'transform
+                        (lambda (node ignore)
+                          (if (eq? (node 'kind) 'TESTSUITE)
+                              (begin
+                                (set-cdr! tests (cons node (cdr tests)))
+                                (make-constant '*UNSPECIFIED*))
+                              (ignore))))))
+        (_make-library name globals init new-body imports exports (cdr tests))))
+
+    (define (_make-library name globals init body imports exports testsuite)
       (define (repr)
         (append 'LIBRARY name exports imports globals (body 'repr)))
       (define (transform func)
         (func self
               (lambda ()
-                (make-library globals
-                              init
-                              (body 'transform func)
-                              imports
-                              exports))))
+                (_make-library name
+                               globals
+                               init
+                               (body 'transform func)
+                               imports
+                               exports
+                               (map (lambda (t) (t 'transform func))
+                                    testsuite)))))
       (define (gen-exports module exports)
         (for-each (lambda (expo) (expo 'gen-rust module))
                   exports))
@@ -645,18 +660,11 @@
                               lib)
                     (println module "initialize();"))
                   init)
-        (let ((tests (list 'dummy)))
-          ((body 'transform (lambda (node ignore)
-                              (if (eq? (node 'kind) 'TESTSUITE)
-                                  (begin
-                                    (set-cdr! tests (cons node (cdr tests)))
-                                    (make-constant '*UNSPECIFIED*))
-                                  (ignore))))
-           'gen-rust module)
-          (println module ";}")
+        (body 'gen-rust module)
+        (println module ";}")
 
-          (for-each (lambda (test) (test 'gen-rust module))
-                    (cdr tests))))
+        (for-each (lambda (test) (test 'gen-rust module))
+                  testsuite))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (repr))
               ((eq? 'transform msg) (transform (car args)))

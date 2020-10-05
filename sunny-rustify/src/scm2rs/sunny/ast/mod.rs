@@ -40,6 +40,137 @@ pub mod exports {
     pub use super::procedure_minus_node_p;
 }
 
+pub fn __make_minus_library(args: &[Scm]) -> Scm {
+    {if args.len() != 7{panic!("invalid arity")}let name = args[0].clone();let globals = args[1].clone();let init = args[2].clone();let body = args[3].clone();let imports = args[4].clone();let exports = args[5].clone();let testsuite = args[6].clone();{
+// (letrec ((repr (lambda () (append (quote LIBRARY) name exports imports globals (body (quote repr))))) (transform (lambda (func) (func self (lambda () (_make-library name globals init (body (quote transform) func) imports exports (map (lambda (t) (t (quote transform) func)) testsuite)))))) (gen-exports (lambda (module exports) (for-each (lambda (expo) (expo (quote gen-rust) module)) exports))) (gen-rust (lambda (module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (rust-gen-global-defs module globals) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (body (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) testsuite))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))))) self)
+{
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (gen-exports (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (append (quote LIBRARY) name exports imports globals (body (quote repr))))) (set! transform (lambda (func) (func self (lambda () (_make-library name globals init (body (quote transform) func) imports exports (map (lambda (t) (t (quote transform) func)) testsuite)))))) (set! gen-exports (lambda (module exports) (for-each (lambda (expo) (expo (quote gen-rust) module)) exports))) (set! gen-rust (lambda (module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (rust-gen-global-defs module globals) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (body (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) testsuite))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg))))) self))
+{let [repr, transform, gen_minus_exports, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let gen_minus_exports = gen_minus_exports.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
+let name = name.clone();let exports = exports.clone();let imports = imports.clone();let globals = globals.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (append (quote LIBRARY) name exports imports globals (body (quote repr)))
+Scm::func(imports::append).invoke(&[Scm::symbol("LIBRARY"),name.clone(),exports.clone(),imports.clone(),globals.clone(),{
+// (body (quote repr))
+body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+let self_ = self_.clone();let name = name.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let imports = imports.clone();let exports = exports.clone();let testsuite = testsuite.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
+// (func self (lambda () (_make-library name globals init (body (quote transform) func) imports exports (map (lambda (t) (t (quote transform) func)) testsuite))))
+func.clone().invoke(&[self_.get(),{// Closure
+let name = name.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let func = func.clone();let imports = imports.clone();let exports = exports.clone();let testsuite = testsuite.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (_make-library name globals init (body (quote transform) func) imports exports (map (lambda (t) (t (quote transform) func)) testsuite))
+Scm::func(__make_minus_library).invoke(&[name.clone(),globals.clone(),init.clone(),{
+// (body (quote transform) func)
+body.clone().invoke(&[Scm::symbol("transform"),func.clone()])},imports.clone(),exports.clone(),{
+// (map (lambda (t) (t (quote transform) func)) testsuite)
+Scm::func(imports::map).invoke(&[{// Closure
+let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let t = args[0].clone();{
+// (t (quote transform) func)
+t.clone().invoke(&[Scm::symbol("transform"),func.clone()])}})},testsuite.clone()])}])}})}])}})});gen_minus_exports.set({// Closure
+Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let exports = args[1].clone();{
+// (for-each (lambda (expo) (expo (quote gen-rust) module)) exports)
+Scm::func(imports::for_minus_each).invoke(&[{// Closure
+let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expo = args[0].clone();{
+// (expo (quote gen-rust) module)
+expo.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},exports.clone()])}})});gen_minus_rust.set({// Closure
+let imports = imports.clone();let gen_minus_exports = gen_minus_exports.clone();let exports = exports.clone();let globals = globals.clone();let body = body.clone();let init = init.clone();let testsuite = testsuite.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
+// (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};")])};{
+// (print module "mod imports")
+Scm::func(imports::print).invoke(&[module.clone(),Scm::from("mod imports")])};{
+// (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports)))
+Scm::func(imports::rust_minus_block).invoke(&[module.clone(),{// Closure
+let module = module.clone();let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (for-each (lambda (i) (i (quote gen-rust) module)) imports)
+Scm::func(imports::for_minus_each).invoke(&[{// Closure
+let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let i = args[0].clone();{
+// (i (quote gen-rust) module)
+i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},imports.clone()])}})}])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};{
+// (print module "pub mod exports")
+Scm::func(imports::print).invoke(&[module.clone(),Scm::from("pub mod exports")])};{
+// (rust-block module (lambda () (gen-exports module exports)))
+Scm::func(imports::rust_minus_block).invoke(&[module.clone(),{// Closure
+let gen_minus_exports = gen_minus_exports.clone();let module = module.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (gen-exports module exports)
+gen_minus_exports.get().invoke(&[module.clone(),exports.clone()])}})}])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};{
+// (rust-gen-global-defs module globals)
+Scm::func(imports::rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),globals.clone()])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};if ({
+// (eq? (quote NOP) (body (quote kind)))
+Scm::func(imports::eq_p).invoke(&[Scm::symbol("NOP"),{
+// (body (quote kind))
+body.clone().invoke(&[Scm::symbol("kind")])}])}).is_true() {{
+// (println module "pub fn initialize() {")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("pub fn initialize() {")])}} else {{{
+// (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])};{
+// (println module "pub fn initialize() {")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("pub fn initialize() {")])};{
+// (println module "if INITIALIZED.with(|x| x.get()) { return }")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("if INITIALIZED.with(|x| x.get()) { return }")])};{
+// (println module "INITIALIZED.with(|x| x.set(true));")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("INITIALIZED.with(|x| x.set(true));")])};{
+// (println module)
+Scm::func(imports::println).invoke(&[module.clone()])}}};{
+// (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init)
+Scm::func(imports::for_minus_each).invoke(&[{// Closure
+let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();{{
+// (print module "crate::")
+Scm::func(imports::print).invoke(&[module.clone(),Scm::from("crate::")])};{
+// (for-each (lambda (l) (print module (rustify-libname l) "::")) lib)
+Scm::func(imports::for_minus_each).invoke(&[{// Closure
+let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let l = args[0].clone();{
+// (print module (rustify-libname l) "::")
+Scm::func(imports::print).invoke(&[module.clone(),{
+// (rustify-libname l)
+Scm::func(imports::rustify_minus_libname).invoke(&[l.clone()])},Scm::from("::")])}})},lib.clone()])};{
+// (println module "initialize();")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from("initialize();")])}}})},init.clone()])};{
+// (body (quote gen-rust) module)
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
+// (println module ";}")
+Scm::func(imports::println).invoke(&[module.clone(),Scm::from(";}")])};{
+// (for-each (lambda (test) (test (quote gen-rust) module)) testsuite)
+Scm::func(imports::for_minus_each).invoke(&[{// Closure
+let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let test = args[0].clone();{
+// (test (quote gen-rust) module)
+test.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},testsuite.clone()])}}})});self_.set({// Closure
+let repr = repr.clone();let transform = transform.clone();let name = name.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
+// (cond ...)
+if ({
+// (eq? (quote repr) msg)
+Scm::func(imports::eq_p).invoke(&[Scm::symbol("repr"),msg.clone()])}).is_true() {{
+// (repr)
+repr.get().invoke(&[])}} else if ({
+// (eq? (quote transform) msg)
+Scm::func(imports::eq_p).invoke(&[Scm::symbol("transform"),msg.clone()])}).is_true() {{
+// (transform (car args))
+transform.get().invoke(&[{
+// (car args)
+Scm::func(imports::car).invoke(&[args_.clone()])}])}} else if ({
+// (eq? (quote kind) msg)
+Scm::func(imports::eq_p).invoke(&[Scm::symbol("kind"),msg.clone()])}).is_true() {Scm::symbol("LIBRARY")} else if ({
+// (eq? (quote libname) msg)
+Scm::func(imports::eq_p).invoke(&[Scm::symbol("libname"),msg.clone()])}).is_true() {name.clone()} else if ({
+// (eq? (quote gen-rust) msg)
+Scm::func(imports::eq_p).invoke(&[Scm::symbol("gen-rust"),msg.clone()])}).is_true() {{
+// (gen-rust (car args))
+gen_minus_rust.get().invoke(&[{
+// (car args)
+Scm::func(imports::car).invoke(&[args_.clone()])}])}} else {{
+// (error "Unknown message LIBRARY" msg)
+Scm::func(imports::error).invoke(&[Scm::from("Unknown message LIBRARY"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+}
 pub fn ast_minus_node_p(args: &[Scm]) -> Scm {
     {
         if args.len() != 1 {
@@ -1757,153 +1888,102 @@ Scm::func(imports::car).invoke(&[args_.clone()])}])}} else {{
 Scm::func(imports::error).invoke(&[Scm::from("Unknown message IMPORT"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}}.into()
 }
 pub fn make_minus_library(args: &[Scm]) -> Scm {
-    {if args.len() != 6{panic!("invalid arity")}let name = args[0].clone();let globals = args[1].clone();let init = args[2].clone();let body = args[3].clone();let imports = args[4].clone();let exports = args[5].clone();{
-// (letrec ((repr (lambda () (append (quote LIBRARY) name exports imports globals (body (quote repr))))) (transform (lambda (func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports))))) (gen-exports (lambda (module exports) (for-each (lambda (expo) (expo (quote gen-rust) module)) exports))) (gen-rust (lambda (module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (rust-gen-global-defs module globals) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg)))))) self)
-{
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (gen-exports (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (append (quote LIBRARY) name exports imports globals (body (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-library globals init (body (quote transform) func) imports exports))))) (set! gen-exports (lambda (module exports) (for-each (lambda (expo) (expo (quote gen-rust) module)) exports))) (set! gen-rust (lambda (module) (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};") (print module "mod imports") (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports))) (println module) (println module) (print module "pub mod exports") (rust-block module (lambda () (gen-exports module exports))) (println module) (println module) (rust-gen-global-defs module globals) (println module) (println module) (if (eq? (quote NOP) (body (quote kind))) (println module "pub fn initialize() {") (begin (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }") (println module) (println module "pub fn initialize() {") (println module "if INITIALIZED.with(|x| x.get()) { return }") (println module "INITIALIZED.with(|x| x.set(true));") (println module))) (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init) (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote kind) msg) (quote LIBRARY)) ((eq? (quote libname) msg) name) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message LIBRARY" msg))))) self))
-{let [repr, transform, gen_minus_exports, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let gen_minus_exports = gen_minus_exports.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
-let name = name.clone();let exports = exports.clone();let imports = imports.clone();let globals = globals.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (append (quote LIBRARY) name exports imports globals (body (quote repr)))
-Scm::func(imports::append).invoke(&[Scm::symbol("LIBRARY"),name.clone(),exports.clone(),imports.clone(),globals.clone(),{
-// (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
-let self_ = self_.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let imports = imports.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
-// (func self (lambda () (make-library globals init (body (quote transform) func) imports exports)))
-func.clone().invoke(&[self_.get(),{// Closure
-let globals = globals.clone();let init = init.clone();let body = body.clone();let func = func.clone();let imports = imports.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (make-library globals init (body (quote transform) func) imports exports)
-Scm::func(make_minus_library).invoke(&[globals.clone(),init.clone(),{
-// (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"),func.clone()])},imports.clone(),exports.clone()])}})}])}})});gen_minus_exports.set({// Closure
-Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let exports = args[1].clone();{
-// (for-each (lambda (expo) (expo (quote gen-rust) module)) exports)
-Scm::func(imports::for_minus_each).invoke(&[{// Closure
-let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expo = args[0].clone();{
-// (expo (quote gen-rust) module)
-expo.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},exports.clone()])}})});gen_minus_rust.set({// Closure
-let imports = imports.clone();let gen_minus_exports = gen_minus_exports.clone();let exports = exports.clone();let globals = globals.clone();let body = body.clone();let init = init.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
-// (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};")])};{
-// (print module "mod imports")
-Scm::func(imports::print).invoke(&[module.clone(),Scm::from("mod imports")])};{
-// (rust-block module (lambda () (for-each (lambda (i) (i (quote gen-rust) module)) imports)))
-Scm::func(imports::rust_minus_block).invoke(&[module.clone(),{// Closure
-let module = module.clone();let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (for-each (lambda (i) (i (quote gen-rust) module)) imports)
-Scm::func(imports::for_minus_each).invoke(&[{// Closure
-let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let i = args[0].clone();{
-// (i (quote gen-rust) module)
-i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},imports.clone()])}})}])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};{
-// (print module "pub mod exports")
-Scm::func(imports::print).invoke(&[module.clone(),Scm::from("pub mod exports")])};{
-// (rust-block module (lambda () (gen-exports module exports)))
-Scm::func(imports::rust_minus_block).invoke(&[module.clone(),{// Closure
-let gen_minus_exports = gen_minus_exports.clone();let module = module.clone();let exports = exports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (gen-exports module exports)
-gen_minus_exports.get().invoke(&[module.clone(),exports.clone()])}})}])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};{
-// (rust-gen-global-defs module globals)
-Scm::func(imports::rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),globals.clone()])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};if ({
-// (eq? (quote NOP) (body (quote kind)))
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("NOP"),{
-// (body (quote kind))
-body.clone().invoke(&[Scm::symbol("kind")])}])}).is_true() {{
-// (println module "pub fn initialize() {")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("pub fn initialize() {")])}} else {{{
-// (println module "thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }")])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])};{
-// (println module "pub fn initialize() {")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("pub fn initialize() {")])};{
-// (println module "if INITIALIZED.with(|x| x.get()) { return }")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("if INITIALIZED.with(|x| x.get()) { return }")])};{
-// (println module "INITIALIZED.with(|x| x.set(true));")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("INITIALIZED.with(|x| x.set(true));")])};{
-// (println module)
-Scm::func(imports::println).invoke(&[module.clone()])}}};{
-// (for-each (lambda (lib) (print module "crate::") (for-each (lambda (l) (print module (rustify-libname l) "::")) lib) (println module "initialize();")) init)
-Scm::func(imports::for_minus_each).invoke(&[{// Closure
-let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();{{
-// (print module "crate::")
-Scm::func(imports::print).invoke(&[module.clone(),Scm::from("crate::")])};{
-// (for-each (lambda (l) (print module (rustify-libname l) "::")) lib)
-Scm::func(imports::for_minus_each).invoke(&[{// Closure
-let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let l = args[0].clone();{
-// (print module (rustify-libname l) "::")
-Scm::func(imports::print).invoke(&[module.clone(),{
-// (rustify-libname l)
-Scm::func(imports::rustify_minus_libname).invoke(&[l.clone()])},Scm::from("::")])}})},lib.clone()])};{
-// (println module "initialize();")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("initialize();")])}}})},init.clone()])};{
-// (let ((tests (list (quote dummy)))) ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module) (println module ";}") (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests)))
-{let tests = {
-// (list (quote dummy))
-Scm::func(imports::list).invoke(&[Scm::symbol("dummy")])};{{
-// ((body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))) (quote gen-rust) module)
-{
-// (body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore))))
-body.clone().invoke(&[Scm::symbol("transform"),{// Closure
-let tests = tests.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let node = args[0].clone();let ignore = args[1].clone();if ({
-// (eq? (node (quote kind)) (quote TESTSUITE))
-Scm::func(imports::eq_p).invoke(&[{
-// (node (quote kind))
-node.clone().invoke(&[Scm::symbol("kind")])},Scm::symbol("TESTSUITE")])}).is_true() {{{
-// (set-cdr! tests (cons node (cdr tests)))
-Scm::func(imports::set_minus_cdr_i).invoke(&[tests.clone(),{
-// (cons node (cdr tests))
-Scm::func(imports::cons).invoke(&[node.clone(),{
-// (cdr tests)
-Scm::func(imports::cdr).invoke(&[tests.clone()])}])}])};{
-// (make-constant (quote *UNSPECIFIED*))
-Scm::func(make_minus_constant).invoke(&[Scm::symbol("*UNSPECIFIED*")])}}} else {{
-// (ignore)
-ignore.clone().invoke(&[])}}})}])}.invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
-// (println module ";}")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from(";}")])};{
-// (for-each (lambda (test) (test (quote gen-rust) module)) (cdr tests))
-Scm::func(imports::for_minus_each).invoke(&[{// Closure
-let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let test = args[0].clone();{
-// (test (quote gen-rust) module)
-test.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},{
-// (cdr tests)
-Scm::func(imports::cdr).invoke(&[tests.clone()])}])}}}}}})});self_.set({// Closure
-let repr = repr.clone();let transform = transform.clone();let name = name.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
-// (cond ...)
-if ({
-// (eq? (quote repr) msg)
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("repr"),msg.clone()])}).is_true() {{
-// (repr)
-repr.get().invoke(&[])}} else if ({
-// (eq? (quote transform) msg)
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("transform"),msg.clone()])}).is_true() {{
-// (transform (car args))
-transform.get().invoke(&[{
-// (car args)
-Scm::func(imports::car).invoke(&[args_.clone()])}])}} else if ({
-// (eq? (quote kind) msg)
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("kind"),msg.clone()])}).is_true() {Scm::symbol("LIBRARY")} else if ({
-// (eq? (quote libname) msg)
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("libname"),msg.clone()])}).is_true() {name.clone()} else if ({
-// (eq? (quote gen-rust) msg)
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("gen-rust"),msg.clone()])}).is_true() {{
-// (gen-rust (car args))
-gen_minus_rust.get().invoke(&[{
-// (car args)
-Scm::func(imports::car).invoke(&[args_.clone()])}])}} else {{
-// (error "Unknown message LIBRARY" msg)
-Scm::func(imports::error).invoke(&[Scm::from("Unknown message LIBRARY"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+    {
+        if args.len() != 6 {
+            panic!("invalid arity")
+        }
+        let name = args[0].clone();
+        let globals = args[1].clone();
+        let init = args[2].clone();
+        let body = args[3].clone();
+        let imports = args[4].clone();
+        let exports = args[5].clone();
+        {
+            // (let* ((tests (list (quote dummy))) (new-body (body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))))) (_make-library name globals init new-body imports exports (cdr tests)))
+            {
+                // (let ((tests (list (quote dummy)))) (let ((new-body (body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))))) (begin (_make-library name globals init new-body imports exports (cdr tests)))))
+                {
+                    let tests = {
+                        // (list (quote dummy))
+                        Scm::func(imports::list).invoke(&[Scm::symbol("dummy")])
+                    };
+                    // (let ((new-body (body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore)))))) (begin (_make-library name globals init new-body imports exports (cdr tests))))
+                    let new_minus_body = {
+                        // (body (quote transform) (lambda (node ignore) (if (eq? (node (quote kind)) (quote TESTSUITE)) (begin (set-cdr! tests (cons node (cdr tests))) (make-constant (quote *UNSPECIFIED*))) (ignore))))
+                        body.clone().invoke(&[Scm::symbol("transform"), {
+                            // Closure
+                            let tests = tests.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 2 {
+                                    panic!("invalid arity")
+                                }
+                                let node = args[0].clone();
+                                let ignore = args[1].clone();
+                                if ({
+                                    // (eq? (node (quote kind)) (quote TESTSUITE))
+                                    Scm::func(imports::eq_p).invoke(&[
+                                        {
+                                            // (node (quote kind))
+                                            node.clone().invoke(&[Scm::symbol("kind")])
+                                        },
+                                        Scm::symbol("TESTSUITE"),
+                                    ])
+                                })
+                                .is_true()
+                                {
+                                    {
+                                        {
+                                            // (set-cdr! tests (cons node (cdr tests)))
+                                            Scm::func(imports::set_minus_cdr_i).invoke(&[
+                                                tests.clone(),
+                                                {
+                                                    // (cons node (cdr tests))
+                                                    Scm::func(imports::cons).invoke(&[
+                                                        node.clone(),
+                                                        {
+                                                            // (cdr tests)
+                                                            Scm::func(imports::cdr)
+                                                                .invoke(&[tests.clone()])
+                                                        },
+                                                    ])
+                                                },
+                                            ])
+                                        };
+                                        {
+                                            // (make-constant (quote *UNSPECIFIED*))
+                                            Scm::func(make_minus_constant)
+                                                .invoke(&[Scm::symbol("*UNSPECIFIED*")])
+                                        }
+                                    }
+                                } else {
+                                    {
+                                        // (ignore)
+                                        ignore.clone().invoke(&[])
+                                    }
+                                }
+                            })
+                        }])
+                    };
+                    {
+                        // (_make-library name globals init new-body imports exports (cdr tests))
+                        Scm::func(__make_minus_library).invoke(&[
+                            name.clone(),
+                            globals.clone(),
+                            init.clone(),
+                            new_minus_body.clone(),
+                            imports.clone(),
+                            exports.clone(),
+                            {
+                                // (cdr tests)
+                                Scm::func(imports::cdr).invoke(&[tests.clone()])
+                            },
+                        ])
+                    }
+                }
+            }
+        }
+    }
+    .into()
 }
 pub fn make_minus_nop(args: &[Scm]) -> Scm {
     {
@@ -2952,6 +3032,10 @@ pub fn initialize() {
         };
         {
             // (define (make-library name globals init body imports exports) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (_make-library name globals init body imports exports testsuite) ...)
             (/*NOP*/)
         };
         {
