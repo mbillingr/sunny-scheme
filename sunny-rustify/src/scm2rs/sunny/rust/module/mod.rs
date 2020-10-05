@@ -31,13 +31,13 @@ pub fn as_minus_port(args: &[Scm]) -> Scm {
         let port_minus_or_minus_module = args[0].clone();
         if ({
             // (module? port-or-module)
-            Scm::func(module_p).invoke(&[port_minus_or_minus_module.clone()])
+            module_p(&[port_minus_or_minus_module.clone()])
         })
         .is_true()
         {
             {
                 // (module-port port-or-module)
-                Scm::func(module_minus_port).invoke(&[port_minus_or_minus_module.clone()])
+                module_minus_port(&[port_minus_or_minus_module.clone()])
             }
         } else {
             port_minus_or_minus_module.clone()
@@ -53,7 +53,7 @@ pub fn close_minus_module(args: &[Scm]) -> Scm {
         let module = args[0].clone();
         {
             // (close-port (module-port module))
-            Scm::func(imports::close_minus_port).invoke(&[{
+            imports::close_minus_port(&[{
                 // (module-port module)
                 Scm::func(module_minus_port).invoke(&[module.clone()])
             }])
@@ -69,7 +69,7 @@ pub fn module_minus_path(args: &[Scm]) -> Scm {
         let module = args[0].clone();
         {
             // (caddr module)
-            Scm::func(imports::caddr).invoke(&[module.clone()])
+            imports::caddr(&[module.clone()])
         }
     }
     .into()
@@ -82,7 +82,7 @@ pub fn module_minus_port(args: &[Scm]) -> Scm {
         let module = args[0].clone();
         {
             // (cadr module)
-            Scm::func(imports::cadr).invoke(&[module.clone()])
+            imports::cadr(&[module.clone()])
         }
     }
     .into()
@@ -97,15 +97,15 @@ pub fn module_p(args: &[Scm]) -> Scm {
             // (and (pair? obj) (eq? (quote module) (car obj)))
             if ({
                 // (pair? obj)
-                Scm::func(imports::pair_p).invoke(&[obj.clone()])
+                imports::pair_p(&[obj.clone()])
             })
             .is_true()
             {
                 {
                     // (eq? (quote module) (car obj))
-                    Scm::func(imports::eq_p).invoke(&[Scm::symbol("module"), {
+                    imports::eq_p(&[Scm::symbol("module"), {
                         // (car obj)
-                        Scm::func(imports::car).invoke(&[obj.clone()])
+                        imports::car(&[obj.clone()])
                     }])
                 }
             } else {
@@ -127,30 +127,28 @@ pub fn open_minus_module(args: &[Scm]) -> Scm {
             {
                 let path = {
                     // (string-append base-path "/" (rustify-libname name))
-                    Scm::func(imports::string_minus_append).invoke(&[
-                        base_minus_path.clone(),
-                        Scm::from("/"),
-                        {
-                            // (rustify-libname name)
-                            Scm::func(imports::rustify_minus_libname).invoke(&[name.clone()])
-                        },
-                    ])
+                    imports::string_minus_append(&[base_minus_path.clone(), Scm::from("/"), {
+                        // (rustify-libname name)
+                        imports::rustify_minus_libname(&[name.clone()])
+                    }])
                 };
                 {
                     {
                         // (create-directory* path)
-                        Scm::func(imports::create_minus_directory_star_).invoke(&[path.clone()])
+                        imports::create_minus_directory_star_(&[path.clone()])
                     };
                     {
                         // (list (quote module) (open-output-file (string-append path "/mod.rs")) path)
-                        Scm::func(imports::list).invoke(&[
+                        imports::list(&[
                             Scm::symbol("module"),
                             {
                                 // (open-output-file (string-append path "/mod.rs"))
-                                Scm::func(imports::open_minus_output_minus_file).invoke(&[{
+                                imports::open_minus_output_minus_file(&[{
                                     // (string-append path "/mod.rs")
-                                    Scm::func(imports::string_minus_append)
-                                        .invoke(&[path.clone(), Scm::from("/mod.rs")])
+                                    imports::string_minus_append(&[
+                                        path.clone(),
+                                        Scm::from("/mod.rs"),
+                                    ])
                                 }])
                             },
                             path.clone(),
@@ -171,7 +169,7 @@ pub fn open_minus_submodule(args: &[Scm]) -> Scm {
         let module = args[1].clone();
         {
             // (open-module name (module-path module))
-            Scm::func(open_minus_module).invoke(&[name.clone(), {
+            open_minus_module(&[name.clone(), {
                 // (module-path module)
                 Scm::func(module_minus_path).invoke(&[module.clone()])
             }])
@@ -188,7 +186,7 @@ pub fn print(args: &[Scm]) -> Scm {
         let args_ = Scm::list(&args[1..]);
         {
             // (for-each (lambda (a) (display a (as-port f))) args)
-            Scm::func(imports::for_minus_each).invoke(&[
+            imports::for_minus_each(&[
                 {
                     // Closure
                     let f = f.clone();
@@ -199,7 +197,7 @@ pub fn print(args: &[Scm]) -> Scm {
                         let a = args[0].clone();
                         {
                             // (display a (as-port f))
-                            Scm::func(imports::display).invoke(&[a.clone(), {
+                            imports::display(&[a.clone(), {
                                 // (as-port f)
                                 Scm::func(as_minus_port).invoke(&[f.clone()])
                             }])
@@ -222,7 +220,7 @@ pub fn println(args: &[Scm]) -> Scm {
         {
             {
                 // (for-each (lambda (a) (display a (as-port f))) args)
-                Scm::func(imports::for_minus_each).invoke(&[
+                imports::for_minus_each(&[
                     {
                         // Closure
                         let f = f.clone();
@@ -233,7 +231,7 @@ pub fn println(args: &[Scm]) -> Scm {
                             let a = args[0].clone();
                             {
                                 // (display a (as-port f))
-                                Scm::func(imports::display).invoke(&[a.clone(), {
+                                imports::display(&[a.clone(), {
                                     // (as-port f)
                                     Scm::func(as_minus_port).invoke(&[f.clone()])
                                 }])
@@ -245,7 +243,7 @@ pub fn println(args: &[Scm]) -> Scm {
             };
             {
                 // (newline (as-port f))
-                Scm::func(imports::newline).invoke(&[{
+                imports::newline(&[{
                     // (as-port f)
                     Scm::func(as_minus_port).invoke(&[f.clone()])
                 }])
@@ -287,7 +285,7 @@ pub fn show(args: &[Scm]) -> Scm {
         let args_ = Scm::list(&args[1..]);
         {
             // (for-each (lambda (a) (write a (as-port f))) args)
-            Scm::func(imports::for_minus_each).invoke(&[
+            imports::for_minus_each(&[
                 {
                     // Closure
                     let f = f.clone();
@@ -298,7 +296,7 @@ pub fn show(args: &[Scm]) -> Scm {
                         let a = args[0].clone();
                         {
                             // (write a (as-port f))
-                            Scm::func(imports::write).invoke(&[a.clone(), {
+                            imports::write(&[a.clone(), {
                                 // (as-port f)
                                 Scm::func(as_minus_port).invoke(&[f.clone()])
                             }])
@@ -321,7 +319,7 @@ pub fn showln(args: &[Scm]) -> Scm {
         {
             {
                 // (for-each (lambda (a) (write a (as-port f))) args)
-                Scm::func(imports::for_minus_each).invoke(&[
+                imports::for_minus_each(&[
                     {
                         // Closure
                         let f = f.clone();
@@ -332,7 +330,7 @@ pub fn showln(args: &[Scm]) -> Scm {
                             let a = args[0].clone();
                             {
                                 // (write a (as-port f))
-                                Scm::func(imports::write).invoke(&[a.clone(), {
+                                imports::write(&[a.clone(), {
                                     // (as-port f)
                                     Scm::func(as_minus_port).invoke(&[f.clone()])
                                 }])
@@ -344,7 +342,7 @@ pub fn showln(args: &[Scm]) -> Scm {
             };
             {
                 // (newline (as-port f))
-                Scm::func(imports::newline).invoke(&[{
+                imports::newline(&[{
                     // (as-port f)
                     Scm::func(as_minus_port).invoke(&[f.clone()])
                 }])

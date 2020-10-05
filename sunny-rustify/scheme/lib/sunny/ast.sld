@@ -13,6 +13,7 @@
           make-definition
           make-export
           make-fixlet
+          make-function-application
           make-import
           make-import-only
           make-library
@@ -160,6 +161,7 @@
               ((eq? 'free-vars msg) (free-vars))
               ((eq? 'kind msg) 'REFERENCE)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
+              ((eq? 'get-name msg) name)
               ((eq? 'get-var msg) var)
               (else (error "Unknown message REFERENCE" msg))))
       self)
@@ -325,6 +327,40 @@
               ((eq? 'kind msg) 'APPLICATION)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
               (else (error "Unknown message APPLICATION" msg))))
+      self)
+
+    (define (make-function-application name var args tail?)
+      (define (repr)
+        (list (if tail? 'FN-APPLY-TC 'FN-APPLY)
+              name var
+              (args 'repr)))
+      (define (transform fnc)
+        (fnc self
+             (lambda () (make-function-application
+                          name var
+                          (args 'transform fnc)
+                          tail?))))
+      (define (free-vars)
+        (args 'free-vars))
+      (define (gen-rust module)
+        (cond ((global-function? var)
+               (print module ""))
+              ((import-variable? var)
+               (print module "imports::"))
+              (else
+                (error "invalid function application" var)))
+        (print module
+               (rustify-identifier name)
+               "(&[")
+        (args 'gen-rust module)
+        (print module "])"))
+      (define (self msg . args)
+        (cond ((eq? 'repr msg) (repr))
+              ((eq? 'transform msg) (transform (car args)))
+              ((eq? 'free-vars msg) (free-vars))
+              ((eq? 'kind msg) 'FN-APPLICATION)
+              ((eq? 'gen-rust msg) (gen-rust (car args)))
+              (else (error "Unknown message FN-APPLICATION" msg))))
       self)
 
     (define (make-null-arg)

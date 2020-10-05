@@ -42,7 +42,7 @@ pub fn astify(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (pair? exp)
-                Scm::func(imports::pair_p).invoke(&[exp.clone()])
+                imports::pair_p(&[exp.clone()])
             })
             .is_true()
             {
@@ -54,7 +54,7 @@ pub fn astify(args: &[Scm]) -> Scm {
                             Scm::func(astify).invoke(&[
                                 {
                                     // (car exp)
-                                    Scm::func(imports::car).invoke(&[exp.clone()])
+                                    imports::car(&[exp.clone()])
                                 },
                                 env.clone(),
                                 Scm::False,
@@ -62,7 +62,7 @@ pub fn astify(args: &[Scm]) -> Scm {
                         };
                         if ({
                             // (keyword? f-obj)
-                            Scm::func(imports::keyword_p).invoke(&[f_minus_obj.clone()])
+                            imports::keyword_p(&[f_minus_obj.clone()])
                         })
                         .is_true()
                         {
@@ -70,8 +70,7 @@ pub fn astify(args: &[Scm]) -> Scm {
                                 // ((keyword-handler f-obj) exp env tail?)
                                 {
                                     // (keyword-handler f-obj)
-                                    Scm::func(imports::keyword_minus_handler)
-                                        .invoke(&[f_minus_obj.clone()])
+                                    imports::keyword_minus_handler(&[f_minus_obj.clone()])
                                 }
                                 .invoke(&[
                                     exp.clone(),
@@ -88,7 +87,7 @@ pub fn astify(args: &[Scm]) -> Scm {
                                         f_minus_obj.clone(),
                                         {
                                             // (cdr exp)
-                                            Scm::func(imports::cdr).invoke(&[exp.clone()])
+                                            imports::cdr(&[exp.clone()])
                                         },
                                         env.clone(),
                                         tail_p.clone(),
@@ -100,7 +99,7 @@ pub fn astify(args: &[Scm]) -> Scm {
                 }
             } else if ({
                 // (symbol? exp)
-                Scm::func(imports::symbol_p).invoke(&[exp.clone()])
+                imports::symbol_p(&[exp.clone()])
             })
             .is_true()
             {
@@ -133,13 +132,12 @@ pub fn astify_minus_abstraction(args: &[Scm]) -> Scm {
                 {
                     let local_minus_env = {
                         // (adjoin-local-env param* env)
-                        Scm::func(imports::adjoin_minus_local_minus_env)
-                            .invoke(&[param_star_.clone(), env.clone()])
+                        imports::adjoin_minus_local_minus_env(&[param_star_.clone(), env.clone()])
                     };
                     // (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))))
                     let body_minus_sexpr = {
                         // (scan-out-defines body)
-                        Scm::func(imports::scan_minus_out_minus_defines).invoke(&[body.clone()])
+                        imports::scan_minus_out_minus_defines(&[body.clone()])
                     };
                     // (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
                     let body_minus_ast = {
@@ -152,7 +150,7 @@ pub fn astify_minus_abstraction(args: &[Scm]) -> Scm {
                     };
                     if ({
                         // (dotted-list? param*)
-                        Scm::func(imports::dotted_minus_list_p).invoke(&[param_star_.clone()])
+                        imports::dotted_minus_list_p(&[param_star_.clone()])
                     })
                     .is_true()
                     {
@@ -162,50 +160,50 @@ pub fn astify_minus_abstraction(args: &[Scm]) -> Scm {
                                 let [fix_minus_param, var_minus_param] = [
                                     {
                                         // (proper-list-part param*)
-                                        Scm::func(imports::proper_minus_list_minus_part)
-                                            .invoke(&[param_star_.clone()])
+                                        imports::proper_minus_list_minus_part(
+                                            &[param_star_.clone()],
+                                        )
                                     },
                                     {
                                         // (last-cdr param*)
-                                        Scm::func(imports::last_minus_cdr)
-                                            .invoke(&[param_star_.clone()])
+                                        imports::last_minus_cdr(&[param_star_.clone()])
                                     },
                                 ];
                                 {
                                     // (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)
-                                    Scm::func(imports::make_minus_vararg_minus_abstraction).invoke(
-                                        &[
-                                            fix_minus_param.clone(),
-                                            var_minus_param.clone(),
-                                            {
-                                                // (lookup* fix-param local-env)
-                                                Scm::func(imports::lookup_star_).invoke(&[
-                                                    fix_minus_param.clone(),
-                                                    local_minus_env.clone(),
-                                                ])
-                                            },
-                                            {
-                                                // (lookup var-param local-env)
-                                                Scm::func(imports::lookup).invoke(&[
-                                                    var_minus_param.clone(),
-                                                    local_minus_env.clone(),
-                                                ])
-                                            },
-                                            body_minus_ast.clone(),
-                                        ],
-                                    )
+                                    imports::make_minus_vararg_minus_abstraction(&[
+                                        fix_minus_param.clone(),
+                                        var_minus_param.clone(),
+                                        {
+                                            // (lookup* fix-param local-env)
+                                            imports::lookup_star_(&[
+                                                fix_minus_param.clone(),
+                                                local_minus_env.clone(),
+                                            ])
+                                        },
+                                        {
+                                            // (lookup var-param local-env)
+                                            imports::lookup(&[
+                                                var_minus_param.clone(),
+                                                local_minus_env.clone(),
+                                            ])
+                                        },
+                                        body_minus_ast.clone(),
+                                    ])
                                 }
                             }
                         }
                     } else {
                         {
                             // (make-abstraction param* (lookup* param* local-env) body-ast)
-                            Scm::func(imports::make_minus_abstraction).invoke(&[
+                            imports::make_minus_abstraction(&[
                                 param_star_.clone(),
                                 {
                                     // (lookup* param* local-env)
-                                    Scm::func(imports::lookup_star_)
-                                        .invoke(&[param_star_.clone(), local_minus_env.clone()])
+                                    imports::lookup_star_(&[
+                                        param_star_.clone(),
+                                        local_minus_env.clone(),
+                                    ])
                                 },
                                 body_minus_ast.clone(),
                             ])
@@ -229,18 +227,18 @@ pub fn astify_minus_alternative(args: &[Scm]) -> Scm {
         let tail_p = args[4].clone();
         {
             // (make-alternative (astify condition env #f) (astify consequent env tail?) (astify alternative env tail?))
-            Scm::func(imports::make_minus_alternative).invoke(&[
+            imports::make_minus_alternative(&[
                 {
                     // (astify condition env #f)
-                    Scm::func(astify).invoke(&[condition.clone(), env.clone(), Scm::False])
+                    astify(&[condition.clone(), env.clone(), Scm::False])
                 },
                 {
                     // (astify consequent env tail?)
-                    Scm::func(astify).invoke(&[consequent.clone(), env.clone(), tail_p.clone()])
+                    astify(&[consequent.clone(), env.clone(), tail_p.clone()])
                 },
                 {
                     // (astify alternative env tail?)
-                    Scm::func(astify).invoke(&[alternative.clone(), env.clone(), tail_p.clone()])
+                    astify(&[alternative.clone(), env.clone(), tail_p.clone()])
                 },
             ])
         }
@@ -259,29 +257,29 @@ pub fn astify_minus_and(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? arg*)
-                Scm::func(imports::null_p).invoke(&[arg_star_.clone()])
+                imports::null_p(&[arg_star_.clone()])
             })
             .is_true()
             {
                 {
                     // (make-constant #t)
-                    Scm::func(imports::make_minus_constant).invoke(&[Scm::True])
+                    imports::make_minus_constant(&[Scm::True])
                 }
             } else if ({
                 // (null? (cdr arg*))
-                Scm::func(imports::null_p).invoke(&[{
+                imports::null_p(&[{
                     // (cdr arg*)
-                    Scm::func(imports::cdr).invoke(&[arg_star_.clone()])
+                    imports::cdr(&[arg_star_.clone()])
                 }])
             })
             .is_true()
             {
                 {
                     // (astify (car arg*) env tail?)
-                    Scm::func(astify).invoke(&[
+                    astify(&[
                         {
                             // (car arg*)
-                            Scm::func(imports::car).invoke(&[arg_star_.clone()])
+                            imports::car(&[arg_star_.clone()])
                         },
                         env.clone(),
                         tail_p.clone(),
@@ -290,13 +288,13 @@ pub fn astify_minus_and(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (make-alternative (astify (car arg*) env #f) (astify-and (cdr arg*) env tail?) (astify-constant #f env))
-                    Scm::func(imports::make_minus_alternative).invoke(&[
+                    imports::make_minus_alternative(&[
                         {
                             // (astify (car arg*) env #f)
-                            Scm::func(astify).invoke(&[
+                            astify(&[
                                 {
                                     // (car arg*)
-                                    Scm::func(imports::car).invoke(&[arg_star_.clone()])
+                                    imports::car(&[arg_star_.clone()])
                                 },
                                 env.clone(),
                                 Scm::False,
@@ -307,7 +305,7 @@ pub fn astify_minus_and(args: &[Scm]) -> Scm {
                             Scm::func(astify_minus_and).invoke(&[
                                 {
                                     // (cdr arg*)
-                                    Scm::func(imports::cdr).invoke(&[arg_star_.clone()])
+                                    imports::cdr(&[arg_star_.clone()])
                                 },
                                 env.clone(),
                                 tail_p.clone(),
@@ -333,47 +331,104 @@ pub fn astify_minus_application(args: &[Scm]) -> Scm {
         let arg_star_ = args[1].clone();
         let env = args[2].clone();
         let tail_p = args[3].clone();
-        if ({
-            // (eq? (quote ABSTRACTION) (proc (quote kind)))
-            Scm::func(imports::eq_p).invoke(&[Scm::symbol("ABSTRACTION"), {
-                // (proc (quote kind))
-                proc.clone().invoke(&[Scm::symbol("kind")])
-            }])
-        })
-        .is_true()
         {
+            // (cond ...)
+            if ({
+                // (eq? (quote ABSTRACTION) (proc (quote kind)))
+                imports::eq_p(&[Scm::symbol("ABSTRACTION"), {
+                    // (proc (quote kind))
+                    proc.clone().invoke(&[Scm::symbol("kind")])
+                }])
+            })
+            .is_true()
             {
-                // (make-fixlet (proc (quote get-params)) (proc (quote get-vars)) (astify-args arg* env) (proc (quote get-body)))
-                Scm::func(imports::make_minus_fixlet).invoke(&[
+                {
+                    // (make-fixlet (proc (quote get-params)) (proc (quote get-vars)) (astify-args arg* env) (proc (quote get-body)))
+                    imports::make_minus_fixlet(&[
+                        {
+                            // (proc (quote get-params))
+                            proc.clone().invoke(&[Scm::symbol("get-params")])
+                        },
+                        {
+                            // (proc (quote get-vars))
+                            proc.clone().invoke(&[Scm::symbol("get-vars")])
+                        },
+                        {
+                            // (astify-args arg* env)
+                            Scm::func(astify_minus_args).invoke(&[arg_star_.clone(), env.clone()])
+                        },
+                        {
+                            // (proc (quote get-body))
+                            proc.clone().invoke(&[Scm::symbol("get-body")])
+                        },
+                    ])
+                }
+            } else if ({
+                // (and (eq? (quote REFERENCE) (proc (quote kind))) (bor (import-variable? (proc (quote get-var))) (global-function? (proc (quote get-var)))))
+                if ({
+                    // (eq? (quote REFERENCE) (proc (quote kind)))
+                    imports::eq_p(&[Scm::symbol("REFERENCE"), {
+                        // (proc (quote kind))
+                        proc.clone().invoke(&[Scm::symbol("kind")])
+                    }])
+                })
+                .is_true()
+                {
                     {
-                        // (proc (quote get-params))
-                        proc.clone().invoke(&[Scm::symbol("get-params")])
-                    },
-                    {
-                        // (proc (quote get-vars))
-                        proc.clone().invoke(&[Scm::symbol("get-vars")])
-                    },
-                    {
-                        // (astify-args arg* env)
-                        Scm::func(astify_minus_args).invoke(&[arg_star_.clone(), env.clone()])
-                    },
-                    {
-                        // (proc (quote get-body))
-                        proc.clone().invoke(&[Scm::symbol("get-body")])
-                    },
-                ])
-            }
-        } else {
+                        // (bor (import-variable? (proc (quote get-var))) (global-function? (proc (quote get-var))))
+                        imports::bor(&[
+                            {
+                                // (import-variable? (proc (quote get-var)))
+                                imports::import_minus_variable_p(&[{
+                                    // (proc (quote get-var))
+                                    proc.clone().invoke(&[Scm::symbol("get-var")])
+                                }])
+                            },
+                            {
+                                // (global-function? (proc (quote get-var)))
+                                imports::global_minus_function_p(&[{
+                                    // (proc (quote get-var))
+                                    proc.clone().invoke(&[Scm::symbol("get-var")])
+                                }])
+                            },
+                        ])
+                    }
+                } else {
+                    Scm::False
+                }
+            })
+            .is_true()
             {
-                // (make-application proc (astify-args arg* env) tail?)
-                Scm::func(imports::make_minus_application).invoke(&[
-                    proc.clone(),
-                    {
-                        // (astify-args arg* env)
-                        Scm::func(astify_minus_args).invoke(&[arg_star_.clone(), env.clone()])
-                    },
-                    tail_p.clone(),
-                ])
+                {
+                    // (make-function-application (proc (quote get-name)) (proc (quote get-var)) (astify-args arg* env) tail?)
+                    imports::make_minus_function_minus_application(&[
+                        {
+                            // (proc (quote get-name))
+                            proc.clone().invoke(&[Scm::symbol("get-name")])
+                        },
+                        {
+                            // (proc (quote get-var))
+                            proc.clone().invoke(&[Scm::symbol("get-var")])
+                        },
+                        {
+                            // (astify-args arg* env)
+                            Scm::func(astify_minus_args).invoke(&[arg_star_.clone(), env.clone()])
+                        },
+                        tail_p.clone(),
+                    ])
+                }
+            } else {
+                {
+                    // (make-application proc (astify-args arg* env) tail?)
+                    imports::make_minus_application(&[
+                        proc.clone(),
+                        {
+                            // (astify-args arg* env)
+                            Scm::func(astify_minus_args).invoke(&[arg_star_.clone(), env.clone()])
+                        },
+                        tail_p.clone(),
+                    ])
+                }
             }
         }
     }
@@ -388,24 +443,24 @@ pub fn astify_minus_args(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         if ({
             // (null? arg*)
-            Scm::func(imports::null_p).invoke(&[arg_star_.clone()])
+            imports::null_p(&[arg_star_.clone()])
         })
         .is_true()
         {
             {
                 // (make-null-arg)
-                Scm::func(imports::make_minus_null_minus_arg).invoke(&[])
+                imports::make_minus_null_minus_arg(&[])
             }
         } else {
             {
                 // (make-args (astify (car arg*) env #f) (astify-args (cdr arg*) env))
-                Scm::func(imports::make_minus_args).invoke(&[
+                imports::make_minus_args(&[
                     {
                         // (astify (car arg*) env #f)
-                        Scm::func(astify).invoke(&[
+                        astify(&[
                             {
                                 // (car arg*)
-                                Scm::func(imports::car).invoke(&[arg_star_.clone()])
+                                imports::car(&[arg_star_.clone()])
                             },
                             env.clone(),
                             Scm::False,
@@ -416,7 +471,7 @@ pub fn astify_minus_args(args: &[Scm]) -> Scm {
                         Scm::func(astify_minus_args).invoke(&[
                             {
                                 // (cdr arg*)
-                                Scm::func(imports::cdr).invoke(&[arg_star_.clone()])
+                                imports::cdr(&[arg_star_.clone()])
                             },
                             env.clone(),
                         ])
@@ -436,9 +491,9 @@ pub fn astify_minus_assert(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (make-assert (astify cond env #f))
-            Scm::func(imports::make_minus_assert).invoke(&[{
+            imports::make_minus_assert(&[{
                 // (astify cond env #f)
-                Scm::func(astify).invoke(&[cond.clone(), env.clone(), Scm::False])
+                astify(&[cond.clone(), env.clone(), Scm::False])
             }])
         }
     }
@@ -458,23 +513,21 @@ pub fn astify_minus_assignment(args: &[Scm]) -> Scm {
                 let [var, val] = [
                     {
                         // (ensure-var! var-name env)
-                        Scm::func(imports::ensure_minus_var_i)
-                            .invoke(&[var_minus_name.clone(), env.clone()])
+                        imports::ensure_minus_var_i(&[var_minus_name.clone(), env.clone()])
                     },
                     {
                         // (astify value env #f)
-                        Scm::func(astify).invoke(&[value.clone(), env.clone(), Scm::False])
+                        astify(&[value.clone(), env.clone(), Scm::False])
                     },
                 ];
                 {
                     {
                         // (variable-set-mutable! var)
-                        Scm::func(imports::variable_minus_set_minus_mutable_i)
-                            .invoke(&[var.clone()])
+                        imports::variable_minus_set_minus_mutable_i(&[var.clone()])
                     };
                     {
                         // (make-assignment var-name var val)
-                        Scm::func(imports::make_minus_assignment).invoke(&[
+                        imports::make_minus_assignment(&[
                             var_minus_name.clone(),
                             var.clone(),
                             val.clone(),
@@ -495,7 +548,7 @@ pub fn astify_minus_comment(args: &[Scm]) -> Scm {
         let node = args[1].clone();
         {
             // (make-comment exp node)
-            Scm::func(imports::make_minus_comment).invoke(&[exp.clone(), node.clone()])
+            imports::make_minus_comment(&[exp.clone(), node.clone()])
         }
     }
     .into()
@@ -512,7 +565,7 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? clause*)
-                Scm::func(imports::null_p).invoke(&[clause_star_.clone()])
+                imports::null_p(&[clause_star_.clone()])
             })
             .is_true()
             {
@@ -522,9 +575,9 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
                 }
             } else if ({
                 // (cond-else-clause? (car clause*))
-                Scm::func(imports::cond_minus_else_minus_clause_p).invoke(&[{
+                imports::cond_minus_else_minus_clause_p(&[{
                     // (car clause*)
-                    Scm::func(imports::car).invoke(&[clause_star_.clone()])
+                    imports::car(&[clause_star_.clone()])
                 }])
             })
             .is_true()
@@ -534,9 +587,9 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
                     Scm::func(astify_minus_sequence).invoke(&[
                         {
                             // (cond-clause-sequence (car clause*))
-                            Scm::func(imports::cond_minus_clause_minus_sequence).invoke(&[{
+                            imports::cond_minus_clause_minus_sequence(&[{
                                 // (car clause*)
-                                Scm::func(imports::car).invoke(&[clause_star_.clone()])
+                                imports::car(&[clause_star_.clone()])
                             }])
                         },
                         env.clone(),
@@ -551,15 +604,13 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
                         {
                             let i = {
                                 // (astify (cond-clause-condition (car clause*)) env #f)
-                                Scm::func(astify).invoke(&[
+                                astify(&[
                                     {
                                         // (cond-clause-condition (car clause*))
-                                        Scm::func(imports::cond_minus_clause_minus_condition)
-                                            .invoke(&[{
-                                                // (car clause*)
-                                                Scm::func(imports::car)
-                                                    .invoke(&[clause_star_.clone()])
-                                            }])
+                                        imports::cond_minus_clause_minus_condition(&[{
+                                            // (car clause*)
+                                            imports::car(&[clause_star_.clone()])
+                                        }])
                                     },
                                     env.clone(),
                                     Scm::False,
@@ -571,13 +622,10 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
                                 Scm::func(astify_minus_sequence).invoke(&[
                                     {
                                         // (cond-clause-sequence (car clause*))
-                                        Scm::func(imports::cond_minus_clause_minus_sequence).invoke(
-                                            &[{
-                                                // (car clause*)
-                                                Scm::func(imports::car)
-                                                    .invoke(&[clause_star_.clone()])
-                                            }],
-                                        )
+                                        imports::cond_minus_clause_minus_sequence(&[{
+                                            // (car clause*)
+                                            imports::car(&[clause_star_.clone()])
+                                        }])
                                     },
                                     env.clone(),
                                     tail_p.clone(),
@@ -589,7 +637,7 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
                                 Scm::func(astify_minus_cond).invoke(&[
                                     {
                                         // (cdr clause*)
-                                        Scm::func(imports::cdr).invoke(&[clause_star_.clone()])
+                                        imports::cdr(&[clause_star_.clone()])
                                     },
                                     env.clone(),
                                     tail_p.clone(),
@@ -597,11 +645,7 @@ pub fn astify_minus_cond(args: &[Scm]) -> Scm {
                             };
                             {
                                 // (make-alternative i t e)
-                                Scm::func(imports::make_minus_alternative).invoke(&[
-                                    i.clone(),
-                                    t.clone(),
-                                    e.clone(),
-                                ])
+                                imports::make_minus_alternative(&[i.clone(), t.clone(), e.clone()])
                             }
                         }
                     }
@@ -620,7 +664,7 @@ pub fn astify_minus_constant(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (make-constant exp)
-            Scm::func(imports::make_minus_constant).invoke(&[exp.clone()])
+            imports::make_minus_constant(&[exp.clone()])
         }
     }
     .into()
@@ -639,23 +683,21 @@ pub fn astify_minus_definition(args: &[Scm]) -> Scm {
                 let [var, val] = [
                     {
                         // (ensure-var! var-name env)
-                        Scm::func(imports::ensure_minus_var_i)
-                            .invoke(&[var_minus_name.clone(), env.clone()])
+                        imports::ensure_minus_var_i(&[var_minus_name.clone(), env.clone()])
                     },
                     {
                         // (astify value env #f)
-                        Scm::func(astify).invoke(&[value.clone(), env.clone(), Scm::False])
+                        astify(&[value.clone(), env.clone(), Scm::False])
                     },
                 ];
                 {
                     {
                         // (global-add-definition! var val)
-                        Scm::func(imports::global_minus_add_minus_definition_i)
-                            .invoke(&[var.clone(), val.clone()])
+                        imports::global_minus_add_minus_definition_i(&[var.clone(), val.clone()])
                     };
                     {
                         // (make-definition var-name var val)
-                        Scm::func(imports::make_minus_definition).invoke(&[
+                        imports::make_minus_definition(&[
                             var_minus_name.clone(),
                             var.clone(),
                             val.clone(),
@@ -678,7 +720,7 @@ pub fn astify_minus_export(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? export-spec*)
-                Scm::func(imports::null_p).invoke(&[export_minus_spec_star_.clone()])
+                imports::null_p(&[export_minus_spec_star_.clone()])
             })
             .is_true()
             {
@@ -686,20 +728,18 @@ pub fn astify_minus_export(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (cons (make-export env (car export-spec*) (car export-spec*)) (astify-export (cdr export-spec*) env))
-                    Scm::func(imports::cons).invoke(&[
+                    imports::cons(&[
                         {
                             // (make-export env (car export-spec*) (car export-spec*))
-                            Scm::func(imports::make_minus_export).invoke(&[
+                            imports::make_minus_export(&[
                                 env.clone(),
                                 {
                                     // (car export-spec*)
-                                    Scm::func(imports::car)
-                                        .invoke(&[export_minus_spec_star_.clone()])
+                                    imports::car(&[export_minus_spec_star_.clone()])
                                 },
                                 {
                                     // (car export-spec*)
-                                    Scm::func(imports::car)
-                                        .invoke(&[export_minus_spec_star_.clone()])
+                                    imports::car(&[export_minus_spec_star_.clone()])
                                 },
                             ])
                         },
@@ -708,8 +748,7 @@ pub fn astify_minus_export(args: &[Scm]) -> Scm {
                             Scm::func(astify_minus_export).invoke(&[
                                 {
                                     // (cdr export-spec*)
-                                    Scm::func(imports::cdr)
-                                        .invoke(&[export_minus_spec_star_.clone()])
+                                    imports::cdr(&[export_minus_spec_star_.clone()])
                                 },
                                 env.clone(),
                             ])
@@ -730,7 +769,7 @@ pub fn astify_minus_import(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         if ({
             // (null? stmt*)
-            Scm::func(imports::null_p).invoke(&[stmt_star_.clone()])
+            imports::null_p(&[stmt_star_.clone()])
         })
         .is_true()
         {
@@ -741,16 +780,16 @@ pub fn astify_minus_import(args: &[Scm]) -> Scm {
                 {
                     let libname = {
                         // (importset-libname (car stmt*))
-                        Scm::func(imports::importset_minus_libname).invoke(&[{
+                        imports::importset_minus_libname(&[{
                             // (car stmt*)
-                            Scm::func(imports::car).invoke(&[stmt_star_.clone()])
+                            imports::car(&[stmt_star_.clone()])
                         }])
                     };
                     {
                         // (cond ...)
                         if ({
                             // (equal? (quote (sunny testing)) libname)
-                            Scm::func(imports::equal_p).invoke(&[
+                            imports::equal_p(&[
                                 Scm::pair(
                                     Scm::symbol("sunny"),
                                     Scm::pair(Scm::symbol("testing"), Scm::Nil),
@@ -765,35 +804,33 @@ pub fn astify_minus_import(args: &[Scm]) -> Scm {
                                 Scm::func(astify_minus_import).invoke(&[
                                     {
                                         // (cdr stmt*)
-                                        Scm::func(imports::cdr).invoke(&[stmt_star_.clone()])
+                                        imports::cdr(&[stmt_star_.clone()])
                                     },
                                     env.clone(),
                                 ])
                             }
                         } else if ({
                             // (importset-only? (car stmt*))
-                            Scm::func(imports::importset_minus_only_p).invoke(&[{
+                            imports::importset_minus_only_p(&[{
                                 // (car stmt*)
-                                Scm::func(imports::car).invoke(&[stmt_star_.clone()])
+                                imports::car(&[stmt_star_.clone()])
                             }])
                         })
                         .is_true()
                         {
                             {
                                 // (cons (astify-import-only libname (importset-only-names (car stmt*)) env) (astify-import (cdr stmt*) env))
-                                Scm::func(imports::cons).invoke(&[
+                                imports::cons(&[
                                     {
                                         // (astify-import-only libname (importset-only-names (car stmt*)) env)
                                         Scm::func(astify_minus_import_minus_only).invoke(&[
                                             libname.clone(),
                                             {
                                                 // (importset-only-names (car stmt*))
-                                                Scm::func(imports::importset_minus_only_minus_names)
-                                                    .invoke(&[{
-                                                        // (car stmt*)
-                                                        Scm::func(imports::car)
-                                                            .invoke(&[stmt_star_.clone()])
-                                                    }])
+                                                imports::importset_minus_only_minus_names(&[{
+                                                    // (car stmt*)
+                                                    imports::car(&[stmt_star_.clone()])
+                                                }])
                                             },
                                             env.clone(),
                                         ])
@@ -803,8 +840,7 @@ pub fn astify_minus_import(args: &[Scm]) -> Scm {
                                         Scm::func(astify_minus_import).invoke(&[
                                             {
                                                 // (cdr stmt*)
-                                                Scm::func(imports::cdr)
-                                                    .invoke(&[stmt_star_.clone()])
+                                                imports::cdr(&[stmt_star_.clone()])
                                             },
                                             env.clone(),
                                         ])
@@ -814,7 +850,7 @@ pub fn astify_minus_import(args: &[Scm]) -> Scm {
                         } else {
                             {
                                 // (cons (astify-import-all libname env) (astify-import (cdr stmt*) env))
-                                Scm::func(imports::cons).invoke(&[
+                                imports::cons(&[
                                     {
                                         // (astify-import-all libname env)
                                         Scm::func(astify_minus_import_minus_all)
@@ -825,8 +861,7 @@ pub fn astify_minus_import(args: &[Scm]) -> Scm {
                                         Scm::func(astify_minus_import).invoke(&[
                                             {
                                                 // (cdr stmt*)
-                                                Scm::func(imports::cdr)
-                                                    .invoke(&[stmt_star_.clone()])
+                                                imports::cdr(&[stmt_star_.clone()])
                                             },
                                             env.clone(),
                                         ])
@@ -851,14 +886,14 @@ pub fn astify_minus_import_minus_all(args: &[Scm]) -> Scm {
         {
             {
                 // (adjoin-import*! (library-exports (library-decls (get-lib libname))) env)
-                Scm::func(imports::adjoin_minus_import_star__i).invoke(&[
+                imports::adjoin_minus_import_star__i(&[
                     {
                         // (library-exports (library-decls (get-lib libname)))
-                        Scm::func(imports::library_minus_exports).invoke(&[{
+                        imports::library_minus_exports(&[{
                             // (library-decls (get-lib libname))
-                            Scm::func(imports::library_minus_decls).invoke(&[{
+                            imports::library_minus_decls(&[{
                                 // (get-lib libname)
-                                Scm::func(imports::get_minus_lib).invoke(&[libname.clone()])
+                                imports::get_minus_lib(&[libname.clone()])
                             }])
                         }])
                     },
@@ -867,7 +902,7 @@ pub fn astify_minus_import_minus_all(args: &[Scm]) -> Scm {
             };
             {
                 // (make-import libname)
-                Scm::func(imports::make_minus_import).invoke(&[libname.clone()])
+                imports::make_minus_import(&[libname.clone()])
             }
         }
     }
@@ -884,15 +919,15 @@ pub fn astify_minus_import_minus_only(args: &[Scm]) -> Scm {
         {
             {
                 // (check-imports names (library-exports (library-decls (get-lib libname))) libname)
-                Scm::func(imports::check_minus_imports).invoke(&[
+                imports::check_minus_imports(&[
                     names.clone(),
                     {
                         // (library-exports (library-decls (get-lib libname)))
-                        Scm::func(imports::library_minus_exports).invoke(&[{
+                        imports::library_minus_exports(&[{
                             // (library-decls (get-lib libname))
-                            Scm::func(imports::library_minus_decls).invoke(&[{
+                            imports::library_minus_decls(&[{
                                 // (get-lib libname)
-                                Scm::func(imports::get_minus_lib).invoke(&[libname.clone()])
+                                imports::get_minus_lib(&[libname.clone()])
                             }])
                         }])
                     },
@@ -901,13 +936,11 @@ pub fn astify_minus_import_minus_only(args: &[Scm]) -> Scm {
             };
             {
                 // (adjoin-import*! names env)
-                Scm::func(imports::adjoin_minus_import_star__i)
-                    .invoke(&[names.clone(), env.clone()])
+                imports::adjoin_minus_import_star__i(&[names.clone(), env.clone()])
             };
             {
                 // (make-import-only libname names)
-                Scm::func(imports::make_minus_import_minus_only)
-                    .invoke(&[libname.clone(), names.clone()])
+                imports::make_minus_import_minus_only(&[libname.clone(), names.clone()])
             }
         }
     }
@@ -925,29 +958,29 @@ pub fn astify_minus_sequence(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? exp*)
-                Scm::func(imports::null_p).invoke(&[exp_star_.clone()])
+                imports::null_p(&[exp_star_.clone()])
             })
             .is_true()
             {
                 {
                     // (error "empty sequence")
-                    Scm::func(imports::error).invoke(&[Scm::from("empty sequence")])
+                    imports::error(&[Scm::from("empty sequence")])
                 }
             } else if ({
                 // (null? (cdr exp*))
-                Scm::func(imports::null_p).invoke(&[{
+                imports::null_p(&[{
                     // (cdr exp*)
-                    Scm::func(imports::cdr).invoke(&[exp_star_.clone()])
+                    imports::cdr(&[exp_star_.clone()])
                 }])
             })
             .is_true()
             {
                 {
                     // (astify (car exp*) env tail?)
-                    Scm::func(astify).invoke(&[
+                    astify(&[
                         {
                             // (car exp*)
-                            Scm::func(imports::car).invoke(&[exp_star_.clone()])
+                            imports::car(&[exp_star_.clone()])
                         },
                         env.clone(),
                         tail_p.clone(),
@@ -961,10 +994,10 @@ pub fn astify_minus_sequence(args: &[Scm]) -> Scm {
                         {
                             let first = {
                                 // (astify (car exp*) env #f)
-                                Scm::func(astify).invoke(&[
+                                astify(&[
                                     {
                                         // (car exp*)
-                                        Scm::func(imports::car).invoke(&[exp_star_.clone()])
+                                        imports::car(&[exp_star_.clone()])
                                     },
                                     env.clone(),
                                     Scm::False,
@@ -976,7 +1009,7 @@ pub fn astify_minus_sequence(args: &[Scm]) -> Scm {
                                 Scm::func(astify_minus_sequence).invoke(&[
                                     {
                                         // (cdr exp*)
-                                        Scm::func(imports::cdr).invoke(&[exp_star_.clone()])
+                                        imports::cdr(&[exp_star_.clone()])
                                     },
                                     env.clone(),
                                     tail_p.clone(),
@@ -984,8 +1017,7 @@ pub fn astify_minus_sequence(args: &[Scm]) -> Scm {
                             };
                             {
                                 // (make-sequence first rest)
-                                Scm::func(imports::make_minus_sequence)
-                                    .invoke(&[first.clone(), rest.clone()])
+                                imports::make_minus_sequence(&[first.clone(), rest.clone()])
                             }
                         }
                     }
@@ -1007,11 +1039,11 @@ pub fn astify_minus_symbol(args: &[Scm]) -> Scm {
             {
                 let var = {
                     // (ensure-var! name env)
-                    Scm::func(imports::ensure_minus_var_i).invoke(&[name.clone(), env.clone()])
+                    imports::ensure_minus_var_i(&[name.clone(), env.clone()])
                 };
                 if ({
                     // (keyword? var)
-                    Scm::func(imports::keyword_p).invoke(&[var.clone()])
+                    imports::keyword_p(&[var.clone()])
                 })
                 .is_true()
                 {
@@ -1019,8 +1051,7 @@ pub fn astify_minus_symbol(args: &[Scm]) -> Scm {
                 } else {
                     {
                         // (make-reference name var)
-                        Scm::func(imports::make_minus_reference)
-                            .invoke(&[name.clone(), var.clone()])
+                        imports::make_minus_reference(&[name.clone(), var.clone()])
                     }
                 }
             }
@@ -1036,18 +1067,18 @@ pub fn astify_minus_testcase(args: &[Scm]) -> Scm {
 {let [given, when, then, dispatch, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let dispatch = dispatch.into_boxed();{let then = then.into_boxed();{let when = when.into_boxed();{let given = given.into_boxed();{given.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body)
-Scm::func(imports::list).invoke(&[Scm::symbol("let*"),{
+imports::list(&[Scm::symbol("let*"),{
 // (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt))
-Scm::func(imports::map).invoke(&[{// Closure
+imports::map(&[{// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let assignment = args[0].clone();{
 // (list (car assignment) (caddr assignment))
-Scm::func(imports::list).invoke(&[{
+imports::list(&[{
 // (car assignment)
-Scm::func(imports::car).invoke(&[assignment.clone()])},{
+imports::car(&[assignment.clone()])},{
 // (caddr assignment)
-Scm::func(imports::caddr).invoke(&[assignment.clone()])}])}})},{
+imports::caddr(&[assignment.clone()])}])}})},{
 // (cdr stmt)
-Scm::func(imports::cdr).invoke(&[stmt.clone()])}])},body.clone()])}})});when.set({// Closure
+imports::cdr(&[stmt.clone()])}])},body.clone()])}})});when.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (loop (cdr stmt)))
 {
@@ -1057,104 +1088,104 @@ let body = body.clone();let loop_ = loop_.clone();Scm::func(move |args: &[Scm]|{
 // (cond ...)
 if ({
 // (null? stmt*)
-Scm::func(imports::null_p).invoke(&[stmt_star_.clone()])}).is_true() {body.clone()} else if ({
+imports::null_p(&[stmt_star_.clone()])}).is_true() {body.clone()} else if ({
 // (eq? (quote <-) (cadar stmt*))
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("<-"),{
+imports::eq_p(&[Scm::symbol("<-"),{
 // (cadar stmt*)
-Scm::func(imports::cadar).invoke(&[stmt_star_.clone()])}])}).is_true() {{
+imports::cadar(&[stmt_star_.clone()])}])}).is_true() {{
 // (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))
-Scm::func(imports::list).invoke(&[Scm::symbol("let"),{
+imports::list(&[Scm::symbol("let"),{
 // (list (list (caar stmt*) (caddar stmt*)))
-Scm::func(imports::list).invoke(&[{
+imports::list(&[{
 // (list (caar stmt*) (caddar stmt*))
-Scm::func(imports::list).invoke(&[{
+imports::list(&[{
 // (caar stmt*)
-Scm::func(imports::caar).invoke(&[stmt_star_.clone()])},{
+imports::caar(&[stmt_star_.clone()])},{
 // (caddar stmt*)
-Scm::func(imports::caddar).invoke(&[stmt_star_.clone()])}])}])},{
+imports::caddar(&[stmt_star_.clone()])}])}])},{
 // (loop (cdr stmt*))
 loop_.get().invoke(&[{
 // (cdr stmt*)
-Scm::func(imports::cdr).invoke(&[stmt_star_.clone()])}])}])}} else {{
+imports::cdr(&[stmt_star_.clone()])}])}])}} else {{
 // (list (quote begin) (car stmt*) (loop (cdr stmt*)))
-Scm::func(imports::list).invoke(&[Scm::symbol("begin"),{
+imports::list(&[Scm::symbol("begin"),{
 // (car stmt*)
-Scm::func(imports::car).invoke(&[stmt_star_.clone()])},{
+imports::car(&[stmt_star_.clone()])},{
 // (loop (cdr stmt*))
 loop_.get().invoke(&[{
 // (cdr stmt*)
-Scm::func(imports::cdr).invoke(&[stmt_star_.clone()])}])}])}}}})});{
+imports::cdr(&[stmt_star_.clone()])}])}])}}}})});{
 // (loop (cdr stmt))
 loop_.get().invoke(&[{
 // (cdr stmt)
-Scm::func(imports::cdr).invoke(&[stmt.clone()])}])}}}}}}})});then.set({// Closure
+imports::cdr(&[stmt.clone()])}])}}}}}}})});then.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))
-Scm::func(imports::cons).invoke(&[Scm::symbol("begin"),{
+imports::cons(&[Scm::symbol("begin"),{
 // (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)
-Scm::func(imports::append).invoke(&[{
+imports::append(&[{
 // (map (lambda (pred) (list (quote assert) pred)) (cdr stmt))
-Scm::func(imports::map).invoke(&[{// Closure
+imports::map(&[{// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let pred = args[0].clone();{
 // (list (quote assert) pred)
-Scm::func(imports::list).invoke(&[Scm::symbol("assert"),pred.clone()])}})},{
+imports::list(&[Scm::symbol("assert"),pred.clone()])}})},{
 // (cdr stmt)
-Scm::func(imports::cdr).invoke(&[stmt.clone()])}])},body.clone()])}])}})});dispatch.set({// Closure
+imports::cdr(&[stmt.clone()])}])},body.clone()])}])}})});dispatch.set({// Closure
 let given = given.clone();let dispatch = dispatch.clone();let when = when.clone();let then = then.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let section_star_ = args[0].clone();let body = args[1].clone();{
 // (cond ...)
 if ({
 // (null? section*)
-Scm::func(imports::null_p).invoke(&[section_star_.clone()])}).is_true() {body.clone()} else if ({
+imports::null_p(&[section_star_.clone()])}).is_true() {body.clone()} else if ({
 // (eq? (quote given) (caar section*))
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("given"),{
+imports::eq_p(&[Scm::symbol("given"),{
 // (caar section*)
-Scm::func(imports::caar).invoke(&[section_star_.clone()])}])}).is_true() {{
+imports::caar(&[section_star_.clone()])}])}).is_true() {{
 // (given (car section*) (dispatch (cdr section*) body))
 given.get().invoke(&[{
 // (car section*)
-Scm::func(imports::car).invoke(&[section_star_.clone()])},{
+imports::car(&[section_star_.clone()])},{
 // (dispatch (cdr section*) body)
 dispatch.get().invoke(&[{
 // (cdr section*)
-Scm::func(imports::cdr).invoke(&[section_star_.clone()])},body.clone()])}])}} else if ({
+imports::cdr(&[section_star_.clone()])},body.clone()])}])}} else if ({
 // (eq? (quote when) (caar section*))
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("when"),{
+imports::eq_p(&[Scm::symbol("when"),{
 // (caar section*)
-Scm::func(imports::caar).invoke(&[section_star_.clone()])}])}).is_true() {{
+imports::caar(&[section_star_.clone()])}])}).is_true() {{
 // (when (car section*) (dispatch (cdr section*) body))
 when.get().invoke(&[{
 // (car section*)
-Scm::func(imports::car).invoke(&[section_star_.clone()])},{
+imports::car(&[section_star_.clone()])},{
 // (dispatch (cdr section*) body)
 dispatch.get().invoke(&[{
 // (cdr section*)
-Scm::func(imports::cdr).invoke(&[section_star_.clone()])},body.clone()])}])}} else if ({
+imports::cdr(&[section_star_.clone()])},body.clone()])}])}} else if ({
 // (eq? (quote then) (caar section*))
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("then"),{
+imports::eq_p(&[Scm::symbol("then"),{
 // (caar section*)
-Scm::func(imports::caar).invoke(&[section_star_.clone()])}])}).is_true() {{
+imports::caar(&[section_star_.clone()])}])}).is_true() {{
 // (then (car section*) (dispatch (cdr section*) body))
 then.get().invoke(&[{
 // (car section*)
-Scm::func(imports::car).invoke(&[section_star_.clone()])},{
+imports::car(&[section_star_.clone()])},{
 // (dispatch (cdr section*) body)
 dispatch.get().invoke(&[{
 // (cdr section*)
-Scm::func(imports::cdr).invoke(&[section_star_.clone()])},body.clone()])}])}} else {{
+imports::cdr(&[section_star_.clone()])},body.clone()])}])}} else {{
 // (error "invalid testcase")
-Scm::func(imports::error).invoke(&[Scm::from("invalid testcase")])}}}})});{
+imports::error(&[Scm::from("invalid testcase")])}}}})});{
 // (let ((body (dispatch (testcase-body case) (quote ())))) (make-testcase (testcase-description case) (astify body env #f)))
 {let body = {
 // (dispatch (testcase-body case) (quote ()))
 dispatch.get().invoke(&[{
 // (testcase-body case)
-Scm::func(imports::testcase_minus_body).invoke(&[case.clone()])},Scm::Nil])};{
+imports::testcase_minus_body(&[case.clone()])},Scm::Nil])};{
 // (make-testcase (testcase-description case) (astify body env #f))
-Scm::func(imports::make_minus_testcase).invoke(&[{
+imports::make_minus_testcase(&[{
 // (testcase-description case)
-Scm::func(imports::testcase_minus_description).invoke(&[case.clone()])},{
+imports::testcase_minus_description(&[case.clone()])},{
 // (astify body env #f)
-Scm::func(astify).invoke(&[body.clone(),env.clone(),Scm::False])}])}}}}}}}}}}}}.into()
+astify(&[body.clone(),env.clone(),Scm::False])}])}}}}}}}}}}}}.into()
 }
 pub fn astify_minus_testsuite(args: &[Scm]) -> Scm {
     {
@@ -1166,9 +1197,9 @@ pub fn astify_minus_testsuite(args: &[Scm]) -> Scm {
         let env = args[2].clone();
         {
             // (make-testsuite name (map (lambda (c) (astify-testcase c env)) cases))
-            Scm::func(imports::make_minus_testsuite).invoke(&[name.clone(), {
+            imports::make_minus_testsuite(&[name.clone(), {
                 // (map (lambda (c) (astify-testcase c env)) cases)
-                Scm::func(imports::map).invoke(&[
+                imports::map(&[
                     {
                         // Closure
                         let env = env.clone();
@@ -1197,7 +1228,7 @@ pub fn astify_minus_unspecified(args: &[Scm]) -> Scm {
         }
         {
             // (make-constant (quote *UNSPECIFIED*))
-            Scm::func(imports::make_minus_constant).invoke(&[Scm::symbol("*UNSPECIFIED*")])
+            imports::make_minus_constant(&[Scm::symbol("*UNSPECIFIED*")])
         }
     }
     .into()

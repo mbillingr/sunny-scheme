@@ -21,69 +21,69 @@ pub mod exports {
 pub fn rust_minus_gen_minus_global_minus_defs(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let g = args[1].clone();if ({
 // (null? g)
-Scm::func(imports::null_p).invoke(&[g.clone()])}).is_true() {{
+imports::null_p(&[g.clone()])}).is_true() {{
 // (println module)
-Scm::func(imports::println).invoke(&[module.clone()])}} else {{
+imports::println(&[module.clone()])}} else {{
 // (cond ...)
 if ({
 // (import-variable? (cdar g))
-Scm::func(imports::import_minus_variable_p).invoke(&[{
+imports::import_minus_variable_p(&[{
 // (cdar g)
-Scm::func(imports::cdar).invoke(&[g.clone()])}])}).is_true() {{
+imports::cdar(&[g.clone()])}])}).is_true() {{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
-Scm::func(imports::cdr).invoke(&[g.clone()])}])}} else if ({
+imports::cdr(&[g.clone()])}])}} else if ({
 // (keyword? (cdar g))
-Scm::func(imports::keyword_p).invoke(&[{
+imports::keyword_p(&[{
 // (cdar g)
-Scm::func(imports::cdar).invoke(&[g.clone()])}])}).is_true() {{
+imports::cdar(&[g.clone()])}])}).is_true() {{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
-Scm::func(imports::cdr).invoke(&[g.clone()])}])}} else if ({
+imports::cdr(&[g.clone()])}])}} else if ({
 // (global-variable? (cdar g))
-Scm::func(imports::global_minus_variable_p).invoke(&[{
+imports::global_minus_variable_p(&[{
 // (cdar g)
-Scm::func(imports::cdar).invoke(&[g.clone()])}])}).is_true() {{{
+imports::cdar(&[g.clone()])}])}).is_true() {{{
 // (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE " (caar g) "\"))}")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
+imports::println(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
 // (rustify-identifier (caar g))
-Scm::func(imports::rustify_minus_identifier).invoke(&[{
+imports::rustify_minus_identifier(&[{
 // (caar g)
-Scm::func(imports::caar).invoke(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "),{
+imports::caar(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "),{
 // (caar g)
-Scm::func(imports::caar).invoke(&[g.clone()])},Scm::from("\"))}")])};{
+imports::caar(&[g.clone()])},Scm::from("\"))}")])};{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
-Scm::func(imports::cdr).invoke(&[g.clone()])}])}}} else if ({
+imports::cdr(&[g.clone()])}])}}} else if ({
 // (global-function? (cdar g))
-Scm::func(imports::global_minus_function_p).invoke(&[{
+imports::global_minus_function_p(&[{
 // (cdar g)
-Scm::func(imports::cdar).invoke(&[g.clone()])}])}).is_true() {{{
+imports::cdar(&[g.clone()])}])}).is_true() {{{
 // (println module "pub fn " (rustify-identifier (caar g)) "(args: &[Scm]) -> Scm { ")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from("pub fn "),{
+imports::println(&[module.clone(),Scm::from("pub fn "),{
 // (rustify-identifier (caar g))
-Scm::func(imports::rustify_minus_identifier).invoke(&[{
+imports::rustify_minus_identifier(&[{
 // (caar g)
-Scm::func(imports::caar).invoke(&[g.clone()])}])},Scm::from("(args: &[Scm]) -> Scm { ")])};{
+imports::caar(&[g.clone()])}])},Scm::from("(args: &[Scm]) -> Scm { ")])};{
 // ((global-function-get-value (cdar g)) (quote gen-rust) module)
 {
 // (global-function-get-value (cdar g))
-Scm::func(imports::global_minus_function_minus_get_minus_value).invoke(&[{
+imports::global_minus_function_minus_get_minus_value(&[{
 // (cdar g)
-Scm::func(imports::cdar).invoke(&[g.clone()])}])}.invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
+imports::cdar(&[g.clone()])}])}.invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (println module ".into()}")
-Scm::func(imports::println).invoke(&[module.clone(),Scm::from(".into()}")])};{
+imports::println(&[module.clone(),Scm::from(".into()}")])};{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
-Scm::func(imports::cdr).invoke(&[g.clone()])}])}}} else {{
+imports::cdr(&[g.clone()])}])}}} else {{
 // (error "Unexpected entry in global environment" (car g))
-Scm::func(imports::error).invoke(&[Scm::from("Unexpected entry in global environment"),{
+imports::error(&[Scm::from("Unexpected entry in global environment"),{
 // (car g)
-Scm::func(imports::car).invoke(&[g.clone()])}])}}}}}.into()
+imports::car(&[g.clone()])}])}}}}}.into()
 }
 pub fn rust_minus_gen_minus_in_minus_module(args: &[Scm]) -> Scm {
     {
@@ -98,8 +98,7 @@ pub fn rust_minus_gen_minus_in_minus_module(args: &[Scm]) -> Scm {
             {
                 let module = {
                     // (open-module name base-path)
-                    Scm::func(imports::open_minus_module)
-                        .invoke(&[name.clone(), base_minus_path.clone()])
+                    imports::open_minus_module(&[name.clone(), base_minus_path.clone()])
                 };
                 {
                     {
@@ -108,7 +107,7 @@ pub fn rust_minus_gen_minus_in_minus_module(args: &[Scm]) -> Scm {
                     };
                     {
                         // (close-module module)
-                        Scm::func(imports::close_minus_module).invoke(&[module.clone()])
+                        imports::close_minus_module(&[module.clone()])
                     }
                 }
             }
@@ -129,7 +128,7 @@ pub fn rust_minus_gen_minus_in_minus_submodule(args: &[Scm]) -> Scm {
             {
                 let module = {
                     // (open-submodule name parent)
-                    Scm::func(imports::open_minus_submodule).invoke(&[name.clone(), parent.clone()])
+                    imports::open_minus_submodule(&[name.clone(), parent.clone()])
                 };
                 {
                     {
@@ -138,7 +137,7 @@ pub fn rust_minus_gen_minus_in_minus_submodule(args: &[Scm]) -> Scm {
                     };
                     {
                         // (close-module module)
-                        Scm::func(imports::close_minus_module).invoke(&[module.clone()])
+                        imports::close_minus_module(&[module.clone()])
                     }
                 }
             }
@@ -156,14 +155,14 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
         {
             {
                 // (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
-                Scm::func(imports::println).invoke(&[
+                imports::println(&[
                     module.clone(),
                     Scm::from("pub mod "),
                     {
                         // (rustify-libname (module-tree-name node))
-                        Scm::func(imports::rustify_minus_libname).invoke(&[{
+                        imports::rustify_minus_libname(&[{
                             // (module-tree-name node)
-                            Scm::func(imports::module_minus_tree_minus_name).invoke(&[node.clone()])
+                            imports::module_minus_tree_minus_name(&[node.clone()])
                         }])
                     },
                     Scm::from(";"),
@@ -171,7 +170,7 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
             };
             if ({
                 // (module-tree-leaf? node)
-                Scm::func(imports::module_minus_tree_minus_leaf_p).invoke(&[node.clone()])
+                imports::module_minus_tree_minus_leaf_p(&[node.clone()])
             })
             .is_true()
             {
@@ -180,7 +179,7 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
                     Scm::func(rust_minus_gen_minus_in_minus_submodule).invoke(&[
                         {
                             // (module-tree-name node)
-                            Scm::func(imports::module_minus_tree_minus_name).invoke(&[node.clone()])
+                            imports::module_minus_tree_minus_name(&[node.clone()])
                         },
                         module.clone(),
                         {
@@ -195,8 +194,7 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
                                     // ((module-tree-libobj node) (quote gen-rust) submod)
                                     {
                                         // (module-tree-libobj node)
-                                        Scm::func(imports::module_minus_tree_minus_libobj)
-                                            .invoke(&[node.clone()])
+                                        imports::module_minus_tree_minus_libobj(&[node.clone()])
                                     }
                                     .invoke(&[Scm::symbol("gen-rust"), submod.clone()])
                                 }
@@ -210,7 +208,7 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
                     Scm::func(rust_minus_gen_minus_in_minus_submodule).invoke(&[
                         {
                             // (module-tree-name node)
-                            Scm::func(imports::module_minus_tree_minus_name).invoke(&[node.clone()])
+                            imports::module_minus_tree_minus_name(&[node.clone()])
                         },
                         module.clone(),
                         {
@@ -226,8 +224,9 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
                                     Scm::func(rust_minus_gen_minus_module_minus_tree_minus_list)
                                         .invoke(&[submod.clone(), {
                                             // (module-tree-children node)
-                                            Scm::func(imports::module_minus_tree_minus_children)
-                                                .invoke(&[node.clone()])
+                                            imports::module_minus_tree_minus_children(&[
+                                                node.clone()
+                                            ])
                                         }])
                                 }
                             })
@@ -248,7 +247,7 @@ pub fn rust_minus_gen_minus_module_minus_tree_minus_list(args: &[Scm]) -> Scm {
         let nodes = args[1].clone();
         {
             // (for-each (lambda (child) (rust-gen-module-tree module child)) nodes)
-            Scm::func(imports::for_minus_each).invoke(&[
+            imports::for_minus_each(&[
                 {
                     // Closure
                     let module = module.clone();
@@ -259,8 +258,7 @@ pub fn rust_minus_gen_minus_module_minus_tree_minus_list(args: &[Scm]) -> Scm {
                         let child = args[0].clone();
                         {
                             // (rust-gen-module-tree module child)
-                            Scm::func(rust_minus_gen_minus_module_minus_tree)
-                                .invoke(&[module.clone(), child.clone()])
+                            rust_minus_gen_minus_module_minus_tree(&[module.clone(), child.clone()])
                         }
                     })
                 },
@@ -282,13 +280,12 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
             {
                 let module_minus_tree = {
                     // (make-module-tree-node (quote root))
-                    Scm::func(imports::make_minus_module_minus_tree_minus_node)
-                        .invoke(&[Scm::symbol("root")])
+                    imports::make_minus_module_minus_tree_minus_node(&[Scm::symbol("root")])
                 };
                 {
                     {
                         // (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs)
-                        Scm::func(imports::for_minus_each).invoke(&[
+                        imports::for_minus_each(&[
                             {
                                 // Closure
                                 let module_minus_tree = module_minus_tree.clone();
@@ -299,19 +296,17 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
                                     let lib = args[0].clone();
                                     {
                                         // (module-tree-insert! module-tree (car lib) (cdr lib))
-                                        Scm::func(imports::module_minus_tree_minus_insert_i).invoke(
-                                            &[
-                                                module_minus_tree.clone(),
-                                                {
-                                                    // (car lib)
-                                                    Scm::func(imports::car).invoke(&[lib.clone()])
-                                                },
-                                                {
-                                                    // (cdr lib)
-                                                    Scm::func(imports::cdr).invoke(&[lib.clone()])
-                                                },
-                                            ],
-                                        )
+                                        imports::module_minus_tree_minus_insert_i(&[
+                                            module_minus_tree.clone(),
+                                            {
+                                                // (car lib)
+                                                imports::car(&[lib.clone()])
+                                            },
+                                            {
+                                                // (cdr lib)
+                                                imports::cdr(&[lib.clone()])
+                                            },
+                                        ])
                                     }
                                 })
                             },
@@ -324,8 +319,9 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
                             module.clone(),
                             {
                                 // (module-tree-children module-tree)
-                                Scm::func(imports::module_minus_tree_minus_children)
-                                    .invoke(&[module_minus_tree.clone()])
+                                imports::module_minus_tree_minus_children(&[
+                                    module_minus_tree.clone()
+                                ])
                             },
                         ])
                     }

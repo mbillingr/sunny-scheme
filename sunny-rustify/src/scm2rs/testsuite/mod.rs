@@ -49,7 +49,7 @@ mod tests {
                     let x = Scm::Nil;
                     assert!({
                         // (null? x)
-                        Scm::func(imports::null_p).invoke(&[x.clone()])
+                        imports::null_p(&[x.clone()])
                     }
                     .is_true());
                 }
@@ -69,7 +69,7 @@ mod tests {
                     let y = Scm::from(1);
                     assert!({
                         // (= x y)
-                        Scm::func(imports::_e_).invoke(&[x.clone(), y.clone()])
+                        imports::_e_(&[x.clone(), y.clone()])
                     }
                     .is_true());
                 }

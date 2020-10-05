@@ -27,10 +27,10 @@ pub fn adjoin_minus_boxed(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (cons (new-boxed name) env)
-            Scm::func(imports::cons).invoke(&[
+            imports::cons(&[
                 {
                     // (new-boxed name)
-                    Scm::func(imports::new_minus_boxed).invoke(&[name.clone()])
+                    imports::new_minus_boxed(&[name.clone()])
                 },
                 env.clone(),
             ])
@@ -49,14 +49,14 @@ pub fn adjoin_minus_boxed_minus_env(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? name*)
-                Scm::func(imports::null_p).invoke(&[name_star_.clone()])
+                imports::null_p(&[name_star_.clone()])
             })
             .is_true()
             {
                 env.clone()
             } else if ({
                 // (pair? name*)
-                Scm::func(imports::pair_p).invoke(&[name_star_.clone()])
+                imports::pair_p(&[name_star_.clone()])
             })
             .is_true()
             {
@@ -65,14 +65,14 @@ pub fn adjoin_minus_boxed_minus_env(args: &[Scm]) -> Scm {
                     Scm::func(adjoin_minus_boxed_minus_env).invoke(&[
                         {
                             // (cdr name*)
-                            Scm::func(imports::cdr).invoke(&[name_star_.clone()])
+                            imports::cdr(&[name_star_.clone()])
                         },
                         {
                             // (adjoin-boxed (car name*) env)
-                            Scm::func(adjoin_minus_boxed).invoke(&[
+                            adjoin_minus_boxed(&[
                                 {
                                     // (car name*)
-                                    Scm::func(imports::car).invoke(&[name_star_.clone()])
+                                    imports::car(&[name_star_.clone()])
                                 },
                                 env.clone(),
                             ])
@@ -82,7 +82,7 @@ pub fn adjoin_minus_boxed_minus_env(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (adjoin-boxed name* env)
-                    Scm::func(adjoin_minus_boxed).invoke(&[name_star_.clone(), env.clone()])
+                    adjoin_minus_boxed(&[name_star_.clone(), env.clone()])
                 }
             }
         }
@@ -101,7 +101,7 @@ pub fn adjoin_minus_global_i(args: &[Scm]) -> Scm {
             Scm::func(adjoin_minus_global_minus_var_i).invoke(&[
                 {
                     // (new-global name)
-                    Scm::func(imports::new_minus_global).invoke(&[name.clone()])
+                    imports::new_minus_global(&[name.clone()])
                 },
                 env.clone(),
             ])
@@ -121,22 +121,22 @@ pub fn adjoin_minus_global_minus_var_i(args: &[Scm]) -> Scm {
             {
                 let genv = {
                     // (find-globals env)
-                    Scm::func(find_minus_globals).invoke(&[env.clone()])
+                    find_minus_globals(&[env.clone()])
                 };
                 {
                     {
                         // (set-cdr! genv (cons var (cdr genv)))
-                        Scm::func(imports::set_minus_cdr_i).invoke(&[genv.clone(), {
+                        imports::set_minus_cdr_i(&[genv.clone(), {
                             // (cons var (cdr genv))
-                            Scm::func(imports::cons).invoke(&[var.clone(), {
+                            imports::cons(&[var.clone(), {
                                 // (cdr genv)
-                                Scm::func(imports::cdr).invoke(&[genv.clone()])
+                                imports::cdr(&[genv.clone()])
                             }])
                         }])
                     };
                     {
                         // (cdr var)
-                        Scm::func(imports::cdr).invoke(&[var.clone()])
+                        imports::cdr(&[var.clone()])
                     }
                 }
             }
@@ -156,7 +156,7 @@ pub fn adjoin_minus_import_i(args: &[Scm]) -> Scm {
             Scm::func(adjoin_minus_global_minus_var_i).invoke(&[
                 {
                     // (new-import name)
-                    Scm::func(imports::new_minus_import).invoke(&[name.clone()])
+                    imports::new_minus_import(&[name.clone()])
                 },
                 env.clone(),
             ])
@@ -191,7 +191,7 @@ pub fn adjoin_minus_import_star__i(args: &[Scm]) -> Scm {
                                     let genv = args[1].clone();
                                     if ({
                                         // (null? name*)
-                                        Scm::func(imports::null_p).invoke(&[name_star_.clone()])
+                                        imports::null_p(&[name_star_.clone()])
                                     })
                                     .is_true()
                                     {
@@ -200,38 +200,29 @@ pub fn adjoin_minus_import_star__i(args: &[Scm]) -> Scm {
                                         {
                                             {
                                                 // (set-cdr! genv (cons (new-import (car name*)) (cdr genv)))
-                                                Scm::func(imports::set_minus_cdr_i).invoke(&[
-                                                    genv.clone(),
-                                                    {
-                                                        // (cons (new-import (car name*)) (cdr genv))
-                                                        Scm::func(imports::cons).invoke(&[
-                                                            {
-                                                                // (new-import (car name*))
-                                                                Scm::func(imports::new_minus_import)
-                                                                    .invoke(&[{
-                                                                        // (car name*)
-                                                                        Scm::func(imports::car)
-                                                                            .invoke(&[
-                                                                                name_star_.clone()
-                                                                            ])
-                                                                    }])
-                                                            },
-                                                            {
-                                                                // (cdr genv)
-                                                                Scm::func(imports::cdr)
-                                                                    .invoke(&[genv.clone()])
-                                                            },
-                                                        ])
-                                                    },
-                                                ])
+                                                imports::set_minus_cdr_i(&[genv.clone(), {
+                                                    // (cons (new-import (car name*)) (cdr genv))
+                                                    imports::cons(&[
+                                                        {
+                                                            // (new-import (car name*))
+                                                            imports::new_minus_import(&[{
+                                                                // (car name*)
+                                                                imports::car(&[name_star_.clone()])
+                                                            }])
+                                                        },
+                                                        {
+                                                            // (cdr genv)
+                                                            imports::cdr(&[genv.clone()])
+                                                        },
+                                                    ])
+                                                }])
                                             };
                                             {
                                                 // (loop (cdr name*) genv)
                                                 loop_.get().invoke(&[
                                                     {
                                                         // (cdr name*)
-                                                        Scm::func(imports::cdr)
-                                                            .invoke(&[name_star_.clone()])
+                                                        imports::cdr(&[name_star_.clone()])
                                                     },
                                                     genv.clone(),
                                                 ])
@@ -244,7 +235,7 @@ pub fn adjoin_minus_import_star__i(args: &[Scm]) -> Scm {
                                 // (loop name* (find-globals env))
                                 loop_.get().invoke(&[name_star_.clone(), {
                                     // (find-globals env)
-                                    Scm::func(find_minus_globals).invoke(&[env.clone()])
+                                    find_minus_globals(&[env.clone()])
                                 }])
                             }
                         }
@@ -264,10 +255,10 @@ pub fn adjoin_minus_local(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (cons (new-local name) env)
-            Scm::func(imports::cons).invoke(&[
+            imports::cons(&[
                 {
                     // (new-local name)
-                    Scm::func(imports::new_minus_local).invoke(&[name.clone()])
+                    imports::new_minus_local(&[name.clone()])
                 },
                 env.clone(),
             ])
@@ -286,14 +277,14 @@ pub fn adjoin_minus_local_minus_env(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? name*)
-                Scm::func(imports::null_p).invoke(&[name_star_.clone()])
+                imports::null_p(&[name_star_.clone()])
             })
             .is_true()
             {
                 env.clone()
             } else if ({
                 // (pair? name*)
-                Scm::func(imports::pair_p).invoke(&[name_star_.clone()])
+                imports::pair_p(&[name_star_.clone()])
             })
             .is_true()
             {
@@ -302,14 +293,14 @@ pub fn adjoin_minus_local_minus_env(args: &[Scm]) -> Scm {
                     Scm::func(adjoin_minus_local_minus_env).invoke(&[
                         {
                             // (cdr name*)
-                            Scm::func(imports::cdr).invoke(&[name_star_.clone()])
+                            imports::cdr(&[name_star_.clone()])
                         },
                         {
                             // (adjoin-local (car name*) env)
-                            Scm::func(adjoin_minus_local).invoke(&[
+                            adjoin_minus_local(&[
                                 {
                                     // (car name*)
-                                    Scm::func(imports::car).invoke(&[name_star_.clone()])
+                                    imports::car(&[name_star_.clone()])
                                 },
                                 env.clone(),
                             ])
@@ -319,7 +310,7 @@ pub fn adjoin_minus_local_minus_env(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (adjoin-local name* env)
-                    Scm::func(adjoin_minus_local).invoke(&[name_star_.clone(), env.clone()])
+                    adjoin_minus_local(&[name_star_.clone(), env.clone()])
                 }
             }
         }
@@ -362,7 +353,7 @@ pub fn env_minus_for_minus_each(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (for-each (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
-            Scm::func(imports::for_minus_each).invoke(&[
+            imports::for_minus_each(&[
                 {
                     // Closure
                     let func = func.clone();
@@ -373,8 +364,7 @@ pub fn env_minus_for_minus_each(args: &[Scm]) -> Scm {
                         let entry = args[0].clone();
                         if ({
                             // (eq? (quote GLOBAL-MARKER) entry)
-                            Scm::func(imports::eq_p)
-                                .invoke(&[Scm::symbol("GLOBAL-MARKER"), entry.clone()])
+                            imports::eq_p(&[Scm::symbol("GLOBAL-MARKER"), entry.clone()])
                         })
                         .is_true()
                         {
@@ -401,9 +391,9 @@ pub fn find_minus_globals(args: &[Scm]) -> Scm {
         let env = args[0].clone();
         if ({
             // (eq? (quote GLOBAL-MARKER) (car env))
-            Scm::func(imports::eq_p).invoke(&[Scm::symbol("GLOBAL-MARKER"), {
+            imports::eq_p(&[Scm::symbol("GLOBAL-MARKER"), {
                 // (car env)
-                Scm::func(imports::car).invoke(&[env.clone()])
+                imports::car(&[env.clone()])
             }])
         })
         .is_true()
@@ -414,7 +404,7 @@ pub fn find_minus_globals(args: &[Scm]) -> Scm {
                 // (find-globals (cdr env))
                 Scm::func(find_minus_globals).invoke(&[{
                     // (cdr env)
-                    Scm::func(imports::cdr).invoke(&[env.clone()])
+                    imports::cdr(&[env.clone()])
                 }])
             }
         }
@@ -432,16 +422,16 @@ pub fn lookup(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? env)
-                Scm::func(imports::null_p).invoke(&[env.clone()])
+                imports::null_p(&[env.clone()])
             })
             .is_true()
             {
                 Scm::False
             } else if ({
                 // (eq? (quote GLOBAL-MARKER) (car env))
-                Scm::func(imports::eq_p).invoke(&[Scm::symbol("GLOBAL-MARKER"), {
+                imports::eq_p(&[Scm::symbol("GLOBAL-MARKER"), {
                     // (car env)
-                    Scm::func(imports::car).invoke(&[env.clone()])
+                    imports::car(&[env.clone()])
                 }])
             })
             .is_true()
@@ -450,28 +440,28 @@ pub fn lookup(args: &[Scm]) -> Scm {
                     // (lookup name (cdr env))
                     Scm::func(lookup).invoke(&[name.clone(), {
                         // (cdr env)
-                        Scm::func(imports::cdr).invoke(&[env.clone()])
+                        imports::cdr(&[env.clone()])
                     }])
                 }
             } else if ({
                 // (eq? name (caar env))
-                Scm::func(imports::eq_p).invoke(&[name.clone(), {
+                imports::eq_p(&[name.clone(), {
                     // (caar env)
-                    Scm::func(imports::caar).invoke(&[env.clone()])
+                    imports::caar(&[env.clone()])
                 }])
             })
             .is_true()
             {
                 {
                     // (cdar env)
-                    Scm::func(imports::cdar).invoke(&[env.clone()])
+                    imports::cdar(&[env.clone()])
                 }
             } else {
                 {
                     // (lookup name (cdr env))
                     Scm::func(lookup).invoke(&[name.clone(), {
                         // (cdr env)
-                        Scm::func(imports::cdr).invoke(&[env.clone()])
+                        imports::cdr(&[env.clone()])
                     }])
                 }
             }
@@ -488,7 +478,7 @@ pub fn lookup_star_(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (map (lambda (name) (lookup name env)) name*)
-            Scm::func(imports::map).invoke(&[
+            imports::map(&[
                 {
                     // Closure
                     let env = env.clone();
@@ -516,15 +506,15 @@ pub fn make_minus_global_minus_env(args: &[Scm]) -> Scm {
         }
         {
             // (list (quote GLOBAL-MARKER) (new-import (quote assert-eq)) (new-import (quote assert-equal)))
-            Scm::func(imports::list).invoke(&[
+            imports::list(&[
                 Scm::symbol("GLOBAL-MARKER"),
                 {
                     // (new-import (quote assert-eq))
-                    Scm::func(imports::new_minus_import).invoke(&[Scm::symbol("assert-eq")])
+                    imports::new_minus_import(&[Scm::symbol("assert-eq")])
                 },
                 {
                     // (new-import (quote assert-equal))
-                    Scm::func(imports::new_minus_import).invoke(&[Scm::symbol("assert-equal")])
+                    imports::new_minus_import(&[Scm::symbol("assert-equal")])
                 },
             ])
         }
@@ -540,7 +530,7 @@ pub fn map_minus_env(args: &[Scm]) -> Scm {
         let env = args[1].clone();
         {
             // (map (lambda (entry) (if (eq? (quote GLOBAL-MARKER) entry) entry (func entry))) env)
-            Scm::func(imports::map).invoke(&[
+            imports::map(&[
                 {
                     // Closure
                     let func = func.clone();
@@ -551,8 +541,7 @@ pub fn map_minus_env(args: &[Scm]) -> Scm {
                         let entry = args[0].clone();
                         if ({
                             // (eq? (quote GLOBAL-MARKER) entry)
-                            Scm::func(imports::eq_p)
-                                .invoke(&[Scm::symbol("GLOBAL-MARKER"), entry.clone()])
+                            imports::eq_p(&[Scm::symbol("GLOBAL-MARKER"), entry.clone()])
                         })
                         .is_true()
                         {

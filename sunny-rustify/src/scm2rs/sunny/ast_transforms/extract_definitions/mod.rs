@@ -20,7 +20,7 @@ let extract_minus_definition = extract_minus_definition.clone();Scm::func(move |
 // (cond ...)
 if ({
 // (eq? (node (quote kind)) (quote DEFINITION))
-Scm::func(imports::eq_p).invoke(&[{
+imports::eq_p(&[{
 // (node (quote kind))
 node.clone().invoke(&[Scm::symbol("kind")])},Scm::symbol("DEFINITION")])}).is_true() {{
 // (extract-definition node)
@@ -35,27 +35,27 @@ node.clone().invoke(&[Scm::symbol("get-val")])};{
 // (cond ...)
 if ({
 // (eq? (quote CLOSURE) (val (quote kind)))
-Scm::func(imports::eq_p).invoke(&[Scm::symbol("CLOSURE"),{
+imports::eq_p(&[Scm::symbol("CLOSURE"),{
 // (val (quote kind))
 val.clone().invoke(&[Scm::symbol("kind")])}])}).is_true() {{if ({
 // (not (null? (val (quote free-vars))))
-Scm::func(imports::not).invoke(&[{
+imports::not(&[{
 // (null? (val (quote free-vars)))
-Scm::func(imports::null_p).invoke(&[{
+imports::null_p(&[{
 // (val (quote free-vars))
 val.clone().invoke(&[Scm::symbol("free-vars")])}])}])}).is_true() {{
 // (error "Definition with free variables" val)
-Scm::func(imports::error).invoke(&[Scm::from("Definition with free variables"),val.clone()])}} else {Scm::symbol("*UNSPECIFIED*")};{
+imports::error(&[Scm::from("Definition with free variables"),val.clone()])}} else {Scm::symbol("*UNSPECIFIED*")};{
 // (global-function-set-value! (node (quote get-var)) (val (quote inner-function)))
-Scm::func(imports::global_minus_function_minus_set_minus_value_i).invoke(&[{
+imports::global_minus_function_minus_set_minus_value_i(&[{
 // (node (quote get-var))
 node.clone().invoke(&[Scm::symbol("get-var")])},{
 // (val (quote inner-function))
 val.clone().invoke(&[Scm::symbol("inner-function")])}])};{
 // (make-nop)
-Scm::func(imports::make_minus_nop).invoke(&[])}}} else {{
+imports::make_minus_nop(&[])}}} else {{
 // (make-definition (node (quote get-name)) (node (quote get-var)) val)
-Scm::func(imports::make_minus_definition).invoke(&[{
+imports::make_minus_definition(&[{
 // (node (quote get-name))
 node.clone().invoke(&[Scm::symbol("get-name")])},{
 // (node (quote get-var))

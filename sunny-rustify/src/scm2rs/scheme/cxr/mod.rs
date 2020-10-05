@@ -39,9 +39,9 @@ pub fn caaaar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (caar (caar x))
-            Scm::func(imports::caar).invoke(&[{
+            imports::caar(&[{
                 // (caar x)
-                Scm::func(imports::caar).invoke(&[x.clone()])
+                imports::caar(&[x.clone()])
             }])
         }
     }
@@ -55,9 +55,9 @@ pub fn caaadr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (caar (cadr x))
-            Scm::func(imports::caar).invoke(&[{
+            imports::caar(&[{
                 // (cadr x)
-                Scm::func(imports::cadr).invoke(&[x.clone()])
+                imports::cadr(&[x.clone()])
             }])
         }
     }
@@ -71,9 +71,9 @@ pub fn caaar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (car (caar x))
-            Scm::func(imports::car).invoke(&[{
+            imports::car(&[{
                 // (caar x)
-                Scm::func(imports::caar).invoke(&[x.clone()])
+                imports::caar(&[x.clone()])
             }])
         }
     }
@@ -87,9 +87,9 @@ pub fn caadar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (caar (cdar x))
-            Scm::func(imports::caar).invoke(&[{
+            imports::caar(&[{
                 // (cdar x)
-                Scm::func(imports::cdar).invoke(&[x.clone()])
+                imports::cdar(&[x.clone()])
             }])
         }
     }
@@ -103,9 +103,9 @@ pub fn caaddr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (caar (cddr x))
-            Scm::func(imports::caar).invoke(&[{
+            imports::caar(&[{
                 // (cddr x)
-                Scm::func(imports::cddr).invoke(&[x.clone()])
+                imports::cddr(&[x.clone()])
             }])
         }
     }
@@ -119,9 +119,9 @@ pub fn caadr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (car (cadr x))
-            Scm::func(imports::car).invoke(&[{
+            imports::car(&[{
                 // (cadr x)
-                Scm::func(imports::cadr).invoke(&[x.clone()])
+                imports::cadr(&[x.clone()])
             }])
         }
     }
@@ -135,9 +135,9 @@ pub fn cadaar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cadr (caar x))
-            Scm::func(imports::cadr).invoke(&[{
+            imports::cadr(&[{
                 // (caar x)
-                Scm::func(imports::caar).invoke(&[x.clone()])
+                imports::caar(&[x.clone()])
             }])
         }
     }
@@ -151,9 +151,9 @@ pub fn cadadr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cadr (cadr x))
-            Scm::func(imports::cadr).invoke(&[{
+            imports::cadr(&[{
                 // (cadr x)
-                Scm::func(imports::cadr).invoke(&[x.clone()])
+                imports::cadr(&[x.clone()])
             }])
         }
     }
@@ -167,9 +167,9 @@ pub fn cadar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (car (cdar x))
-            Scm::func(imports::car).invoke(&[{
+            imports::car(&[{
                 // (cdar x)
-                Scm::func(imports::cdar).invoke(&[x.clone()])
+                imports::cdar(&[x.clone()])
             }])
         }
     }
@@ -183,9 +183,9 @@ pub fn caddar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cadr (cdar x))
-            Scm::func(imports::cadr).invoke(&[{
+            imports::cadr(&[{
                 // (cdar x)
-                Scm::func(imports::cdar).invoke(&[x.clone()])
+                imports::cdar(&[x.clone()])
             }])
         }
     }
@@ -199,9 +199,9 @@ pub fn cadddr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cadr (cddr x))
-            Scm::func(imports::cadr).invoke(&[{
+            imports::cadr(&[{
                 // (cddr x)
-                Scm::func(imports::cddr).invoke(&[x.clone()])
+                imports::cddr(&[x.clone()])
             }])
         }
     }
@@ -215,9 +215,9 @@ pub fn caddr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (car (cddr x))
-            Scm::func(imports::car).invoke(&[{
+            imports::car(&[{
                 // (cddr x)
-                Scm::func(imports::cddr).invoke(&[x.clone()])
+                imports::cddr(&[x.clone()])
             }])
         }
     }
@@ -231,9 +231,9 @@ pub fn cdaaar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdar (caar x))
-            Scm::func(imports::cdar).invoke(&[{
+            imports::cdar(&[{
                 // (caar x)
-                Scm::func(imports::caar).invoke(&[x.clone()])
+                imports::caar(&[x.clone()])
             }])
         }
     }
@@ -247,9 +247,9 @@ pub fn cdaadr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdar (cadr x))
-            Scm::func(imports::cdar).invoke(&[{
+            imports::cdar(&[{
                 // (cadr x)
-                Scm::func(imports::cadr).invoke(&[x.clone()])
+                imports::cadr(&[x.clone()])
             }])
         }
     }
@@ -263,9 +263,9 @@ pub fn cdaar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdr (caar x))
-            Scm::func(imports::cdr).invoke(&[{
+            imports::cdr(&[{
                 // (caar x)
-                Scm::func(imports::caar).invoke(&[x.clone()])
+                imports::caar(&[x.clone()])
             }])
         }
     }
@@ -279,9 +279,9 @@ pub fn cdadar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdar (cdar x))
-            Scm::func(imports::cdar).invoke(&[{
+            imports::cdar(&[{
                 // (cdar x)
-                Scm::func(imports::cdar).invoke(&[x.clone()])
+                imports::cdar(&[x.clone()])
             }])
         }
     }
@@ -295,9 +295,9 @@ pub fn cdaddr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdar (cddr x))
-            Scm::func(imports::cdar).invoke(&[{
+            imports::cdar(&[{
                 // (cddr x)
-                Scm::func(imports::cddr).invoke(&[x.clone()])
+                imports::cddr(&[x.clone()])
             }])
         }
     }
@@ -311,9 +311,9 @@ pub fn cdadr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdr (cadr x))
-            Scm::func(imports::cdr).invoke(&[{
+            imports::cdr(&[{
                 // (cadr x)
-                Scm::func(imports::cadr).invoke(&[x.clone()])
+                imports::cadr(&[x.clone()])
             }])
         }
     }
@@ -327,9 +327,9 @@ pub fn cddaar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cddr (caar x))
-            Scm::func(imports::cddr).invoke(&[{
+            imports::cddr(&[{
                 // (caar x)
-                Scm::func(imports::caar).invoke(&[x.clone()])
+                imports::caar(&[x.clone()])
             }])
         }
     }
@@ -343,9 +343,9 @@ pub fn cddadr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cddr (cadr x))
-            Scm::func(imports::cddr).invoke(&[{
+            imports::cddr(&[{
                 // (cadr x)
-                Scm::func(imports::cadr).invoke(&[x.clone()])
+                imports::cadr(&[x.clone()])
             }])
         }
     }
@@ -359,9 +359,9 @@ pub fn cddar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdr (cdar x))
-            Scm::func(imports::cdr).invoke(&[{
+            imports::cdr(&[{
                 // (cdar x)
-                Scm::func(imports::cdar).invoke(&[x.clone()])
+                imports::cdar(&[x.clone()])
             }])
         }
     }
@@ -375,9 +375,9 @@ pub fn cdddar(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cddr (cdar x))
-            Scm::func(imports::cddr).invoke(&[{
+            imports::cddr(&[{
                 // (cdar x)
-                Scm::func(imports::cdar).invoke(&[x.clone()])
+                imports::cdar(&[x.clone()])
             }])
         }
     }
@@ -391,9 +391,9 @@ pub fn cddddr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cddr (cddr x))
-            Scm::func(imports::cddr).invoke(&[{
+            imports::cddr(&[{
                 // (cddr x)
-                Scm::func(imports::cddr).invoke(&[x.clone()])
+                imports::cddr(&[x.clone()])
             }])
         }
     }
@@ -407,9 +407,9 @@ pub fn cdddr(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         {
             // (cdr (cddr x))
-            Scm::func(imports::cdr).invoke(&[{
+            imports::cdr(&[{
                 // (cddr x)
-                Scm::func(imports::cddr).invoke(&[x.clone()])
+                imports::cddr(&[x.clone()])
             }])
         }
     }

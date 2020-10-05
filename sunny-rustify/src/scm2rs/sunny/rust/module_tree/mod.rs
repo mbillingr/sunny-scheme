@@ -26,7 +26,7 @@ pub fn make_minus_module_minus_tree_minus_leaf(args: &[Scm]) -> Scm {
         let lib = args[1].clone();
         {
             // (cons name lib)
-            Scm::func(imports::cons).invoke(&[name.clone(), lib.clone()])
+            imports::cons(&[name.clone(), lib.clone()])
         }
     }
     .into()
@@ -39,7 +39,7 @@ pub fn make_minus_module_minus_tree_minus_node(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         {
             // (cons name (quote ()))
-            Scm::func(imports::cons).invoke(&[name.clone(), Scm::Nil])
+            imports::cons(&[name.clone(), Scm::Nil])
         }
     }
     .into()
@@ -53,11 +53,11 @@ pub fn module_minus_tree_minus_append_minus_child_i(args: &[Scm]) -> Scm {
         let child = args[1].clone();
         {
             // (module-tree-set-children! node (cons child (module-tree-children node)))
-            Scm::func(module_minus_tree_minus_set_minus_children_i).invoke(&[node.clone(), {
+            module_minus_tree_minus_set_minus_children_i(&[node.clone(), {
                 // (cons child (module-tree-children node))
-                Scm::func(imports::cons).invoke(&[child.clone(), {
+                imports::cons(&[child.clone(), {
                     // (module-tree-children node)
-                    Scm::func(module_minus_tree_minus_children).invoke(&[node.clone()])
+                    module_minus_tree_minus_children(&[node.clone()])
                 }])
             }])
         }
@@ -72,7 +72,7 @@ pub fn module_minus_tree_minus_children(args: &[Scm]) -> Scm {
         let node = args[0].clone();
         {
             // (cdr node)
-            Scm::func(imports::cdr).invoke(&[node.clone()])
+            imports::cdr(&[node.clone()])
         }
     }
     .into()
@@ -87,13 +87,13 @@ pub fn module_minus_tree_minus_find_minus_child(args: &[Scm]) -> Scm {
         {
             if ({
                 // (module-tree-leaf? node)
-                Scm::func(module_minus_tree_minus_leaf_p).invoke(&[node.clone()])
+                module_minus_tree_minus_leaf_p(&[node.clone()])
             })
             .is_true()
             {
                 {
                     // (error "called (module-tree-find-child) on leaf node" name node)
-                    Scm::func(imports::error).invoke(&[
+                    imports::error(&[
                         Scm::from("called (module-tree-find-child) on leaf node"),
                         name.clone(),
                         node.clone(),
@@ -104,9 +104,9 @@ pub fn module_minus_tree_minus_find_minus_child(args: &[Scm]) -> Scm {
             };
             {
                 // (assq name (module-tree-children node))
-                Scm::func(imports::assq).invoke(&[name.clone(), {
+                imports::assq(&[name.clone(), {
                     // (module-tree-children node)
-                    Scm::func(module_minus_tree_minus_children).invoke(&[node.clone()])
+                    module_minus_tree_minus_children(&[node.clone()])
                 }])
             }
         }
@@ -124,13 +124,13 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
         {
             if ({
                 // (null? libname)
-                Scm::func(imports::null_p).invoke(&[libname.clone()])
+                imports::null_p(&[libname.clone()])
             })
             .is_true()
             {
                 {
                     // (error "invalid insert - empty libname")
-                    Scm::func(imports::error).invoke(&[Scm::from("invalid insert - empty libname")])
+                    imports::error(&[Scm::from("invalid insert - empty libname")])
                 }
             } else {
                 Scm::symbol("*UNSPECIFIED*")
@@ -140,13 +140,10 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                 {
                     let child = {
                         // (module-tree-find-child tree (car libname))
-                        Scm::func(module_minus_tree_minus_find_minus_child).invoke(&[
-                            tree.clone(),
-                            {
-                                // (car libname)
-                                Scm::func(imports::car).invoke(&[libname.clone()])
-                            },
-                        ])
+                        module_minus_tree_minus_find_minus_child(&[tree.clone(), {
+                            // (car libname)
+                            imports::car(&[libname.clone()])
+                        }])
                     };
                     if (child.clone()).is_true() {
                         {
@@ -155,35 +152,32 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                 child.clone(),
                                 {
                                     // (cdr libname)
-                                    Scm::func(imports::cdr).invoke(&[libname.clone()])
+                                    imports::cdr(&[libname.clone()])
                                 },
                                 libobj.clone(),
                             ])
                         }
                     } else if ({
                         // (null? (cdr libname))
-                        Scm::func(imports::null_p).invoke(&[{
+                        imports::null_p(&[{
                             // (cdr libname)
-                            Scm::func(imports::cdr).invoke(&[libname.clone()])
+                            imports::cdr(&[libname.clone()])
                         }])
                     })
                     .is_true()
                     {
                         {
                             // (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj))
-                            Scm::func(module_minus_tree_minus_append_minus_child_i).invoke(&[
-                                tree.clone(),
-                                {
-                                    // (make-module-tree-leaf (car libname) libobj)
-                                    Scm::func(make_minus_module_minus_tree_minus_leaf).invoke(&[
-                                        {
-                                            // (car libname)
-                                            Scm::func(imports::car).invoke(&[libname.clone()])
-                                        },
-                                        libobj.clone(),
-                                    ])
-                                },
-                            ])
+                            module_minus_tree_minus_append_minus_child_i(&[tree.clone(), {
+                                // (make-module-tree-leaf (car libname) libobj)
+                                make_minus_module_minus_tree_minus_leaf(&[
+                                    {
+                                        // (car libname)
+                                        imports::car(&[libname.clone()])
+                                    },
+                                    libobj.clone(),
+                                ])
+                            }])
                         }
                     } else {
                         {
@@ -191,9 +185,9 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                             {
                                 let new_minus_node = {
                                     // (make-module-tree-node (car libname))
-                                    Scm::func(make_minus_module_minus_tree_minus_node).invoke(&[{
+                                    make_minus_module_minus_tree_minus_node(&[{
                                         // (car libname)
-                                        Scm::func(imports::car).invoke(&[libname.clone()])
+                                        imports::car(&[libname.clone()])
                                     }])
                                 };
                                 {
@@ -203,15 +197,17 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                             new_minus_node.clone(),
                                             {
                                                 // (cdr libname)
-                                                Scm::func(imports::cdr).invoke(&[libname.clone()])
+                                                imports::cdr(&[libname.clone()])
                                             },
                                             libobj.clone(),
                                         ])
                                     };
                                     {
                                         // (module-tree-append-child! tree new-node)
-                                        Scm::func(module_minus_tree_minus_append_minus_child_i)
-                                            .invoke(&[tree.clone(), new_minus_node.clone()])
+                                        module_minus_tree_minus_append_minus_child_i(&[
+                                            tree.clone(),
+                                            new_minus_node.clone(),
+                                        ])
                                     }
                                 }
                             }
@@ -233,26 +229,26 @@ pub fn module_minus_tree_minus_leaf_p(args: &[Scm]) -> Scm {
             // (and (pair? node) (symbol? (car node)) (not (null? (cdr node))) (not (pair? (cdr node))))
             if ({
                 // (pair? node)
-                Scm::func(imports::pair_p).invoke(&[node.clone()])
+                imports::pair_p(&[node.clone()])
             })
             .is_true()
             {
                 if ({
                     // (symbol? (car node))
-                    Scm::func(imports::symbol_p).invoke(&[{
+                    imports::symbol_p(&[{
                         // (car node)
-                        Scm::func(imports::car).invoke(&[node.clone()])
+                        imports::car(&[node.clone()])
                     }])
                 })
                 .is_true()
                 {
                     if ({
                         // (not (null? (cdr node)))
-                        Scm::func(imports::not).invoke(&[{
+                        imports::not(&[{
                             // (null? (cdr node))
-                            Scm::func(imports::null_p).invoke(&[{
+                            imports::null_p(&[{
                                 // (cdr node)
-                                Scm::func(imports::cdr).invoke(&[node.clone()])
+                                imports::cdr(&[node.clone()])
                             }])
                         }])
                     })
@@ -260,11 +256,11 @@ pub fn module_minus_tree_minus_leaf_p(args: &[Scm]) -> Scm {
                     {
                         {
                             // (not (pair? (cdr node)))
-                            Scm::func(imports::not).invoke(&[{
+                            imports::not(&[{
                                 // (pair? (cdr node))
-                                Scm::func(imports::pair_p).invoke(&[{
+                                imports::pair_p(&[{
                                     // (cdr node)
-                                    Scm::func(imports::cdr).invoke(&[node.clone()])
+                                    imports::cdr(&[node.clone()])
                                 }])
                             }])
                         }
@@ -289,7 +285,7 @@ pub fn module_minus_tree_minus_libobj(args: &[Scm]) -> Scm {
         let node = args[0].clone();
         {
             // (cdr node)
-            Scm::func(imports::cdr).invoke(&[node.clone()])
+            imports::cdr(&[node.clone()])
         }
     }
     .into()
@@ -302,7 +298,7 @@ pub fn module_minus_tree_minus_name(args: &[Scm]) -> Scm {
         let node = args[0].clone();
         {
             // (car node)
-            Scm::func(imports::car).invoke(&[node.clone()])
+            imports::car(&[node.clone()])
         }
     }
     .into()
@@ -316,7 +312,7 @@ pub fn module_minus_tree_minus_set_minus_children_i(args: &[Scm]) -> Scm {
         let children = args[1].clone();
         {
             // (set-cdr! node children)
-            Scm::func(imports::set_minus_cdr_i).invoke(&[node.clone(), children.clone()])
+            imports::set_minus_cdr_i(&[node.clone(), children.clone()])
         }
     }
     .into()

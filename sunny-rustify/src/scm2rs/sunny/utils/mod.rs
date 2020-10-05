@@ -25,7 +25,7 @@ pub fn any(args: &[Scm]) -> Scm {
         let seq = args[1].clone();
         if ({
             // (pair? seq)
-            Scm::func(imports::pair_p).invoke(&[seq.clone()])
+            imports::pair_p(&[seq.clone()])
         })
         .is_true()
         {
@@ -33,7 +33,7 @@ pub fn any(args: &[Scm]) -> Scm {
                 // (f (car seq))
                 f.clone().invoke(&[{
                     // (car seq)
-                    Scm::func(imports::car).invoke(&[seq.clone()])
+                    imports::car(&[seq.clone()])
                 }])
             })
             .is_true()
@@ -44,7 +44,7 @@ pub fn any(args: &[Scm]) -> Scm {
                     // (any f (cdr seq))
                     Scm::func(any).invoke(&[f.clone(), {
                         // (cdr seq)
-                        Scm::func(imports::cdr).invoke(&[seq.clone()])
+                        imports::cdr(&[seq.clone()])
                     }])
                 }
             }
@@ -62,7 +62,7 @@ pub fn atom_p(args: &[Scm]) -> Scm {
         let x = args[0].clone();
         if ({
             // (pair? x)
-            Scm::func(imports::pair_p).invoke(&[x.clone()])
+            imports::pair_p(&[x.clone()])
         })
         .is_true()
         {
@@ -84,7 +84,7 @@ pub fn bor(args: &[Scm]) -> Scm {
             first.clone()
         } else if ({
             // (null? args)
-            Scm::func(imports::null_p).invoke(&[args_.clone()])
+            imports::null_p(&[args_.clone()])
         })
         .is_true()
         {
@@ -92,7 +92,7 @@ pub fn bor(args: &[Scm]) -> Scm {
         } else {
             {
                 // (apply bor args)
-                Scm::func(imports::apply).invoke(&[Scm::func(bor), args_.clone()])
+                imports::apply(&[Scm::func(bor), args_.clone()])
             }
         }
     }
@@ -106,9 +106,9 @@ pub fn dotted_minus_list_p(args: &[Scm]) -> Scm {
         let seq = args[0].clone();
         {
             // (not (null? (last-cdr seq)))
-            Scm::func(imports::not).invoke(&[{
+            imports::not(&[{
                 // (null? (last-cdr seq))
-                Scm::func(imports::null_p).invoke(&[{
+                imports::null_p(&[{
                     // (last-cdr seq)
                     Scm::func(last_minus_cdr).invoke(&[seq.clone()])
                 }])
@@ -126,7 +126,7 @@ pub fn filter(args: &[Scm]) -> Scm {
         let seq = args[1].clone();
         if ({
             // (pair? seq)
-            Scm::func(imports::pair_p).invoke(&[seq.clone()])
+            imports::pair_p(&[seq.clone()])
         })
         .is_true()
         {
@@ -134,23 +134,23 @@ pub fn filter(args: &[Scm]) -> Scm {
                 // (f (car seq))
                 f.clone().invoke(&[{
                     // (car seq)
-                    Scm::func(imports::car).invoke(&[seq.clone()])
+                    imports::car(&[seq.clone()])
                 }])
             })
             .is_true()
             {
                 {
                     // (cons (car seq) (filter f (cdr seq)))
-                    Scm::func(imports::cons).invoke(&[
+                    imports::cons(&[
                         {
                             // (car seq)
-                            Scm::func(imports::car).invoke(&[seq.clone()])
+                            imports::car(&[seq.clone()])
                         },
                         {
                             // (filter f (cdr seq))
                             Scm::func(filter).invoke(&[f.clone(), {
                                 // (cdr seq)
-                                Scm::func(imports::cdr).invoke(&[seq.clone()])
+                                imports::cdr(&[seq.clone()])
                             }])
                         },
                     ])
@@ -160,7 +160,7 @@ pub fn filter(args: &[Scm]) -> Scm {
                     // (filter f (cdr seq))
                     Scm::func(filter).invoke(&[f.clone(), {
                         // (cdr seq)
-                        Scm::func(imports::cdr).invoke(&[seq.clone()])
+                        imports::cdr(&[seq.clone()])
                     }])
                 }
             }
@@ -178,7 +178,7 @@ pub fn last_minus_cdr(args: &[Scm]) -> Scm {
         let seq = args[0].clone();
         if ({
             // (pair? seq)
-            Scm::func(imports::pair_p).invoke(&[seq.clone()])
+            imports::pair_p(&[seq.clone()])
         })
         .is_true()
         {
@@ -186,7 +186,7 @@ pub fn last_minus_cdr(args: &[Scm]) -> Scm {
                 // (last-cdr (cdr seq))
                 Scm::func(last_minus_cdr).invoke(&[{
                     // (cdr seq)
-                    Scm::func(imports::cdr).invoke(&[seq.clone()])
+                    imports::cdr(&[seq.clone()])
                 }])
             }
         } else {
@@ -203,22 +203,22 @@ pub fn proper_minus_list_minus_part(args: &[Scm]) -> Scm {
         let seq = args[0].clone();
         if ({
             // (pair? seq)
-            Scm::func(imports::pair_p).invoke(&[seq.clone()])
+            imports::pair_p(&[seq.clone()])
         })
         .is_true()
         {
             {
                 // (cons (car seq) (proper-list-part (cdr seq)))
-                Scm::func(imports::cons).invoke(&[
+                imports::cons(&[
                     {
                         // (car seq)
-                        Scm::func(imports::car).invoke(&[seq.clone()])
+                        imports::car(&[seq.clone()])
                     },
                     {
                         // (proper-list-part (cdr seq))
                         Scm::func(proper_minus_list_minus_part).invoke(&[{
                             // (cdr seq)
-                            Scm::func(imports::cdr).invoke(&[seq.clone()])
+                            imports::cdr(&[seq.clone()])
                         }])
                     },
                 ])
@@ -239,7 +239,7 @@ pub fn reduce(args: &[Scm]) -> Scm {
         let seq = args[2].clone();
         if ({
             // (pair? seq)
-            Scm::func(imports::pair_p).invoke(&[seq.clone()])
+            imports::pair_p(&[seq.clone()])
         })
         .is_true()
         {
@@ -251,12 +251,12 @@ pub fn reduce(args: &[Scm]) -> Scm {
                         // (f init (car seq))
                         f.clone().invoke(&[init.clone(), {
                             // (car seq)
-                            Scm::func(imports::car).invoke(&[seq.clone()])
+                            imports::car(&[seq.clone()])
                         }])
                     },
                     {
                         // (cdr seq)
-                        Scm::func(imports::cdr).invoke(&[seq.clone()])
+                        imports::cdr(&[seq.clone()])
                     },
                 ])
             }
@@ -275,7 +275,7 @@ pub fn sort(args: &[Scm]) -> Scm {
         let ass = args[1].clone();
         if ({
             // (pair? ass)
-            Scm::func(imports::pair_p).invoke(&[ass.clone()])
+            imports::pair_p(&[ass.clone()])
         })
         .is_true()
         {
@@ -284,16 +284,16 @@ pub fn sort(args: &[Scm]) -> Scm {
                 {
                     let pivot = {
                         // (car ass)
-                        Scm::func(imports::car).invoke(&[ass.clone()])
+                        imports::car(&[ass.clone()])
                     };
                     {
                         // (append (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass))) (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))))
-                        Scm::func(imports::append).invoke(&[
+                        imports::append(&[
                             {
                                 // (sort cmp (filter (lambda (x) (cmp x pivot)) (cdr ass)))
                                 Scm::func(sort).invoke(&[cmp.clone(), {
                                     // (filter (lambda (x) (cmp x pivot)) (cdr ass))
-                                    Scm::func(filter).invoke(&[
+                                    filter(&[
                                         {
                                             // Closure
                                             let cmp = cmp.clone();
@@ -311,18 +311,18 @@ pub fn sort(args: &[Scm]) -> Scm {
                                         },
                                         {
                                             // (cdr ass)
-                                            Scm::func(imports::cdr).invoke(&[ass.clone()])
+                                            imports::cdr(&[ass.clone()])
                                         },
                                     ])
                                 }])
                             },
                             {
                                 // (cons pivot (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass))))
-                                Scm::func(imports::cons).invoke(&[pivot.clone(), {
+                                imports::cons(&[pivot.clone(), {
                                     // (sort cmp (filter (lambda (x) (not (cmp x pivot))) (cdr ass)))
                                     Scm::func(sort).invoke(&[cmp.clone(), {
                                         // (filter (lambda (x) (not (cmp x pivot))) (cdr ass))
-                                        Scm::func(filter).invoke(&[
+                                        filter(&[
                                             {
                                                 // Closure
                                                 let cmp = cmp.clone();
@@ -334,7 +334,7 @@ pub fn sort(args: &[Scm]) -> Scm {
                                                     let x = args[0].clone();
                                                     {
                                                         // (not (cmp x pivot))
-                                                        Scm::func(imports::not).invoke(&[{
+                                                        imports::not(&[{
                                                             // (cmp x pivot)
                                                             cmp.clone()
                                                                 .invoke(&[x.clone(), pivot.clone()])
@@ -344,7 +344,7 @@ pub fn sort(args: &[Scm]) -> Scm {
                                             },
                                             {
                                                 // (cdr ass)
-                                                Scm::func(imports::cdr).invoke(&[ass.clone()])
+                                                imports::cdr(&[ass.clone()])
                                             },
                                         ])
                                     }])

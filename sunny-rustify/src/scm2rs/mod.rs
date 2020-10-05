@@ -27,11 +27,11 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
             {
                 let expr = {
                     // (read input-file)
-                    Scm::func(imports::read).invoke(&[input_minus_file.with(|value| value.get())])
+                    imports::read(&[input_minus_file.with(|value| value.get())])
                 };
                 if ({
                     // (eof-object? expr)
-                    Scm::func(imports::eof_minus_object_p).invoke(&[expr.clone()])
+                    imports::eof_minus_object_p(&[expr.clone()])
                 })
                 .is_true()
                 {
@@ -39,7 +39,7 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
                 } else {
                     {
                         // (cons expr (load-sexpr))
-                        Scm::func(imports::cons).invoke(&[expr.clone(), {
+                        imports::cons(&[expr.clone(), {
                             // (load-sexpr)
                             Scm::func(load_minus_sexpr).invoke(&[])
                         }])
@@ -74,7 +74,7 @@ pub fn main() {
             args_.with(|value| {
                 value.set({
                     // (command-line)
-                    Scm::func(imports::command_minus_line).invoke(&[])
+                    imports::command_minus_line(&[])
                 })
             })
         };
@@ -83,7 +83,7 @@ pub fn main() {
             input_minus_file_minus_name.with(|value| {
                 value.set({
                     // (cadr args)
-                    Scm::func(imports::cadr).invoke(&[args_.with(|value| value.get())])
+                    imports::cadr(&[args_.with(|value| value.get())])
                 })
             })
         };
@@ -92,7 +92,7 @@ pub fn main() {
             output_minus_module_minus_name.with(|value| {
                 value.set({
                     // (caddr args)
-                    Scm::func(imports::caddr).invoke(&[args_.with(|value| value.get())])
+                    imports::caddr(&[args_.with(|value| value.get())])
                 })
             })
         };
@@ -102,16 +102,16 @@ pub fn main() {
                 value.set(
                     if ({
                         // (pair? (cdddr args))
-                        Scm::func(imports::pair_p).invoke(&[{
+                        imports::pair_p(&[{
                             // (cdddr args)
-                            Scm::func(imports::cdddr).invoke(&[args_.with(|value| value.get())])
+                            imports::cdddr(&[args_.with(|value| value.get())])
                         }])
                     })
                     .is_true()
                     {
                         {
                             // (cadddr args)
-                            Scm::func(imports::cadddr).invoke(&[args_.with(|value| value.get())])
+                            imports::cadddr(&[args_.with(|value| value.get())])
                         }
                     } else {
                         Scm::from(".")
@@ -121,45 +121,44 @@ pub fn main() {
         };
         {
             // (newline)
-            Scm::func(imports::newline).invoke(&[])
+            imports::newline(&[])
         };
         {
             // (display input-file-name)
-            Scm::func(imports::display)
-                .invoke(&[input_minus_file_minus_name.with(|value| value.get())])
+            imports::display(&[input_minus_file_minus_name.with(|value| value.get())])
         };
         {
             // (display " --> ")
-            Scm::func(imports::display).invoke(&[Scm::from(" --> ")])
+            imports::display(&[Scm::from(" --> ")])
         };
         {
             // (display output-dir)
-            Scm::func(imports::display).invoke(&[output_minus_dir.with(|value| value.get())])
+            imports::display(&[output_minus_dir.with(|value| value.get())])
         };
         {
             // (display "/")
-            Scm::func(imports::display).invoke(&[Scm::from("/")])
+            imports::display(&[Scm::from("/")])
         };
         {
             // (display output-module-name)
-            Scm::func(imports::display)
-                .invoke(&[output_minus_module_minus_name.with(|value| value.get())])
+            imports::display(&[output_minus_module_minus_name.with(|value| value.get())])
         };
         {
             // (newline)
-            Scm::func(imports::newline).invoke(&[])
+            imports::newline(&[])
         };
         {
             // (newline)
-            Scm::func(imports::newline).invoke(&[])
+            imports::newline(&[])
         };
         {
             // (define input-file (open-input-file input-file-name))
             input_minus_file.with(|value| {
                 value.set({
                     // (open-input-file input-file-name)
-                    Scm::func(imports::open_minus_input_minus_file)
-                        .invoke(&[input_minus_file_minus_name.with(|value| value.get())])
+                    imports::open_minus_input_minus_file(&[
+                        input_minus_file_minus_name.with(|value| value.get())
+                    ])
                 })
             })
         };
@@ -172,7 +171,7 @@ pub fn main() {
             program.with(|value| {
                 value.set({
                     // (load-sexpr)
-                    Scm::func(load_minus_sexpr).invoke(&[])
+                    load_minus_sexpr(&[])
                 })
             })
         };
@@ -181,14 +180,13 @@ pub fn main() {
             ast.with(|value| {
                 value.set({
                     // (astify-toplevel program)
-                    Scm::func(imports::astify_minus_toplevel)
-                        .invoke(&[program.with(|value| value.get())])
+                    imports::astify_minus_toplevel(&[program.with(|value| value.get())])
                 })
             })
         };
         {
             // (rust-gen-in-module output-module-name output-dir (lambda (module) (ast (quote gen-rust) module)))
-            Scm::func(imports::rust_minus_gen_minus_in_minus_module).invoke(&[
+            imports::rust_minus_gen_minus_in_minus_module(&[
                 output_minus_module_minus_name.with(|value| value.get()),
                 output_minus_dir.with(|value| value.get()),
                 {

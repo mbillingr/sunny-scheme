@@ -35,20 +35,20 @@ pub fn set_minus_add(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? set)
-                Scm::func(imports::null_p).invoke(&[set.clone()])
+                imports::null_p(&[set.clone()])
             })
             .is_true()
             {
                 {
                     // (cons item (quote ()))
-                    Scm::func(imports::cons).invoke(&[item.clone(), Scm::Nil])
+                    imports::cons(&[item.clone(), Scm::Nil])
                 }
             } else if ({
                 // (equal? (car set) item)
-                Scm::func(imports::equal_p).invoke(&[
+                imports::equal_p(&[
                     {
                         // (car set)
-                        Scm::func(imports::car).invoke(&[set.clone()])
+                        imports::car(&[set.clone()])
                     },
                     item.clone(),
                 ])
@@ -59,17 +59,17 @@ pub fn set_minus_add(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (cons (car set) (set-add (cdr set) item))
-                    Scm::func(imports::cons).invoke(&[
+                    imports::cons(&[
                         {
                             // (car set)
-                            Scm::func(imports::car).invoke(&[set.clone()])
+                            imports::car(&[set.clone()])
                         },
                         {
                             // (set-add (cdr set) item)
                             Scm::func(set_minus_add).invoke(&[
                                 {
                                     // (cdr set)
-                                    Scm::func(imports::cdr).invoke(&[set.clone()])
+                                    imports::cdr(&[set.clone()])
                                 },
                                 item.clone(),
                             ])
@@ -109,7 +109,7 @@ pub fn set_minus_do_star_(args: &[Scm]) -> Scm {
         let item_star_ = args[2].clone();
         if ({
             // (null? item*)
-            Scm::func(imports::null_p).invoke(&[item_star_.clone()])
+            imports::null_p(&[item_star_.clone()])
         })
         .is_true()
         {
@@ -123,12 +123,12 @@ pub fn set_minus_do_star_(args: &[Scm]) -> Scm {
                         // (func set (car item*))
                         func.clone().invoke(&[set.clone(), {
                             // (car item*)
-                            Scm::func(imports::car).invoke(&[item_star_.clone()])
+                            imports::car(&[item_star_.clone()])
                         }])
                     },
                     {
                         // (cdr item*)
-                        Scm::func(imports::cdr).invoke(&[item_star_.clone()])
+                        imports::cdr(&[item_star_.clone()])
                     },
                 ])
             }
@@ -144,7 +144,7 @@ pub fn set_minus_empty_p(args: &[Scm]) -> Scm {
         let set = args[0].clone();
         {
             // (null? set)
-            Scm::func(imports::null_p).invoke(&[set.clone()])
+            imports::null_p(&[set.clone()])
         }
     }
     .into()
@@ -160,17 +160,17 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? set)
-                Scm::func(imports::null_p).invoke(&[set.clone()])
+                imports::null_p(&[set.clone()])
             })
             .is_true()
             {
                 Scm::Nil
             } else if ({
                 // (equal? (car set) item)
-                Scm::func(imports::equal_p).invoke(&[
+                imports::equal_p(&[
                     {
                         // (car set)
-                        Scm::func(imports::car).invoke(&[set.clone()])
+                        imports::car(&[set.clone()])
                     },
                     item.clone(),
                 ])
@@ -179,22 +179,22 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
             {
                 {
                     // (cdr set)
-                    Scm::func(imports::cdr).invoke(&[set.clone()])
+                    imports::cdr(&[set.clone()])
                 }
             } else {
                 {
                     // (cons (car set) (set-remove (cdr set) item))
-                    Scm::func(imports::cons).invoke(&[
+                    imports::cons(&[
                         {
                             // (car set)
-                            Scm::func(imports::car).invoke(&[set.clone()])
+                            imports::car(&[set.clone()])
                         },
                         {
                             // (set-remove (cdr set) item)
                             Scm::func(set_minus_remove).invoke(&[
                                 {
                                     // (cdr set)
-                                    Scm::func(imports::cdr).invoke(&[set.clone()])
+                                    imports::cdr(&[set.clone()])
                                 },
                                 item.clone(),
                             ])
@@ -235,14 +235,14 @@ pub fn set_minus_union(args: &[Scm]) -> Scm {
             // (cond ...)
             if ({
                 // (null? set1)
-                Scm::func(imports::null_p).invoke(&[set1.clone()])
+                imports::null_p(&[set1.clone()])
             })
             .is_true()
             {
                 set2.clone()
             } else if ({
                 // (null? set2)
-                Scm::func(imports::null_p).invoke(&[set2.clone()])
+                imports::null_p(&[set2.clone()])
             })
             .is_true()
             {
@@ -250,7 +250,7 @@ pub fn set_minus_union(args: &[Scm]) -> Scm {
             } else {
                 {
                     // (set-add* set1 set2)
-                    Scm::func(set_minus_add_star_).invoke(&[set1.clone(), set2.clone()])
+                    set_minus_add_star_(&[set1.clone(), set2.clone()])
                 }
             }
         }

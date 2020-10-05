@@ -54,15 +54,15 @@ pub fn abstraction_p(args: &[Scm]) -> Scm {
             // (and (pair? expr) (eq? (quote lambda) (car expr)))
             if ({
                 // (pair? expr)
-                Scm::func(imports::pair_p).invoke(&[expr.clone()])
+                imports::pair_p(&[expr.clone()])
             })
             .is_true()
             {
                 {
                     // (eq? (quote lambda) (car expr))
-                    Scm::func(imports::eq_p).invoke(&[Scm::symbol("lambda"), {
+                    imports::eq_p(&[Scm::symbol("lambda"), {
                         // (car expr)
-                        Scm::func(imports::car).invoke(&[expr.clone()])
+                        imports::car(&[expr.clone()])
                     }])
                 }
             } else {
@@ -80,7 +80,7 @@ pub fn and_minus_args(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cdr expr)
-            Scm::func(imports::cdr).invoke(&[expr.clone()])
+            imports::cdr(&[expr.clone()])
         }
     }
     .into()
@@ -93,7 +93,7 @@ pub fn assert_minus_condition(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()
@@ -106,7 +106,7 @@ pub fn begin_minus_statements(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cdr expr)
-            Scm::func(imports::cdr).invoke(&[expr.clone()])
+            imports::cdr(&[expr.clone()])
         }
     }
     .into()
@@ -119,7 +119,7 @@ pub fn cond_minus_clause_minus_condition(args: &[Scm]) -> Scm {
         let clause = args[0].clone();
         {
             // (car clause)
-            Scm::func(imports::car).invoke(&[clause.clone()])
+            imports::car(&[clause.clone()])
         }
     }
     .into()
@@ -132,7 +132,7 @@ pub fn cond_minus_clause_minus_sequence(args: &[Scm]) -> Scm {
         let clause = args[0].clone();
         {
             // (cdr clause)
-            Scm::func(imports::cdr).invoke(&[clause.clone()])
+            imports::cdr(&[clause.clone()])
         }
     }
     .into()
@@ -145,7 +145,7 @@ pub fn cond_minus_clauses(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cdr expr)
-            Scm::func(imports::cdr).invoke(&[expr.clone()])
+            imports::cdr(&[expr.clone()])
         }
     }
     .into()
@@ -158,9 +158,9 @@ pub fn cond_minus_else_minus_clause_p(args: &[Scm]) -> Scm {
         let clause = args[0].clone();
         {
             // (eq? (quote else) (car clause))
-            Scm::func(imports::eq_p).invoke(&[Scm::symbol("else"), {
+            imports::eq_p(&[Scm::symbol("else"), {
                 // (car clause)
-                Scm::func(imports::car).invoke(&[clause.clone()])
+                imports::car(&[clause.clone()])
             }])
         }
     }
@@ -174,19 +174,19 @@ pub fn definition_minus_signature(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         if ({
             // (pair? (cadr expr))
-            Scm::func(imports::pair_p).invoke(&[{
+            imports::pair_p(&[{
                 // (cadr expr)
-                Scm::func(imports::cadr).invoke(&[expr.clone()])
+                imports::cadr(&[expr.clone()])
             }])
         })
         .is_true()
         {
             {
                 // (list (cadr expr) (quote ...))
-                Scm::func(imports::list).invoke(&[
+                imports::list(&[
                     {
                         // (cadr expr)
-                        Scm::func(imports::cadr).invoke(&[expr.clone()])
+                        imports::cadr(&[expr.clone()])
                     },
                     Scm::symbol("..."),
                 ])
@@ -194,7 +194,7 @@ pub fn definition_minus_signature(args: &[Scm]) -> Scm {
         } else {
             {
                 // (cdr expr)
-                Scm::func(imports::cdr).invoke(&[expr.clone()])
+                imports::cdr(&[expr.clone()])
             }
         }
     }
@@ -208,25 +208,25 @@ pub fn definition_minus_value(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         if ({
             // (pair? (cadr expr))
-            Scm::func(imports::pair_p).invoke(&[{
+            imports::pair_p(&[{
                 // (cadr expr)
-                Scm::func(imports::cadr).invoke(&[expr.clone()])
+                imports::cadr(&[expr.clone()])
             }])
         })
         .is_true()
         {
             {
                 // (cons (quote lambda) (cons (cdadr expr) (cddr expr)))
-                Scm::func(imports::cons).invoke(&[Scm::symbol("lambda"), {
+                imports::cons(&[Scm::symbol("lambda"), {
                     // (cons (cdadr expr) (cddr expr))
-                    Scm::func(imports::cons).invoke(&[
+                    imports::cons(&[
                         {
                             // (cdadr expr)
-                            Scm::func(imports::cdadr).invoke(&[expr.clone()])
+                            imports::cdadr(&[expr.clone()])
                         },
                         {
                             // (cddr expr)
-                            Scm::func(imports::cddr).invoke(&[expr.clone()])
+                            imports::cddr(&[expr.clone()])
                         },
                     ])
                 }])
@@ -234,7 +234,7 @@ pub fn definition_minus_value(args: &[Scm]) -> Scm {
         } else {
             {
                 // (caddr expr)
-                Scm::func(imports::caddr).invoke(&[expr.clone()])
+                imports::caddr(&[expr.clone()])
             }
         }
     }
@@ -248,21 +248,21 @@ pub fn definition_minus_variable(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         if ({
             // (pair? (cadr expr))
-            Scm::func(imports::pair_p).invoke(&[{
+            imports::pair_p(&[{
                 // (cadr expr)
-                Scm::func(imports::cadr).invoke(&[expr.clone()])
+                imports::cadr(&[expr.clone()])
             }])
         })
         .is_true()
         {
             {
                 // (caadr expr)
-                Scm::func(imports::caadr).invoke(&[expr.clone()])
+                imports::caadr(&[expr.clone()])
             }
         } else {
             {
                 // (cadr expr)
-                Scm::func(imports::cadr).invoke(&[expr.clone()])
+                imports::cadr(&[expr.clone()])
             }
         }
     }
@@ -278,16 +278,16 @@ pub fn definition_p(args: &[Scm]) -> Scm {
             // (and (pair? expr) (eq? (car expr) (quote define)))
             if ({
                 // (pair? expr)
-                Scm::func(imports::pair_p).invoke(&[expr.clone()])
+                imports::pair_p(&[expr.clone()])
             })
             .is_true()
             {
                 {
                     // (eq? (car expr) (quote define))
-                    Scm::func(imports::eq_p).invoke(&[
+                    imports::eq_p(&[
                         {
                             // (car expr)
-                            Scm::func(imports::car).invoke(&[expr.clone()])
+                            imports::car(&[expr.clone()])
                         },
                         Scm::symbol("define"),
                     ])
@@ -307,16 +307,16 @@ pub fn if_minus_alternative(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         if ({
             // (pair? (cdddr expr))
-            Scm::func(imports::pair_p).invoke(&[{
+            imports::pair_p(&[{
                 // (cdddr expr)
-                Scm::func(imports::cdddr).invoke(&[expr.clone()])
+                imports::cdddr(&[expr.clone()])
             }])
         })
         .is_true()
         {
             {
                 // (cadddr expr)
-                Scm::func(imports::cadddr).invoke(&[expr.clone()])
+                imports::cadddr(&[expr.clone()])
             }
         } else {
             Scm::pair(
@@ -335,7 +335,7 @@ pub fn if_minus_condition(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()
@@ -348,7 +348,7 @@ pub fn if_minus_consequence(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (caddr expr)
-            Scm::func(imports::caddr).invoke(&[expr.clone()])
+            imports::caddr(&[expr.clone()])
         }
     }
     .into()
@@ -361,7 +361,7 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
         let exp_star_ = args[0].clone();
         {
             // (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*)))
-            Scm::func(imports::filter).invoke(&[
+            imports::filter(&[
                 {
                     // Closure
                     Scm::func(move |args: &[Scm]| {
@@ -371,9 +371,9 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
                         let libname = args[0].clone();
                         {
                             // (not (equal? libname (quote (sunny testing))))
-                            Scm::func(imports::not).invoke(&[{
+                            imports::not(&[{
                                 // (equal? libname (quote (sunny testing)))
-                                Scm::func(imports::equal_p).invoke(&[
+                                imports::equal_p(&[
                                     libname.clone(),
                                     Scm::pair(
                                         Scm::symbol("sunny"),
@@ -386,9 +386,9 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
                 },
                 {
                     // (map importset-libname (cdr exp*))
-                    Scm::func(imports::map).invoke(&[Scm::func(importset_minus_libname), {
+                    imports::map(&[Scm::func(importset_minus_libname), {
                         // (cdr exp*)
-                        Scm::func(imports::cdr).invoke(&[exp_star_.clone()])
+                        imports::cdr(&[exp_star_.clone()])
                     }])
                 },
             ])
@@ -406,16 +406,16 @@ pub fn import_p(args: &[Scm]) -> Scm {
             // (and (pair? expr) (eq? (car expr) (quote import)))
             if ({
                 // (pair? expr)
-                Scm::func(imports::pair_p).invoke(&[expr.clone()])
+                imports::pair_p(&[expr.clone()])
             })
             .is_true()
             {
                 {
                     // (eq? (car expr) (quote import))
-                    Scm::func(imports::eq_p).invoke(&[
+                    imports::eq_p(&[
                         {
                             // (car expr)
-                            Scm::func(imports::car).invoke(&[expr.clone()])
+                            imports::car(&[expr.clone()])
                         },
                         Scm::symbol("import"),
                     ])
@@ -435,9 +435,9 @@ pub fn importset_minus_except_p(args: &[Scm]) -> Scm {
         let stmt = args[0].clone();
         {
             // (eq? (quote except) (car stmt))
-            Scm::func(imports::eq_p).invoke(&[Scm::symbol("except"), {
+            imports::eq_p(&[Scm::symbol("except"), {
                 // (car stmt)
-                Scm::func(imports::car).invoke(&[stmt.clone()])
+                imports::car(&[stmt.clone()])
             }])
         }
     }
@@ -461,7 +461,7 @@ pub fn importset_minus_libname(args: &[Scm]) -> Scm {
                     // (importset-libname (cadr stmt))
                     Scm::func(importset_minus_libname).invoke(&[{
                         // (cadr stmt)
-                        Scm::func(imports::cadr).invoke(&[stmt.clone()])
+                        imports::cadr(&[stmt.clone()])
                     }])
                 }
             } else if ({
@@ -474,7 +474,7 @@ pub fn importset_minus_libname(args: &[Scm]) -> Scm {
                     // (importset-libname (cadr stmt))
                     Scm::func(importset_minus_libname).invoke(&[{
                         // (cadr stmt)
-                        Scm::func(imports::cadr).invoke(&[stmt.clone()])
+                        imports::cadr(&[stmt.clone()])
                     }])
                 }
             } else {
@@ -492,7 +492,7 @@ pub fn importset_minus_only_minus_names(args: &[Scm]) -> Scm {
         let stmt = args[0].clone();
         {
             // (cddr stmt)
-            Scm::func(imports::cddr).invoke(&[stmt.clone()])
+            imports::cddr(&[stmt.clone()])
         }
     }
     .into()
@@ -505,9 +505,9 @@ pub fn importset_minus_only_p(args: &[Scm]) -> Scm {
         let stmt = args[0].clone();
         {
             // (eq? (quote only) (car stmt))
-            Scm::func(imports::eq_p).invoke(&[Scm::symbol("only"), {
+            imports::eq_p(&[Scm::symbol("only"), {
                 // (car stmt)
-                Scm::func(imports::car).invoke(&[stmt.clone()])
+                imports::car(&[stmt.clone()])
             }])
         }
     }
@@ -521,7 +521,7 @@ pub fn lambda_minus_body(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cddr expr)
-            Scm::func(imports::cddr).invoke(&[expr.clone()])
+            imports::cddr(&[expr.clone()])
         }
     }
     .into()
@@ -534,7 +534,7 @@ pub fn lambda_minus_params(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()
@@ -547,7 +547,7 @@ pub fn let_star__minus_bindings(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()
@@ -560,9 +560,9 @@ pub fn let_minus_args(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (map cadr (cadr expr))
-            Scm::func(imports::map).invoke(&[Scm::func(imports::cadr), {
+            imports::map(&[Scm::func(imports::cadr), {
                 // (cadr expr)
-                Scm::func(imports::cadr).invoke(&[expr.clone()])
+                imports::cadr(&[expr.clone()])
             }])
         }
     }
@@ -576,7 +576,7 @@ pub fn let_minus_body(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cddr expr)
-            Scm::func(imports::cddr).invoke(&[expr.clone()])
+            imports::cddr(&[expr.clone()])
         }
     }
     .into()
@@ -589,9 +589,9 @@ pub fn let_minus_vars(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (map car (cadr expr))
-            Scm::func(imports::map).invoke(&[Scm::func(imports::car), {
+            imports::map(&[Scm::func(imports::car), {
                 // (cadr expr)
-                Scm::func(imports::cadr).invoke(&[expr.clone()])
+                imports::cadr(&[expr.clone()])
             }])
         }
     }
@@ -607,15 +607,15 @@ pub fn library_p(args: &[Scm]) -> Scm {
             // (and (pair? exp*) (eq? (quote define-library) (car exp*)))
             if ({
                 // (pair? exp*)
-                Scm::func(imports::pair_p).invoke(&[exp_star_.clone()])
+                imports::pair_p(&[exp_star_.clone()])
             })
             .is_true()
             {
                 {
                     // (eq? (quote define-library) (car exp*))
-                    Scm::func(imports::eq_p).invoke(&[Scm::symbol("define-library"), {
+                    imports::eq_p(&[Scm::symbol("define-library"), {
                         // (car exp*)
-                        Scm::func(imports::car).invoke(&[exp_star_.clone()])
+                        imports::car(&[exp_star_.clone()])
                     }])
                 }
             } else {
@@ -657,52 +657,42 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                             // (cond ...)
                                             if ({
                                                 // (null? exp*)
-                                                Scm::func(imports::null_p)
-                                                    .invoke(&[exp_star_.clone()])
+                                                imports::null_p(&[exp_star_.clone()])
                                             })
                                             .is_true()
                                             {
                                                 Scm::Nil
                                             } else if ({
                                                 // (definition? (car exp*))
-                                                Scm::func(definition_p).invoke(&[{
+                                                definition_p(&[{
                                                     // (car exp*)
-                                                    Scm::func(imports::car)
-                                                        .invoke(&[exp_star_.clone()])
+                                                    imports::car(&[exp_star_.clone()])
                                                 }])
                                             })
                                             .is_true()
                                             {
                                                 {
                                                     // (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))
-                                                    Scm::func(imports::cons).invoke(&[
+                                                    imports::cons(&[
                                                         {
                                                             // (list (definition-variable (car exp*)) (definition-value (car exp*)))
-                                                            Scm::func(imports::list).invoke(&[
+                                                            imports::list(&[
                                                                 {
                                                                     // (definition-variable (car exp*))
-                                                                    Scm::func(
-                                                                        definition_minus_variable,
-                                                                    )
-                                                                    .invoke(&[{
+                                                                    definition_minus_variable(&[{
                                                                         // (car exp*)
-                                                                        Scm::func(imports::car)
-                                                                            .invoke(&[
-                                                                                exp_star_.clone()
-                                                                            ])
+                                                                        imports::car(&[
+                                                                            exp_star_.clone()
+                                                                        ])
                                                                     }])
                                                                 },
                                                                 {
                                                                     // (definition-value (car exp*))
-                                                                    Scm::func(
-                                                                        definition_minus_value,
-                                                                    )
-                                                                    .invoke(&[{
+                                                                    definition_minus_value(&[{
                                                                         // (car exp*)
-                                                                        Scm::func(imports::car)
-                                                                            .invoke(&[
-                                                                                exp_star_.clone()
-                                                                            ])
+                                                                        imports::car(&[
+                                                                            exp_star_.clone()
+                                                                        ])
                                                                     }])
                                                                 },
                                                             ])
@@ -711,8 +701,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                             // (initializations (cdr exp*))
                                                             initializations.get().invoke(&[{
                                                                 // (cdr exp*)
-                                                                Scm::func(imports::cdr)
-                                                                    .invoke(&[exp_star_.clone()])
+                                                                imports::cdr(&[exp_star_.clone()])
                                                             }])
                                                         },
                                                     ])
@@ -722,8 +711,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                     // (initializations (cdr exp*))
                                                     initializations.get().invoke(&[{
                                                         // (cdr exp*)
-                                                        Scm::func(imports::cdr)
-                                                            .invoke(&[exp_star_.clone()])
+                                                        imports::cdr(&[exp_star_.clone()])
                                                     }])
                                                 }
                                             }
@@ -742,18 +730,16 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                             // (cond ...)
                                             if ({
                                                 // (null? exp*)
-                                                Scm::func(imports::null_p)
-                                                    .invoke(&[exp_star_.clone()])
+                                                imports::null_p(&[exp_star_.clone()])
                                             })
                                             .is_true()
                                             {
                                                 Scm::Nil
                                             } else if ({
                                                 // (definition? (car exp*))
-                                                Scm::func(definition_p).invoke(&[{
+                                                definition_p(&[{
                                                     // (car exp*)
-                                                    Scm::func(imports::car)
-                                                        .invoke(&[exp_star_.clone()])
+                                                    imports::car(&[exp_star_.clone()])
                                                 }])
                                             })
                                             .is_true()
@@ -762,25 +748,22 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                     // (transform (cdr exp*))
                                                     transform.get().invoke(&[{
                                                         // (cdr exp*)
-                                                        Scm::func(imports::cdr)
-                                                            .invoke(&[exp_star_.clone()])
+                                                        imports::cdr(&[exp_star_.clone()])
                                                     }])
                                                 }
                                             } else {
                                                 {
                                                     // (cons (car exp*) (transform (cdr exp*)))
-                                                    Scm::func(imports::cons).invoke(&[
+                                                    imports::cons(&[
                                                         {
                                                             // (car exp*)
-                                                            Scm::func(imports::car)
-                                                                .invoke(&[exp_star_.clone()])
+                                                            imports::car(&[exp_star_.clone()])
                                                         },
                                                         {
                                                             // (transform (cdr exp*))
                                                             transform.get().invoke(&[{
                                                                 // (cdr exp*)
-                                                                Scm::func(imports::cdr)
-                                                                    .invoke(&[exp_star_.clone()])
+                                                                imports::cdr(&[exp_star_.clone()])
                                                             }])
                                                         },
                                                     ])
@@ -798,7 +781,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                         };
                                         if ({
                                             // (null? ini)
-                                            Scm::func(imports::null_p).invoke(&[ini.clone()])
+                                            imports::null_p(&[ini.clone()])
                                         })
                                         .is_true()
                                         {
@@ -806,23 +789,15 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                         } else {
                                             {
                                                 // (list (cons (quote letrec) (cons ini (transform body))))
-                                                Scm::func(imports::list).invoke(&[{
+                                                imports::list(&[{
                                                     // (cons (quote letrec) (cons ini (transform body)))
-                                                    Scm::func(imports::cons).invoke(&[
-                                                        Scm::symbol("letrec"),
-                                                        {
-                                                            // (cons ini (transform body))
-                                                            Scm::func(imports::cons).invoke(&[
-                                                                ini.clone(),
-                                                                {
-                                                                    // (transform body)
-                                                                    transform
-                                                                        .get()
-                                                                        .invoke(&[body.clone()])
-                                                                },
-                                                            ])
-                                                        },
-                                                    ])
+                                                    imports::cons(&[Scm::symbol("letrec"), {
+                                                        // (cons ini (transform body))
+                                                        imports::cons(&[ini.clone(), {
+                                                            // (transform body)
+                                                            transform.get().invoke(&[body.clone()])
+                                                        }])
+                                                    }])
                                                 }])
                                             }
                                         }
@@ -845,7 +820,7 @@ pub fn set_i_minus_value(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (caddr expr)
-            Scm::func(imports::caddr).invoke(&[expr.clone()])
+            imports::caddr(&[expr.clone()])
         }
     }
     .into()
@@ -858,7 +833,7 @@ pub fn set_i_minus_variable(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()
@@ -871,7 +846,7 @@ pub fn testcase_minus_body(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cddr expr)
-            Scm::func(imports::cddr).invoke(&[expr.clone()])
+            imports::cddr(&[expr.clone()])
         }
     }
     .into()
@@ -884,7 +859,7 @@ pub fn testcase_minus_description(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()
@@ -897,7 +872,7 @@ pub fn testsuite_minus_cases(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cddr expr)
-            Scm::func(imports::cddr).invoke(&[expr.clone()])
+            imports::cddr(&[expr.clone()])
         }
     }
     .into()
@@ -910,7 +885,7 @@ pub fn testsuite_minus_name(args: &[Scm]) -> Scm {
         let expr = args[0].clone();
         {
             // (cadr expr)
-            Scm::func(imports::cadr).invoke(&[expr.clone()])
+            imports::cadr(&[expr.clone()])
         }
     }
     .into()

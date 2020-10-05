@@ -22,12 +22,12 @@ pub fn expand_minus_and(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-comment exp (astify-and (and-args exp) env tail?))
-            Scm::func(imports::astify_minus_comment).invoke(&[exp.clone(), {
+            imports::astify_minus_comment(&[exp.clone(), {
                 // (astify-and (and-args exp) env tail?)
-                Scm::func(imports::astify_minus_and).invoke(&[
+                imports::astify_minus_and(&[
                     {
                         // (and-args exp)
-                        Scm::func(imports::and_minus_args).invoke(&[exp.clone()])
+                        imports::and_minus_args(&[exp.clone()])
                     },
                     env.clone(),
                     tail_p.clone(),
@@ -47,10 +47,10 @@ pub fn expand_minus_assert(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-assert (assert-condition exp) env)
-            Scm::func(imports::astify_minus_assert).invoke(&[
+            imports::astify_minus_assert(&[
                 {
                     // (assert-condition exp)
-                    Scm::func(imports::assert_minus_condition).invoke(&[exp.clone()])
+                    imports::assert_minus_condition(&[exp.clone()])
                 },
                 env.clone(),
             ])
@@ -68,10 +68,10 @@ pub fn expand_minus_begin(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-sequence (begin-statements exp) env tail?)
-            Scm::func(imports::astify_minus_sequence).invoke(&[
+            imports::astify_minus_sequence(&[
                 {
                     // (begin-statements exp)
-                    Scm::func(imports::begin_minus_statements).invoke(&[exp.clone()])
+                    imports::begin_minus_statements(&[exp.clone()])
                 },
                 env.clone(),
                 tail_p.clone(),
@@ -90,14 +90,14 @@ pub fn expand_minus_cond(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-comment (quote (cond ...)) (astify-cond (cond-clauses exp) env tail?))
-            Scm::func(imports::astify_minus_comment).invoke(&[
+            imports::astify_minus_comment(&[
                 Scm::pair(Scm::symbol("cond"), Scm::pair(Scm::symbol("..."), Scm::Nil)),
                 {
                     // (astify-cond (cond-clauses exp) env tail?)
-                    Scm::func(imports::astify_minus_cond).invoke(&[
+                    imports::astify_minus_cond(&[
                         {
                             // (cond-clauses exp)
-                            Scm::func(imports::cond_minus_clauses).invoke(&[exp.clone()])
+                            imports::cond_minus_clauses(&[exp.clone()])
                         },
                         env.clone(),
                         tail_p.clone(),
@@ -118,24 +118,24 @@ pub fn expand_minus_define(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-comment (cons (quote define) (definition-signature exp)) (astify-definition (definition-variable exp) (definition-value exp) env))
-            Scm::func(imports::astify_minus_comment).invoke(&[
+            imports::astify_minus_comment(&[
                 {
                     // (cons (quote define) (definition-signature exp))
-                    Scm::func(imports::cons).invoke(&[Scm::symbol("define"), {
+                    imports::cons(&[Scm::symbol("define"), {
                         // (definition-signature exp)
-                        Scm::func(imports::definition_minus_signature).invoke(&[exp.clone()])
+                        imports::definition_minus_signature(&[exp.clone()])
                     }])
                 },
                 {
                     // (astify-definition (definition-variable exp) (definition-value exp) env)
-                    Scm::func(imports::astify_minus_definition).invoke(&[
+                    imports::astify_minus_definition(&[
                         {
                             // (definition-variable exp)
-                            Scm::func(imports::definition_minus_variable).invoke(&[exp.clone()])
+                            imports::definition_minus_variable(&[exp.clone()])
                         },
                         {
                             // (definition-value exp)
-                            Scm::func(imports::definition_minus_value).invoke(&[exp.clone()])
+                            imports::definition_minus_value(&[exp.clone()])
                         },
                         env.clone(),
                     ])
@@ -155,18 +155,18 @@ pub fn expand_minus_if(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)
-            Scm::func(imports::astify_minus_alternative).invoke(&[
+            imports::astify_minus_alternative(&[
                 {
                     // (if-condition exp)
-                    Scm::func(imports::if_minus_condition).invoke(&[exp.clone()])
+                    imports::if_minus_condition(&[exp.clone()])
                 },
                 {
                     // (if-consequence exp)
-                    Scm::func(imports::if_minus_consequence).invoke(&[exp.clone()])
+                    imports::if_minus_consequence(&[exp.clone()])
                 },
                 {
                     // (if-alternative exp)
-                    Scm::func(imports::if_minus_alternative).invoke(&[exp.clone()])
+                    imports::if_minus_alternative(&[exp.clone()])
                 },
                 env.clone(),
                 tail_p.clone(),
@@ -185,14 +185,14 @@ pub fn expand_minus_lambda(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-abstraction (lambda-params exp) (lambda-body exp) env)
-            Scm::func(imports::astify_minus_abstraction).invoke(&[
+            imports::astify_minus_abstraction(&[
                 {
                     // (lambda-params exp)
-                    Scm::func(imports::lambda_minus_params).invoke(&[exp.clone()])
+                    imports::lambda_minus_params(&[exp.clone()])
                 },
                 {
                     // (lambda-body exp)
-                    Scm::func(imports::lambda_minus_body).invoke(&[exp.clone()])
+                    imports::lambda_minus_body(&[exp.clone()])
                 },
                 env.clone(),
             ])
@@ -210,26 +210,26 @@ pub fn expand_minus_let(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-comment exp (astify-application (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?))
-            Scm::func(imports::astify_minus_comment).invoke(&[exp.clone(), {
+            imports::astify_minus_comment(&[exp.clone(), {
                 // (astify-application (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?)
-                Scm::func(imports::astify_minus_application).invoke(&[
+                imports::astify_minus_application(&[
                     {
                         // (astify-abstraction (let-vars exp) (let-body exp) env)
-                        Scm::func(imports::astify_minus_abstraction).invoke(&[
+                        imports::astify_minus_abstraction(&[
                             {
                                 // (let-vars exp)
-                                Scm::func(imports::let_minus_vars).invoke(&[exp.clone()])
+                                imports::let_minus_vars(&[exp.clone()])
                             },
                             {
                                 // (let-body exp)
-                                Scm::func(imports::let_minus_body).invoke(&[exp.clone()])
+                                imports::let_minus_body(&[exp.clone()])
                             },
                             env.clone(),
                         ])
                     },
                     {
                         // (let-args exp)
-                        Scm::func(imports::let_minus_args).invoke(&[exp.clone()])
+                        imports::let_minus_args(&[exp.clone()])
                     },
                     env.clone(),
                     tail_p.clone(),
@@ -267,40 +267,34 @@ pub fn expand_minus_let_star_(args: &[Scm]) -> Scm {
                                     let bindings = args[0].clone();
                                     if ({
                                         // (null? bindings)
-                                        Scm::func(imports::null_p).invoke(&[bindings.clone()])
+                                        imports::null_p(&[bindings.clone()])
                                     })
                                     .is_true()
                                     {
                                         {
                                             // (cons (quote begin) (let-body exp))
-                                            Scm::func(imports::cons).invoke(&[
-                                                Scm::symbol("begin"),
-                                                {
-                                                    // (let-body exp)
-                                                    Scm::func(imports::let_minus_body)
-                                                        .invoke(&[exp.clone()])
-                                                },
-                                            ])
+                                            imports::cons(&[Scm::symbol("begin"), {
+                                                // (let-body exp)
+                                                imports::let_minus_body(&[exp.clone()])
+                                            }])
                                         }
                                     } else {
                                         {
                                             // (list (quote let) (list (car bindings)) (loop (cdr bindings)))
-                                            Scm::func(imports::list).invoke(&[
+                                            imports::list(&[
                                                 Scm::symbol("let"),
                                                 {
                                                     // (list (car bindings))
-                                                    Scm::func(imports::list).invoke(&[{
+                                                    imports::list(&[{
                                                         // (car bindings)
-                                                        Scm::func(imports::car)
-                                                            .invoke(&[bindings.clone()])
+                                                        imports::car(&[bindings.clone()])
                                                     }])
                                                 },
                                                 {
                                                     // (loop (cdr bindings))
                                                     loop_.get().invoke(&[{
                                                         // (cdr bindings)
-                                                        Scm::func(imports::cdr)
-                                                            .invoke(&[bindings.clone()])
+                                                        imports::cdr(&[bindings.clone()])
                                                     }])
                                                 },
                                             ])
@@ -310,15 +304,14 @@ pub fn expand_minus_let_star_(args: &[Scm]) -> Scm {
                             });
                             {
                                 // (astify-comment exp (expand-let (loop (let*-bindings exp)) env tail?))
-                                Scm::func(imports::astify_minus_comment).invoke(&[exp.clone(), {
+                                imports::astify_minus_comment(&[exp.clone(), {
                                     // (expand-let (loop (let*-bindings exp)) env tail?)
-                                    Scm::func(expand_minus_let).invoke(&[
+                                    expand_minus_let(&[
                                         {
                                             // (loop (let*-bindings exp))
                                             loop_.get().invoke(&[{
                                                 // (let*-bindings exp)
-                                                Scm::func(imports::let_star__minus_bindings)
-                                                    .invoke(&[exp.clone()])
+                                                imports::let_star__minus_bindings(&[exp.clone()])
                                             }])
                                         },
                                         env.clone(),
@@ -344,16 +337,16 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-comment exp (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?))
-            Scm::func(imports::astify_minus_comment).invoke(&[exp.clone(), {
+            imports::astify_minus_comment(&[exp.clone(), {
                 // (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?)
-                Scm::func(expand_minus_let).invoke(&[
+                expand_minus_let(&[
                     {
                         // (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))))
-                        Scm::func(imports::list).invoke(&[
+                        imports::list(&[
                             Scm::symbol("let"),
                             {
                                 // (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp))
-                                Scm::func(imports::map).invoke(&[
+                                imports::map(&[
                                     {
                                         // Closure
                                         Scm::func(move |args: &[Scm]| {
@@ -363,7 +356,7 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
                                             let name = args[0].clone();
                                             {
                                                 // (list name (quote (quote *uninitialized*)))
-                                                Scm::func(imports::list).invoke(&[
+                                                imports::list(&[
                                                     name.clone(),
                                                     Scm::pair(
                                                         Scm::symbol("quote"),
@@ -378,18 +371,18 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
                                     },
                                     {
                                         // (let-vars exp)
-                                        Scm::func(imports::let_minus_vars).invoke(&[exp.clone()])
+                                        imports::let_minus_vars(&[exp.clone()])
                                     },
                                 ])
                             },
                             {
                                 // (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))
-                                Scm::func(imports::cons).invoke(&[Scm::symbol("begin"), {
+                                imports::cons(&[Scm::symbol("begin"), {
                                     // (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp))
-                                    Scm::func(imports::append).invoke(&[
+                                    imports::append(&[
                                         {
                                             // (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp))
-                                            Scm::func(imports::map).invoke(&[
+                                            imports::map(&[
                                                 {
                                                     // Closure
                                                     Scm::func(move |args: &[Scm]| {
@@ -400,7 +393,7 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
                                                         let val = args[1].clone();
                                                         {
                                                             // (list (quote set!) name val)
-                                                            Scm::func(imports::list).invoke(&[
+                                                            imports::list(&[
                                                                 Scm::symbol("set!"),
                                                                 name.clone(),
                                                                 val.clone(),
@@ -410,20 +403,17 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
                                                 },
                                                 {
                                                     // (let-vars exp)
-                                                    Scm::func(imports::let_minus_vars)
-                                                        .invoke(&[exp.clone()])
+                                                    imports::let_minus_vars(&[exp.clone()])
                                                 },
                                                 {
                                                     // (let-args exp)
-                                                    Scm::func(imports::let_minus_args)
-                                                        .invoke(&[exp.clone()])
+                                                    imports::let_minus_args(&[exp.clone()])
                                                 },
                                             ])
                                         },
                                         {
                                             // (let-body exp)
-                                            Scm::func(imports::let_minus_body)
-                                                .invoke(&[exp.clone()])
+                                            imports::let_minus_body(&[exp.clone()])
                                         },
                                     ])
                                 }])
@@ -448,10 +438,10 @@ pub fn expand_minus_quote(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-constant (cadr exp) env)
-            Scm::func(imports::astify_minus_constant).invoke(&[
+            imports::astify_minus_constant(&[
                 {
                     // (cadr exp)
-                    Scm::func(imports::cadr).invoke(&[exp.clone()])
+                    imports::cadr(&[exp.clone()])
                 },
                 env.clone(),
             ])
@@ -469,14 +459,14 @@ pub fn expand_minus_set_i(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-assignment (set!-variable exp) (set!-value exp) env)
-            Scm::func(imports::astify_minus_assignment).invoke(&[
+            imports::astify_minus_assignment(&[
                 {
                     // (set!-variable exp)
-                    Scm::func(imports::set_i_minus_variable).invoke(&[exp.clone()])
+                    imports::set_i_minus_variable(&[exp.clone()])
                 },
                 {
                     // (set!-value exp)
-                    Scm::func(imports::set_i_minus_value).invoke(&[exp.clone()])
+                    imports::set_i_minus_value(&[exp.clone()])
                 },
                 env.clone(),
             ])
@@ -494,14 +484,14 @@ pub fn expand_minus_testsuite(args: &[Scm]) -> Scm {
         let tail_p = args[2].clone();
         {
             // (astify-testsuite (testsuite-name exp) (testsuite-cases exp) env)
-            Scm::func(imports::astify_minus_testsuite).invoke(&[
+            imports::astify_minus_testsuite(&[
                 {
                     // (testsuite-name exp)
-                    Scm::func(imports::testsuite_minus_name).invoke(&[exp.clone()])
+                    imports::testsuite_minus_name(&[exp.clone()])
                 },
                 {
                     // (testsuite-cases exp)
-                    Scm::func(imports::testsuite_minus_cases).invoke(&[exp.clone()])
+                    imports::testsuite_minus_cases(&[exp.clone()])
                 },
                 env.clone(),
             ])
@@ -516,72 +506,86 @@ pub fn make_minus_core_minus_env(args: &[Scm]) -> Scm {
         }
         {
             // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-keyword (quote testsuite) expand-testsuite))
-            Scm::func(imports::list).invoke(&[
+            imports::list(&[
                 Scm::symbol("GLOBAL-MARKER"),
                 {
                     // (new-keyword (quote and) expand-and)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("and"), Scm::func(expand_minus_and)])
+                    imports::new_minus_keyword(&[Scm::symbol("and"), Scm::func(expand_minus_and)])
                 },
                 {
                     // (new-keyword (quote assert) expand-assert)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("assert"), Scm::func(expand_minus_assert)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("assert"),
+                        Scm::func(expand_minus_assert),
+                    ])
                 },
                 {
                     // (new-keyword (quote begin) expand-begin)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("begin"), Scm::func(expand_minus_begin)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("begin"),
+                        Scm::func(expand_minus_begin),
+                    ])
                 },
                 {
                     // (new-keyword (quote cond) expand-cond)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("cond"), Scm::func(expand_minus_cond)])
+                    imports::new_minus_keyword(&[Scm::symbol("cond"), Scm::func(expand_minus_cond)])
                 },
                 {
                     // (new-keyword (quote define) expand-define)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("define"), Scm::func(expand_minus_define)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("define"),
+                        Scm::func(expand_minus_define),
+                    ])
                 },
                 {
                     // (new-keyword (quote if) expand-if)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("if"), Scm::func(expand_minus_if)])
+                    imports::new_minus_keyword(&[Scm::symbol("if"), Scm::func(expand_minus_if)])
                 },
                 {
                     // (new-keyword (quote lambda) expand-lambda)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("lambda"), Scm::func(expand_minus_lambda)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("lambda"),
+                        Scm::func(expand_minus_lambda),
+                    ])
                 },
                 {
                     // (new-keyword (quote let) expand-let)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("let"), Scm::func(expand_minus_let)])
+                    imports::new_minus_keyword(&[Scm::symbol("let"), Scm::func(expand_minus_let)])
                 },
                 {
                     // (new-keyword (quote let*) expand-let*)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("let*"), Scm::func(expand_minus_let_star_)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("let*"),
+                        Scm::func(expand_minus_let_star_),
+                    ])
                 },
                 {
                     // (new-keyword (quote letrec) expand-letrec)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("letrec"), Scm::func(expand_minus_letrec)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("letrec"),
+                        Scm::func(expand_minus_letrec),
+                    ])
                 },
                 {
                     // (new-keyword (quote quote) expand-quote)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("quote"), Scm::func(expand_minus_quote)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("quote"),
+                        Scm::func(expand_minus_quote),
+                    ])
                 },
                 {
                     // (new-keyword (quote set!) expand-set!)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("set!"), Scm::func(expand_minus_set_i)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("set!"),
+                        Scm::func(expand_minus_set_i),
+                    ])
                 },
                 {
                     // (new-keyword (quote testsuite) expand-testsuite)
-                    Scm::func(imports::new_minus_keyword)
-                        .invoke(&[Scm::symbol("testsuite"), Scm::func(expand_minus_testsuite)])
+                    imports::new_minus_keyword(&[
+                        Scm::symbol("testsuite"),
+                        Scm::func(expand_minus_testsuite),
+                    ])
                 },
             ])
         }

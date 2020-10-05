@@ -49,8 +49,7 @@ pub fn boxed_minus_variable_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj BoxedVariable)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), BoxedVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), BoxedVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -64,11 +63,7 @@ pub fn global_minus_add_minus_definition_i(args: &[Scm]) -> Scm {
         let val = args[1].clone();
         {
             // (call-method var (quote add-definition!) val)
-            Scm::func(imports::call_minus_method).invoke(&[
-                var.clone(),
-                Scm::symbol("add-definition!"),
-                val.clone(),
-            ])
+            imports::call_minus_method(&[var.clone(), Scm::symbol("add-definition!"), val.clone()])
         }
     }
     .into()
@@ -81,7 +76,7 @@ pub fn global_minus_function_minus_get_minus_value(args: &[Scm]) -> Scm {
         let var = args[0].clone();
         {
             // (get-field var (quote value))
-            Scm::func(imports::get_minus_field).invoke(&[var.clone(), Scm::symbol("value")])
+            imports::get_minus_field(&[var.clone(), Scm::symbol("value")])
         }
     }
     .into()
@@ -95,11 +90,7 @@ pub fn global_minus_function_minus_set_minus_value_i(args: &[Scm]) -> Scm {
         let val = args[1].clone();
         {
             // (set-field! var (quote value) val)
-            Scm::func(imports::set_minus_field_i).invoke(&[
-                var.clone(),
-                Scm::symbol("value"),
-                val.clone(),
-            ])
+            imports::set_minus_field_i(&[var.clone(), Scm::symbol("value"), val.clone()])
         }
     }
     .into()
@@ -112,8 +103,7 @@ pub fn global_minus_function_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj GlobalFunction)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), GlobalFunction.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), GlobalFunction.with(|value| value.get())])
         }
     }
     .into()
@@ -126,8 +116,7 @@ pub fn global_minus_variable_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj GlobalVariable)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), GlobalVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), GlobalVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -140,8 +129,7 @@ pub fn import_minus_variable_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj ImportedVariable)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), ImportedVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), ImportedVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -154,7 +142,7 @@ pub fn keyword_minus_handler(args: &[Scm]) -> Scm {
         let kw = args[0].clone();
         {
             // (get-field kw (quote handler))
-            Scm::func(imports::get_minus_field).invoke(&[kw.clone(), Scm::symbol("handler")])
+            imports::get_minus_field(&[kw.clone(), Scm::symbol("handler")])
         }
     }
     .into()
@@ -167,7 +155,7 @@ pub fn keyword_minus_name(args: &[Scm]) -> Scm {
         let kw = args[0].clone();
         {
             // (get-field kw (quote name))
-            Scm::func(imports::get_minus_field).invoke(&[kw.clone(), Scm::symbol("name")])
+            imports::get_minus_field(&[kw.clone(), Scm::symbol("name")])
         }
     }
     .into()
@@ -182,14 +170,13 @@ pub fn keyword_p(args: &[Scm]) -> Scm {
             // (and (table? obj) (ancestor? obj Keyword))
             if ({
                 // (table? obj)
-                Scm::func(imports::table_p).invoke(&[obj.clone()])
+                imports::table_p(&[obj.clone()])
             })
             .is_true()
             {
                 {
                     // (ancestor? obj Keyword)
-                    Scm::func(imports::ancestor_p)
-                        .invoke(&[obj.clone(), Keyword.with(|value| value.get())])
+                    imports::ancestor_p(&[obj.clone(), Keyword.with(|value| value.get())])
                 }
             } else {
                 Scm::False
@@ -206,7 +193,7 @@ pub fn local_minus_boxify_i(args: &[Scm]) -> Scm {
         let var = args[0].clone();
         {
             // (call-method var (quote into-boxed!))
-            Scm::func(imports::call_minus_method).invoke(&[var.clone(), Scm::symbol("into-boxed!")])
+            imports::call_minus_method(&[var.clone(), Scm::symbol("into-boxed!")])
         }
     }
     .into()
@@ -219,8 +206,7 @@ pub fn local_minus_variable_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj LocalVariable)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), LocalVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), LocalVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -237,12 +223,12 @@ pub fn make_minus_keyword(args: &[Scm]) -> Scm {
             {
                 let keyword = {
                     // (clone Keyword)
-                    Scm::func(imports::clone).invoke(&[Keyword.with(|value| value.get())])
+                    imports::clone(&[Keyword.with(|value| value.get())])
                 };
                 {
                     {
                         // (set-field! keyword (quote name) name)
-                        Scm::func(imports::set_minus_field_i).invoke(&[
+                        imports::set_minus_field_i(&[
                             keyword.clone(),
                             Scm::symbol("name"),
                             name.clone(),
@@ -250,7 +236,7 @@ pub fn make_minus_keyword(args: &[Scm]) -> Scm {
                     };
                     {
                         // (set-field! keyword (quote handler) handler)
-                        Scm::func(imports::set_minus_field_i).invoke(&[
+                        imports::set_minus_field_i(&[
                             keyword.clone(),
                             Scm::symbol("handler"),
                             handler.clone(),
@@ -271,9 +257,9 @@ pub fn new_minus_boxed(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         {
             // (cons name (clone BoxedVariable))
-            Scm::func(imports::cons).invoke(&[name.clone(), {
+            imports::cons(&[name.clone(), {
                 // (clone BoxedVariable)
-                Scm::func(imports::clone).invoke(&[BoxedVariable.with(|value| value.get())])
+                imports::clone(&[BoxedVariable.with(|value| value.get())])
             }])
         }
     }
@@ -287,9 +273,9 @@ pub fn new_minus_global(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         {
             // (cons name (clone UndefinedGlobal))
-            Scm::func(imports::cons).invoke(&[name.clone(), {
+            imports::cons(&[name.clone(), {
                 // (clone UndefinedGlobal)
-                Scm::func(imports::clone).invoke(&[UndefinedGlobal.with(|value| value.get())])
+                imports::clone(&[UndefinedGlobal.with(|value| value.get())])
             }])
         }
     }
@@ -303,9 +289,9 @@ pub fn new_minus_import(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         {
             // (cons name (clone ImportedVariable))
-            Scm::func(imports::cons).invoke(&[name.clone(), {
+            imports::cons(&[name.clone(), {
                 // (clone ImportedVariable)
-                Scm::func(imports::clone).invoke(&[ImportedVariable.with(|value| value.get())])
+                imports::clone(&[ImportedVariable.with(|value| value.get())])
             }])
         }
     }
@@ -320,9 +306,9 @@ pub fn new_minus_keyword(args: &[Scm]) -> Scm {
         let handler = args[1].clone();
         {
             // (cons name (make-keyword name handler))
-            Scm::func(imports::cons).invoke(&[name.clone(), {
+            imports::cons(&[name.clone(), {
                 // (make-keyword name handler)
-                Scm::func(make_minus_keyword).invoke(&[name.clone(), handler.clone()])
+                make_minus_keyword(&[name.clone(), handler.clone()])
             }])
         }
     }
@@ -336,9 +322,9 @@ pub fn new_minus_local(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         {
             // (cons name (clone LocalVariable))
-            Scm::func(imports::cons).invoke(&[name.clone(), {
+            imports::cons(&[name.clone(), {
                 // (clone LocalVariable)
-                Scm::func(imports::clone).invoke(&[LocalVariable.with(|value| value.get())])
+                imports::clone(&[LocalVariable.with(|value| value.get())])
             }])
         }
     }
@@ -353,7 +339,7 @@ pub fn replace_minus_var_i(args: &[Scm]) -> Scm {
         let new_minus_var = args[1].clone();
         {
             // (replace-table! var new-var)
-            Scm::func(imports::replace_minus_table_i).invoke(&[var.clone(), new_minus_var.clone()])
+            imports::replace_minus_table_i(&[var.clone(), new_minus_var.clone()])
         }
     }
     .into()
@@ -366,8 +352,7 @@ pub fn undefined_minus_global_minus_variable_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj UndefinedGlobal)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), UndefinedGlobal.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), UndefinedGlobal.with(|value| value.get())])
         }
     }
     .into()
@@ -380,7 +365,7 @@ pub fn variable_minus_mutable_p(args: &[Scm]) -> Scm {
         let var = args[0].clone();
         {
             // (call-method var (quote mutable?))
-            Scm::func(imports::call_minus_method).invoke(&[var.clone(), Scm::symbol("mutable?")])
+            imports::call_minus_method(&[var.clone(), Scm::symbol("mutable?")])
         }
     }
     .into()
@@ -393,8 +378,7 @@ pub fn variable_minus_set_minus_mutable_i(args: &[Scm]) -> Scm {
         let var = args[0].clone();
         {
             // (call-method var (quote set-mutable!))
-            Scm::func(imports::call_minus_method)
-                .invoke(&[var.clone(), Scm::symbol("set-mutable!")])
+            imports::call_minus_method(&[var.clone(), Scm::symbol("set-mutable!")])
         }
     }
     .into()
@@ -407,8 +391,7 @@ pub fn variable_p(args: &[Scm]) -> Scm {
         let obj = args[0].clone();
         {
             // (ancestor? obj Variable)
-            Scm::func(imports::ancestor_p)
-                .invoke(&[obj.clone(), Variable.with(|value| value.get())])
+            imports::ancestor_p(&[obj.clone(), Variable.with(|value| value.get())])
         }
     }
     .into()
@@ -433,13 +416,13 @@ pub fn initialize() {
             Keyword.with(|value| {
                 value.set({
                     // (make-table)
-                    Scm::func(imports::make_minus_table).invoke(&[])
+                    imports::make_minus_table(&[])
                 })
             })
         };
         {
             // (set-field! Keyword (quote __name__) (quote Keyword))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 Keyword.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("Keyword"),
@@ -450,13 +433,13 @@ pub fn initialize() {
             Variable.with(|value| {
                 value.set({
                     // (make-table)
-                    Scm::func(imports::make_minus_table).invoke(&[])
+                    imports::make_minus_table(&[])
                 })
             })
         };
         {
             // (set-field! Variable (quote __name__) (quote Variable))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 Variable.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("Variable"),
@@ -464,7 +447,7 @@ pub fn initialize() {
         };
         {
             // (set-field! Variable (quote mut) #f)
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 Variable.with(|value| value.get()),
                 Scm::symbol("mut"),
                 Scm::False,
@@ -472,7 +455,7 @@ pub fn initialize() {
         };
         {
             // (set-field! Variable (quote mutable?) (lambda (self) (get-field self (quote mut))))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 Variable.with(|value| value.get()),
                 Scm::symbol("mutable?"),
                 {
@@ -484,8 +467,7 @@ pub fn initialize() {
                         let self_ = args[0].clone();
                         {
                             // (get-field self (quote mut))
-                            Scm::func(imports::get_minus_field)
-                                .invoke(&[self_.clone(), Scm::symbol("mut")])
+                            imports::get_minus_field(&[self_.clone(), Scm::symbol("mut")])
                         }
                     })
                 },
@@ -493,7 +475,7 @@ pub fn initialize() {
         };
         {
             // (set-field! Variable (quote set-mutable!) (lambda (self) (set-field! self (quote mut) #t)))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 Variable.with(|value| value.get()),
                 Scm::symbol("set-mutable!"),
                 {
@@ -505,7 +487,7 @@ pub fn initialize() {
                         let self_ = args[0].clone();
                         {
                             // (set-field! self (quote mut) #t)
-                            Scm::func(imports::set_minus_field_i).invoke(&[
+                            imports::set_minus_field_i(&[
                                 self_.clone(),
                                 Scm::symbol("mut"),
                                 Scm::True,
@@ -520,13 +502,13 @@ pub fn initialize() {
             GlobalVariable.with(|value| {
                 value.set({
                     // (clone Variable)
-                    Scm::func(imports::clone).invoke(&[Variable.with(|value| value.get())])
+                    imports::clone(&[Variable.with(|value| value.get())])
                 })
             })
         };
         {
             // (set-field! GlobalVariable (quote __name__) (quote GlobalVariable))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 GlobalVariable.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("GlobalVariable"),
@@ -534,7 +516,7 @@ pub fn initialize() {
         };
         {
             // (set-field! GlobalVariable (quote mutable?) (lambda (self) #t))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 GlobalVariable.with(|value| value.get()),
                 Scm::symbol("mutable?"),
                 {
@@ -551,7 +533,7 @@ pub fn initialize() {
         };
         {
             // (set-field! GlobalVariable (quote add-definition!) (lambda (self value) (quote IGNORED)))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 GlobalVariable.with(|value| value.get()),
                 Scm::symbol("add-definition!"),
                 {
@@ -572,13 +554,13 @@ pub fn initialize() {
             GlobalFunction.with(|value| {
                 value.set({
                     // (clone Variable)
-                    Scm::func(imports::clone).invoke(&[Variable.with(|value| value.get())])
+                    imports::clone(&[Variable.with(|value| value.get())])
                 })
             })
         };
         {
             // (set-field! GlobalFunction (quote __name__) (quote GlobalFunction))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 GlobalFunction.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("GlobalFunction"),
@@ -586,7 +568,7 @@ pub fn initialize() {
         };
         {
             // (set-field! GlobalFunction (quote add-definition!) (lambda (self value) (set-parent! self GlobalVariable)))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 GlobalFunction.with(|value| value.get()),
                 Scm::symbol("add-definition!"),
                 {
@@ -599,8 +581,10 @@ pub fn initialize() {
                         let value = args[1].clone();
                         {
                             // (set-parent! self GlobalVariable)
-                            Scm::func(imports::set_minus_parent_i)
-                                .invoke(&[self_.clone(), GlobalVariable.with(|value| value.get())])
+                            imports::set_minus_parent_i(&[
+                                self_.clone(),
+                                GlobalVariable.with(|value| value.get()),
+                            ])
                         }
                     })
                 },
@@ -611,13 +595,13 @@ pub fn initialize() {
             UndefinedGlobal.with(|value| {
                 value.set({
                     // (clone Variable)
-                    Scm::func(imports::clone).invoke(&[Variable.with(|value| value.get())])
+                    imports::clone(&[Variable.with(|value| value.get())])
                 })
             })
         };
         {
             // (set-field! UndefinedGlobal (quote __name__) (quote UndefinedGlobal))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 UndefinedGlobal.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("UndefinedGlobal"),
@@ -625,7 +609,7 @@ pub fn initialize() {
         };
         {
             // (set-field! UndefinedGlobal (quote add-definition!) (lambda (self value) (cond ((eq? (value (quote kind)) (quote ABSTRACTION)) (set-parent! self GlobalFunction) (set-field! self (quote value) value)) ((eq? (value (quote kind)) (quote VARARG-ABSTRACTION)) (set-parent! self GlobalFunction) (set-field! self (quote value) value)) (else (set-parent! self GlobalVariable)))))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 UndefinedGlobal.with(|value| value.get()),
                 Scm::symbol("add-definition!"),
                 {
@@ -640,7 +624,7 @@ pub fn initialize() {
                             // (cond ...)
                             if ({
                                 // (eq? (value (quote kind)) (quote ABSTRACTION))
-                                Scm::func(imports::eq_p).invoke(&[
+                                imports::eq_p(&[
                                     {
                                         // (value (quote kind))
                                         value.clone().invoke(&[Scm::symbol("kind")])
@@ -653,14 +637,14 @@ pub fn initialize() {
                                 {
                                     {
                                         // (set-parent! self GlobalFunction)
-                                        Scm::func(imports::set_minus_parent_i).invoke(&[
+                                        imports::set_minus_parent_i(&[
                                             self_.clone(),
                                             GlobalFunction.with(|value| value.get()),
                                         ])
                                     };
                                     {
                                         // (set-field! self (quote value) value)
-                                        Scm::func(imports::set_minus_field_i).invoke(&[
+                                        imports::set_minus_field_i(&[
                                             self_.clone(),
                                             Scm::symbol("value"),
                                             value.clone(),
@@ -669,7 +653,7 @@ pub fn initialize() {
                                 }
                             } else if ({
                                 // (eq? (value (quote kind)) (quote VARARG-ABSTRACTION))
-                                Scm::func(imports::eq_p).invoke(&[
+                                imports::eq_p(&[
                                     {
                                         // (value (quote kind))
                                         value.clone().invoke(&[Scm::symbol("kind")])
@@ -682,14 +666,14 @@ pub fn initialize() {
                                 {
                                     {
                                         // (set-parent! self GlobalFunction)
-                                        Scm::func(imports::set_minus_parent_i).invoke(&[
+                                        imports::set_minus_parent_i(&[
                                             self_.clone(),
                                             GlobalFunction.with(|value| value.get()),
                                         ])
                                     };
                                     {
                                         // (set-field! self (quote value) value)
-                                        Scm::func(imports::set_minus_field_i).invoke(&[
+                                        imports::set_minus_field_i(&[
                                             self_.clone(),
                                             Scm::symbol("value"),
                                             value.clone(),
@@ -699,7 +683,7 @@ pub fn initialize() {
                             } else {
                                 {
                                     // (set-parent! self GlobalVariable)
-                                    Scm::func(imports::set_minus_parent_i).invoke(&[
+                                    imports::set_minus_parent_i(&[
                                         self_.clone(),
                                         GlobalVariable.with(|value| value.get()),
                                     ])
@@ -715,13 +699,13 @@ pub fn initialize() {
             ImportedVariable.with(|value| {
                 value.set({
                     // (clone Variable)
-                    Scm::func(imports::clone).invoke(&[Variable.with(|value| value.get())])
+                    imports::clone(&[Variable.with(|value| value.get())])
                 })
             })
         };
         {
             // (set-field! ImportedVariable (quote __name__) (quote ImportedVariable))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 ImportedVariable.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("ImportedVariable"),
@@ -732,13 +716,13 @@ pub fn initialize() {
             LocalVariable.with(|value| {
                 value.set({
                     // (clone Variable)
-                    Scm::func(imports::clone).invoke(&[Variable.with(|value| value.get())])
+                    imports::clone(&[Variable.with(|value| value.get())])
                 })
             })
         };
         {
             // (set-field! LocalVariable (quote __name__) (quote LocalVariable))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 LocalVariable.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("LocalVariable"),
@@ -746,7 +730,7 @@ pub fn initialize() {
         };
         {
             // (set-field! LocalVariable (quote into-boxed!) (lambda (self) (set-parent! self BoxedVariable)))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 LocalVariable.with(|value| value.get()),
                 Scm::symbol("into-boxed!"),
                 {
@@ -758,8 +742,10 @@ pub fn initialize() {
                         let self_ = args[0].clone();
                         {
                             // (set-parent! self BoxedVariable)
-                            Scm::func(imports::set_minus_parent_i)
-                                .invoke(&[self_.clone(), BoxedVariable.with(|value| value.get())])
+                            imports::set_minus_parent_i(&[
+                                self_.clone(),
+                                BoxedVariable.with(|value| value.get()),
+                            ])
                         }
                     })
                 },
@@ -770,13 +756,13 @@ pub fn initialize() {
             BoxedVariable.with(|value| {
                 value.set({
                     // (clone LocalVariable)
-                    Scm::func(imports::clone).invoke(&[LocalVariable.with(|value| value.get())])
+                    imports::clone(&[LocalVariable.with(|value| value.get())])
                 })
             })
         };
         {
             // (set-field! BoxedVariable (quote __name__) (quote BoxedVariable))
-            Scm::func(imports::set_minus_field_i).invoke(&[
+            imports::set_minus_field_i(&[
                 BoxedVariable.with(|value| value.get()),
                 Scm::symbol("__name__"),
                 Scm::symbol("BoxedVariable"),

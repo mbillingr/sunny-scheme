@@ -37,7 +37,7 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                         // (cond ...)
                                         if ({
                                             // (eq? (node (quote kind)) (quote ABSTRACTION))
-                                            Scm::func(imports::eq_p).invoke(&[
+                                            imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
                                                     node.clone().invoke(&[Scm::symbol("kind")])
@@ -49,14 +49,14 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                         {
                                             {
                                                 // (make-closure (transform-children))
-                                                Scm::func(imports::make_minus_closure).invoke(&[{
+                                                imports::make_minus_closure(&[{
                                                     // (transform-children)
                                                     transform_minus_children.clone().invoke(&[])
                                                 }])
                                             }
                                         } else if ({
                                             // (eq? (node (quote kind)) (quote VARARG-ABSTRACTION))
-                                            Scm::func(imports::eq_p).invoke(&[
+                                            imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
                                                     node.clone().invoke(&[Scm::symbol("kind")])
@@ -68,14 +68,14 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                         {
                                             {
                                                 // (make-closure (transform-children))
-                                                Scm::func(imports::make_minus_closure).invoke(&[{
+                                                imports::make_minus_closure(&[{
                                                     // (transform-children)
                                                     transform_minus_children.clone().invoke(&[])
                                                 }])
                                             }
                                         } else if ({
                                             // (eq? (node (quote kind)) (quote CLOSURE))
-                                            Scm::func(imports::eq_p).invoke(&[
+                                            imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
                                                     node.clone().invoke(&[Scm::symbol("kind")])
