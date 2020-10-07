@@ -4,6 +4,7 @@
           adjoin-import*!
           adjoin-local-env
           ensure-var!
+          env-find
           env-for-each
           lookup
           lookup*
@@ -27,17 +28,23 @@
 
     (define (lookup* name* env)
       (map (lambda (name)
-             (lookup name env)) 
+             (lookup name env))
            name*))
 
     (define (lookup name env)
+      (let ((entry (env-find name env)))
+        (if entry
+            (cdr entry)
+            #f)))
+
+    (define (env-find name env)
       (cond ((null? env)
              #f)
             ((eq? 'GLOBAL-MARKER (car env))
-             (lookup name (cdr env)))
+             (env-find name (cdr env)))
             ((eq? name (caar env))
-             (cdar env))
-            (else (lookup name (cdr env)))))
+             (car env))
+            (else (env-find name (cdr env)))))
 
     (define (find-globals env)
       (if (eq? 'GLOBAL-MARKER (car env))

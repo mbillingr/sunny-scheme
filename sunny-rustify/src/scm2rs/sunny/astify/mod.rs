@@ -7,6 +7,7 @@ mod imports {
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::library::exports::*;
     pub use crate::sunny::scheme_syntax::exports::*;
+    pub use crate::sunny::table::exports::*;
     pub use crate::sunny::utils::exports::*;
     pub use crate::sunny::variable::exports::*;
 }
@@ -28,8 +29,10 @@ pub mod exports {
     pub use super::astify_minus_sequence;
     pub use super::astify_minus_symbol;
     pub use super::astify_minus_testsuite;
+    pub use super::make_minus_syntactic_minus_closure;
 }
 
+thread_local! {#[allow(non_upper_case_globals)] pub static SyntacticClosure: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE SyntacticClosure"))}
 pub fn astify(args: &[Scm]) -> Scm {
     {
         if args.len() != 3 {
@@ -41,6 +44,20 @@ pub fn astify(args: &[Scm]) -> Scm {
         {
             // (cond ...)
             if ({
+                // (syntactic-closure? exp)
+                Scm::func(syntactic_minus_closure_p).invoke(&[exp.clone()])
+            })
+            .is_true()
+            {
+                {
+                    // (astify-syntactic-closure exp env tail?)
+                    Scm::func(astify_minus_syntactic_minus_closure).invoke(&[
+                        exp.clone(),
+                        env.clone(),
+                        tail_p.clone(),
+                    ])
+                }
+            } else if ({
                 // (pair? exp)
                 imports::pair_p(&[exp.clone()])
             })
@@ -1059,6 +1076,25 @@ pub fn astify_minus_symbol(args: &[Scm]) -> Scm {
     }
     .into()
 }
+pub fn astify_minus_syntactic_minus_closure(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 3 {
+            panic!("invalid arity")
+        }
+        let sc = args[0].clone();
+        let env = args[1].clone();
+        let tail_p = args[2].clone();
+        {
+            // ((get-field sc (quote closure)) env tail?)
+            {
+                // (get-field sc (quote closure))
+                imports::get_minus_field(&[sc.clone(), Scm::symbol("closure")])
+            }
+            .invoke(&[env.clone(), tail_p.clone()])
+        }
+    }
+    .into()
+}
 pub fn astify_minus_testcase(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let case = args[0].clone();let env = args[1].clone();{
 // (letrec ((given (lambda (stmt body) (list (quote let*) (map (lambda (assignment) (list (car assignment) (caddr assignment))) (cdr stmt)) body))) (when (lambda (stmt body) (define (loop stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))) (loop (cdr stmt)))) (then (lambda (stmt body) (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body)))) (dispatch (lambda (section* body) (cond ((null? section*) body) ((eq? (quote given) (caar section*)) (given (car section*) (dispatch (cdr section*) body))) ((eq? (quote when) (caar section*)) (when (car section*) (dispatch (cdr section*) body))) ((eq? (quote then) (caar section*)) (then (car section*) (dispatch (cdr section*) body))) (else (error "invalid testcase")))))) (let ((body (dispatch (testcase-body case) (quote ())))) (make-testcase (testcase-description case) (astify body env #f))))
@@ -1233,6 +1269,128 @@ pub fn astify_minus_unspecified(args: &[Scm]) -> Scm {
     }
     .into()
 }
+pub fn filter_minus_syntactic_minus_env(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 3 {
+            panic!("invalid arity")
+        }
+        let names = args[0].clone();
+        let names_minus_env = args[1].clone();
+        let else_minus_env = args[2].clone();
+        if ({
+            // (null? names)
+            imports::null_p(&[names.clone()])
+        })
+        .is_true()
+        {
+            else_minus_env.clone()
+        } else {
+            {
+                // (cons (env-find (car names) names-env) (filter-syntactic-env (cdr names) names-env else-env))
+                imports::cons(&[
+                    {
+                        // (env-find (car names) names-env)
+                        imports::env_minus_find(&[
+                            {
+                                // (car names)
+                                imports::car(&[names.clone()])
+                            },
+                            names_minus_env.clone(),
+                        ])
+                    },
+                    {
+                        // (filter-syntactic-env (cdr names) names-env else-env)
+                        Scm::func(filter_minus_syntactic_minus_env).invoke(&[
+                            {
+                                // (cdr names)
+                                imports::cdr(&[names.clone()])
+                            },
+                            names_minus_env.clone(),
+                            else_minus_env.clone(),
+                        ])
+                    },
+                ])
+            }
+        }
+    }
+    .into()
+}
+pub fn make_minus_syntactic_minus_closure(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 3 {
+            panic!("invalid arity")
+        }
+        let env = args[0].clone();
+        let free_minus_names = args[1].clone();
+        let exp = args[2].clone();
+        {
+            // (let ((sc (clone SyntacticClosure))) (set-field! sc (quote closure) (lambda (free-names-env tail?) (astify exp (filter-syntactic-env free-names free-names-env env) tail?))))
+            {
+                let sc = {
+                    // (clone SyntacticClosure)
+                    imports::clone(&[SyntacticClosure.with(|value| value.get())])
+                };
+                {
+                    // (set-field! sc (quote closure) (lambda (free-names-env tail?) (astify exp (filter-syntactic-env free-names free-names-env env) tail?)))
+                    imports::set_minus_field_i(&[sc.clone(), Scm::symbol("closure"), {
+                        // Closure
+                        let exp = exp.clone();
+                        let free_minus_names = free_minus_names.clone();
+                        let env = env.clone();
+                        Scm::func(move |args: &[Scm]| {
+                            if args.len() != 2 {
+                                panic!("invalid arity")
+                            }
+                            let free_minus_names_minus_env = args[0].clone();
+                            let tail_p = args[1].clone();
+                            {
+                                // (astify exp (filter-syntactic-env free-names free-names-env env) tail?)
+                                astify(&[
+                                    exp.clone(),
+                                    {
+                                        // (filter-syntactic-env free-names free-names-env env)
+                                        Scm::func(filter_minus_syntactic_minus_env).invoke(&[
+                                            free_minus_names.clone(),
+                                            free_minus_names_minus_env.clone(),
+                                            env.clone(),
+                                        ])
+                                    },
+                                    tail_p.clone(),
+                                ])
+                            }
+                        })
+                    }])
+                }
+            }
+        }
+    }
+    .into()
+}
+pub fn syntactic_minus_closure_p(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let obj = args[0].clone();
+        {
+            // (and (table? obj) (ancestor? obj SyntacticClosure))
+            if ({
+                // (table? obj)
+                imports::table_p(&[obj.clone()])
+            })
+            .is_true()
+            {
+                {
+                    // (ancestor? obj SyntacticClosure)
+                    imports::ancestor_p(&[obj.clone(), SyntacticClosure.with(|value| value.get())])
+                }
+            } else {
+                Scm::False
+            }
+        }
+    }
+    .into()
+}
 
 thread_local! { static INITIALIZED: std::cell::Cell<bool> = std::cell::Cell::new(false); }
 
@@ -1248,6 +1406,7 @@ pub fn initialize() {
     crate::sunny::library::initialize();
     crate::sunny::env::initialize();
     crate::sunny::scheme_syntax::initialize();
+    crate::sunny::table::initialize();
     crate::sunny::utils::initialize();
     crate::sunny::variable::initialize();
     {
@@ -1334,6 +1493,39 @@ pub fn initialize() {
         };
         {
             // (define (astify-unspecified) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define SyntacticClosure (make-table))
+            SyntacticClosure.with(|value| {
+                value.set({
+                    // (make-table)
+                    imports::make_minus_table(&[])
+                })
+            })
+        };
+        {
+            // (set-field! SyntacticClosure (quote __name__) (quote SyntacticClosure))
+            imports::set_minus_field_i(&[
+                SyntacticClosure.with(|value| value.get()),
+                Scm::symbol("__name__"),
+                Scm::symbol("SyntacticClosure"),
+            ])
+        };
+        {
+            // (define (make-syntactic-closure env free-names exp) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (syntactic-closure? obj) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (astify-syntactic-closure sc env tail?) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (filter-syntactic-env names names-env else-env) ...)
             (/*NOP*/)
         }
     };

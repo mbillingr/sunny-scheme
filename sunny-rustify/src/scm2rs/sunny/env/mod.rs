@@ -11,6 +11,7 @@ pub mod exports {
     pub use super::adjoin_minus_import_star__i;
     pub use super::adjoin_minus_local_minus_env;
     pub use super::ensure_minus_var_i;
+    pub use super::env_minus_find;
     pub use super::env_minus_for_minus_each;
     pub use super::lookup;
     pub use super::lookup_star_;
@@ -344,6 +345,64 @@ pub fn ensure_minus_var_i(args: &[Scm]) -> Scm {
     }
     .into()
 }
+pub fn env_minus_find(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 2 {
+            panic!("invalid arity")
+        }
+        let name = args[0].clone();
+        let env = args[1].clone();
+        {
+            // (cond ...)
+            if ({
+                // (null? env)
+                imports::null_p(&[env.clone()])
+            })
+            .is_true()
+            {
+                Scm::False
+            } else if ({
+                // (eq? (quote GLOBAL-MARKER) (car env))
+                imports::eq_p(&[Scm::symbol("GLOBAL-MARKER"), {
+                    // (car env)
+                    imports::car(&[env.clone()])
+                }])
+            })
+            .is_true()
+            {
+                {
+                    // (env-find name (cdr env))
+                    Scm::func(env_minus_find).invoke(&[name.clone(), {
+                        // (cdr env)
+                        imports::cdr(&[env.clone()])
+                    }])
+                }
+            } else if ({
+                // (eq? name (caar env))
+                imports::eq_p(&[name.clone(), {
+                    // (caar env)
+                    imports::caar(&[env.clone()])
+                }])
+            })
+            .is_true()
+            {
+                {
+                    // (car env)
+                    imports::car(&[env.clone()])
+                }
+            } else {
+                {
+                    // (env-find name (cdr env))
+                    Scm::func(env_minus_find).invoke(&[name.clone(), {
+                        // (cdr env)
+                        imports::cdr(&[env.clone()])
+                    }])
+                }
+            }
+        }
+    }
+    .into()
+}
 pub fn env_minus_for_minus_each(args: &[Scm]) -> Scm {
     {
         if args.len() != 2 {
@@ -419,50 +478,19 @@ pub fn lookup(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         let env = args[1].clone();
         {
-            // (cond ...)
-            if ({
-                // (null? env)
-                imports::null_p(&[env.clone()])
-            })
-            .is_true()
+            // (let ((entry (env-find name env))) (if entry (cdr entry) #f))
             {
-                Scm::False
-            } else if ({
-                // (eq? (quote GLOBAL-MARKER) (car env))
-                imports::eq_p(&[Scm::symbol("GLOBAL-MARKER"), {
-                    // (car env)
-                    imports::car(&[env.clone()])
-                }])
-            })
-            .is_true()
-            {
-                {
-                    // (lookup name (cdr env))
-                    Scm::func(lookup).invoke(&[name.clone(), {
-                        // (cdr env)
-                        imports::cdr(&[env.clone()])
-                    }])
-                }
-            } else if ({
-                // (eq? name (caar env))
-                imports::eq_p(&[name.clone(), {
-                    // (caar env)
-                    imports::caar(&[env.clone()])
-                }])
-            })
-            .is_true()
-            {
-                {
-                    // (cdar env)
-                    imports::cdar(&[env.clone()])
-                }
-            } else {
-                {
-                    // (lookup name (cdr env))
-                    Scm::func(lookup).invoke(&[name.clone(), {
-                        // (cdr env)
-                        imports::cdr(&[env.clone()])
-                    }])
+                let entry = {
+                    // (env-find name env)
+                    Scm::func(env_minus_find).invoke(&[name.clone(), env.clone()])
+                };
+                if (entry.clone()).is_true() {
+                    {
+                        // (cdr entry)
+                        imports::cdr(&[entry.clone()])
+                    }
+                } else {
+                    Scm::False
                 }
             }
         }
@@ -587,6 +615,10 @@ pub fn initialize() {
         };
         {
             // (define (lookup name env) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (env-find name env) ...)
             (/*NOP*/)
         };
         {

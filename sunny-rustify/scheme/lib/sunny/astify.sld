@@ -14,7 +14,8 @@
           astify-import
           astify-sequence
           astify-symbol
-          astify-testsuite)
+          astify-testsuite
+          make-syntactic-closure)
 
   (import (scheme base)
           (scheme cxr)
@@ -22,12 +23,14 @@
           (sunny library)
           (sunny env)
           (sunny scheme-syntax)
+          (sunny table)
           (sunny utils)
           (sunny variable))
 
   (begin
     (define (astify exp env tail?)
-      (cond ((pair? exp)
+      (cond ((syntactic-closure? exp) (astify-syntactic-closure exp env tail?))
+            ((pair? exp)
              (let ((f-obj (astify (car exp) env #f)))
                (if (keyword? f-obj)
                    ((keyword-handler f-obj) exp env tail?)
@@ -219,4 +222,32 @@
                        (astify body env #f))))
 
     (define (astify-unspecified)
-      (make-constant '*UNSPECIFIED*))))
+      (make-constant '*UNSPECIFIED*))
+
+    ; --- syntactic closure ---
+
+    (define SyntacticClosure (make-table))
+    (set-field! SyntacticClosure '__name__ 'SyntacticClosure)
+
+    (define (make-syntactic-closure env free-names exp)
+      (let ((sc (clone SyntacticClosure)))
+        (set-field! sc 'closure
+          (lambda (free-names-env tail?)
+            (astify exp
+                    (filter-syntactic-env free-names
+                                          free-names-env
+                                          env)
+                    tail?)))))
+
+    (define (syntactic-closure? obj)
+      (and (table? obj)
+           (ancestor? obj SyntacticClosure)))
+
+    (define (astify-syntactic-closure sc env tail?)
+      ((get-field sc 'closure) env tail?))
+
+    (define (filter-syntactic-env names names-env else-env)
+      (if (null? names)
+          else-env
+          (cons (env-find (car names) names-env)
+                (filter-syntactic-env (cdr names) names-env else-env))))))
