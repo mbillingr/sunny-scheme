@@ -1324,42 +1324,45 @@ pub fn make_minus_syntactic_minus_closure(args: &[Scm]) -> Scm {
         let free_minus_names = args[1].clone();
         let exp = args[2].clone();
         {
-            // (let ((sc (clone SyntacticClosure))) (set-field! sc (quote closure) (lambda (free-names-env tail?) (astify exp (filter-syntactic-env free-names free-names-env env) tail?))))
+            // (let ((sc (clone SyntacticClosure))) (set-field! sc (quote closure) (lambda (free-names-env tail?) (astify exp (filter-syntactic-env free-names free-names-env env) tail?))) sc)
             {
                 let sc = {
                     // (clone SyntacticClosure)
                     imports::clone(&[SyntacticClosure.with(|value| value.get())])
                 };
                 {
-                    // (set-field! sc (quote closure) (lambda (free-names-env tail?) (astify exp (filter-syntactic-env free-names free-names-env env) tail?)))
-                    imports::set_minus_field_i(&[sc.clone(), Scm::symbol("closure"), {
-                        // Closure
-                        let exp = exp.clone();
-                        let free_minus_names = free_minus_names.clone();
-                        let env = env.clone();
-                        Scm::func(move |args: &[Scm]| {
-                            if args.len() != 2 {
-                                panic!("invalid arity")
-                            }
-                            let free_minus_names_minus_env = args[0].clone();
-                            let tail_p = args[1].clone();
-                            {
-                                // (astify exp (filter-syntactic-env free-names free-names-env env) tail?)
-                                astify(&[
-                                    exp.clone(),
-                                    {
-                                        // (filter-syntactic-env free-names free-names-env env)
-                                        Scm::func(filter_minus_syntactic_minus_env).invoke(&[
-                                            free_minus_names.clone(),
-                                            free_minus_names_minus_env.clone(),
-                                            env.clone(),
-                                        ])
-                                    },
-                                    tail_p.clone(),
-                                ])
-                            }
-                        })
-                    }])
+                    {
+                        // (set-field! sc (quote closure) (lambda (free-names-env tail?) (astify exp (filter-syntactic-env free-names free-names-env env) tail?)))
+                        imports::set_minus_field_i(&[sc.clone(), Scm::symbol("closure"), {
+                            // Closure
+                            let exp = exp.clone();
+                            let free_minus_names = free_minus_names.clone();
+                            let env = env.clone();
+                            Scm::func(move |args: &[Scm]| {
+                                if args.len() != 2 {
+                                    panic!("invalid arity")
+                                }
+                                let free_minus_names_minus_env = args[0].clone();
+                                let tail_p = args[1].clone();
+                                {
+                                    // (astify exp (filter-syntactic-env free-names free-names-env env) tail?)
+                                    astify(&[
+                                        exp.clone(),
+                                        {
+                                            // (filter-syntactic-env free-names free-names-env env)
+                                            Scm::func(filter_minus_syntactic_minus_env).invoke(&[
+                                                free_minus_names.clone(),
+                                                free_minus_names_minus_env.clone(),
+                                                env.clone(),
+                                            ])
+                                        },
+                                        tail_p.clone(),
+                                    ])
+                                }
+                            })
+                        }])
+                    };
+                    sc.clone()
                 }
             }
         }

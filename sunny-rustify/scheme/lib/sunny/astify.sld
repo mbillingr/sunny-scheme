@@ -237,7 +237,8 @@
                     (filter-syntactic-env free-names
                                           free-names-env
                                           env)
-                    tail?)))))
+                    tail?)))
+        sc))
 
     (define (syntactic-closure? obj)
       (and (table? obj)

@@ -2,6 +2,7 @@
   (export make-core-env)
 
   (import (scheme base)
+          (scheme cxr)
           (sunny astify)
           (sunny env)
           (sunny scheme-syntax)
@@ -20,6 +21,7 @@
             (new-keyword 'let expand-let)
             (new-keyword 'let* expand-let*)
             (new-keyword 'letrec expand-letrec)
+            (new-keyword 'or expand-or)
             (new-keyword 'quote expand-quote)
             (new-keyword 'set! expand-set!)
             (new-keyword 'testsuite expand-testsuite)))
@@ -80,6 +82,15 @@
                                    (let-args exp))
                               (let-body exp))))
           env tail?)))
+
+    (define (expand-or exp env tail?)
+      (let ((x1 (make-syntactic-closure env '() (cadr exp)))
+            (x2 (make-syntactic-closure env '() (caddr exp))))
+        (astify (make-syntactic-closure (make-core-env)
+                                        '()
+                                        (list (list 'lambda (list 'tmp) (list 'if 'tmp 'tmp x2))
+                                              x1))
+                env tail?)))
 
     (define (expand-quote exp env tail?)
       (astify-constant (cadr exp) env))

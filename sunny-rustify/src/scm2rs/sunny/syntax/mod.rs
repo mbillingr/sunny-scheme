@@ -2,6 +2,7 @@
 use sunny_core::{Mut, Scm};
 mod imports {
     pub use crate::scheme::base::exports::*;
+    pub use crate::scheme::cxr::exports::*;
     pub use crate::sunny::astify::exports::*;
     pub use crate::sunny::env::exports::*;
     pub use crate::sunny::scheme_syntax::exports::*;
@@ -428,6 +429,80 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
     }
     .into()
 }
+pub fn expand_minus_or(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 3 {
+            panic!("invalid arity")
+        }
+        let exp = args[0].clone();
+        let env = args[1].clone();
+        let tail_p = args[2].clone();
+        {
+            // (let ((x1 (make-syntactic-closure env (quote ()) (cadr exp))) (x2 (make-syntactic-closure env (quote ()) (caddr exp)))) (astify (make-syntactic-closure (make-core-env) (quote ()) (list (list (quote lambda) (list (quote tmp)) (list (quote if) (quote tmp) (quote tmp) x2)) x1)) env tail?))
+            {
+                let [x1, x2] = [
+                    {
+                        // (make-syntactic-closure env (quote ()) (cadr exp))
+                        imports::make_minus_syntactic_minus_closure(&[env.clone(), Scm::Nil, {
+                            // (cadr exp)
+                            imports::cadr(&[exp.clone()])
+                        }])
+                    },
+                    {
+                        // (make-syntactic-closure env (quote ()) (caddr exp))
+                        imports::make_minus_syntactic_minus_closure(&[env.clone(), Scm::Nil, {
+                            // (caddr exp)
+                            imports::caddr(&[exp.clone()])
+                        }])
+                    },
+                ];
+                {
+                    // (astify (make-syntactic-closure (make-core-env) (quote ()) (list (list (quote lambda) (list (quote tmp)) (list (quote if) (quote tmp) (quote tmp) x2)) x1)) env tail?)
+                    imports::astify(&[
+                        {
+                            // (make-syntactic-closure (make-core-env) (quote ()) (list (list (quote lambda) (list (quote tmp)) (list (quote if) (quote tmp) (quote tmp) x2)) x1))
+                            imports::make_minus_syntactic_minus_closure(&[
+                                {
+                                    // (make-core-env)
+                                    make_minus_core_minus_env(&[])
+                                },
+                                Scm::Nil,
+                                {
+                                    // (list (list (quote lambda) (list (quote tmp)) (list (quote if) (quote tmp) (quote tmp) x2)) x1)
+                                    imports::list(&[
+                                        {
+                                            // (list (quote lambda) (list (quote tmp)) (list (quote if) (quote tmp) (quote tmp) x2))
+                                            imports::list(&[
+                                                Scm::symbol("lambda"),
+                                                {
+                                                    // (list (quote tmp))
+                                                    imports::list(&[Scm::symbol("tmp")])
+                                                },
+                                                {
+                                                    // (list (quote if) (quote tmp) (quote tmp) x2)
+                                                    imports::list(&[
+                                                        Scm::symbol("if"),
+                                                        Scm::symbol("tmp"),
+                                                        Scm::symbol("tmp"),
+                                                        x2.clone(),
+                                                    ])
+                                                },
+                                            ])
+                                        },
+                                        x1.clone(),
+                                    ])
+                                },
+                            ])
+                        },
+                        env.clone(),
+                        tail_p.clone(),
+                    ])
+                }
+            }
+        }
+    }
+    .into()
+}
 pub fn expand_minus_quote(args: &[Scm]) -> Scm {
     {
         if args.len() != 3 {
@@ -505,7 +580,7 @@ pub fn make_minus_core_minus_env(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         {
-            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-keyword (quote testsuite) expand-testsuite))
+            // (list (quote GLOBAL-MARKER) (new-keyword (quote and) expand-and) (new-keyword (quote assert) expand-assert) (new-keyword (quote begin) expand-begin) (new-keyword (quote cond) expand-cond) (new-keyword (quote define) expand-define) (new-keyword (quote if) expand-if) (new-keyword (quote lambda) expand-lambda) (new-keyword (quote let) expand-let) (new-keyword (quote let*) expand-let*) (new-keyword (quote letrec) expand-letrec) (new-keyword (quote or) expand-or) (new-keyword (quote quote) expand-quote) (new-keyword (quote set!) expand-set!) (new-keyword (quote testsuite) expand-testsuite))
             imports::list(&[
                 Scm::symbol("GLOBAL-MARKER"),
                 {
@@ -567,6 +642,10 @@ pub fn make_minus_core_minus_env(args: &[Scm]) -> Scm {
                     ])
                 },
                 {
+                    // (new-keyword (quote or) expand-or)
+                    imports::new_minus_keyword(&[Scm::symbol("or"), Scm::func(expand_minus_or)])
+                },
+                {
                     // (new-keyword (quote quote) expand-quote)
                     imports::new_minus_keyword(&[
                         Scm::symbol("quote"),
@@ -602,6 +681,7 @@ pub fn initialize() {
     INITIALIZED.with(|x| x.set(true));
 
     crate::scheme::base::initialize();
+    crate::scheme::cxr::initialize();
     crate::sunny::astify::initialize();
     crate::sunny::env::initialize();
     crate::sunny::scheme_syntax::initialize();
@@ -650,6 +730,10 @@ pub fn initialize() {
         };
         {
             // (define (expand-letrec exp env tail?) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (expand-or exp env tail?) ...)
             (/*NOP*/)
         };
         {
