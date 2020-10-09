@@ -53,6 +53,9 @@
 
     (define UndefinedGlobal (clone Variable))
     (set-field! UndefinedGlobal '__name__ 'UndefinedGlobal)
+    (set-field! UndefinedGlobal 'new
+      (lambda (self name)
+        (clone UndefinedGlobal)))
     (set-field! UndefinedGlobal 'add-definition!
       (lambda (self value)
         (cond ((eq? (value 'kind) 'ABSTRACTION)
@@ -66,13 +69,22 @@
 
     (define ImportedVariable (clone Variable))
     (set-field! ImportedVariable '__name__ 'ImportedVariable)
+    (set-field! ImportedVariable 'new
+      (lambda (self name)
+        (clone ImportedVariable)))
 
     (define LocalVariable (clone Variable))
     (set-field! LocalVariable '__name__ 'LocalVariable)
     (set-field! LocalVariable 'into-boxed! (lambda (self) (set-parent! self BoxedVariable)))
+    (set-field! LocalVariable 'new
+      (lambda (self name)
+        (clone LocalVariable)))
 
     (define BoxedVariable (clone LocalVariable))
     (set-field! BoxedVariable '__name__ 'BoxedVariable)
+    (set-field! BoxedVariable 'new
+      (lambda (self name)
+        (clone BoxedVariable)))
 
     (define (keyword? obj)
       (and (table? obj)
@@ -133,16 +145,16 @@
       (cons name (make-keyword name handler)))
 
     (define (new-import name)
-      (cons name (clone ImportedVariable)))
+      (cons name (call-method ImportedVariable 'new name)))
 
     (define (new-global name)
-      (cons name (clone UndefinedGlobal)))
+      (cons name (call-method UndefinedGlobal 'new name)))
 
     (define (new-local name)
-      (cons name (clone LocalVariable)))
+      (cons name (call-method LocalVariable 'new name)))
 
     (define (new-boxed name)
-      (cons name (clone BoxedVariable)))
+      (cons name (call-method BoxedVariable 'new name)))
 
     (define (replace-var! var new-var)
       (replace-table! var new-var))))
