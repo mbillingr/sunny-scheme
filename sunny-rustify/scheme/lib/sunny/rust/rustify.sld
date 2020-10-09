@@ -31,7 +31,7 @@
             ((eq? name 'mut) "mut_")
             ((eq? name 'ref) "ref_")
             ((eq? name 'self) "self_")
-            (else (append-all (map char-map (string->list (symbol->string name)))))))
+            (else (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name)))))))
 
     (define (rustify-libname name)
       (define (char-map ch)

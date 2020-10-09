@@ -55,7 +55,9 @@
     (set-field! UndefinedGlobal '__name__ 'UndefinedGlobal)
     (set-field! UndefinedGlobal 'new
       (lambda (self name)
-        (clone UndefinedGlobal)))
+        (let ((var (clone UndefinedGlobal)))
+          (set-field! var 'name (unique-name name))
+          var)))
     (set-field! UndefinedGlobal 'add-definition!
       (lambda (self value)
         (cond ((eq? (value 'kind) 'ABSTRACTION)
@@ -71,20 +73,26 @@
     (set-field! ImportedVariable '__name__ 'ImportedVariable)
     (set-field! ImportedVariable 'new
       (lambda (self name)
-        (clone ImportedVariable)))
+        (let ((var (clone ImportedVariable)))
+          (set-field! var 'name name)
+          var)))
 
     (define LocalVariable (clone Variable))
     (set-field! LocalVariable '__name__ 'LocalVariable)
     (set-field! LocalVariable 'into-boxed! (lambda (self) (set-parent! self BoxedVariable)))
     (set-field! LocalVariable 'new
       (lambda (self name)
-        (clone LocalVariable)))
+        (let ((var (clone LocalVariable)))
+          (set-field! var 'name (unique-name name))
+          var)))
 
     (define BoxedVariable (clone LocalVariable))
     (set-field! BoxedVariable '__name__ 'BoxedVariable)
     (set-field! BoxedVariable 'new
       (lambda (self name)
-        (clone BoxedVariable)))
+        (let ((var (clone BoxedVariable)))
+          (set-field! var 'name (unique-name name))
+          var)))
 
     (define (keyword? obj)
       (and (table? obj)
@@ -157,4 +165,12 @@
       (cons name (call-method BoxedVariable 'new name)))
 
     (define (replace-var! var new-var)
-      (replace-table! var new-var))))
+      (replace-table! var new-var))
+
+    (define UNIQUE-COUNT 0)
+
+    (define (unique-name name)
+      (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
+      (string-append (symbol->string name)
+                     "_"
+                     (number->string UNIQUE-COUNT)))))
