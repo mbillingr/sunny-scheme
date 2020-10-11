@@ -73,8 +73,7 @@
 
     (define (astify-application proc arg* env tail?)
       (cond ((eq? 'ABSTRACTION (proc 'kind))
-             (make-fixlet (proc 'get-params)
-                          (proc 'get-vars)
+             (make-fixlet (proc 'get-vars)
                           (astify-args arg* env)
                           (proc 'get-body)))
             ((and (eq? 'REFERENCE (proc 'kind))

@@ -360,12 +360,8 @@ pub fn astify_minus_application(args: &[Scm]) -> Scm {
             .is_true()
             {
                 {
-                    // (make-fixlet (proc (quote get-params)) (proc (quote get-vars)) (astify-args arg* env) (proc (quote get-body)))
+                    // (make-fixlet (proc (quote get-vars)) (astify-args arg* env) (proc (quote get-body)))
                     imports::make_minus_fixlet(&[
-                        {
-                            // (proc (quote get-params))
-                            proc.clone().invoke(&[Scm::symbol("get-params")])
-                        },
                         {
                             // (proc (quote get-vars))
                             proc.clone().invoke(&[Scm::symbol("get-vars")])

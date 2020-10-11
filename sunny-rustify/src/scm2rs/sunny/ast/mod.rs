@@ -1773,77 +1773,81 @@ imports::error(&[Scm::from("invalid export variable"),var.clone(),name.clone()])
     .into()
 }
 pub fn make_minus_fixlet(args: &[Scm]) -> Scm {
-    {if args.len() != 4{panic!("invalid arity")}let params = args[0].clone();let vars = args[1].clone();let args_ = args[2].clone();let body = args[3].clone();{
-// (letrec ((repr (lambda () (list (quote FIXLET) params (args (quote repr)) (body (quote repr))))) (transform (lambda (fnc) (fnc self (lambda () (make-fixlet params vars (args (quote transform) fnc) (body (quote transform) fnc)))))) (free-vars (lambda () (set-union (set-remove* (body (quote free-vars)) params) (args (quote free-vars))))) (gen-rust-inner (lambda (module) (define (gen-params v*) (if (pair? v*) (begin (print module (rustify-identifier (get-field (car v*) (quote name))) ", ") (gen-params (cdr v*))))) (cond ((= 0 (length params)) (quote IGNORE)) ((= 1 (length params)) (print module "let ") (print module (rustify-identifier (get-field (car vars) (quote name)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))) (gen-rust (lambda (module) (rust-block module (lambda () (gen-rust-inner module))))) (self (lambda (msg . arg*) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car arg*))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FIXLET)) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-args) msg) args) ((eq? (quote get-body) msg) body) ((eq? (quote gen-rust) msg) (gen-rust (car arg*))) ((eq? (quote gen-rust-inner) msg) (gen-rust-inner (car arg*))) (else (error "Unknown message FIXLET" msg)))))) self)
+    {if args.len() != 3{panic!("invalid arity")}let vars = args[0].clone();let args_ = args[1].clone();let body = args[2].clone();{
+// (letrec ((repr (lambda () (list (quote FIXLET) vars (args (quote repr)) (body (quote repr))))) (transform (lambda (fnc) (fnc self (lambda () (make-fixlet vars (args (quote transform) fnc) (body (quote transform) fnc)))))) (free-vars (lambda () (set-union (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars))) (args (quote free-vars))))) (gen-rust-inner (lambda (module) (define (gen-params v*) (if (pair? v*) (begin (print module (rustify-identifier (variable-name (car v*))) ", ") (gen-params (cdr v*))))) (cond ((= 0 (length vars)) (quote IGNORE)) ((= 1 (length vars)) (print module "let ") (print module (rustify-identifier (variable-name (car vars)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))) (gen-rust (lambda (module) (rust-block module (lambda () (gen-rust-inner module))))) (self (lambda (msg . arg*) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car arg*))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FIXLET)) ((eq? (quote get-params) msg) (map variable-name vars)) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-args) msg) args) ((eq? (quote get-body) msg) body) ((eq? (quote gen-rust) msg) (gen-rust (car arg*))) ((eq? (quote gen-rust-inner) msg) (gen-rust-inner (car arg*))) (else (error "Unknown message FIXLET" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust-inner (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote FIXLET) params (args (quote repr)) (body (quote repr))))) (set! transform (lambda (fnc) (fnc self (lambda () (make-fixlet params vars (args (quote transform) fnc) (body (quote transform) fnc)))))) (set! free-vars (lambda () (set-union (set-remove* (body (quote free-vars)) params) (args (quote free-vars))))) (set! gen-rust-inner (lambda (module) (define (gen-params v*) (if (pair? v*) (begin (print module (rustify-identifier (get-field (car v*) (quote name))) ", ") (gen-params (cdr v*))))) (cond ((= 0 (length params)) (quote IGNORE)) ((= 1 (length params)) (print module "let ") (print module (rustify-identifier (get-field (car vars) (quote name)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))) (set! gen-rust (lambda (module) (rust-block module (lambda () (gen-rust-inner module))))) (set! self (lambda (msg . arg*) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car arg*))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FIXLET)) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-args) msg) args) ((eq? (quote get-body) msg) body) ((eq? (quote gen-rust) msg) (gen-rust (car arg*))) ((eq? (quote gen-rust-inner) msg) (gen-rust-inner (car arg*))) (else (error "Unknown message FIXLET" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust-inner (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote FIXLET) vars (args (quote repr)) (body (quote repr))))) (set! transform (lambda (fnc) (fnc self (lambda () (make-fixlet vars (args (quote transform) fnc) (body (quote transform) fnc)))))) (set! free-vars (lambda () (set-union (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars))) (args (quote free-vars))))) (set! gen-rust-inner (lambda (module) (define (gen-params v*) (if (pair? v*) (begin (print module (rustify-identifier (variable-name (car v*))) ", ") (gen-params (cdr v*))))) (cond ((= 0 (length vars)) (quote IGNORE)) ((= 1 (length vars)) (print module "let ") (print module (rustify-identifier (variable-name (car vars)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))) (set! gen-rust (lambda (module) (rust-block module (lambda () (gen-rust-inner module))))) (set! self (lambda (msg . arg*) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car arg*))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FIXLET)) ((eq? (quote get-params) msg) (map variable-name vars)) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-args) msg) args) ((eq? (quote get-body) msg) body) ((eq? (quote gen-rust) msg) (gen-rust (car arg*))) ((eq? (quote gen-rust-inner) msg) (gen-rust-inner (car arg*))) (else (error "Unknown message FIXLET" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust_minus_inner, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
-let params = params.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (list (quote FIXLET) params (args (quote repr)) (body (quote repr)))
-imports::list(&[Scm::symbol("FIXLET"),params.clone(),{
+let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (list (quote FIXLET) vars (args (quote repr)) (body (quote repr)))
+imports::list(&[Scm::symbol("FIXLET"),vars.clone(),{
 // (args (quote repr))
 args_.clone().invoke(&[Scm::symbol("repr")])},{
 // (body (quote repr))
 body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
-let self_ = self_.clone();let params = params.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
-// (fnc self (lambda () (make-fixlet params vars (args (quote transform) fnc) (body (quote transform) fnc))))
+let self_ = self_.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
+// (fnc self (lambda () (make-fixlet vars (args (quote transform) fnc) (body (quote transform) fnc))))
 fnc.clone().invoke(&[self_.get(),{// Closure
-let params = params.clone();let vars = vars.clone();let args_ = args_.clone();let fnc = fnc.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (make-fixlet params vars (args (quote transform) fnc) (body (quote transform) fnc))
-Scm::func(make_minus_fixlet).invoke(&[params.clone(),vars.clone(),{
+let vars = vars.clone();let args_ = args_.clone();let fnc = fnc.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (make-fixlet vars (args (quote transform) fnc) (body (quote transform) fnc))
+Scm::func(make_minus_fixlet).invoke(&[vars.clone(),{
 // (args (quote transform) fnc)
 args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},{
 // (body (quote transform) fnc)
 body.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])}])}})}])}})});free_minus_vars.set({// Closure
-let body = body.clone();let params = params.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (set-union (set-remove* (body (quote free-vars)) params) (args (quote free-vars)))
+let body = body.clone();let vars = vars.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (set-union (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars))) (args (quote free-vars)))
 imports::set_minus_union(&[{
-// (set-remove* (body (quote free-vars)) params)
+// (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars)))
 imports::set_minus_remove_star_(&[{
 // (body (quote free-vars))
-body.clone().invoke(&[Scm::symbol("free-vars")])},params.clone()])},{
+body.clone().invoke(&[Scm::symbol("free-vars")])},{
+// (map free-var-name (map variable-name vars))
+imports::map(&[Scm::func(free_minus_var_minus_name),{
+// (map variable-name vars)
+imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}])}])},{
 // (args (quote free-vars))
 args_.clone().invoke(&[Scm::symbol("free-vars")])}])}})});gen_minus_rust_minus_inner.set({// Closure
-let params = params.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
-// (letrec ((gen-params (lambda (v*) (if (pair? v*) (begin (print module (rustify-identifier (get-field (car v*) (quote name))) ", ") (gen-params (cdr v*))))))) (cond ((= 0 (length params)) (quote IGNORE)) ((= 1 (length params)) (print module "let ") (print module (rustify-identifier (get-field (car vars) (quote name)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))
+let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
+// (letrec ((gen-params (lambda (v*) (if (pair? v*) (begin (print module (rustify-identifier (variable-name (car v*))) ", ") (gen-params (cdr v*))))))) (cond ((= 0 (length vars)) (quote IGNORE)) ((= 1 (length vars)) (print module "let ") (print module (rustify-identifier (variable-name (car vars)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))
 {
-// (let ((gen-params (quote *uninitialized*))) (begin (set! gen-params (lambda (v*) (if (pair? v*) (begin (print module (rustify-identifier (get-field (car v*) (quote name))) ", ") (gen-params (cdr v*)))))) (cond ((= 0 (length params)) (quote IGNORE)) ((= 1 (length params)) (print module "let ") (print module (rustify-identifier (get-field (car vars) (quote name)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module)))))
+// (let ((gen-params (quote *uninitialized*))) (begin (set! gen-params (lambda (v*) (if (pair? v*) (begin (print module (rustify-identifier (variable-name (car v*))) ", ") (gen-params (cdr v*)))))) (cond ((= 0 (length vars)) (quote IGNORE)) ((= 1 (length vars)) (print module "let ") (print module (rustify-identifier (variable-name (car vars)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module)))))
 {let gen_minus_params = Scm::symbol("*uninitialized*");{let gen_minus_params = gen_minus_params.into_boxed();{gen_minus_params.set({// Closure
 let module = module.clone();let gen_minus_params = gen_minus_params.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let v_star_ = args[0].clone();if ({
 // (pair? v*)
 imports::pair_p(&[v_star_.clone()])}).is_true() {{{
-// (print module (rustify-identifier (get-field (car v*) (quote name))) ", ")
+// (print module (rustify-identifier (variable-name (car v*))) ", ")
 imports::print(&[module.clone(),{
-// (rustify-identifier (get-field (car v*) (quote name)))
+// (rustify-identifier (variable-name (car v*)))
 imports::rustify_minus_identifier(&[{
-// (get-field (car v*) (quote name))
-imports::get_minus_field(&[{
+// (variable-name (car v*))
+imports::variable_minus_name(&[{
 // (car v*)
-imports::car(&[v_star_.clone()])},Scm::symbol("name")])}])},Scm::from(", ")])};{
+imports::car(&[v_star_.clone()])}])}])},Scm::from(", ")])};{
 // (gen-params (cdr v*))
 gen_minus_params.get().invoke(&[{
 // (cdr v*)
 imports::cdr(&[v_star_.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}})});{
 // (cond ...)
 if ({
-// (= 0 (length params))
+// (= 0 (length vars))
 imports::_e_(&[Scm::from(0),{
-// (length params)
-imports::length(&[params.clone()])}])}).is_true() {Scm::symbol("IGNORE")} else if ({
-// (= 1 (length params))
+// (length vars)
+imports::length(&[vars.clone()])}])}).is_true() {Scm::symbol("IGNORE")} else if ({
+// (= 1 (length vars))
 imports::_e_(&[Scm::from(1),{
-// (length params)
-imports::length(&[params.clone()])}])}).is_true() {{{
+// (length vars)
+imports::length(&[vars.clone()])}])}).is_true() {{{
 // (print module "let ")
 imports::print(&[module.clone(),Scm::from("let ")])};{
-// (print module (rustify-identifier (get-field (car vars) (quote name))))
+// (print module (rustify-identifier (variable-name (car vars))))
 imports::print(&[module.clone(),{
-// (rustify-identifier (get-field (car vars) (quote name)))
+// (rustify-identifier (variable-name (car vars)))
 imports::rustify_minus_identifier(&[{
-// (get-field (car vars) (quote name))
-imports::get_minus_field(&[{
+// (variable-name (car vars))
+imports::variable_minus_name(&[{
 // (car vars)
-imports::car(&[vars.clone()])},Scm::symbol("name")])}])}])};{
+imports::car(&[vars.clone()])}])}])}])};{
 // (print module " = ")
 imports::print(&[module.clone(),Scm::from(" = ")])};{
 // (args (quote gen-rust) module)
@@ -1888,7 +1892,7 @@ imports::rust_minus_block(&[module.clone(),{// Closure
 let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (gen-rust-inner module)
 gen_minus_rust_minus_inner.get().invoke(&[module.clone()])}})}])}})});self_.set({// Closure
-let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let params = params.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();let gen_minus_rust = gen_minus_rust.clone();let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let arg_star_ = Scm::list(&args[1..]);{
+let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();let gen_minus_rust = gen_minus_rust.clone();let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let arg_star_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
 // (eq? (quote repr) msg)
@@ -1908,7 +1912,9 @@ free_minus_vars.get().invoke(&[])}} else if ({
 // (eq? (quote kind) msg)
 imports::eq_p(&[Scm::symbol("kind"),msg.clone()])}).is_true() {Scm::symbol("FIXLET")} else if ({
 // (eq? (quote get-params) msg)
-imports::eq_p(&[Scm::symbol("get-params"),msg.clone()])}).is_true() {params.clone()} else if ({
+imports::eq_p(&[Scm::symbol("get-params"),msg.clone()])}).is_true() {{
+// (map variable-name vars)
+imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}} else if ({
 // (eq? (quote get-vars) msg)
 imports::eq_p(&[Scm::symbol("get-vars"),msg.clone()])}).is_true() {vars.clone()} else if ({
 // (eq? (quote get-args) msg)
@@ -3516,7 +3522,7 @@ pub fn initialize() {
             (/*NOP*/)
         };
         {
-            // (define (make-fixlet params vars args body) ...)
+            // (define (make-fixlet vars args body) ...)
             (/*NOP*/)
         };
         {

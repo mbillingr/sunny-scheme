@@ -17,9 +17,9 @@ pub fn boxify(args: &[Scm]) -> Scm {
         }
         let node = args[0].clone();
         {
-            // (letrec ((transform (lambda (node ignore) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (boxify-abstraction (node (quote get-params)) (node (quote get-vars)) (node (quote get-params)) (node (quote get-vars)) (node (quote get-body)))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))) ((eq? (node (quote kind)) (quote FIXLET)) (boxify-fixlet (node (quote get-params)) (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))) (else (ignore)))))) (node (quote transform) transform))
+            // (letrec ((transform (lambda (node ignore) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (boxify-abstraction (node (quote get-params)) (node (quote get-vars)) (node (quote get-params)) (node (quote get-vars)) (node (quote get-body)))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))) ((eq? (node (quote kind)) (quote FIXLET)) (boxify-fixlet (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))) (else (ignore)))))) (node (quote transform) transform))
             {
-                // (let ((transform (quote *uninitialized*))) (begin (set! transform (lambda (node ignore) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (boxify-abstraction (node (quote get-params)) (node (quote get-vars)) (node (quote get-params)) (node (quote get-vars)) (node (quote get-body)))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))) ((eq? (node (quote kind)) (quote FIXLET)) (boxify-fixlet (node (quote get-params)) (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))) (else (ignore))))) (node (quote transform) transform)))
+                // (let ((transform (quote *uninitialized*))) (begin (set! transform (lambda (node ignore) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (boxify-abstraction (node (quote get-params)) (node (quote get-vars)) (node (quote get-params)) (node (quote get-vars)) (node (quote get-body)))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (boxify-vararg-abstraction (node (quote get-params)) (node (quote get-vararg)) (node (quote get-vars)) (node (quote get-varvar)) (cons (node (quote get-vararg)) (node (quote get-params))) (cons (node (quote get-varvar)) (node (quote get-vars))) (node (quote get-body)))) ((eq? (node (quote kind)) (quote FIXLET)) (boxify-fixlet (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))) (else (ignore))))) (node (quote transform) transform)))
                 {
                     let transform = Scm::symbol("*uninitialized*");
                     {
@@ -170,13 +170,8 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                         .is_true()
                                         {
                                             {
-                                                // (boxify-fixlet (node (quote get-params)) (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))
+                                                // (boxify-fixlet (node (quote get-vars)) (node (quote get-args)) (node (quote get-body)))
                                                 Scm::func(boxify_minus_fixlet).invoke(&[
-                                                    {
-                                                        // (node (quote get-params))
-                                                        node.clone()
-                                                            .invoke(&[Scm::symbol("get-params")])
-                                                    },
                                                     {
                                                         // (node (quote get-vars))
                                                         node.clone()
@@ -340,18 +335,17 @@ pub fn boxify_minus_abstraction(args: &[Scm]) -> Scm {
 }
 pub fn boxify_minus_fixlet(args: &[Scm]) -> Scm {
     {
-        if args.len() != 4 {
+        if args.len() != 3 {
             panic!("invalid arity")
         }
-        let params = args[0].clone();
-        let vars = args[1].clone();
-        let args_ = args[2].clone();
-        let body = args[3].clone();
+        let vars = args[0].clone();
+        let args_ = args[1].clone();
+        let body = args[2].clone();
         {
-            // (make-fixlet params vars args (boxify-vars! params vars (boxify body)))
-            imports::make_minus_fixlet(&[params.clone(), vars.clone(), args_.clone(), {
-                // (boxify-vars! params vars (boxify body))
-                Scm::func(boxify_minus_vars_i).invoke(&[params.clone(), vars.clone(), {
+            // (make-fixlet vars args (boxify-vars! vars (boxify body)))
+            imports::make_minus_fixlet(&[vars.clone(), args_.clone(), {
+                // (boxify-vars! vars (boxify body))
+                Scm::func(boxify_minus_vars_i).invoke(&[vars.clone(), {
                     // (boxify body)
                     boxify(&[body.clone()])
                 }])
@@ -461,53 +455,20 @@ pub fn boxify_minus_vararg_minus_abstraction(args: &[Scm]) -> Scm {
 }
 pub fn boxify_minus_vars_i(args: &[Scm]) -> Scm {
     {
-        if args.len() != 3 {
+        if args.len() != 2 {
             panic!("invalid arity")
         }
-        let param_star_ = args[0].clone();
-        let var_star_ = args[1].clone();
-        let body = args[2].clone();
+        let var_star_ = args[0].clone();
+        let body = args[1].clone();
         {
             // (cond ...)
             if ({
-                // (and (null? param*) (null? var*))
-                if ({
-                    // (null? param*)
-                    imports::null_p(&[param_star_.clone()])
-                })
-                .is_true()
-                {
-                    {
-                        // (null? var*)
-                        imports::null_p(&[var_star_.clone()])
-                    }
-                } else {
-                    Scm::False
-                }
-            })
-            .is_true()
-            {
-                body.clone()
-            } else if ({
-                // (null? param*)
-                imports::null_p(&[param_star_.clone()])
-            })
-            .is_true()
-            {
-                {
-                    // (error "mismatch params/vars")
-                    imports::error(&[Scm::from("mismatch params/vars")])
-                }
-            } else if ({
                 // (null? var*)
                 imports::null_p(&[var_star_.clone()])
             })
             .is_true()
             {
-                {
-                    // (error "mismatch params/vars")
-                    imports::error(&[Scm::from("mismatch params/vars")])
-                }
+                body.clone()
             } else if ({
                 // (variable-mutable? (car var*))
                 imports::variable_minus_mutable_p(&[{
@@ -526,22 +487,21 @@ pub fn boxify_minus_vars_i(args: &[Scm]) -> Scm {
                         }])
                     };
                     {
-                        // (boxify-vars! (cdr param*) (cdr var*) (make-boxify (car param*) body))
+                        // (boxify-vars! (cdr var*) (make-boxify (variable-name (car var*)) body))
                         Scm::func(boxify_minus_vars_i).invoke(&[
-                            {
-                                // (cdr param*)
-                                imports::cdr(&[param_star_.clone()])
-                            },
                             {
                                 // (cdr var*)
                                 imports::cdr(&[var_star_.clone()])
                             },
                             {
-                                // (make-boxify (car param*) body)
+                                // (make-boxify (variable-name (car var*)) body)
                                 imports::make_minus_boxify(&[
                                     {
-                                        // (car param*)
-                                        imports::car(&[param_star_.clone()])
+                                        // (variable-name (car var*))
+                                        imports::variable_minus_name(&[{
+                                            // (car var*)
+                                            imports::car(&[var_star_.clone()])
+                                        }])
                                     },
                                     body.clone(),
                                 ])
@@ -551,12 +511,8 @@ pub fn boxify_minus_vars_i(args: &[Scm]) -> Scm {
                 }
             } else {
                 {
-                    // (boxify-vars! (cdr param*) (cdr var*) body)
+                    // (boxify-vars! (cdr var*) body)
                     Scm::func(boxify_minus_vars_i).invoke(&[
-                        {
-                            // (cdr param*)
-                            imports::cdr(&[param_star_.clone()])
-                        },
                         {
                             // (cdr var*)
                             imports::cdr(&[var_star_.clone()])
@@ -596,11 +552,11 @@ pub fn initialize() {
             (/*NOP*/)
         };
         {
-            // (define (boxify-fixlet params vars args body) ...)
+            // (define (boxify-fixlet vars args body) ...)
             (/*NOP*/)
         };
         {
-            // (define (boxify-vars! param* var* body) ...)
+            // (define (boxify-vars! var* body) ...)
             (/*NOP*/)
         }
     };
