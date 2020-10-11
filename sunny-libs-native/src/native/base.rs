@@ -60,6 +60,12 @@ pub mod exports {
         }
     }
 
+    wrap_fn!{"string->symbol",
+        string_minus__g_symbol(s) {
+            Scm::symbol(s.as_string().unwrap().as_str())
+        }
+    }
+
     wrap_fn!{"string->list",
         string_minus__g_list(s) {
             let s = s.as_string().unwrap();

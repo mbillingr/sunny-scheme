@@ -24,7 +24,8 @@
     procedure?
     reverse
     set-car! set-cdr!
-    string? string->list string=? string-append string<?
+    string? string->list string->symbol
+    string=? string-append string<?
     symbol? symbol->string symbol=?)
 
   (import (native base))
