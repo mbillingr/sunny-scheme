@@ -1052,7 +1052,7 @@ pub fn astify_minus_symbol(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         let env = args[1].clone();
         {
-            // (let ((var (ensure-var! name env))) (if (keyword? var) var (make-reference name var)))
+            // (let ((var (ensure-var! name env))) (if (keyword? var) var (make-reference var)))
             {
                 let var = {
                     // (ensure-var! name env)
@@ -1067,8 +1067,8 @@ pub fn astify_minus_symbol(args: &[Scm]) -> Scm {
                     var.clone()
                 } else {
                     {
-                        // (make-reference name var)
-                        imports::make_minus_reference(&[name.clone(), var.clone()])
+                        // (make-reference var)
+                        imports::make_minus_reference(&[var.clone()])
                     }
                 }
             }

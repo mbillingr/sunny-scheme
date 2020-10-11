@@ -169,7 +169,7 @@
       (let ((var (ensure-var! name env)))
         (if (keyword? var)
             var
-            (make-reference name var))))
+            (make-reference var))))
 
     (define (astify-testsuite name cases env)
       (make-testsuite name
