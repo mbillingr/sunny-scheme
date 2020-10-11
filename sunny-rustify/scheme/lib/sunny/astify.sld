@@ -99,7 +99,7 @@
       (let ((var (ensure-var! var-name env))
             (val (astify value env #f)))
         (variable-set-mutable! var)
-        (make-assignment var-name var val)))
+        (make-assignment var val)))
 
     (define (astify-comment exp node)
       (make-comment exp node))

@@ -168,27 +168,26 @@
               (else (error "Unknown message REFERENCE" msg))))
       self)
 
-    (define (make-assignment name var val)
+    (define (make-assignment var val)
       (define (repr)
-        (list 'SET! name (val 'repr)))
+        (list 'SET! (variable-name var) (val 'repr)))
       (define (transform func)
         (func self
-              (lambda () (make-assignment name
-                                          var
+              (lambda () (make-assignment var
                                           (val 'transform func)))))
       (define (free-vars)
         (set-add (val 'free-vars)
-                 name))
+                 (free-var-name (variable-name var))))
       (define (gen-rust module)
-        (let ((uname (get-field var 'name)))
+        (let ((name (variable-name var)))
           (cond ((global-variable? var)
                  (print module
-                        (rustify-identifier uname)
+                        (rustify-identifier name)
                         ".with(|value| value.set(")
                  (val 'gen-rust module)
                  (print module "))"))
                 ((boxed-variable? var)
-                 (print module (rustify-identifier uname) ".set(")
+                 (print module (rustify-identifier name) ".set(")
                  (val 'gen-rust module)
                  (print module ")"))
                 (else (error "set! on unboxed variable" name var)))))

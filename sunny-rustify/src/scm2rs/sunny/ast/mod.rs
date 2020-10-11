@@ -1016,52 +1016,58 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
     .into()
 }
 pub fn make_minus_assignment(args: &[Scm]) -> Scm {
-    {if args.len() != 3{panic!("invalid arity")}let name = args[0].clone();let var = args[1].clone();let val = args[2].clone();{
-// (letrec ((repr (lambda () (list (quote SET!) name (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-assignment name var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) name))) (gen-rust (lambda (module) (let ((uname (get-field var (quote name)))) (cond ((global-variable? var) (print module (rustify-identifier uname) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier uname) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var)))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg)))))) self)
+    {if args.len() != 2{panic!("invalid arity")}let var = args[0].clone();let val = args[1].clone();{
+// (letrec ((repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var)))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote SET!) name (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-assignment name var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) name))) (set! gen-rust (lambda (module) (let ((uname (get-field var (quote name)))) (cond ((global-variable? var) (print module (rustify-identifier uname) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier uname) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var)))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var)))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
-let name = name.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (list (quote SET!) name (val (quote repr)))
-imports::list(&[Scm::symbol("SET!"),name.clone(),{
+let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (list (quote SET!) (variable-name var) (val (quote repr)))
+imports::list(&[Scm::symbol("SET!"),{
+// (variable-name var)
+imports::variable_minus_name(&[var.clone()])},{
 // (val (quote repr))
 val.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
-let self_ = self_.clone();let name = name.clone();let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
-// (func self (lambda () (make-assignment name var (val (quote transform) func))))
+let self_ = self_.clone();let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
+// (func self (lambda () (make-assignment var (val (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
-let name = name.clone();let var = var.clone();let val = val.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (make-assignment name var (val (quote transform) func))
-Scm::func(make_minus_assignment).invoke(&[name.clone(),var.clone(),{
+let var = var.clone();let val = val.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (make-assignment var (val (quote transform) func))
+Scm::func(make_minus_assignment).invoke(&[var.clone(),{
 // (val (quote transform) func)
 val.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
-let val = val.clone();let name = name.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (set-add (val (quote free-vars)) name)
+let val = val.clone();let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (set-add (val (quote free-vars)) (free-var-name (variable-name var)))
 imports::set_minus_add(&[{
 // (val (quote free-vars))
-val.clone().invoke(&[Scm::symbol("free-vars")])},name.clone()])}})});gen_minus_rust.set({// Closure
-let var = var.clone();let val = val.clone();let name = name.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
-// (let ((uname (get-field var (quote name)))) (cond ((global-variable? var) (print module (rustify-identifier uname) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier uname) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var))))
-{let uname = {
-// (get-field var (quote name))
-imports::get_minus_field(&[var.clone(),Scm::symbol("name")])};{
+val.clone().invoke(&[Scm::symbol("free-vars")])},{
+// (free-var-name (variable-name var))
+Scm::func(free_minus_var_minus_name).invoke(&[{
+// (variable-name var)
+imports::variable_minus_name(&[var.clone()])}])}])}})});gen_minus_rust.set({// Closure
+let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
+// (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var))))
+{let name = {
+// (variable-name var)
+imports::variable_minus_name(&[var.clone()])};{
 // (cond ...)
 if ({
 // (global-variable? var)
 imports::global_minus_variable_p(&[var.clone()])}).is_true() {{{
-// (print module (rustify-identifier uname) ".with(|value| value.set(")
+// (print module (rustify-identifier name) ".with(|value| value.set(")
 imports::print(&[module.clone(),{
-// (rustify-identifier uname)
-imports::rustify_minus_identifier(&[uname.clone()])},Scm::from(".with(|value| value.set(")])};{
+// (rustify-identifier name)
+imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".with(|value| value.set(")])};{
 // (val (quote gen-rust) module)
 val.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module "))")
 imports::print(&[module.clone(),Scm::from("))")])}}} else if ({
 // (boxed-variable? var)
 imports::boxed_minus_variable_p(&[var.clone()])}).is_true() {{{
-// (print module (rustify-identifier uname) ".set(")
+// (print module (rustify-identifier name) ".set(")
 imports::print(&[module.clone(),{
-// (rustify-identifier uname)
-imports::rustify_minus_identifier(&[uname.clone()])},Scm::from(".set(")])};{
+// (rustify-identifier name)
+imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".set(")])};{
 // (val (quote gen-rust) module)
 val.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module ")")
@@ -3462,7 +3468,7 @@ pub fn initialize() {
             (/*NOP*/)
         };
         {
-            // (define (make-assignment name var val) ...)
+            // (define (make-assignment var val) ...)
             (/*NOP*/)
         };
         {

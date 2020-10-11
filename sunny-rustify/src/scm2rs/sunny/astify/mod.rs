@@ -525,7 +525,7 @@ pub fn astify_minus_assignment(args: &[Scm]) -> Scm {
         let value = args[1].clone();
         let env = args[2].clone();
         {
-            // (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (variable-set-mutable! var) (make-assignment var-name var val))
+            // (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (variable-set-mutable! var) (make-assignment var val))
             {
                 let [var, val] = [
                     {
@@ -543,12 +543,8 @@ pub fn astify_minus_assignment(args: &[Scm]) -> Scm {
                         imports::variable_minus_set_minus_mutable_i(&[var.clone()])
                     };
                     {
-                        // (make-assignment var-name var val)
-                        imports::make_minus_assignment(&[
-                            var_minus_name.clone(),
-                            var.clone(),
-                            val.clone(),
-                        ])
+                        // (make-assignment var val)
+                        imports::make_minus_assignment(&[var.clone(), val.clone()])
                     }
                 }
             }
