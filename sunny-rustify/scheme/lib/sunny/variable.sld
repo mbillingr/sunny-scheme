@@ -21,7 +21,9 @@
           keyword?
           keyword-name
           keyword-handler
-          undefined-global-variable?)
+          undefined-global-variable?
+          variable-name
+          variable-set-name!)
 
   (import (scheme base)
           (scheme cxr)
@@ -56,7 +58,7 @@
     (set-field! UndefinedGlobal 'new
       (lambda (self name)
         (let ((var (clone UndefinedGlobal)))
-          (set-field! var 'name (unique-name name))
+          (set-field! var 'name name)
           var)))
     (set-field! UndefinedGlobal 'add-definition!
       (lambda (self value)
@@ -83,7 +85,7 @@
     (set-field! LocalVariable 'new
       (lambda (self name)
         (let ((var (clone LocalVariable)))
-          (set-field! var 'name (unique-name name))
+          (set-field! var 'name name)
           var)))
 
     (define BoxedVariable (clone LocalVariable))
@@ -91,8 +93,14 @@
     (set-field! BoxedVariable 'new
       (lambda (self name)
         (let ((var (clone BoxedVariable)))
-          (set-field! var 'name (unique-name name))
+          (set-field! var 'name name)
           var)))
+
+    (define (variable-name var)
+      (get-field var 'name))
+
+    (define (variable-set-name! var name)
+      (set-field! var 'name name))
 
     (define (keyword? obj)
       (and (table? obj)
