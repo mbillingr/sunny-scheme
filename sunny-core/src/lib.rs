@@ -158,6 +158,13 @@ impl Scm {
         }
     }
 
+    pub fn is_string(&self) -> bool {
+        match self {
+            Scm::String(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_symbol(&self) -> bool {
         match self {
             Scm::Symbol(_) => true,

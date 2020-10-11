@@ -22,6 +22,7 @@ pub mod exports {
     wrap_fn1!{"null?", null_p = Scm::is_null}
     wrap_fn1!{"pair?", pair_p = Scm::is_pair}
     wrap_fn1!{"procedure?", procedure_p = Scm::is_procedure}
+    wrap_fn1!{"string?", string_p = Scm::is_string}
     wrap_fn1!{"symbol?", symbol_p = Scm::is_symbol}
     wrap_fn1!{"char?", char_p = Scm::is_char}
 

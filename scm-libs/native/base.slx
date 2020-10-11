@@ -13,5 +13,5 @@
     pair?
     procedure?
     set-car! set-cdr!
-    string->list string-cons string<?
+    string? string->list string-cons string<?
     symbol? symbol->string))
