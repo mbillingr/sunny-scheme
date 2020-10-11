@@ -27,8 +27,7 @@
                    (val 'inner-function))
                  (make-nop))
                 (else
-                  (make-definition (node 'get-name)
-                                   (node 'get-var)
+                  (make-definition (node 'get-var)
                                    val)))))
 
       (node 'transform transform))))

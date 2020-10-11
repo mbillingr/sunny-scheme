@@ -123,7 +123,7 @@
       (let ((var (ensure-var! var-name env))
             (val (astify value env #f)))
         (global-add-definition! var val)
-        (make-definition var-name var val)))
+        (make-definition var val)))
 
     (define (astify-export export-spec* env)
       (cond ((null? export-spec*)

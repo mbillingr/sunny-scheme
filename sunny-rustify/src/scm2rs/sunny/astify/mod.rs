@@ -691,7 +691,7 @@ pub fn astify_minus_definition(args: &[Scm]) -> Scm {
         let value = args[1].clone();
         let env = args[2].clone();
         {
-            // (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (global-add-definition! var val) (make-definition var-name var val))
+            // (let ((var (ensure-var! var-name env)) (val (astify value env #f))) (global-add-definition! var val) (make-definition var val))
             {
                 let [var, val] = [
                     {
@@ -709,12 +709,8 @@ pub fn astify_minus_definition(args: &[Scm]) -> Scm {
                         imports::global_minus_add_minus_definition_i(&[var.clone(), val.clone()])
                     };
                     {
-                        // (make-definition var-name var val)
-                        imports::make_minus_definition(&[
-                            var_minus_name.clone(),
-                            var.clone(),
-                            val.clone(),
-                        ])
+                        // (make-definition var val)
+                        imports::make_minus_definition(&[var.clone(), val.clone()])
                     }
                 }
             }
