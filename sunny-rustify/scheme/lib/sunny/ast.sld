@@ -331,15 +331,15 @@
               (else (error "Unknown message APPLICATION" msg))))
       self)
 
-    (define (make-function-application name var args tail?)
+    (define (make-function-application var args tail?)
       (define (repr)
         (list (if tail? 'FN-APPLY-TC 'FN-APPLY)
-              name var
+              (variable-name var)
               (args 'repr)))
       (define (transform fnc)
         (fnc self
              (lambda () (make-function-application
-                          name var
+                          var
                           (args 'transform fnc)
                           tail?))))
       (define (free-vars)
@@ -352,7 +352,7 @@
               (else
                 (error "invalid function application" var)))
         (print module
-               (rustify-identifier name)
+               (rustify-identifier (variable-name var))
                "(&[")
         (args 'gen-rust module)
         (print module "])"))

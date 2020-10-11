@@ -1931,28 +1931,30 @@ imports::car(&[arg_star_.clone()])}])}} else {{
 imports::error(&[Scm::from("Unknown message FIXLET"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_function_minus_application(args: &[Scm]) -> Scm {
-    {if args.len() != 4{panic!("invalid arity")}let name = args[0].clone();let var = args[1].clone();let args_ = args[2].clone();let tail_p = args[3].clone();{
-// (letrec ((repr (lambda () (list (if tail? (quote FN-APPLY-TC) (quote FN-APPLY)) name var (args (quote repr))))) (transform (lambda (fnc) (fnc self (lambda () (make-function-application name var (args (quote transform) fnc) tail?))))) (free-vars (lambda () (args (quote free-vars)))) (gen-rust (lambda (module) (cond ((global-function? var) (print module "")) ((import-variable? var) (print module "imports::")) (else (error "invalid function application" var))) (print module (rustify-identifier name) "(&[") (args (quote gen-rust) module) (print module "])"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FN-APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message FN-APPLICATION" msg)))))) self)
+    {if args.len() != 3{panic!("invalid arity")}let var = args[0].clone();let args_ = args[1].clone();let tail_p = args[2].clone();{
+// (letrec ((repr (lambda () (list (if tail? (quote FN-APPLY-TC) (quote FN-APPLY)) (variable-name var) (args (quote repr))))) (transform (lambda (fnc) (fnc self (lambda () (make-function-application var (args (quote transform) fnc) tail?))))) (free-vars (lambda () (args (quote free-vars)))) (gen-rust (lambda (module) (cond ((global-function? var) (print module "")) ((import-variable? var) (print module "imports::")) (else (error "invalid function application" var))) (print module (rustify-identifier (variable-name var)) "(&[") (args (quote gen-rust) module) (print module "])"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FN-APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message FN-APPLICATION" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (if tail? (quote FN-APPLY-TC) (quote FN-APPLY)) name var (args (quote repr))))) (set! transform (lambda (fnc) (fnc self (lambda () (make-function-application name var (args (quote transform) fnc) tail?))))) (set! free-vars (lambda () (args (quote free-vars)))) (set! gen-rust (lambda (module) (cond ((global-function? var) (print module "")) ((import-variable? var) (print module "imports::")) (else (error "invalid function application" var))) (print module (rustify-identifier name) "(&[") (args (quote gen-rust) module) (print module "])"))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FN-APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message FN-APPLICATION" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (if tail? (quote FN-APPLY-TC) (quote FN-APPLY)) (variable-name var) (args (quote repr))))) (set! transform (lambda (fnc) (fnc self (lambda () (make-function-application var (args (quote transform) fnc) tail?))))) (set! free-vars (lambda () (args (quote free-vars)))) (set! gen-rust (lambda (module) (cond ((global-function? var) (print module "")) ((import-variable? var) (print module "imports::")) (else (error "invalid function application" var))) (print module (rustify-identifier (variable-name var)) "(&[") (args (quote gen-rust) module) (print module "])"))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote FN-APPLICATION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message FN-APPLICATION" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
-let tail_p = tail_p.clone();let name = name.clone();let var = var.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (list (if tail? (quote FN-APPLY-TC) (quote FN-APPLY)) name var (args (quote repr)))
-imports::list(&[if (tail_p.clone()).is_true() {Scm::symbol("FN-APPLY-TC")} else {Scm::symbol("FN-APPLY")},name.clone(),var.clone(),{
+let tail_p = tail_p.clone();let var = var.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (list (if tail? (quote FN-APPLY-TC) (quote FN-APPLY)) (variable-name var) (args (quote repr)))
+imports::list(&[if (tail_p.clone()).is_true() {Scm::symbol("FN-APPLY-TC")} else {Scm::symbol("FN-APPLY")},{
+// (variable-name var)
+imports::variable_minus_name(&[var.clone()])},{
 // (args (quote repr))
 args_.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
-let self_ = self_.clone();let name = name.clone();let var = var.clone();let args_ = args_.clone();let tail_p = tail_p.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
-// (fnc self (lambda () (make-function-application name var (args (quote transform) fnc) tail?)))
+let self_ = self_.clone();let var = var.clone();let args_ = args_.clone();let tail_p = tail_p.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
+// (fnc self (lambda () (make-function-application var (args (quote transform) fnc) tail?)))
 fnc.clone().invoke(&[self_.get(),{// Closure
-let name = name.clone();let var = var.clone();let args_ = args_.clone();let fnc = fnc.clone();let tail_p = tail_p.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (make-function-application name var (args (quote transform) fnc) tail?)
-Scm::func(make_minus_function_minus_application).invoke(&[name.clone(),var.clone(),{
+let var = var.clone();let args_ = args_.clone();let fnc = fnc.clone();let tail_p = tail_p.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (make-function-application var (args (quote transform) fnc) tail?)
+Scm::func(make_minus_function_minus_application).invoke(&[var.clone(),{
 // (args (quote transform) fnc)
 args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},tail_p.clone()])}})}])}})});free_minus_vars.set({// Closure
 let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (args (quote free-vars))
 args_.clone().invoke(&[Scm::symbol("free-vars")])}})});gen_minus_rust.set({// Closure
-let var = var.clone();let name = name.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
+let var = var.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (cond ...)
 if ({
 // (global-function? var)
@@ -1965,10 +1967,12 @@ imports::import_minus_variable_p(&[var.clone()])}).is_true() {{
 imports::print(&[module.clone(),Scm::from("imports::")])}} else {{
 // (error "invalid function application" var)
 imports::error(&[Scm::from("invalid function application"),var.clone()])}}};{
-// (print module (rustify-identifier name) "(&[")
+// (print module (rustify-identifier (variable-name var)) "(&[")
 imports::print(&[module.clone(),{
-// (rustify-identifier name)
-imports::rustify_minus_identifier(&[name.clone()])},Scm::from("(&[")])};{
+// (rustify-identifier (variable-name var))
+imports::rustify_minus_identifier(&[{
+// (variable-name var)
+imports::variable_minus_name(&[var.clone()])}])},Scm::from("(&[")])};{
 // (args (quote gen-rust) module)
 args_.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module "])")
@@ -3500,7 +3504,7 @@ pub fn initialize() {
             (/*NOP*/)
         };
         {
-            // (define (make-function-application name var args tail?) ...)
+            // (define (make-function-application var args tail?) ...)
             (/*NOP*/)
         };
         {

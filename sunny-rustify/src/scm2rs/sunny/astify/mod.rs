@@ -417,12 +417,8 @@ pub fn astify_minus_application(args: &[Scm]) -> Scm {
             .is_true()
             {
                 {
-                    // (make-function-application (proc (quote get-name)) (proc (quote get-var)) (astify-args arg* env) tail?)
+                    // (make-function-application (proc (quote get-var)) (astify-args arg* env) tail?)
                     imports::make_minus_function_minus_application(&[
-                        {
-                            // (proc (quote get-name))
-                            proc.clone().invoke(&[Scm::symbol("get-name")])
-                        },
                         {
                             // (proc (quote get-var))
                             proc.clone().invoke(&[Scm::symbol("get-var")])
