@@ -17,24 +17,24 @@
     (define (rust-gen-global-defs module g)
       (if (null? g)
           (println module)
-          (cond ((import-variable? (cdar g))
+          (cond ((import-variable? (car g))
                  (rust-gen-global-defs module (cdr g)))
-                ((keyword? (cdar g))
+                ((keyword? (car g))
                  (rust-gen-global-defs module (cdr g)))
-                ((global-variable? (cdar g))
+                ((global-variable? (car g))
                  (println module
                           "thread_local!{#[allow(non_upper_case_globals)] pub static "
-                          (rustify-identifier (caar g))
+                          (rustify-identifier (variable-name (car g)))
                           ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "
-                          (caar g)
+                          (variable-name (car g))
                           "\"))}")
                  (rust-gen-global-defs module (cdr g)))
-                ((global-function? (cdar g))
+                ((global-function? (car g))
                  (println module
                           "pub fn "
-                          (rustify-identifier (caar g))
+                          (rustify-identifier (variable-name (car g)))
                           "(args: &[Scm]) -> Scm { ")
-                 ((global-function-get-value (cdar g)) 'gen-rust module)
+                 ((global-function-get-value (car g)) 'gen-rust module)
                  (println module
                           ".into()}")
                  (rust-gen-global-defs module (cdr g)))

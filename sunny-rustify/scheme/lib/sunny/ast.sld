@@ -141,7 +141,7 @@
         (let ((uname (get-field var 'name)))
           (cond ((global-variable? var)
                  (print module
-                        (rustify-identifier)
+                        (rustify-identifier name)
                         ".with(|value| value.get())"))
                 ((global-function? var)
                  (print module

@@ -36,6 +36,7 @@ pub mod exports {
     pub use super::imports::set_minus_cdr_i;
     pub use super::imports::string_l__p;
     pub use super::imports::string_minus__g_list;
+    pub use super::imports::string_p;
     pub use super::imports::symbol_minus__g_string;
     pub use super::imports::symbol_p;
     pub use super::length;

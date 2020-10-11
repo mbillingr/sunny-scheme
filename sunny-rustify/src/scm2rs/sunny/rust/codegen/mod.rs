@@ -26,54 +26,60 @@ imports::null_p(&[g.clone()])}).is_true() {{
 imports::println(&[module.clone()])}} else {{
 // (cond ...)
 if ({
-// (import-variable? (cdar g))
+// (import-variable? (car g))
 imports::import_minus_variable_p(&[{
-// (cdar g)
-imports::cdar(&[g.clone()])}])}).is_true() {{
+// (car g)
+imports::car(&[g.clone()])}])}).is_true() {{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
 imports::cdr(&[g.clone()])}])}} else if ({
-// (keyword? (cdar g))
+// (keyword? (car g))
 imports::keyword_p(&[{
-// (cdar g)
-imports::cdar(&[g.clone()])}])}).is_true() {{
+// (car g)
+imports::car(&[g.clone()])}])}).is_true() {{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
 imports::cdr(&[g.clone()])}])}} else if ({
-// (global-variable? (cdar g))
+// (global-variable? (car g))
 imports::global_minus_variable_p(&[{
-// (cdar g)
-imports::cdar(&[g.clone()])}])}).is_true() {{{
-// (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (caar g)) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE " (caar g) "\"))}")
+// (car g)
+imports::car(&[g.clone()])}])}).is_true() {{{
+// (println module "thread_local!{#[allow(non_upper_case_globals)] pub static " (rustify-identifier (variable-name (car g))) ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE " (variable-name (car g)) "\"))}")
 imports::println(&[module.clone(),Scm::from("thread_local!{#[allow(non_upper_case_globals)] pub static "),{
-// (rustify-identifier (caar g))
+// (rustify-identifier (variable-name (car g)))
 imports::rustify_minus_identifier(&[{
-// (caar g)
-imports::caar(&[g.clone()])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "),{
-// (caar g)
-imports::caar(&[g.clone()])},Scm::from("\"))}")])};{
+// (variable-name (car g))
+imports::variable_minus_name(&[{
+// (car g)
+imports::car(&[g.clone()])}])}])},Scm::from(": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "),{
+// (variable-name (car g))
+imports::variable_minus_name(&[{
+// (car g)
+imports::car(&[g.clone()])}])},Scm::from("\"))}")])};{
 // (rust-gen-global-defs module (cdr g))
 Scm::func(rust_minus_gen_minus_global_minus_defs).invoke(&[module.clone(),{
 // (cdr g)
 imports::cdr(&[g.clone()])}])}}} else if ({
-// (global-function? (cdar g))
+// (global-function? (car g))
 imports::global_minus_function_p(&[{
-// (cdar g)
-imports::cdar(&[g.clone()])}])}).is_true() {{{
-// (println module "pub fn " (rustify-identifier (caar g)) "(args: &[Scm]) -> Scm { ")
+// (car g)
+imports::car(&[g.clone()])}])}).is_true() {{{
+// (println module "pub fn " (rustify-identifier (variable-name (car g))) "(args: &[Scm]) -> Scm { ")
 imports::println(&[module.clone(),Scm::from("pub fn "),{
-// (rustify-identifier (caar g))
+// (rustify-identifier (variable-name (car g)))
 imports::rustify_minus_identifier(&[{
-// (caar g)
-imports::caar(&[g.clone()])}])},Scm::from("(args: &[Scm]) -> Scm { ")])};{
-// ((global-function-get-value (cdar g)) (quote gen-rust) module)
+// (variable-name (car g))
+imports::variable_minus_name(&[{
+// (car g)
+imports::car(&[g.clone()])}])}])},Scm::from("(args: &[Scm]) -> Scm { ")])};{
+// ((global-function-get-value (car g)) (quote gen-rust) module)
 {
-// (global-function-get-value (cdar g))
+// (global-function-get-value (car g))
 imports::global_minus_function_minus_get_minus_value(&[{
-// (cdar g)
-imports::cdar(&[g.clone()])}])}.invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
+// (car g)
+imports::car(&[g.clone()])}])}.invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (println module ".into()}")
 imports::println(&[module.clone(),Scm::from(".into()}")])};{
 // (rust-gen-global-defs module (cdr g))

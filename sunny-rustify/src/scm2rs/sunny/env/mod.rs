@@ -2,6 +2,7 @@
 use sunny_core::{Mut, Scm};
 mod imports {
     pub use crate::scheme::base::exports::*;
+    pub use crate::sunny::utils::exports::*;
     pub use crate::sunny::variable::exports::*;
 }
 
@@ -118,7 +119,7 @@ pub fn adjoin_minus_global_minus_var_i(args: &[Scm]) -> Scm {
         let var = args[0].clone();
         let env = args[1].clone();
         {
-            // (let ((genv (find-globals env))) (set-cdr! genv (cons var (cdr genv))) (cdr var))
+            // (let ((genv (find-globals env))) (set-cdr! genv (cons var (cdr genv))) var)
             {
                 let genv = {
                     // (find-globals env)
@@ -135,10 +136,7 @@ pub fn adjoin_minus_global_minus_var_i(args: &[Scm]) -> Scm {
                             }])
                         }])
                     };
-                    {
-                        // (cdr var)
-                        imports::cdr(&[var.clone()])
-                    }
+                    var.clone()
                 }
             }
         }
@@ -378,10 +376,13 @@ pub fn env_minus_find(args: &[Scm]) -> Scm {
                     }])
                 }
             } else if ({
-                // (eq? name (caar env))
-                imports::eq_p(&[name.clone(), {
-                    // (caar env)
-                    imports::caar(&[env.clone()])
+                // (same-name? name (variable-name (car env)))
+                imports::same_minus_name_p(&[name.clone(), {
+                    // (variable-name (car env))
+                    imports::variable_minus_name(&[{
+                        // (car env)
+                        imports::car(&[env.clone()])
+                    }])
                 }])
             })
             .is_true()
@@ -478,21 +479,8 @@ pub fn lookup(args: &[Scm]) -> Scm {
         let name = args[0].clone();
         let env = args[1].clone();
         {
-            // (let ((entry (env-find name env))) (if entry (cdr entry) #f))
-            {
-                let entry = {
-                    // (env-find name env)
-                    Scm::func(env_minus_find).invoke(&[name.clone(), env.clone()])
-                };
-                if (entry.clone()).is_true() {
-                    {
-                        // (cdr entry)
-                        imports::cdr(&[entry.clone()])
-                    }
-                } else {
-                    Scm::False
-                }
-            }
+            // (env-find name env)
+            Scm::func(env_minus_find).invoke(&[name.clone(), env.clone()])
         }
     }
     .into()
@@ -598,6 +586,7 @@ pub fn initialize() {
     INITIALIZED.with(|x| x.set(true));
 
     crate::scheme::base::initialize();
+    crate::sunny::utils::initialize();
     crate::sunny::variable::initialize();
     {
         (/*NOP*/);

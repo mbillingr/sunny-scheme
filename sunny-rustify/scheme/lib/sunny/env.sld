@@ -12,6 +12,7 @@
           map-env)
 
   (import (scheme base)
+          (sunny utils)
           (sunny variable))
 
   (begin
@@ -32,17 +33,14 @@
            name*))
 
     (define (lookup name env)
-      (let ((entry (env-find name env)))
-        (if entry
-            (cdr entry)
-            #f)))
+      (env-find name env))
 
     (define (env-find name env)
       (cond ((null? env)
              #f)
             ((eq? 'GLOBAL-MARKER (car env))
              (env-find name (cdr env)))
-            ((eq? name (caar env))
+            ((same-name? name (variable-name (car env)))
              (car env))
             (else (env-find name (cdr env)))))
 
@@ -60,7 +58,7 @@
     (define (adjoin-global-var! var env)
       (let ((genv (find-globals env)))
         (set-cdr! genv (cons var (cdr genv)))
-        (cdr var)))
+        var))
 
     (define (adjoin-local name env)
       (cons (new-local name) env))

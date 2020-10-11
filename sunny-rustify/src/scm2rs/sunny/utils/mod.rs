@@ -13,6 +13,7 @@ pub mod exports {
     pub use super::last_minus_cdr;
     pub use super::proper_minus_list_minus_part;
     pub use super::reduce;
+    pub use super::same_minus_name_p;
     pub use super::sort;
 }
 
@@ -266,6 +267,98 @@ pub fn reduce(args: &[Scm]) -> Scm {
     }
     .into()
 }
+pub fn same_minus_name_p(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 2 {
+            panic!("invalid arity")
+        }
+        let a = args[0].clone();
+        let b = args[1].clone();
+        {
+            // (cond ...)
+            if ({
+                // (and (symbol? a) (symbol? b))
+                if ({
+                    // (symbol? a)
+                    imports::symbol_p(&[a.clone()])
+                })
+                .is_true()
+                {
+                    {
+                        // (symbol? b)
+                        imports::symbol_p(&[b.clone()])
+                    }
+                } else {
+                    Scm::False
+                }
+            })
+            .is_true()
+            {
+                {
+                    // (eq? a b)
+                    imports::eq_p(&[a.clone(), b.clone()])
+                }
+            } else if ({
+                // (and (string? a) (string? b))
+                if ({
+                    // (string? a)
+                    imports::string_p(&[a.clone()])
+                })
+                .is_true()
+                {
+                    {
+                        // (string? b)
+                        imports::string_p(&[b.clone()])
+                    }
+                } else {
+                    Scm::False
+                }
+            })
+            .is_true()
+            {
+                {
+                    // (equal? a b)
+                    imports::equal_p(&[a.clone(), b.clone()])
+                }
+            } else if ({
+                // (symbol? a)
+                imports::symbol_p(&[a.clone()])
+            })
+            .is_true()
+            {
+                {
+                    // (same-name? (symbol->string a) b)
+                    Scm::func(same_minus_name_p).invoke(&[
+                        {
+                            // (symbol->string a)
+                            imports::symbol_minus__g_string(&[a.clone()])
+                        },
+                        b.clone(),
+                    ])
+                }
+            } else if ({
+                // (symbol? b)
+                imports::symbol_p(&[b.clone()])
+            })
+            .is_true()
+            {
+                {
+                    // (same-name? a (symbol->string b))
+                    Scm::func(same_minus_name_p).invoke(&[a.clone(), {
+                        // (symbol->string b)
+                        imports::symbol_minus__g_string(&[b.clone()])
+                    }])
+                }
+            } else {
+                {
+                    // (error "invalid names" a b)
+                    imports::error(&[Scm::from("invalid names"), a.clone(), b.clone()])
+                }
+            }
+        }
+    }
+    .into()
+}
 pub fn sort(args: &[Scm]) -> Scm {
     {
         if args.len() != 2 {
@@ -406,6 +499,10 @@ pub fn initialize() {
         };
         {
             // (define (sort cmp ass) ...)
+            (/*NOP*/)
+        };
+        {
+            // (define (same-name? a b) ...)
             (/*NOP*/)
         }
     };

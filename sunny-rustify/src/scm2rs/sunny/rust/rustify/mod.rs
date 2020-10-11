@@ -18,9 +18,9 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
         }
         let name = args[0].clone();
         {
-            // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (cond ((eq? name (quote args)) "args_") ((eq? name (quote fn)) "fn_") ((eq? name (quote loop)) "loop_") ((eq? name (quote let)) "let_") ((eq? name (quote mut)) "mut_") ((eq? name (quote ref)) "ref_") ((eq? name (quote self)) "self_") (else (append-all (map char-map (string->list (symbol->string name)))))))
+            // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (cond ((same-name? name (quote args)) "args_") ((same-name? name (quote fn)) "fn_") ((same-name? name (quote loop)) "loop_") ((same-name? name (quote let)) "let_") ((same-name? name (quote mut)) "mut_") ((same-name? name (quote ref)) "ref_") ((same-name? name (quote self)) "self_") (else (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name)))))))
             {
-                // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (cond ((eq? name (quote args)) "args_") ((eq? name (quote fn)) "fn_") ((eq? name (quote loop)) "loop_") ((eq? name (quote let)) "let_") ((eq? name (quote mut)) "mut_") ((eq? name (quote ref)) "ref_") ((eq? name (quote self)) "self_") (else (append-all (map char-map (string->list (symbol->string name))))))))
+                // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (cond ((same-name? name (quote args)) "args_") ((same-name? name (quote fn)) "fn_") ((same-name? name (quote loop)) "loop_") ((same-name? name (quote let)) "let_") ((same-name? name (quote mut)) "mut_") ((same-name? name (quote ref)) "ref_") ((same-name? name (quote self)) "self_") (else (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name))))))))
                 {
                     let [char_minus_map, append_minus_all] = [
                         Scm::symbol("*uninitialized*"),
@@ -160,67 +160,99 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                 {
                                     // (cond ...)
                                     if ({
-                                        // (eq? name (quote args))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("args")])
+                                        // (same-name? name (quote args))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("args"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("args_")
                                     } else if ({
-                                        // (eq? name (quote fn))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("fn")])
+                                        // (same-name? name (quote fn))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("fn"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("fn_")
                                     } else if ({
-                                        // (eq? name (quote loop))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("loop")])
+                                        // (same-name? name (quote loop))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("loop"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("loop_")
                                     } else if ({
-                                        // (eq? name (quote let))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("let")])
+                                        // (same-name? name (quote let))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("let"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("let_")
                                     } else if ({
-                                        // (eq? name (quote mut))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("mut")])
+                                        // (same-name? name (quote mut))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("mut"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("mut_")
                                     } else if ({
-                                        // (eq? name (quote ref))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("ref")])
+                                        // (same-name? name (quote ref))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("ref"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("ref_")
                                     } else if ({
-                                        // (eq? name (quote self))
-                                        imports::eq_p(&[name.clone(), Scm::symbol("self")])
+                                        // (same-name? name (quote self))
+                                        imports::same_minus_name_p(&[
+                                            name.clone(),
+                                            Scm::symbol("self"),
+                                        ])
                                     })
                                     .is_true()
                                     {
                                         Scm::from("self_")
                                     } else {
                                         {
-                                            // (append-all (map char-map (string->list (symbol->string name))))
+                                            // (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name))))
                                             append_minus_all.get().invoke(&[{
-                                                // (map char-map (string->list (symbol->string name)))
+                                                // (map char-map (string->list (if (symbol? name) (symbol->string name) name)))
                                                 imports::map(&[char_minus_map.get(), {
-                                                    // (string->list (symbol->string name))
-                                                    imports::string_minus__g_list(&[{
-                                                        // (symbol->string name)
-                                                        imports::symbol_minus__g_string(&[
+                                                    // (string->list (if (symbol? name) (symbol->string name) name))
+                                                    imports::string_minus__g_list(&[
+                                                        if ({
+                                                            // (symbol? name)
+                                                            imports::symbol_p(&[name.clone()])
+                                                        })
+                                                        .is_true()
+                                                        {
+                                                            {
+                                                                // (symbol->string name)
+                                                                imports::symbol_minus__g_string(&[
+                                                                    name.clone(),
+                                                                ])
+                                                            }
+                                                        } else {
                                                             name.clone()
-                                                        ])
-                                                    }])
+                                                        },
+                                                    ])
                                                 }])
                                             }])
                                         }

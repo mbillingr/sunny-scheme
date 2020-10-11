@@ -14,7 +14,8 @@
           (sunny scheme-syntax)
           (sunny sets)
           (sunny syntax)
-          (sunny utils))
+          (sunny utils)
+          (sunny variable))
 
   (begin
     (define (astify-toplevel exp*)
@@ -48,8 +49,8 @@
                (process-library-decls (cdr exp*)))))
       (process-library-decls exp*)
       (let* ((globals (sort (lambda (a b)
-                              (string<? (symbol->string (car a))
-                                        (symbol->string (car b))))
+                              (string<? (variable-name a)
+                                        (variable-name b)))
                             (cdr global-env))))
         (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
 
@@ -71,8 +72,8 @@
                            (main (boxify (close-procedures ast)))
                            (main (extract-definitions main))
                            (globals (sort (lambda (a b)
-                                            (string<? (symbol->string (car a))
-                                                      (symbol->string (car b))))
+                                            (string<? (variable-name a)
+                                                      (variable-name b)))
                                           (cdr global-env))))
                       (make-program globals
                                     imports

@@ -97,7 +97,10 @@
           var)))
 
     (define (variable-name var)
-      (get-field var 'name))
+      (let ((name (get-field var 'name)))
+        (if (string? name)
+            name
+            (symbol->string name))))
 
     (define (variable-set-name! var name)
       (set-field! var 'name name))
@@ -158,27 +161,26 @@
       (call-method var 'into-boxed!))
 
     (define (new-keyword name handler)
-      (cons name (make-keyword name handler)))
+      (make-keyword name handler))
 
     (define (new-import name)
-      (cons name (call-method ImportedVariable 'new name)))
+      (call-method ImportedVariable 'new name))
 
     (define (new-global name)
-      (cons name (call-method UndefinedGlobal 'new name)))
+      (call-method UndefinedGlobal 'new name))
 
     (define (new-local name)
-      (cons name (call-method LocalVariable 'new name)))
+      (call-method LocalVariable 'new name))
 
     (define (new-boxed name)
-      (cons name (call-method BoxedVariable 'new name)))
+      (call-method BoxedVariable 'new name))
 
     (define (replace-var! var new-var)
-      (replace-table! var new-var))
+      (replace-table! var new-var))))
 
-    (define UNIQUE-COUNT 0)
-
-    (define (unique-name name)
-      (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
-      (string-append (symbol->string name)
-                     "_"
-                     (number->string UNIQUE-COUNT)))))
+    ;(define UNIQUE-COUNT 0)
+    ;(define (unique-name name)
+    ;  (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
+    ;  (string-append ((if (symbol? name) (symbol->string name) name))
+    ;                 "_"
+    ;                 (number->string UNIQUE-COUNT)))))

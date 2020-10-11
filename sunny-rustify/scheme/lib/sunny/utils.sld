@@ -8,6 +8,7 @@
           last-cdr
           proper-list-part
           reduce
+          same-name?
           sort)
 
   (import (scheme base))
@@ -69,4 +70,15 @@
                           (sort cmp
                                 (filter (lambda (x) (not (cmp x pivot)))
                                         (cdr ass))))))
-          '()))))
+          '()))
+
+    (define (same-name? a b)
+      (cond ((and (symbol? a) (symbol? b))
+             (eq? a b))
+            ((and (string? a) (string? b))
+             (equal? a b))
+            ((symbol? a)
+             (same-name? (symbol->string a) b))
+            ((symbol? b)
+             (same-name? a (symbol->string b)))
+            (else (error "invalid names" a b))))))

@@ -13,6 +13,7 @@ mod imports {
     pub use crate::sunny::sets::exports::*;
     pub use crate::sunny::syntax::exports::*;
     pub use crate::sunny::utils::exports::*;
+    pub use crate::sunny::variable::exports::*;
 }
 
 pub mod exports {
@@ -23,9 +24,9 @@ pub mod exports {
 
 pub fn astify_minus_library(args: &[Scm]) -> Scm {
     {if args.len() != 3{panic!("invalid arity")}let name = args[0].clone();let exp_star_ = args[1].clone();let library_minus_env = args[2].clone();{
-// (letrec ((init (make-set)) (body (make-nop)) (global-env (make-core-env)) (imports (quote ())) (exports (quote ())) (process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*))))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
+// (letrec ((init (make-set)) (body (make-nop)) (global-env (make-core-env)) (imports (quote ())) (exports (quote ())) (process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*))))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
 {
-// (let ((init (quote *uninitialized*)) (body (quote *uninitialized*)) (global-env (quote *uninitialized*)) (imports (quote *uninitialized*)) (exports (quote *uninitialized*)) (process-library-decls (quote *uninitialized*))) (begin (set! init (make-set)) (set! body (make-nop)) (set! global-env (make-core-env)) (set! imports (quote ())) (set! exports (quote ())) (set! process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*)))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports)))))))
+// (let ((init (quote *uninitialized*)) (body (quote *uninitialized*)) (global-env (quote *uninitialized*)) (imports (quote *uninitialized*)) (exports (quote *uninitialized*)) (process-library-decls (quote *uninitialized*))) (begin (set! init (make-set)) (set! body (make-nop)) (set! global-env (make-core-env)) (set! imports (quote ())) (set! exports (quote ())) (set! process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*)))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports)))))))
 {let [init, body, global_minus_env, imports, exports, process_minus_library_minus_decls, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_library_minus_decls = process_minus_library_minus_decls.into_boxed();{let exports = exports.into_boxed();{let imports = imports.into_boxed();{let global_minus_env = global_minus_env.into_boxed();{let body = body.into_boxed();{let init = init.into_boxed();{init.set({
 // (make-set)
 imports::make_minus_set(&[])});body.set({
@@ -94,23 +95,19 @@ process_minus_library_minus_decls.get().invoke(&[{
 imports::cdr(&[exp_star_.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});{
 // (process-library-decls exp*)
 process_minus_library_minus_decls.get().invoke(&[exp_star_.clone()])};{
-// (let* ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports)))))
+// (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports)))))
 {
-// (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
+// (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
 {let globals = {
-// (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env))
+// (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env))
 imports::sort(&[{// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let a = args[0].clone();let b = args[1].clone();{
-// (string<? (symbol->string (car a)) (symbol->string (car b)))
+// (string<? (variable-name a) (variable-name b))
 imports::string_l__p(&[{
-// (symbol->string (car a))
-imports::symbol_minus__g_string(&[{
-// (car a)
-imports::car(&[a.clone()])}])},{
-// (symbol->string (car b))
-imports::symbol_minus__g_string(&[{
-// (car b)
-imports::car(&[b.clone()])}])}])}})},{
+// (variable-name a)
+imports::variable_minus_name(&[a.clone()])},{
+// (variable-name b)
+imports::variable_minus_name(&[b.clone()])}])}})},{
 // (cdr global-env)
 imports::cdr(&[global_minus_env.get()])}])};{
 // (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))
@@ -124,9 +121,9 @@ imports::make_minus_library(&[name.clone(),globals.clone(),init.get(),body.get()
 }
 pub fn astify_minus_program(args: &[Scm]) -> Scm {
     {if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
-// (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
+// (letrec ((global-env (make-core-env)) (library-env (list (quote ()))) (process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set)))
 {
-// (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))) (process-imports exp* (quote ()) (make-set))))
+// (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env)))))))) (process-imports exp* (quote ()) (make-set))))
 {let [global_minus_env, library_minus_env, process_minus_imports, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_imports = process_minus_imports.into_boxed();{let library_minus_env = library_minus_env.into_boxed();{let global_minus_env = global_minus_env.into_boxed();{global_minus_env.set({
 // (make-core-env)
 imports::make_minus_core_minus_env(&[])});library_minus_env.set({
@@ -161,37 +158,33 @@ imports::set_minus_add_star_(&[init.clone(),{
 imports::import_minus_libnames(&[{
 // (car exp*)
 imports::car(&[exp_star_.clone()])}])}])}])}}} else {{
-// (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
+// (let* ((ast (astify-sequence exp* global-env #f)) (main (boxify (close-procedures ast))) (main (extract-definitions main)) (globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (make-program globals imports init main (filter cdr (car library-env))))
 {
-// (let ((ast (astify-sequence exp* global-env #f))) (let ((main (boxify (close-procedures ast)))) (let ((main (extract-definitions main))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))))
+// (let ((ast (astify-sequence exp* global-env #f))) (let ((main (boxify (close-procedures ast)))) (let ((main (extract-definitions main))) (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))))
 {let ast = {
 // (astify-sequence exp* global-env #f)
 imports::astify_minus_sequence(&[exp_star_.clone(),global_minus_env.get(),Scm::False])};
-// (let ((main (boxify (close-procedures ast)))) (let ((main (extract-definitions main))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))))
+// (let ((main (boxify (close-procedures ast)))) (let ((main (extract-definitions main))) (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))))
 let main = {
 // (boxify (close-procedures ast))
 imports::boxify(&[{
 // (close-procedures ast)
 imports::close_minus_procedures(&[ast.clone()])}])};
-// (let ((main (extract-definitions main))) (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))
+// (let ((main (extract-definitions main))) (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env))))))
 let main = {
 // (extract-definitions main)
 imports::extract_minus_definitions(&[main.clone()])};
-// (let ((globals (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))
+// (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (make-program globals imports init main (filter cdr (car library-env)))))
 let globals = {
-// (sort (lambda (a b) (string<? (symbol->string (car a)) (symbol->string (car b)))) (cdr global-env))
+// (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env))
 imports::sort(&[{// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let a = args[0].clone();let b = args[1].clone();{
-// (string<? (symbol->string (car a)) (symbol->string (car b)))
+// (string<? (variable-name a) (variable-name b))
 imports::string_l__p(&[{
-// (symbol->string (car a))
-imports::symbol_minus__g_string(&[{
-// (car a)
-imports::car(&[a.clone()])}])},{
-// (symbol->string (car b))
-imports::symbol_minus__g_string(&[{
-// (car b)
-imports::car(&[b.clone()])}])}])}})},{
+// (variable-name a)
+imports::variable_minus_name(&[a.clone()])},{
+// (variable-name b)
+imports::variable_minus_name(&[b.clone()])}])}})},{
 // (cdr global-env)
 imports::cdr(&[global_minus_env.get()])}])};{
 // (make-program globals imports init main (filter cdr (car library-env)))
@@ -418,6 +411,7 @@ pub fn initialize() {
     crate::sunny::sets::initialize();
     crate::sunny::syntax::initialize();
     crate::sunny::utils::initialize();
+    crate::sunny::variable::initialize();
     {
         (/*NOP*/);
         {
