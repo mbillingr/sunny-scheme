@@ -52,7 +52,10 @@
                               (string<? (variable-name a)
                                         (variable-name b)))
                             (cdr global-env))))
-        (extract-definitions (boxify (close-procedures (make-library name globals init body imports exports))))))
+        (extract-definitions
+          (boxify
+            (close-procedures
+              (make-library name globals init body imports exports))))))
 
 
     (define (astify-program exp*)
@@ -68,18 +71,19 @@
                                         (astify-import (cdar exp*) global-env))
                                 (set-add* init (import-libnames (car exp*)))))
 
-              (else (let* ((ast (astify-sequence exp* global-env #f))
-                           (main (boxify (close-procedures ast)))
-                           (main (extract-definitions main))
+              (else (let* ((body (astify-sequence exp* global-env #f))
                            (globals (sort (lambda (a b)
                                             (string<? (variable-name a)
                                                       (variable-name b)))
                                           (cdr global-env))))
-                      (make-program globals
-                                    imports
-                                    init
-                                    main
-                                    (filter cdr (car library-env)))))))
+                      (extract-definitions
+                        (boxify
+                          (close-procedures
+                            (make-program globals
+                                          imports
+                                          init
+                                          body
+                                          (filter cdr (car library-env))))))))))
 
       (process-imports exp* '() (make-set)))
 

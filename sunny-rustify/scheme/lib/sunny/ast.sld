@@ -596,7 +596,7 @@
       (define (transform func)
         (func self
               (lambda ()
-                (make-program globals imports init (body 'transform func)))))
+                (make-program globals imports init (body 'transform func) libraries))))
       (define (gen-imports module)
         (for-each (lambda (i)
                     (i 'gen-rust module))
