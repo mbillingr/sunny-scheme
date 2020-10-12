@@ -51,8 +51,7 @@
                                          (lookup* fix-param local-env)
                                          (lookup var-param local-env)
                                          body-ast))
-            (make-abstraction param*
-                              (lookup* param* local-env)
+            (make-abstraction (lookup* param* local-env)
                               body-ast))))
 
     (define (astify-alternative condition consequent alternative env tail?)

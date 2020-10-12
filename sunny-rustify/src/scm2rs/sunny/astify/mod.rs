@@ -143,20 +143,20 @@ pub fn astify_minus_abstraction(args: &[Scm]) -> Scm {
         let body = args[1].clone();
         let env = args[2].clone();
         {
-            // (let* ((local-env (adjoin-local-env param* env)) (body-sexpr (scan-out-defines body)) (body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))
+            // (let* ((local-env (adjoin-local-env param* env)) (body-sexpr (scan-out-defines body)) (body-ast (astify-sequence body-sexpr local-env #t))) (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction (lookup* param* local-env) body-ast)))
             {
-                // (let ((local-env (adjoin-local-env param* env))) (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))))
+                // (let ((local-env (adjoin-local-env param* env))) (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction (lookup* param* local-env) body-ast))))))
                 {
                     let local_minus_env = {
                         // (adjoin-local-env param* env)
                         imports::adjoin_minus_local_minus_env(&[param_star_.clone(), env.clone()])
                     };
-                    // (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast)))))
+                    // (let ((body-sexpr (scan-out-defines body))) (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction (lookup* param* local-env) body-ast)))))
                     let body_minus_sexpr = {
                         // (scan-out-defines body)
                         imports::scan_minus_out_minus_defines(&[body.clone()])
                     };
-                    // (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction param* (lookup* param* local-env) body-ast))))
+                    // (let ((body-ast (astify-sequence body-sexpr local-env #t))) (begin (if (dotted-list? param*) (let ((fix-param (proper-list-part param*)) (var-param (last-cdr param*))) (make-vararg-abstraction fix-param var-param (lookup* fix-param local-env) (lookup var-param local-env) body-ast)) (make-abstraction (lookup* param* local-env) body-ast))))
                     let body_minus_ast = {
                         // (astify-sequence body-sexpr local-env #t)
                         Scm::func(astify_minus_sequence).invoke(&[
@@ -212,9 +212,8 @@ pub fn astify_minus_abstraction(args: &[Scm]) -> Scm {
                         }
                     } else {
                         {
-                            // (make-abstraction param* (lookup* param* local-env) body-ast)
+                            // (make-abstraction (lookup* param* local-env) body-ast)
                             imports::make_minus_abstraction(&[
-                                param_star_.clone(),
                                 {
                                     // (lookup* param* local-env)
                                     imports::lookup_star_(&[

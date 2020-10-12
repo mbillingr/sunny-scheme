@@ -222,45 +222,51 @@ pub fn free_minus_var_minus_name(args: &[Scm]) -> Scm {
     .into()
 }
 pub fn make_minus_abstraction(args: &[Scm]) -> Scm {
-    {if args.len() != 3{panic!("invalid arity")}let params = args[0].clone();let vars = args[1].clone();let body = args[2].clone();{
-// (letrec ((repr (lambda () (list (quote ABSTRACTION) params (body (quote repr))))) (transform (lambda (func) (func self (lambda () (make-abstraction params vars (body (quote transform) func)))))) (free-vars (lambda () (set-remove* (body (quote free-vars)) params))) (gen-rust (lambda (module) (define (gen-params p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (car p*))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg)))))) self)
+    {if args.len() != 2{panic!("invalid arity")}let vars = args[0].clone();let body = args[1].clone();{
+// (letrec ((repr (lambda () (list (quote ABSTRACTION) vars (body (quote repr))))) (transform (lambda (func) (func self (lambda () (make-abstraction vars (body (quote transform) func)))))) (free-vars (lambda () (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars))))) (gen-rust (lambda (module) (define (gen-params p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (variable-name (car p*)))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) (map variable-name vars)) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote ABSTRACTION) params (body (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-abstraction params vars (body (quote transform) func)))))) (set! free-vars (lambda () (set-remove* (body (quote free-vars)) params))) (set! gen-rust (lambda (module) (define (gen-params p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (car p*))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) params) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote ABSTRACTION) vars (body (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-abstraction vars (body (quote transform) func)))))) (set! free-vars (lambda () (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars))))) (set! gen-rust (lambda (module) (define (gen-params p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (variable-name (car p*)))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ABSTRACTION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-params) msg) (map variable-name vars)) ((eq? (quote get-vars) msg) vars) ((eq? (quote get-body) msg) body) (else (error "Unknown message ABSTRACTION" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
-let params = params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (list (quote ABSTRACTION) params (body (quote repr)))
-imports::list(&[Scm::symbol("ABSTRACTION"),params.clone(),{
+let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (list (quote ABSTRACTION) vars (body (quote repr)))
+imports::list(&[Scm::symbol("ABSTRACTION"),vars.clone(),{
 // (body (quote repr))
 body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
-let self_ = self_.clone();let params = params.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
-// (func self (lambda () (make-abstraction params vars (body (quote transform) func))))
+let self_ = self_.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
+// (func self (lambda () (make-abstraction vars (body (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
-let params = params.clone();let vars = vars.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (make-abstraction params vars (body (quote transform) func))
-Scm::func(make_minus_abstraction).invoke(&[params.clone(),vars.clone(),{
+let vars = vars.clone();let body = body.clone();let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (make-abstraction vars (body (quote transform) func))
+Scm::func(make_minus_abstraction).invoke(&[vars.clone(),{
 // (body (quote transform) func)
 body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
-let body = body.clone();let params = params.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
-// (set-remove* (body (quote free-vars)) params)
+let body = body.clone();let vars = vars.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+// (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars)))
 imports::set_minus_remove_star_(&[{
 // (body (quote free-vars))
-body.clone().invoke(&[Scm::symbol("free-vars")])},params.clone()])}})});gen_minus_rust.set({// Closure
-let params = params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
-// (letrec ((gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (car p*))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module))))
+body.clone().invoke(&[Scm::symbol("free-vars")])},{
+// (map free-var-name (map variable-name vars))
+imports::map(&[Scm::func(free_minus_var_minus_name),{
+// (map variable-name vars)
+imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}])}])}})});gen_minus_rust.set({// Closure
+let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
+// (letrec ((gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (variable-name (car p*)))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module))))
 {
-// (let ((gen-params (quote *uninitialized*))) (begin (set! gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (car p*))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1)))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module)))))
+// (let ((gen-params (quote *uninitialized*))) (begin (set! gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (variable-name (car p*)))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1)))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module)))))
 {let gen_minus_params = Scm::symbol("*uninitialized*");{let gen_minus_params = gen_minus_params.into_boxed();{gen_minus_params.set({// Closure
 let module = module.clone();let gen_minus_params = gen_minus_params.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let p_star_ = args[0].clone();let k = args[1].clone();if ({
 // (pair? p*)
 imports::pair_p(&[p_star_.clone()])}).is_true() {{{
 // (print module "let ")
 imports::print(&[module.clone(),Scm::from("let ")])};{
-// (print module (rustify-identifier (car p*)))
+// (print module (rustify-identifier (variable-name (car p*))))
 imports::print(&[module.clone(),{
-// (rustify-identifier (car p*))
+// (rustify-identifier (variable-name (car p*)))
 imports::rustify_minus_identifier(&[{
+// (variable-name (car p*))
+imports::variable_minus_name(&[{
 // (car p*)
-imports::car(&[p_star_.clone()])}])}])};{
+imports::car(&[p_star_.clone()])}])}])}])};{
 // (print module " = args[")
 imports::print(&[module.clone(),Scm::from(" = args[")])};{
 // (print module k)
@@ -273,22 +279,22 @@ gen_minus_params.get().invoke(&[{
 imports::cdr(&[p_star_.clone()])},{
 // (+ k 1)
 imports::_plus_(&[k.clone(),Scm::from(1)])}])}}} else {Scm::symbol("*UNSPECIFIED*")}})});{
-// (rust-block module (lambda () (print module "if args.len() != ") (print module (length params)) (print module "{panic!(\"invalid arity\")}") (gen-params params 0) (body (quote gen-rust) module)))
+// (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module)))
 imports::rust_minus_block(&[module.clone(),{// Closure
-let module = module.clone();let params = params.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{{
+let module = module.clone();let vars = vars.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{{
 // (print module "if args.len() != ")
 imports::print(&[module.clone(),Scm::from("if args.len() != ")])};{
-// (print module (length params))
+// (print module (length vars))
 imports::print(&[module.clone(),{
-// (length params)
-imports::length(&[params.clone()])}])};{
+// (length vars)
+imports::length(&[vars.clone()])}])};{
 // (print module "{panic!(\"invalid arity\")}")
 imports::print(&[module.clone(),Scm::from("{panic!(\"invalid arity\")}")])};{
-// (gen-params params 0)
-gen_minus_params.get().invoke(&[params.clone(),Scm::from(0)])};{
+// (gen-params vars 0)
+gen_minus_params.get().invoke(&[vars.clone(),Scm::from(0)])};{
 // (body (quote gen-rust) module)
 body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}}}}}}})});self_.set({// Closure
-let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let params = params.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
+let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
 // (eq? (quote repr) msg)
@@ -314,7 +320,9 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else if ({
 // (eq? (quote get-params) msg)
-imports::eq_p(&[Scm::symbol("get-params"),msg.clone()])}).is_true() {params.clone()} else if ({
+imports::eq_p(&[Scm::symbol("get-params"),msg.clone()])}).is_true() {{
+// (map variable-name vars)
+imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}} else if ({
 // (eq? (quote get-vars) msg)
 imports::eq_p(&[Scm::symbol("get-vars"),msg.clone()])}).is_true() {vars.clone()} else if ({
 // (eq? (quote get-body) msg)
@@ -3530,7 +3538,7 @@ pub fn initialize() {
             (/*NOP*/)
         };
         {
-            // (define (make-abstraction params vars body) ...)
+            // (define (make-abstraction vars body) ...)
             (/*NOP*/)
         };
         {
