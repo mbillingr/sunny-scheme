@@ -29,49 +29,49 @@ pub fn set_minus_add(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let set = args[0].clone();
-        let item = args[1].clone();
+        let set__244 = args[0].clone();
+        let item__243 = args[1].clone();
         {
             // (cond ...)
             if ({
                 // (null? set)
-                imports::null_p(&[set.clone()])
+                imports::null_p(&[set__244.clone()])
             })
             .is_true()
             {
                 {
                     // (cons item (quote ()))
-                    imports::cons(&[item.clone(), Scm::Nil])
+                    imports::cons(&[item__243.clone(), Scm::Nil])
                 }
             } else if ({
                 // (equal? (car set) item)
                 imports::equal_p(&[
                     {
                         // (car set)
-                        imports::car(&[set.clone()])
+                        imports::car(&[set__244.clone()])
                     },
-                    item.clone(),
+                    item__243.clone(),
                 ])
             })
             .is_true()
             {
-                set.clone()
+                set__244.clone()
             } else {
                 {
                     // (cons (car set) (set-add (cdr set) item))
                     imports::cons(&[
                         {
                             // (car set)
-                            imports::car(&[set.clone()])
+                            imports::car(&[set__244.clone()])
                         },
                         {
                             // (set-add (cdr set) item)
                             Scm::func(set_minus_add).invoke(&[
                                 {
                                     // (cdr set)
-                                    imports::cdr(&[set.clone()])
+                                    imports::cdr(&[set__244.clone()])
                                 },
-                                item.clone(),
+                                item__243.clone(),
                             ])
                         },
                     ])
@@ -86,14 +86,14 @@ pub fn set_minus_add_star_(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let set = args[0].clone();
-        let item_star_ = args[1].clone();
+        let set__248 = args[0].clone();
+        let item_star___247 = args[1].clone();
         {
             // (set-do* set-add set item*)
             Scm::func(set_minus_do_star_).invoke(&[
                 Scm::func(set_minus_add),
-                set.clone(),
-                item_star_.clone(),
+                set__248.clone(),
+                item_star___247.clone(),
             ])
         }
     }
@@ -104,31 +104,31 @@ pub fn set_minus_do_star_(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let func = args[0].clone();
-        let set = args[1].clone();
-        let item_star_ = args[2].clone();
+        let func__253 = args[0].clone();
+        let set__252 = args[1].clone();
+        let item_star___251 = args[2].clone();
         if ({
             // (null? item*)
-            imports::null_p(&[item_star_.clone()])
+            imports::null_p(&[item_star___251.clone()])
         })
         .is_true()
         {
-            set.clone()
+            set__252.clone()
         } else {
             {
                 // (set-do* func (func set (car item*)) (cdr item*))
                 Scm::func(set_minus_do_star_).invoke(&[
-                    func.clone(),
+                    func__253.clone(),
                     {
                         // (func set (car item*))
-                        func.clone().invoke(&[set.clone(), {
+                        func__253.clone().invoke(&[set__252.clone(), {
                             // (car item*)
-                            imports::car(&[item_star_.clone()])
+                            imports::car(&[item_star___251.clone()])
                         }])
                     },
                     {
                         // (cdr item*)
-                        imports::cdr(&[item_star_.clone()])
+                        imports::cdr(&[item_star___251.clone()])
                     },
                 ])
             }
@@ -141,10 +141,10 @@ pub fn set_minus_empty_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let set = args[0].clone();
+        let set__242 = args[0].clone();
         {
             // (null? set)
-            imports::null_p(&[set.clone()])
+            imports::null_p(&[set__242.clone()])
         }
     }
     .into()
@@ -154,13 +154,13 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let set = args[0].clone();
-        let item = args[1].clone();
+        let set__246 = args[0].clone();
+        let item__245 = args[1].clone();
         {
             // (cond ...)
             if ({
                 // (null? set)
-                imports::null_p(&[set.clone()])
+                imports::null_p(&[set__246.clone()])
             })
             .is_true()
             {
@@ -170,16 +170,16 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
                 imports::equal_p(&[
                     {
                         // (car set)
-                        imports::car(&[set.clone()])
+                        imports::car(&[set__246.clone()])
                     },
-                    item.clone(),
+                    item__245.clone(),
                 ])
             })
             .is_true()
             {
                 {
                     // (cdr set)
-                    imports::cdr(&[set.clone()])
+                    imports::cdr(&[set__246.clone()])
                 }
             } else {
                 {
@@ -187,16 +187,16 @@ pub fn set_minus_remove(args: &[Scm]) -> Scm {
                     imports::cons(&[
                         {
                             // (car set)
-                            imports::car(&[set.clone()])
+                            imports::car(&[set__246.clone()])
                         },
                         {
                             // (set-remove (cdr set) item)
                             Scm::func(set_minus_remove).invoke(&[
                                 {
                                     // (cdr set)
-                                    imports::cdr(&[set.clone()])
+                                    imports::cdr(&[set__246.clone()])
                                 },
-                                item.clone(),
+                                item__245.clone(),
                             ])
                         },
                     ])
@@ -211,14 +211,14 @@ pub fn set_minus_remove_star_(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let set = args[0].clone();
-        let item_star_ = args[1].clone();
+        let set__250 = args[0].clone();
+        let item_star___249 = args[1].clone();
         {
             // (set-do* set-remove set item*)
             Scm::func(set_minus_do_star_).invoke(&[
                 Scm::func(set_minus_remove),
-                set.clone(),
-                item_star_.clone(),
+                set__250.clone(),
+                item_star___249.clone(),
             ])
         }
     }
@@ -229,28 +229,28 @@ pub fn set_minus_union(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let set1 = args[0].clone();
-        let set2 = args[1].clone();
+        let set1__255 = args[0].clone();
+        let set2__254 = args[1].clone();
         {
             // (cond ...)
             if ({
                 // (null? set1)
-                imports::null_p(&[set1.clone()])
+                imports::null_p(&[set1__255.clone()])
             })
             .is_true()
             {
-                set2.clone()
+                set2__254.clone()
             } else if ({
                 // (null? set2)
-                imports::null_p(&[set2.clone()])
+                imports::null_p(&[set2__254.clone()])
             })
             .is_true()
             {
-                set1.clone()
+                set1__255.clone()
             } else {
                 {
                     // (set-add* set1 set2)
-                    set_minus_add_star_(&[set1.clone(), set2.clone()])
+                    set_minus_add_star_(&[set1__255.clone(), set2__254.clone()])
                 }
             }
         }

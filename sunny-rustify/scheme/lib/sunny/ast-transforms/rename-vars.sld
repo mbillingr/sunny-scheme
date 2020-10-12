@@ -16,11 +16,13 @@
         (if (renamed? var)
             'DONE
             (begin
-              (variable-set-name! var (rename (variable-name var)))
+              (variable-set-name! var (rename (variable-name var) var))
               (set! renamed (cons var renamed)))))
 
       (define (transform node transform-children)
         (cond ((eq? (node 'kind) 'REFERENCE)
+               (do-rename! (node 'get-var)))
+              ((eq? (node 'kind) 'ASSIGNMENT)
                (do-rename! (node 'get-var))))
         (transform-children))
 

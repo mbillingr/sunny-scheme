@@ -16,96 +16,96 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__260 = args[0].clone();
         {
             // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (cond ((same-name? name (quote args)) "args_") ((same-name? name (quote fn)) "fn_") ((same-name? name (quote loop)) "loop_") ((same-name? name (quote let)) "let_") ((same-name? name (quote mut)) "mut_") ((same-name? name (quote ref)) "ref_") ((same-name? name (quote self)) "self_") (else (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name)))))))
             {
                 // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\?) "_p") ((eq? ch #\!) "_i") ((eq? ch #\<) "_l_") ((eq? ch #\>) "_g_") ((eq? ch #\=) "_e_") ((eq? ch #\-) "_minus_") ((eq? ch #\+) "_plus_") ((eq? ch #\*) "_star_") ((eq? ch #\/) "_slash_") (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (cond ((same-name? name (quote args)) "args_") ((same-name? name (quote fn)) "fn_") ((same-name? name (quote loop)) "loop_") ((same-name? name (quote let)) "let_") ((same-name? name (quote mut)) "mut_") ((same-name? name (quote ref)) "ref_") ((same-name? name (quote self)) "self_") (else (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name))))))))
                 {
-                    let [char_minus_map, append_minus_all] = [
+                    let [char_minus_map__256, append_minus_all__258] = [
                         Scm::symbol("*uninitialized*"),
                         Scm::symbol("*uninitialized*"),
                     ];
                     {
-                        let append_minus_all = append_minus_all.into_boxed();
+                        let append_minus_all__258 = append_minus_all__258.into_boxed();
                         {
-                            let char_minus_map = char_minus_map.into_boxed();
+                            let char_minus_map__256 = char_minus_map__256.into_boxed();
                             {
-                                char_minus_map.set({
+                                char_minus_map__256.set({
                                     // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let ch = args[0].clone();
+                                        let ch__257 = args[0].clone();
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (eq? ch #\_)
-                                                imports::eq_p(&[ch.clone(), Scm::char('_')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('_')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("__")
                                             } else if ({
                                                 // (eq? ch #\?)
-                                                imports::eq_p(&[ch.clone(), Scm::char('?')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('?')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_p")
                                             } else if ({
                                                 // (eq? ch #\!)
-                                                imports::eq_p(&[ch.clone(), Scm::char('!')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('!')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_i")
                                             } else if ({
                                                 // (eq? ch #\<)
-                                                imports::eq_p(&[ch.clone(), Scm::char('<')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('<')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_l_")
                                             } else if ({
                                                 // (eq? ch #\>)
-                                                imports::eq_p(&[ch.clone(), Scm::char('>')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('>')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_g_")
                                             } else if ({
                                                 // (eq? ch #\=)
-                                                imports::eq_p(&[ch.clone(), Scm::char('=')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('=')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_e_")
                                             } else if ({
                                                 // (eq? ch #\-)
-                                                imports::eq_p(&[ch.clone(), Scm::char('-')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('-')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_minus_")
                                             } else if ({
                                                 // (eq? ch #\+)
-                                                imports::eq_p(&[ch.clone(), Scm::char('+')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('+')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_plus_")
                                             } else if ({
                                                 // (eq? ch #\*)
-                                                imports::eq_p(&[ch.clone(), Scm::char('*')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('*')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_star_")
                                             } else if ({
                                                 // (eq? ch #\/)
-                                                imports::eq_p(&[ch.clone(), Scm::char('/')])
+                                                imports::eq_p(&[ch__257.clone(), Scm::char('/')])
                                             })
                                             .is_true()
                                             {
@@ -115,7 +115,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                                     // (list->string (list ch))
                                                     imports::list_minus__g_string(&[{
                                                         // (list ch)
-                                                        imports::list(&[ch.clone()])
+                                                        imports::list(&[ch__257.clone()])
                                                     }])
                                                 }
                                             }
@@ -123,17 +123,17 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     })
                                 });
                                 Scm::anything();
-                                append_minus_all.set({
+                                append_minus_all__258.set({
                                     // Closure
-                                    let append_minus_all = append_minus_all.clone();
+                                    let append_minus_all__258 = append_minus_all__258.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let strs = args[0].clone();
+                                        let strs__259 = args[0].clone();
                                         if ({
                                             // (null? strs)
-                                            imports::null_p(&[strs.clone()])
+                                            imports::null_p(&[strs__259.clone()])
                                         })
                                         .is_true()
                                         {
@@ -144,13 +144,13 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                                 imports::string_minus_append(&[
                                                     {
                                                         // (car strs)
-                                                        imports::car(&[strs.clone()])
+                                                        imports::car(&[strs__259.clone()])
                                                     },
                                                     {
                                                         // (append-all (cdr strs))
-                                                        append_minus_all.get().invoke(&[{
+                                                        append_minus_all__258.get().invoke(&[{
                                                             // (cdr strs)
-                                                            imports::cdr(&[strs.clone()])
+                                                            imports::cdr(&[strs__259.clone()])
                                                         }])
                                                     },
                                                 ])
@@ -164,7 +164,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     if ({
                                         // (same-name? name (quote args))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("args"),
                                         ])
                                     })
@@ -174,7 +174,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else if ({
                                         // (same-name? name (quote fn))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("fn"),
                                         ])
                                     })
@@ -184,7 +184,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else if ({
                                         // (same-name? name (quote loop))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("loop"),
                                         ])
                                     })
@@ -194,7 +194,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else if ({
                                         // (same-name? name (quote let))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("let"),
                                         ])
                                     })
@@ -204,7 +204,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else if ({
                                         // (same-name? name (quote mut))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("mut"),
                                         ])
                                     })
@@ -214,7 +214,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else if ({
                                         // (same-name? name (quote ref))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("ref"),
                                         ])
                                     })
@@ -224,7 +224,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else if ({
                                         // (same-name? name (quote self))
                                         imports::same_minus_name_p(&[
-                                            name.clone(),
+                                            name__260.clone(),
                                             Scm::symbol("self"),
                                         ])
                                     })
@@ -234,25 +234,25 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                     } else {
                                         {
                                             // (append-all (map char-map (string->list (if (symbol? name) (symbol->string name) name))))
-                                            append_minus_all.get().invoke(&[{
+                                            append_minus_all__258.get().invoke(&[{
                                                 // (map char-map (string->list (if (symbol? name) (symbol->string name) name)))
-                                                imports::map(&[char_minus_map.get(), {
+                                                imports::map(&[char_minus_map__256.get(), {
                                                     // (string->list (if (symbol? name) (symbol->string name) name))
                                                     imports::string_minus__g_list(&[
                                                         if ({
                                                             // (symbol? name)
-                                                            imports::symbol_p(&[name.clone()])
+                                                            imports::symbol_p(&[name__260.clone()])
                                                         })
                                                         .is_true()
                                                         {
                                                             {
                                                                 // (symbol->string name)
                                                                 imports::symbol_minus__g_string(&[
-                                                                    name.clone(),
+                                                                    name__260.clone(),
                                                                 ])
                                                             }
                                                         } else {
-                                                            name.clone()
+                                                            name__260.clone()
                                                         },
                                                     ])
                                                 }])
@@ -274,40 +274,40 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__266 = args[0].clone();
         {
             // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))))
             {
                 // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))))
                 {
-                    let [char_minus_map, append_minus_all] = [
+                    let [char_minus_map__261, append_minus_all__263] = [
                         Scm::symbol("*uninitialized*"),
                         Scm::symbol("*uninitialized*"),
                     ];
                     {
-                        let append_minus_all = append_minus_all.into_boxed();
+                        let append_minus_all__263 = append_minus_all__263.into_boxed();
                         {
-                            let char_minus_map = char_minus_map.into_boxed();
+                            let char_minus_map__261 = char_minus_map__261.into_boxed();
                             {
-                                char_minus_map.set({
+                                char_minus_map__261.set({
                                     // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let ch = args[0].clone();
+                                        let ch__262 = args[0].clone();
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (eq? ch #\_)
-                                                imports::eq_p(&[ch.clone(), Scm::char('_')])
+                                                imports::eq_p(&[ch__262.clone(), Scm::char('_')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("__")
                                             } else if ({
                                                 // (eq? ch #\-)
-                                                imports::eq_p(&[ch.clone(), Scm::char('-')])
+                                                imports::eq_p(&[ch__262.clone(), Scm::char('-')])
                                             })
                                             .is_true()
                                             {
@@ -317,7 +317,7 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                                     // (list->string (list ch))
                                                     imports::list_minus__g_string(&[{
                                                         // (list ch)
-                                                        imports::list(&[ch.clone()])
+                                                        imports::list(&[ch__262.clone()])
                                                     }])
                                                 }
                                             }
@@ -325,17 +325,17 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                     })
                                 });
                                 Scm::anything();
-                                append_minus_all.set({
+                                append_minus_all__263.set({
                                     // Closure
-                                    let append_minus_all = append_minus_all.clone();
+                                    let append_minus_all__263 = append_minus_all__263.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let strs = args[0].clone();
+                                        let strs__264 = args[0].clone();
                                         if ({
                                             // (null? strs)
-                                            imports::null_p(&[strs.clone()])
+                                            imports::null_p(&[strs__264.clone()])
                                         })
                                         .is_true()
                                         {
@@ -346,13 +346,13 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                                 imports::string_minus_append(&[
                                                     {
                                                         // (car strs)
-                                                        imports::car(&[strs.clone()])
+                                                        imports::car(&[strs__264.clone()])
                                                     },
                                                     {
                                                         // (append-all (cdr strs))
-                                                        append_minus_all.get().invoke(&[{
+                                                        append_minus_all__263.get().invoke(&[{
                                                             // (cdr strs)
-                                                            imports::cdr(&[strs.clone()])
+                                                            imports::cdr(&[strs__264.clone()])
                                                         }])
                                                     },
                                                 ])
@@ -364,24 +364,29 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                 {
                                     // (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))
                                     {
-                                        let name = if ({
+                                        let name__265 = if ({
                                             // (symbol? name)
-                                            imports::symbol_p(&[name.clone()])
+                                            imports::symbol_p(&[name__266.clone()])
                                         })
                                         .is_true()
                                         {
                                             {
                                                 // (symbol->string name)
-                                                imports::symbol_minus__g_string(&[name.clone()])
+                                                imports::symbol_minus__g_string(
+                                                    &[name__266.clone()],
+                                                )
                                             }
                                         } else {
-                                            name.clone()
+                                            name__266.clone()
                                         };
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (eq? name (quote fn))
-                                                imports::eq_p(&[name.clone(), Scm::symbol("fn")])
+                                                imports::eq_p(&[
+                                                    name__265.clone(),
+                                                    Scm::symbol("fn"),
+                                                ])
                                             })
                                             .is_true()
                                             {
@@ -389,14 +394,17 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                             } else {
                                                 {
                                                     // (append-all (map char-map (string->list name)))
-                                                    append_minus_all.get().invoke(&[{
+                                                    append_minus_all__263.get().invoke(&[{
                                                         // (map char-map (string->list name))
-                                                        imports::map(&[char_minus_map.get(), {
-                                                            // (string->list name)
-                                                            imports::string_minus__g_list(&[
-                                                                name.clone()
-                                                            ])
-                                                        }])
+                                                        imports::map(&[
+                                                            char_minus_map__261.get(),
+                                                            {
+                                                                // (string->list name)
+                                                                imports::string_minus__g_list(&[
+                                                                    name__265.clone(),
+                                                                ])
+                                                            },
+                                                        ])
                                                     }])
                                                 }
                                             }
@@ -417,40 +425,43 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__271 = args[0].clone();
         {
             // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (append-all (filter (lambda (x) x) (map char-map (string->list name)))))
             {
                 // (let ((char-map (quote *uninitialized*)) (append-all (quote *uninitialized*))) (begin (set! char-map (lambda (ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))) (set! append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs)))))) (append-all (filter (lambda (x) x) (map char-map (string->list name))))))
                 {
-                    let [char_minus_map, append_minus_all] = [
+                    let [char_minus_map__267, append_minus_all__269] = [
                         Scm::symbol("*uninitialized*"),
                         Scm::symbol("*uninitialized*"),
                     ];
                     {
-                        let append_minus_all = append_minus_all.into_boxed();
+                        let append_minus_all__269 = append_minus_all__269.into_boxed();
                         {
-                            let char_minus_map = char_minus_map.into_boxed();
+                            let char_minus_map__267 = char_minus_map__267.into_boxed();
                             {
-                                char_minus_map.set({
+                                char_minus_map__267.set({
                                     // Closure
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let ch = args[0].clone();
+                                        let ch__268 = args[0].clone();
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (eq? ch #\ )
-                                                imports::eq_p(&[ch.clone(), Scm::char(' ')])
+                                                imports::eq_p(&[ch__268.clone(), Scm::char(' ')])
                                             })
                                             .is_true()
                                             {
                                                 Scm::from("_")
                                             } else if ({
                                                 // (eq? ch #\')
-                                                imports::eq_p(&[ch.clone(), Scm::char_apostrophe()])
+                                                imports::eq_p(&[
+                                                    ch__268.clone(),
+                                                    Scm::char_apostrophe(),
+                                                ])
                                             })
                                             .is_true()
                                             {
@@ -460,7 +471,7 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                                     // (list->string (list ch))
                                                     imports::list_minus__g_string(&[{
                                                         // (list ch)
-                                                        imports::list(&[ch.clone()])
+                                                        imports::list(&[ch__268.clone()])
                                                     }])
                                                 }
                                             }
@@ -468,17 +479,17 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                     })
                                 });
                                 Scm::anything();
-                                append_minus_all.set({
+                                append_minus_all__269.set({
                                     // Closure
-                                    let append_minus_all = append_minus_all.clone();
+                                    let append_minus_all__269 = append_minus_all__269.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let strs = args[0].clone();
+                                        let strs__270 = args[0].clone();
                                         if ({
                                             // (null? strs)
-                                            imports::null_p(&[strs.clone()])
+                                            imports::null_p(&[strs__270.clone()])
                                         })
                                         .is_true()
                                         {
@@ -489,13 +500,13 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                                 imports::string_minus_append(&[
                                                     {
                                                         // (car strs)
-                                                        imports::car(&[strs.clone()])
+                                                        imports::car(&[strs__270.clone()])
                                                     },
                                                     {
                                                         // (append-all (cdr strs))
-                                                        append_minus_all.get().invoke(&[{
+                                                        append_minus_all__269.get().invoke(&[{
                                                             // (cdr strs)
-                                                            imports::cdr(&[strs.clone()])
+                                                            imports::cdr(&[strs__270.clone()])
                                                         }])
                                                     },
                                                 ])
@@ -506,7 +517,7 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                 Scm::anything();
                                 {
                                     // (append-all (filter (lambda (x) x) (map char-map (string->list name))))
-                                    append_minus_all.get().invoke(&[{
+                                    append_minus_all__269.get().invoke(&[{
                                         // (filter (lambda (x) x) (map char-map (string->list name)))
                                         imports::filter(&[
                                             {
@@ -515,15 +526,17 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                                     if args.len() != 1 {
                                                         panic!("invalid arity")
                                                     }
-                                                    let x = args[0].clone();
-                                                    x.clone()
+                                                    let x__272 = args[0].clone();
+                                                    x__272.clone()
                                                 })
                                             },
                                             {
                                                 // (map char-map (string->list name))
-                                                imports::map(&[char_minus_map.get(), {
+                                                imports::map(&[char_minus_map__267.get(), {
                                                     // (string->list name)
-                                                    imports::string_minus__g_list(&[name.clone()])
+                                                    imports::string_minus__g_list(&[
+                                                        name__271.clone()
+                                                    ])
                                                 }])
                                             },
                                         ])

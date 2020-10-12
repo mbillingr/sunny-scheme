@@ -48,10 +48,10 @@ pub fn boxed_minus_variable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__188 = args[0].clone();
         {
             // (ancestor? obj BoxedVariable)
-            imports::ancestor_p(&[obj.clone(), BoxedVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj__188.clone(), BoxedVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -61,11 +61,15 @@ pub fn global_minus_add_minus_definition_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
-        let val = args[1].clone();
+        let var__192 = args[0].clone();
+        let val__191 = args[1].clone();
         {
             // (call-method var (quote add-definition!) val)
-            imports::call_minus_method(&[var.clone(), Scm::symbol("add-definition!"), val.clone()])
+            imports::call_minus_method(&[
+                var__192.clone(),
+                Scm::symbol("add-definition!"),
+                val__191.clone(),
+            ])
         }
     }
     .into()
@@ -75,10 +79,10 @@ pub fn global_minus_function_minus_get_minus_value(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
+        let var__193 = args[0].clone();
         {
             // (get-field var (quote value))
-            imports::get_minus_field(&[var.clone(), Scm::symbol("value")])
+            imports::get_minus_field(&[var__193.clone(), Scm::symbol("value")])
         }
     }
     .into()
@@ -88,11 +92,11 @@ pub fn global_minus_function_minus_set_minus_value_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
-        let val = args[1].clone();
+        let var__195 = args[0].clone();
+        let val__194 = args[1].clone();
         {
             // (set-field! var (quote value) val)
-            imports::set_minus_field_i(&[var.clone(), Scm::symbol("value"), val.clone()])
+            imports::set_minus_field_i(&[var__195.clone(), Scm::symbol("value"), val__194.clone()])
         }
     }
     .into()
@@ -102,10 +106,10 @@ pub fn global_minus_function_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__185 = args[0].clone();
         {
             // (ancestor? obj GlobalFunction)
-            imports::ancestor_p(&[obj.clone(), GlobalFunction.with(|value| value.get())])
+            imports::ancestor_p(&[obj__185.clone(), GlobalFunction.with(|value| value.get())])
         }
     }
     .into()
@@ -115,10 +119,10 @@ pub fn global_minus_variable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__183 = args[0].clone();
         {
             // (ancestor? obj GlobalVariable)
-            imports::ancestor_p(&[obj.clone(), GlobalVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj__183.clone(), GlobalVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -128,10 +132,10 @@ pub fn import_minus_variable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__186 = args[0].clone();
         {
             // (ancestor? obj ImportedVariable)
-            imports::ancestor_p(&[obj.clone(), ImportedVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj__186.clone(), ImportedVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -141,10 +145,10 @@ pub fn keyword_minus_handler(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let kw = args[0].clone();
+        let kw__181 = args[0].clone();
         {
             // (get-field kw (quote handler))
-            imports::get_minus_field(&[kw.clone(), Scm::symbol("handler")])
+            imports::get_minus_field(&[kw__181.clone(), Scm::symbol("handler")])
         }
     }
     .into()
@@ -154,10 +158,10 @@ pub fn keyword_minus_name(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let kw = args[0].clone();
+        let kw__180 = args[0].clone();
         {
             // (get-field kw (quote name))
-            imports::get_minus_field(&[kw.clone(), Scm::symbol("name")])
+            imports::get_minus_field(&[kw__180.clone(), Scm::symbol("name")])
         }
     }
     .into()
@@ -167,18 +171,18 @@ pub fn keyword_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__176 = args[0].clone();
         {
             // (and (table? obj) (ancestor? obj Keyword))
             if ({
                 // (table? obj)
-                imports::table_p(&[obj.clone()])
+                imports::table_p(&[obj__176.clone()])
             })
             .is_true()
             {
                 {
                     // (ancestor? obj Keyword)
-                    imports::ancestor_p(&[obj.clone(), Keyword.with(|value| value.get())])
+                    imports::ancestor_p(&[obj__176.clone(), Keyword.with(|value| value.get())])
                 }
             } else {
                 Scm::False
@@ -192,10 +196,10 @@ pub fn local_minus_boxify_i(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
+        let var__196 = args[0].clone();
         {
             // (call-method var (quote into-boxed!))
-            imports::call_minus_method(&[var.clone(), Scm::symbol("into-boxed!")])
+            imports::call_minus_method(&[var__196.clone(), Scm::symbol("into-boxed!")])
         }
     }
     .into()
@@ -205,10 +209,10 @@ pub fn local_minus_variable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__187 = args[0].clone();
         {
             // (ancestor? obj LocalVariable)
-            imports::ancestor_p(&[obj.clone(), LocalVariable.with(|value| value.get())])
+            imports::ancestor_p(&[obj__187.clone(), LocalVariable.with(|value| value.get())])
         }
     }
     .into()
@@ -218,12 +222,12 @@ pub fn make_minus_keyword(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
-        let handler = args[1].clone();
+        let name__177 = args[0].clone();
+        let handler__179 = args[1].clone();
         {
             // (let ((keyword (clone Keyword))) (set-field! keyword (quote name) name) (set-field! keyword (quote handler) handler) keyword)
             {
-                let keyword = {
+                let keyword__178 = {
                     // (clone Keyword)
                     imports::clone(&[Keyword.with(|value| value.get())])
                 };
@@ -231,20 +235,20 @@ pub fn make_minus_keyword(args: &[Scm]) -> Scm {
                     {
                         // (set-field! keyword (quote name) name)
                         imports::set_minus_field_i(&[
-                            keyword.clone(),
+                            keyword__178.clone(),
                             Scm::symbol("name"),
-                            name.clone(),
+                            name__177.clone(),
                         ])
                     };
                     {
                         // (set-field! keyword (quote handler) handler)
                         imports::set_minus_field_i(&[
-                            keyword.clone(),
+                            keyword__178.clone(),
                             Scm::symbol("handler"),
-                            handler.clone(),
+                            handler__179.clone(),
                         ])
                     };
-                    keyword.clone()
+                    keyword__178.clone()
                 }
             }
         }
@@ -256,13 +260,13 @@ pub fn new_minus_boxed(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__202 = args[0].clone();
         {
             // (call-method BoxedVariable (quote new) name)
             imports::call_minus_method(&[
                 BoxedVariable.with(|value| value.get()),
                 Scm::symbol("new"),
-                name.clone(),
+                name__202.clone(),
             ])
         }
     }
@@ -273,13 +277,13 @@ pub fn new_minus_global(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__200 = args[0].clone();
         {
             // (call-method UndefinedGlobal (quote new) name)
             imports::call_minus_method(&[
                 UndefinedGlobal.with(|value| value.get()),
                 Scm::symbol("new"),
-                name.clone(),
+                name__200.clone(),
             ])
         }
     }
@@ -290,13 +294,13 @@ pub fn new_minus_import(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__199 = args[0].clone();
         {
             // (call-method ImportedVariable (quote new) name)
             imports::call_minus_method(&[
                 ImportedVariable.with(|value| value.get()),
                 Scm::symbol("new"),
-                name.clone(),
+                name__199.clone(),
             ])
         }
     }
@@ -307,11 +311,11 @@ pub fn new_minus_keyword(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
-        let handler = args[1].clone();
+        let name__198 = args[0].clone();
+        let handler__197 = args[1].clone();
         {
             // (make-keyword name handler)
-            make_minus_keyword(&[name.clone(), handler.clone()])
+            make_minus_keyword(&[name__198.clone(), handler__197.clone()])
         }
     }
     .into()
@@ -321,13 +325,13 @@ pub fn new_minus_local(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name = args[0].clone();
+        let name__201 = args[0].clone();
         {
             // (call-method LocalVariable (quote new) name)
             imports::call_minus_method(&[
                 LocalVariable.with(|value| value.get()),
                 Scm::symbol("new"),
-                name.clone(),
+                name__201.clone(),
             ])
         }
     }
@@ -338,11 +342,11 @@ pub fn replace_minus_var_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
-        let new_minus_var = args[1].clone();
+        let var__204 = args[0].clone();
+        let new_minus_var__203 = args[1].clone();
         {
             // (replace-table! var new-var)
-            imports::replace_minus_table_i(&[var.clone(), new_minus_var.clone()])
+            imports::replace_minus_table_i(&[var__204.clone(), new_minus_var__203.clone()])
         }
     }
     .into()
@@ -352,10 +356,10 @@ pub fn undefined_minus_global_minus_variable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__184 = args[0].clone();
         {
             // (ancestor? obj UndefinedGlobal)
-            imports::ancestor_p(&[obj.clone(), UndefinedGlobal.with(|value| value.get())])
+            imports::ancestor_p(&[obj__184.clone(), UndefinedGlobal.with(|value| value.get())])
         }
     }
     .into()
@@ -365,10 +369,10 @@ pub fn variable_minus_mutable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
+        let var__189 = args[0].clone();
         {
             // (call-method var (quote mutable?))
-            imports::call_minus_method(&[var.clone(), Scm::symbol("mutable?")])
+            imports::call_minus_method(&[var__189.clone(), Scm::symbol("mutable?")])
         }
     }
     .into()
@@ -378,25 +382,25 @@ pub fn variable_minus_name(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
+        let var__173 = args[0].clone();
         {
             // (let ((name (get-field var (quote name)))) (if (string? name) name (symbol->string name)))
             {
-                let name = {
+                let name__172 = {
                     // (get-field var (quote name))
-                    imports::get_minus_field(&[var.clone(), Scm::symbol("name")])
+                    imports::get_minus_field(&[var__173.clone(), Scm::symbol("name")])
                 };
                 if ({
                     // (string? name)
-                    imports::string_p(&[name.clone()])
+                    imports::string_p(&[name__172.clone()])
                 })
                 .is_true()
                 {
-                    name.clone()
+                    name__172.clone()
                 } else {
                     {
                         // (symbol->string name)
-                        imports::symbol_minus__g_string(&[name.clone()])
+                        imports::symbol_minus__g_string(&[name__172.clone()])
                     }
                 }
             }
@@ -409,10 +413,10 @@ pub fn variable_minus_set_minus_mutable_i(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
+        let var__190 = args[0].clone();
         {
             // (call-method var (quote set-mutable!))
-            imports::call_minus_method(&[var.clone(), Scm::symbol("set-mutable!")])
+            imports::call_minus_method(&[var__190.clone(), Scm::symbol("set-mutable!")])
         }
     }
     .into()
@@ -422,11 +426,11 @@ pub fn variable_minus_set_minus_name_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let var = args[0].clone();
-        let name = args[1].clone();
+        let var__175 = args[0].clone();
+        let name__174 = args[1].clone();
         {
             // (set-field! var (quote name) name)
-            imports::set_minus_field_i(&[var.clone(), Scm::symbol("name"), name.clone()])
+            imports::set_minus_field_i(&[var__175.clone(), Scm::symbol("name"), name__174.clone()])
         }
     }
     .into()
@@ -436,10 +440,10 @@ pub fn variable_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj = args[0].clone();
+        let obj__182 = args[0].clone();
         {
             // (ancestor? obj Variable)
-            imports::ancestor_p(&[obj.clone(), Variable.with(|value| value.get())])
+            imports::ancestor_p(&[obj__182.clone(), Variable.with(|value| value.get())])
         }
     }
     .into()
@@ -514,10 +518,10 @@ pub fn initialize() {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
+                        let self__158 = args[0].clone();
                         {
                             // (get-field self (quote mut))
-                            imports::get_minus_field(&[self_.clone(), Scm::symbol("mut")])
+                            imports::get_minus_field(&[self__158.clone(), Scm::symbol("mut")])
                         }
                     })
                 },
@@ -534,11 +538,11 @@ pub fn initialize() {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
+                        let self__159 = args[0].clone();
                         {
                             // (set-field! self (quote mut) #t)
                             imports::set_minus_field_i(&[
-                                self_.clone(),
+                                self__159.clone(),
                                 Scm::symbol("mut"),
                                 Scm::True,
                             ])
@@ -629,12 +633,12 @@ pub fn initialize() {
                         if args.len() != 2 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
+                        let self__160 = args[0].clone();
                         let value = args[1].clone();
                         {
                             // (set-parent! self GlobalVariable)
                             imports::set_minus_parent_i(&[
-                                self_.clone(),
+                                self__160.clone(),
                                 GlobalVariable.with(|value| value.get()),
                             ])
                         }
@@ -672,11 +676,11 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         let self_ = args[0].clone();
-                        let name = args[1].clone();
+                        let name__161 = args[1].clone();
                         {
                             // (let ((var (clone UndefinedGlobal))) (set-field! var (quote name) name) var)
                             {
-                                let var = {
+                                let var__162 = {
                                     // (clone UndefinedGlobal)
                                     imports::clone(&[UndefinedGlobal.with(|value| value.get())])
                                 };
@@ -684,12 +688,12 @@ pub fn initialize() {
                                     {
                                         // (set-field! var (quote name) name)
                                         imports::set_minus_field_i(&[
-                                            var.clone(),
+                                            var__162.clone(),
                                             Scm::symbol("name"),
-                                            name.clone(),
+                                            name__161.clone(),
                                         ])
                                     };
-                                    var.clone()
+                                    var__162.clone()
                                 }
                             }
                         }
@@ -708,8 +712,8 @@ pub fn initialize() {
                         if args.len() != 2 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
-                        let value = args[1].clone();
+                        let self__163 = args[0].clone();
+                        let value__164 = args[1].clone();
                         {
                             // (cond ...)
                             if ({
@@ -717,7 +721,7 @@ pub fn initialize() {
                                 imports::eq_p(&[
                                     {
                                         // (value (quote kind))
-                                        value.clone().invoke(&[Scm::symbol("kind")])
+                                        value__164.clone().invoke(&[Scm::symbol("kind")])
                                     },
                                     Scm::symbol("ABSTRACTION"),
                                 ])
@@ -728,16 +732,16 @@ pub fn initialize() {
                                     {
                                         // (set-parent! self GlobalFunction)
                                         imports::set_minus_parent_i(&[
-                                            self_.clone(),
+                                            self__163.clone(),
                                             GlobalFunction.with(|value| value.get()),
                                         ])
                                     };
                                     {
                                         // (set-field! self (quote value) value)
                                         imports::set_minus_field_i(&[
-                                            self_.clone(),
+                                            self__163.clone(),
                                             Scm::symbol("value"),
-                                            value.clone(),
+                                            value__164.clone(),
                                         ])
                                     }
                                 }
@@ -746,7 +750,7 @@ pub fn initialize() {
                                 imports::eq_p(&[
                                     {
                                         // (value (quote kind))
-                                        value.clone().invoke(&[Scm::symbol("kind")])
+                                        value__164.clone().invoke(&[Scm::symbol("kind")])
                                     },
                                     Scm::symbol("VARARG-ABSTRACTION"),
                                 ])
@@ -757,16 +761,16 @@ pub fn initialize() {
                                     {
                                         // (set-parent! self GlobalFunction)
                                         imports::set_minus_parent_i(&[
-                                            self_.clone(),
+                                            self__163.clone(),
                                             GlobalFunction.with(|value| value.get()),
                                         ])
                                     };
                                     {
                                         // (set-field! self (quote value) value)
                                         imports::set_minus_field_i(&[
-                                            self_.clone(),
+                                            self__163.clone(),
                                             Scm::symbol("value"),
-                                            value.clone(),
+                                            value__164.clone(),
                                         ])
                                     }
                                 }
@@ -774,7 +778,7 @@ pub fn initialize() {
                                 {
                                     // (set-parent! self GlobalVariable)
                                     imports::set_minus_parent_i(&[
-                                        self_.clone(),
+                                        self__163.clone(),
                                         GlobalVariable.with(|value| value.get()),
                                     ])
                                 }
@@ -814,11 +818,11 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         let self_ = args[0].clone();
-                        let name = args[1].clone();
+                        let name__165 = args[1].clone();
                         {
                             // (let ((var (clone ImportedVariable))) (set-field! var (quote name) name) var)
                             {
-                                let var = {
+                                let var__166 = {
                                     // (clone ImportedVariable)
                                     imports::clone(&[ImportedVariable.with(|value| value.get())])
                                 };
@@ -826,12 +830,12 @@ pub fn initialize() {
                                     {
                                         // (set-field! var (quote name) name)
                                         imports::set_minus_field_i(&[
-                                            var.clone(),
+                                            var__166.clone(),
                                             Scm::symbol("name"),
-                                            name.clone(),
+                                            name__165.clone(),
                                         ])
                                     };
-                                    var.clone()
+                                    var__166.clone()
                                 }
                             }
                         }
@@ -868,11 +872,11 @@ pub fn initialize() {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let self_ = args[0].clone();
+                        let self__167 = args[0].clone();
                         {
                             // (set-parent! self BoxedVariable)
                             imports::set_minus_parent_i(&[
-                                self_.clone(),
+                                self__167.clone(),
                                 BoxedVariable.with(|value| value.get()),
                             ])
                         }
@@ -892,11 +896,11 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         let self_ = args[0].clone();
-                        let name = args[1].clone();
+                        let name__168 = args[1].clone();
                         {
                             // (let ((var (clone LocalVariable))) (set-field! var (quote name) name) var)
                             {
-                                let var = {
+                                let var__169 = {
                                     // (clone LocalVariable)
                                     imports::clone(&[LocalVariable.with(|value| value.get())])
                                 };
@@ -904,12 +908,12 @@ pub fn initialize() {
                                     {
                                         // (set-field! var (quote name) name)
                                         imports::set_minus_field_i(&[
-                                            var.clone(),
+                                            var__169.clone(),
                                             Scm::symbol("name"),
-                                            name.clone(),
+                                            name__168.clone(),
                                         ])
                                     };
-                                    var.clone()
+                                    var__169.clone()
                                 }
                             }
                         }
@@ -947,11 +951,11 @@ pub fn initialize() {
                             panic!("invalid arity")
                         }
                         let self_ = args[0].clone();
-                        let name = args[1].clone();
+                        let name__170 = args[1].clone();
                         {
                             // (let ((var (clone BoxedVariable))) (set-field! var (quote name) name) var)
                             {
-                                let var = {
+                                let var__171 = {
                                     // (clone BoxedVariable)
                                     imports::clone(&[BoxedVariable.with(|value| value.get())])
                                 };
@@ -959,12 +963,12 @@ pub fn initialize() {
                                     {
                                         // (set-field! var (quote name) name)
                                         imports::set_minus_field_i(&[
-                                            var.clone(),
+                                            var__171.clone(),
                                             Scm::symbol("name"),
-                                            name.clone(),
+                                            name__170.clone(),
                                         ])
                                     };
-                                    var.clone()
+                                    var__171.clone()
                                 }
                             }
                         }

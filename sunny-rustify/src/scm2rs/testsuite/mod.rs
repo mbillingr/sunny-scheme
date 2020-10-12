@@ -46,10 +46,10 @@ mod tests {
             {
                 // (let ((x (quote ()))) (begin (begin (assert (null? x)))))
                 {
-                    let x = Scm::Nil;
+                    let x__952 = Scm::Nil;
                     assert!({
                         // (null? x)
-                        imports::null_p(&[x.clone()])
+                        imports::null_p(&[x__952.clone()])
                     }
                     .is_true());
                 }
@@ -64,12 +64,12 @@ mod tests {
             {
                 // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
                 {
-                    let x = Scm::from(1);
+                    let x__954 = Scm::from(1);
                     // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
-                    let y = Scm::from(1);
+                    let y__953 = Scm::from(1);
                     assert!({
                         // (= x y)
-                        imports::_e_(&[x.clone(), y.clone()])
+                        imports::_e_(&[x__954.clone(), y__953.clone()])
                     }
                     .is_true());
                 }

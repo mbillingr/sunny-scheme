@@ -11,21 +11,24 @@
         (sunny astify-toplevel)
         (sunny rust codegen)
         (sunny table)
+        (sunny variable)
         (testsuite))
 
-;(define UNIQUE-COUNT 0)
-;(define (unique-name name)
-;  (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
-;  (string-append name
-;                 "_"
-;                 (number->string UNIQUE-COUNT)))
+(define UNIQUE-COUNT 0)
+(define (unique-name name)
+  (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
+  (string-append name
+                 "_"
+                 (number->string UNIQUE-COUNT)))
 
 (define (rust-pipeline scheme-ast)
-  (rename-vars (lambda (name)
-                 ;(unique-name
-                   (if (string? name) name (symbol->string name)))
-    (extract-definitions
-      (boxify
+  (extract-definitions
+    (boxify
+      (rename-vars (lambda (name var)
+                     (let ((str-name (if (string? name) name (symbol->string name))))
+                       (if (local-variable? var)
+                           (unique-name str-name)
+                           str-name)))
         (close-procedures
           scheme-ast)))))
 
