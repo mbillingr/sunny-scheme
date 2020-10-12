@@ -541,36 +541,37 @@
               (else (error "Unknown message ABSTRACTION" msg))))
       self)
 
-    (define (make-vararg-abstraction params vararg vars varvar body)
+    (define (make-vararg-abstraction vars varvar body)
       (define (repr)
-        (list 'VARARG-ABSTRACTION params (body 'repr)))
+        (list 'VARARG-ABSTRACTION vars varvar (body 'repr)))
       (define (transform func)
         (func self
               (lambda ()
-                (make-vararg-abstraction params vararg vars varvar (body 'transform func)))))
+                (make-vararg-abstraction vars varvar (body 'transform func)))))
       (define (free-vars)
         (set-remove* (body 'free-vars)
-                     (cons vararg params)))
+                     (map free-var-name
+                          (map variable-name (cons varvar vars)))))
       (define (gen-rust module)
         (define (gen-params p* k)
           (if (pair? p*)
               (begin (print module "let "
-                                   (rustify-identifier (car p*))
+                                   (rustify-identifier (variable-name (car p*)))
                                    " = args["
                                    k
                                    "].clone();")
                      (gen-params (cdr p*) (+ k 1)))
               (begin (print module "let "
-                                   (rustify-identifier vararg)
+                                   (rustify-identifier (variable-name varvar))
                                    " = Scm::list(&args["
                                    k
                                    "..]);"))))
         (rust-block module
           (lambda ()
             (print module "if args.len() < "
-                          (length params)
+                          (length vars)
                           "{panic!(\"not enough args\")}")
-            (gen-params params 0)
+            (gen-params vars 0)
             (body 'gen-rust module))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (repr))
@@ -578,8 +579,8 @@
               ((eq? 'free-vars msg) (free-vars))
               ((eq? 'kind msg) 'VARARG-ABSTRACTION)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
-              ((eq? 'get-params msg) params)
-              ((eq? 'get-vararg msg) vararg)
+              ((eq? 'get-params msg) (map variable-name vars))
+              ((eq? 'get-vararg msg) (variable-name varvar))
               ((eq? 'get-vars msg) vars)
               ((eq? 'get-varvar msg) varvar)
               ((eq? 'get-body msg) body)

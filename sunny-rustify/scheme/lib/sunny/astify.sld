@@ -46,11 +46,9 @@
         (if (dotted-list? param*)
             (let ((fix-param (proper-list-part param*))
                   (var-param (last-cdr param*)))
-              (make-vararg-abstraction fix-param
-                                         var-param
-                                         (lookup* fix-param local-env)
-                                         (lookup var-param local-env)
-                                         body-ast))
+              (make-vararg-abstraction (lookup* fix-param local-env)
+                                       (lookup var-param local-env)
+                                       body-ast))
             (make-abstraction (lookup* param* local-env)
                               body-ast))))
 

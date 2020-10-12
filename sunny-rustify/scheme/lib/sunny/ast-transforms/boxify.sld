@@ -13,12 +13,8 @@
                                    (node 'get-vars)
                                    (node 'get-body)))
               ((eq? (node 'kind) 'VARARG-ABSTRACTION)
-               (boxify-vararg-abstraction (node 'get-params)
-                                          (node 'get-vararg)
-                                          (node 'get-vars)
+               (boxify-vararg-abstraction (node 'get-vars)
                                           (node 'get-varvar)
-                                          (cons (node 'get-vararg)
-                                                (node 'get-params))
                                           (cons (node 'get-varvar)
                                                 (node 'get-vars))
                                           (node 'get-body)))
@@ -40,15 +36,15 @@
             (else
               (boxify-abstraction vars (cdr var*) body))))
 
-    (define (boxify-vararg-abstraction params vararg vars varvar param* var* body)
+    (define (boxify-vararg-abstraction vars varvar var* body)
       (if (null? var*)
-          (make-vararg-abstraction params vararg vars varvar (boxify body))
+          (make-vararg-abstraction vars varvar (boxify body))
           (if (variable-mutable? (car var*))
               (begin (local-boxify! (car var*))
-                     (boxify-vararg-abstraction params vararg vars varvar
-                                                (cdr param*) (cdr var*)
-                                                (make-boxify (car param*) body)))
-              (boxify-vararg-abstraction params vararg vars varvar (cdr param*) (cdr var*) body))))
+                     (boxify-vararg-abstraction vars varvar
+                                                (cdr var*)
+                                                (make-boxify (variable-name (car var*) body))))
+              (boxify-vararg-abstraction vars varvar (cdr var*) body))))
 
     (define (boxify-fixlet vars args body)
       (make-fixlet vars args
