@@ -20,6 +20,7 @@
     memq
     not
     null?
+    number->string
     pair?
     procedure?
     reverse

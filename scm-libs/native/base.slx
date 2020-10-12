@@ -9,6 +9,7 @@
     eq? equal?
     error
     list->string
+    number->string
     null?
     pair?
     procedure?

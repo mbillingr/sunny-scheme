@@ -54,6 +54,15 @@ pub mod exports {
         }
     }
 
+    wrap_fn!{"number->string",
+        number_minus__g_string(n) {
+            if !n.is_number() {
+                panic!("Not a number: number->string {:?}", n);
+            }
+            Scm::string(format!("{}", n))
+        }
+    }
+
     wrap_fn!{"symbol->string",
         symbol_minus__g_string(s) {
             Scm::str(s.as_symbol().unwrap().name())

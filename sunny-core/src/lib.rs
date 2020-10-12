@@ -155,6 +155,13 @@ impl Scm {
         }
     }
 
+    pub fn is_number(&self) -> bool {
+        match self {
+            Scm::Int(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_eof(&self) -> bool {
         match self {
             Scm::Eof => true,
