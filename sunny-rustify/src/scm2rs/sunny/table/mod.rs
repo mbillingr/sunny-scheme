@@ -361,7 +361,8 @@ pub fn initialize() {
                         // (cons (quote <table>) (quote ()))
                         imports::cons(&[Scm::symbol("<table>"), Scm::Nil])
                     })
-                })
+                });
+                Scm::anything()
             };
             {
                 // (define (table? obj) ...)

@@ -29,11 +29,11 @@ pub fn astify_minus_library(args: &[Scm]) -> Scm {
 // (let ((init (quote *uninitialized*)) (body (quote *uninitialized*)) (global-env (quote *uninitialized*)) (imports (quote *uninitialized*)) (exports (quote *uninitialized*)) (process-library-decls (quote *uninitialized*))) (begin (set! init (make-set)) (set! body (make-nop)) (set! global-env (make-core-env)) (set! imports (quote ())) (set! exports (quote ())) (set! process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env ast-transform) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*)))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports exports)))))
 {let [init, body, global_minus_env, imports, exports, process_minus_library_minus_decls, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_library_minus_decls = process_minus_library_minus_decls.into_boxed();{let exports = exports.into_boxed();{let imports = imports.into_boxed();{let global_minus_env = global_minus_env.into_boxed();{let body = body.into_boxed();{let init = init.into_boxed();{init.set({
 // (make-set)
-imports::make_minus_set(&[])});body.set({
+imports::make_minus_set(&[])});Scm::anything();body.set({
 // (make-nop)
-imports::make_minus_nop(&[])});global_minus_env.set({
+imports::make_minus_nop(&[])});Scm::anything();global_minus_env.set({
 // (make-core-env)
-imports::make_minus_core_minus_env(&[])});imports.set(Scm::Nil);exports.set(Scm::Nil);process_minus_library_minus_decls.set({// Closure
+imports::make_minus_core_minus_env(&[])});Scm::anything();imports.set(Scm::Nil);Scm::anything();exports.set(Scm::Nil);Scm::anything();process_minus_library_minus_decls.set({// Closure
 let exports = exports.clone();let global_minus_env = global_minus_env.clone();let process_minus_library_minus_decls = process_minus_library_minus_decls.clone();let library_minus_env = library_minus_env.clone();let ast_minus_transform = ast_minus_transform.clone();let init = init.clone();let imports = imports.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star_ = args[0].clone();{
 // (cond ...)
 if ({
@@ -48,7 +48,7 @@ imports::append(&[exports.get(),{
 // (astify-export (cdar exp*) global-env)
 imports::astify_minus_export(&[{
 // (cdar exp*)
-imports::cdar(&[exp_star_.clone()])},global_minus_env.get()])}])});{
+imports::cdar(&[exp_star_.clone()])},global_minus_env.get()])}])});Scm::anything();{
 // (process-library-decls (cdr exp*))
 process_minus_library_minus_decls.get().invoke(&[{
 // (cdr exp*)
@@ -68,13 +68,13 @@ imports::set_minus_add_star_(&[init.get(),{
 // (import-libnames (car exp*))
 imports::import_minus_libnames(&[{
 // (car exp*)
-imports::car(&[exp_star_.clone()])}])}])});imports.set({
+imports::car(&[exp_star_.clone()])}])}])});Scm::anything();imports.set({
 // (append imports (astify-import (cdar exp*) global-env))
 imports::append(&[imports.get(),{
 // (astify-import (cdar exp*) global-env)
 imports::astify_minus_import(&[{
 // (cdar exp*)
-imports::cdar(&[exp_star_.clone()])},global_minus_env.get()])}])});{
+imports::cdar(&[exp_star_.clone()])},global_minus_env.get()])}])});Scm::anything();{
 // (process-library-decls (cdr exp*))
 process_minus_library_minus_decls.get().invoke(&[{
 // (cdr exp*)
@@ -88,11 +88,11 @@ imports::make_minus_sequence(&[body.get(),{
 // (astify-sequence (cdar exp*) global-env #f)
 imports::astify_minus_sequence(&[{
 // (cdar exp*)
-imports::cdar(&[exp_star_.clone()])},global_minus_env.get(),Scm::False])}])});{
+imports::cdar(&[exp_star_.clone()])},global_minus_env.get(),Scm::False])}])});Scm::anything();{
 // (process-library-decls (cdr exp*))
 process_minus_library_minus_decls.get().invoke(&[{
 // (cdr exp*)
-imports::cdr(&[exp_star_.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});{
+imports::cdr(&[exp_star_.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});Scm::anything();{
 // (process-library-decls exp*)
 process_minus_library_minus_decls.get().invoke(&[exp_star_.clone()])};{
 // (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports exports)))
@@ -122,9 +122,9 @@ pub fn astify_minus_program(args: &[Scm]) -> Scm {
 // (let ((global-env (quote *uninitialized*)) (library-env (quote *uninitialized*)) (process-imports (quote *uninitialized*))) (begin (set! global-env (make-core-env)) (set! library-env (list (quote ()))) (set! process-imports (lambda (exp* imports init) (cond ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env ast-transform) (process-imports (cdr exp*) (append imports (astify-import (cdar exp*) global-env)) (set-add* init (import-libnames (car exp*))))) (else (let* ((body (astify-sequence exp* global-env #f)) (globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-program globals imports init body (filter cdr (car library-env))))))))) (process-imports exp* (quote ()) (make-set))))
 {let [global_minus_env, library_minus_env, process_minus_imports, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_imports = process_minus_imports.into_boxed();{let library_minus_env = library_minus_env.into_boxed();{let global_minus_env = global_minus_env.into_boxed();{global_minus_env.set({
 // (make-core-env)
-imports::make_minus_core_minus_env(&[])});library_minus_env.set({
+imports::make_minus_core_minus_env(&[])});Scm::anything();library_minus_env.set({
 // (list (quote ()))
-imports::list(&[Scm::Nil])});process_minus_imports.set({// Closure
+imports::list(&[Scm::Nil])});Scm::anything();process_minus_imports.set({// Closure
 let library_minus_env = library_minus_env.clone();let ast_minus_transform = ast_minus_transform.clone();let process_minus_imports = process_minus_imports.clone();let global_minus_env = global_minus_env.clone();Scm::func(move |args: &[Scm]|{if args.len() != 3{panic!("invalid arity")}let exp_star_ = args[0].clone();let imports = args[1].clone();let init = args[2].clone();{
 // (cond ...)
 if ({
@@ -180,7 +180,7 @@ imports::make_minus_program(&[globals.clone(),imports.clone(),init.clone(),body.
 // (filter cdr (car library-env))
 imports::filter(&[Scm::func(imports::cdr),{
 // (car library-env)
-imports::car(&[library_minus_env.get()])}])}])}])}}}}}}})});{
+imports::car(&[library_minus_env.get()])}])}])}])}}}}}}})});Scm::anything();{
 // (process-imports exp* (quote ()) (make-set))
 process_minus_imports.get().invoke(&[exp_star_.clone(),Scm::Nil,{
 // (make-set)

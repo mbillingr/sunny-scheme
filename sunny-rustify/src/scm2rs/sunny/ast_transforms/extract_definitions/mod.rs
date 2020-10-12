@@ -26,7 +26,7 @@ node.clone().invoke(&[Scm::symbol("kind")])},Scm::symbol("DEFINITION")])}).is_tr
 // (extract-definition node)
 extract_minus_definition.get().invoke(&[node.clone()])}} else {{
 // (transform-children)
-transform_minus_children.clone().invoke(&[])}}}})});extract_minus_definition.set({// Closure
+transform_minus_children.clone().invoke(&[])}}}})});Scm::anything();extract_minus_definition.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let node = args[0].clone();{
 // (let ((val (node (quote get-val)))) (cond ((eq? (quote CLOSURE) (val (quote kind))) (if (not (null? (val (quote free-vars)))) (error "Definition with free variables" (variable-name (node (quote get-var))) (val (quote free-vars)))) (global-function-set-value! (node (quote get-var)) (val (quote inner-function))) (make-nop)) (else (make-definition (node (quote get-var)) val))))
 {let val = {
@@ -63,7 +63,7 @@ imports::make_minus_nop(&[])}}} else {{
 // (make-definition (node (quote get-var)) val)
 imports::make_minus_definition(&[{
 // (node (quote get-var))
-node.clone().invoke(&[Scm::symbol("get-var")])},val.clone()])}}}}}})});{
+node.clone().invoke(&[Scm::symbol("get-var")])},val.clone()])}}}}}})});Scm::anything();{
 // (node (quote transform) transform)
 node.clone().invoke(&[Scm::symbol("transform"),transform.get()])}}}}}}}}.into()
 }

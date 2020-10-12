@@ -95,6 +95,7 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                     }
                                 })
                             });
+                            Scm::anything();
                             {
                                 // (node (quote transform) transform)
                                 node.clone()

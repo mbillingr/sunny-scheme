@@ -1095,7 +1095,7 @@ imports::car(&[assignment.clone()])},{
 // (caddr assignment)
 imports::caddr(&[assignment.clone()])}])}})},{
 // (cdr stmt)
-imports::cdr(&[stmt.clone()])}])},body.clone()])}})});when.set({// Closure
+imports::cdr(&[stmt.clone()])}])},body.clone()])}})});Scm::anything();when.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (letrec ((loop (lambda (stmt*) (cond ((null? stmt*) body) ((eq? (quote <-) (cadar stmt*)) (list (quote let) (list (list (caar stmt*) (caddar stmt*))) (loop (cdr stmt*)))) (else (list (quote begin) (car stmt*) (loop (cdr stmt*)))))))) (loop (cdr stmt)))
 {
@@ -1131,11 +1131,11 @@ imports::car(&[stmt_star_.clone()])},{
 // (loop (cdr stmt*))
 loop_.get().invoke(&[{
 // (cdr stmt*)
-imports::cdr(&[stmt_star_.clone()])}])}])}}}})});{
+imports::cdr(&[stmt_star_.clone()])}])}])}}}})});Scm::anything();{
 // (loop (cdr stmt))
 loop_.get().invoke(&[{
 // (cdr stmt)
-imports::cdr(&[stmt.clone()])}])}}}}}}})});then.set({// Closure
+imports::cdr(&[stmt.clone()])}])}}}}}}})});Scm::anything();then.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let stmt = args[0].clone();let body = args[1].clone();{
 // (cons (quote begin) (append (map (lambda (pred) (list (quote assert) pred)) (cdr stmt)) body))
 imports::cons(&[Scm::symbol("begin"),{
@@ -1147,7 +1147,7 @@ Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let pre
 // (list (quote assert) pred)
 imports::list(&[Scm::symbol("assert"),pred.clone()])}})},{
 // (cdr stmt)
-imports::cdr(&[stmt.clone()])}])},body.clone()])}])}})});dispatch.set({// Closure
+imports::cdr(&[stmt.clone()])}])},body.clone()])}])}})});Scm::anything();dispatch.set({// Closure
 let given = given.clone();let dispatch = dispatch.clone();let when = when.clone();let then = then.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let section_star_ = args[0].clone();let body = args[1].clone();{
 // (cond ...)
 if ({
@@ -1190,7 +1190,7 @@ dispatch.get().invoke(&[{
 // (cdr section*)
 imports::cdr(&[section_star_.clone()])},body.clone()])}])}} else {{
 // (error "invalid testcase")
-imports::error(&[Scm::from("invalid testcase")])}}}})});{
+imports::error(&[Scm::from("invalid testcase")])}}}})});Scm::anything();{
 // (let ((body (dispatch (testcase-body case) (quote ())))) (make-testcase (testcase-description case) (astify body env #f)))
 {let body = {
 // (dispatch (testcase-body case) (quote ()))
@@ -1486,7 +1486,8 @@ pub fn initialize() {
                     // (make-table)
                     imports::make_minus_table(&[])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! SyntacticClosure (quote __name__) (quote SyntacticClosure))

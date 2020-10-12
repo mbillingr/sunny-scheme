@@ -303,6 +303,7 @@ pub fn expand_minus_let_star_(args: &[Scm]) -> Scm {
                                     }
                                 })
                             });
+                            Scm::anything();
                             {
                                 // (astify-comment exp (expand-let (loop (let*-bindings exp)) env tail?))
                                 imports::astify_minus_comment(&[exp.clone(), {

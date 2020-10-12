@@ -177,10 +177,4 @@
 
     (define (replace-var! var new-var)
       (replace-table! var new-var))))
-
-    ;(define UNIQUE-COUNT 0)
-    ;(define (unique-name name)
-    ;  (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
-    ;  (string-append ((if (symbol? name) (symbol->string name) name))
-    ;                 "_"
-    ;                 (number->string UNIQUE-COUNT)))))
+  

@@ -10,6 +10,7 @@ mod imports {
     pub use crate::sunny::ast_transforms::boxify::exports::*;
     pub use crate::sunny::ast_transforms::close_procedures::exports::*;
     pub use crate::sunny::ast_transforms::extract_definitions::exports::*;
+    pub use crate::sunny::ast_transforms::rename_vars::exports::*;
     pub use crate::sunny::astify_toplevel::exports::*;
     pub use crate::sunny::rust::codegen::exports::*;
     pub use crate::sunny::table::exports::*;
@@ -63,14 +64,41 @@ pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
         }
         let scheme_minus_ast = args[0].clone();
         {
-            // (extract-definitions (boxify (close-procedures scheme-ast)))
-            imports::extract_minus_definitions(&[{
-                // (boxify (close-procedures scheme-ast))
-                imports::boxify(&[{
-                    // (close-procedures scheme-ast)
-                    imports::close_minus_procedures(&[scheme_minus_ast.clone()])
-                }])
-            }])
+            // (rename-vars (lambda (name) (if (string? name) name (symbol->string name))) (extract-definitions (boxify (close-procedures scheme-ast))))
+            imports::rename_minus_vars(&[
+                {
+                    // Closure
+                    Scm::func(move |args: &[Scm]| {
+                        if args.len() != 1 {
+                            panic!("invalid arity")
+                        }
+                        let name = args[0].clone();
+                        if ({
+                            // (string? name)
+                            imports::string_p(&[name.clone()])
+                        })
+                        .is_true()
+                        {
+                            name.clone()
+                        } else {
+                            {
+                                // (symbol->string name)
+                                imports::symbol_minus__g_string(&[name.clone()])
+                            }
+                        }
+                    })
+                },
+                {
+                    // (extract-definitions (boxify (close-procedures scheme-ast)))
+                    imports::extract_minus_definitions(&[{
+                        // (boxify (close-procedures scheme-ast))
+                        imports::boxify(&[{
+                            // (close-procedures scheme-ast)
+                            imports::close_minus_procedures(&[scheme_minus_ast.clone()])
+                        }])
+                    }])
+                },
+            ])
         }
     }
     .into()
@@ -89,6 +117,7 @@ pub fn main() {
     crate::sunny::ast_transforms::boxify::initialize();
     crate::sunny::ast_transforms::close_procedures::initialize();
     crate::sunny::ast_transforms::extract_definitions::initialize();
+    crate::sunny::ast_transforms::rename_vars::initialize();
     crate::sunny::astify_toplevel::initialize();
     crate::sunny::rust::codegen::initialize();
     crate::sunny::table::initialize();
@@ -105,7 +134,8 @@ pub fn main() {
                     // (command-line)
                     imports::command_minus_line(&[])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (define input-file-name (cadr args))
@@ -114,7 +144,8 @@ pub fn main() {
                     // (cadr args)
                     imports::cadr(&[args_.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (define output-module-name (caddr args))
@@ -123,7 +154,8 @@ pub fn main() {
                     // (caddr args)
                     imports::caddr(&[args_.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (define output-dir (if (pair? (cdddr args)) (cadddr args) "."))
@@ -146,7 +178,8 @@ pub fn main() {
                         Scm::from(".")
                     },
                 )
-            })
+            });
+            Scm::anything()
         };
         {
             // (newline)
@@ -189,7 +222,8 @@ pub fn main() {
                         input_minus_file_minus_name.with(|value| value.get())
                     ])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (define (load-sexpr) ...)
@@ -202,7 +236,8 @@ pub fn main() {
                     // (load-sexpr)
                     load_minus_sexpr(&[])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (define ast (astify-toplevel program rust-pipeline))
@@ -214,7 +249,8 @@ pub fn main() {
                         Scm::func(rust_minus_pipeline),
                     ])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (rust-gen-in-module output-module-name output-dir (lambda (module) (ast (quote gen-rust) module)))

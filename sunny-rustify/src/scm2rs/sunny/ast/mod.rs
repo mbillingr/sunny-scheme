@@ -52,7 +52,7 @@ let name = name.clone();let exports = exports.clone();let imports = imports.clon
 // (append (quote LIBRARY) name exports imports globals (body (quote repr)))
 imports::append(&[Scm::symbol("LIBRARY"),name.clone(),exports.clone(),imports.clone(),globals.clone(),{
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+body.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let name = name.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let imports = imports.clone();let exports = exports.clone();let testsuite = testsuite.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (_make-library name globals init (body (quote transform) func) imports exports (map (lambda (t) (t (quote transform) func)) testsuite))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -65,13 +65,13 @@ body.clone().invoke(&[Scm::symbol("transform"),func.clone()])},imports.clone(),e
 imports::map(&[{// Closure
 let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let t = args[0].clone();{
 // (t (quote transform) func)
-t.clone().invoke(&[Scm::symbol("transform"),func.clone()])}})},testsuite.clone()])}])}})}])}})});gen_minus_exports.set({// Closure
+t.clone().invoke(&[Scm::symbol("transform"),func.clone()])}})},testsuite.clone()])}])}})}])}})});Scm::anything();gen_minus_exports.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let exports = args[1].clone();{
 // (for-each (lambda (expo) (expo (quote gen-rust) module)) exports)
 imports::for_minus_each(&[{// Closure
 let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let expo = args[0].clone();{
 // (expo (quote gen-rust) module)
-expo.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},exports.clone()])}})});gen_minus_rust.set({// Closure
+expo.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},exports.clone()])}})});Scm::anything();gen_minus_rust.set({// Closure
 let imports = imports.clone();let gen_minus_exports = gen_minus_exports.clone();let exports = exports.clone();let globals = globals.clone();let body = body.clone();let init = init.clone();let testsuite = testsuite.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm};")
 imports::println(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm};")])};{
@@ -146,7 +146,7 @@ imports::println(&[module.clone(),Scm::from(";}")])};{
 imports::for_minus_each(&[{// Closure
 let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let test = args[0].clone();{
 // (test (quote gen-rust) module)
-test.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},testsuite.clone()])}}})});self_.set({// Closure
+test.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},testsuite.clone()])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let name = name.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -171,7 +171,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message LIBRARY" msg)
-imports::error(&[Scm::from("Unknown message LIBRARY"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message LIBRARY"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn ast_minus_node_p(args: &[Scm]) -> Scm {
     {
@@ -231,7 +231,7 @@ let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if
 // (list (quote ABSTRACTION) vars (body (quote repr)))
 imports::list(&[Scm::symbol("ABSTRACTION"),vars.clone(),{
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+body.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-abstraction vars (body (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -239,7 +239,7 @@ let vars = vars.clone();let body = body.clone();let func = func.clone();Scm::fun
 // (make-abstraction vars (body (quote transform) func))
 Scm::func(make_minus_abstraction).invoke(&[vars.clone(),{
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let body = body.clone();let vars = vars.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars)))
 imports::set_minus_remove_star_(&[{
@@ -248,7 +248,7 @@ body.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (map free-var-name (map variable-name vars))
 imports::map(&[Scm::func(free_minus_var_minus_name),{
 // (map variable-name vars)
-imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}])}])}})});gen_minus_rust.set({// Closure
+imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}])}])}})});Scm::anything();gen_minus_rust.set({// Closure
 let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (letrec ((gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let ") (print module (rustify-identifier (variable-name (car p*)))) (print module " = args[") (print module k) (print module "].clone();") (gen-params (cdr p*) (+ k 1))))))) (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module))))
 {
@@ -278,7 +278,7 @@ gen_minus_params.get().invoke(&[{
 // (cdr p*)
 imports::cdr(&[p_star_.clone()])},{
 // (+ k 1)
-imports::_plus_(&[k.clone(),Scm::from(1)])}])}}} else {Scm::symbol("*UNSPECIFIED*")}})});{
+imports::_plus_(&[k.clone(),Scm::from(1)])}])}}} else {Scm::symbol("*UNSPECIFIED*")}})});Scm::anything();{
 // (rust-block module (lambda () (print module "if args.len() != ") (print module (length vars)) (print module "{panic!(\"invalid arity\")}") (gen-params vars 0) (body (quote gen-rust) module)))
 imports::rust_minus_block(&[module.clone(),{// Closure
 let module = module.clone();let vars = vars.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{{
@@ -293,7 +293,7 @@ imports::print(&[module.clone(),Scm::from("{panic!(\"invalid arity\")}")])};{
 // (gen-params vars 0)
 gen_minus_params.get().invoke(&[vars.clone(),Scm::from(0)])};{
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}}}}}}})});self_.set({// Closure
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}}}}}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -328,7 +328,7 @@ imports::eq_p(&[Scm::symbol("get-vars"),msg.clone()])}).is_true() {vars.clone()}
 // (eq? (quote get-body) msg)
 imports::eq_p(&[Scm::symbol("get-body"),msg.clone()])}).is_true() {body.clone()} else {{
 // (error "Unknown message ABSTRACTION" msg)
-imports::error(&[Scm::from("Unknown message ABSTRACTION"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message ABSTRACTION"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_alternative(args: &[Scm]) -> Scm {
     {if args.len() != 3{panic!("invalid arity")}let condition = args[0].clone();let consequent = args[1].clone();let alternative = args[2].clone();{
@@ -344,7 +344,7 @@ condition.clone().invoke(&[Scm::symbol("repr")])},{
 // (consequent (quote repr))
 consequent.clone().invoke(&[Scm::symbol("repr")])},{
 // (alternative (quote repr))
-alternative.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+alternative.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let condition = condition.clone();let consequent = consequent.clone();let alternative = alternative.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-alternative (condition (quote transform) func) (consequent (quote transform) func) (alternative (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -356,7 +356,7 @@ condition.clone().invoke(&[Scm::symbol("transform"),func.clone()])},{
 // (consequent (quote transform) func)
 consequent.clone().invoke(&[Scm::symbol("transform"),func.clone()])},{
 // (alternative (quote transform) func)
-alternative.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+alternative.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let condition = condition.clone();let consequent = consequent.clone();let alternative = alternative.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-union (set-union (condition (quote free-vars)) (consequent (quote free-vars))) (alternative (quote free-vars)))
 imports::set_minus_union(&[{
@@ -367,7 +367,7 @@ condition.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (consequent (quote free-vars))
 consequent.clone().invoke(&[Scm::symbol("free-vars")])}])},{
 // (alternative (quote free-vars))
-alternative.clone().invoke(&[Scm::symbol("free-vars")])}])}})});gen_minus_rust.set({// Closure
+alternative.clone().invoke(&[Scm::symbol("free-vars")])}])}})});Scm::anything();gen_minus_rust.set({// Closure
 let condition = condition.clone();let consequent = consequent.clone();let alternative = alternative.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (print module "if (")
 imports::print(&[module.clone(),Scm::from("if (")])};{
@@ -390,7 +390,7 @@ imports::print(&[module.clone(),Scm::from("{")])};{
 // (alternative (quote gen-rust) module)
 alternative.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module "}")
-imports::print(&[module.clone(),Scm::from("}")])}}}}})});self_.set({// Closure
+imports::print(&[module.clone(),Scm::from("}")])}}}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -417,7 +417,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message ALTERNATIVE" msg)
-imports::error(&[Scm::from("Unknown message ALTERNATIVE"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message ALTERNATIVE"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_application(args: &[Scm]) -> Scm {
     {if args.len() != 3{panic!("invalid arity")}let func = args[0].clone();let args_ = args[1].clone();let tail_p = args[2].clone();{
@@ -433,7 +433,7 @@ imports::cons(&[{
 // (func (quote repr))
 func.clone().invoke(&[Scm::symbol("repr")])},{
 // (args (quote repr))
-args_.clone().invoke(&[Scm::symbol("repr")])}])}])}})});transform.set({// Closure
+args_.clone().invoke(&[Scm::symbol("repr")])}])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let func = func.clone();let args_ = args_.clone();let tail_p = tail_p.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
 // (fnc self (lambda () (make-application (func (quote transform) fnc) (args (quote transform) fnc) tail?)))
 fnc.clone().invoke(&[self_.get(),{// Closure
@@ -443,14 +443,14 @@ Scm::func(make_minus_application).invoke(&[{
 // (func (quote transform) fnc)
 func.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},{
 // (args (quote transform) fnc)
-args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},tail_p.clone()])}})}])}})});free_minus_vars.set({// Closure
+args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},tail_p.clone()])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let func = func.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-union (func (quote free-vars)) (args (quote free-vars)))
 imports::set_minus_union(&[{
 // (func (quote free-vars))
 func.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (args (quote free-vars))
-args_.clone().invoke(&[Scm::symbol("free-vars")])}])}})});gen_minus_rust.set({// Closure
+args_.clone().invoke(&[Scm::symbol("free-vars")])}])}})});Scm::anything();gen_minus_rust.set({// Closure
 let func = func.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (func (quote gen-rust) module)
 func.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
@@ -459,7 +459,7 @@ imports::print(&[module.clone(),Scm::from(".invoke(&[")])};{
 // (args (quote gen-rust) module)
 args_.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module "])")
-imports::print(&[module.clone(),Scm::from("])")])}}})});self_.set({// Closure
+imports::print(&[module.clone(),Scm::from("])")])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -486,7 +486,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message APPLICATION" msg)
-imports::error(&[Scm::from("Unknown message APPLICATION"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message APPLICATION"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_args(args: &[Scm]) -> Scm {
     {
@@ -538,6 +538,7 @@ pub fn make_minus_args(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             transform.set({
                                                 // Closure
                                                 let self_ = self_.clone();
@@ -590,6 +591,7 @@ pub fn make_minus_args(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             free_minus_vars.set({
                                                 // Closure
                                                 let arg = arg.clone();
@@ -617,6 +619,7 @@ pub fn make_minus_args(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             gen_minus_rust.set({
                                                 // Closure
                                                 let arg = arg.clone();
@@ -673,6 +676,7 @@ pub fn make_minus_args(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.set({
                                                 // Closure
                                                 let repr = repr.clone();
@@ -769,6 +773,7 @@ pub fn make_minus_args(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.get()
                                         }
                                     }
@@ -827,6 +832,7 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             transform.set({
                                                 // Closure
                                                 let self_ = self_.clone();
@@ -866,6 +872,7 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             free_minus_vars.set({
                                                 // Closure
                                                 let condition = condition.clone();
@@ -881,6 +888,7 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             gen_minus_rust.set({
                                                 // Closure
                                                 let condition = condition.clone();
@@ -914,6 +922,7 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.set({
                                                 // Closure
                                                 let repr = repr.clone();
@@ -1010,6 +1019,7 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.get()
                                         }
                                     }
@@ -1025,9 +1035,9 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
 }
 pub fn make_minus_assignment(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let var = args[0].clone();let val = args[1].clone();{
-// (letrec ((repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var)))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg)))))) self)
+// (letrec ((repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var)))) (print module "Scm::anything()"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var)))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var)))) (print module "Scm::anything()"))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (list (quote SET!) (variable-name var) (val (quote repr)))
@@ -1035,7 +1045,7 @@ imports::list(&[Scm::symbol("SET!"),{
 // (variable-name var)
 imports::variable_minus_name(&[var.clone()])},{
 // (val (quote repr))
-val.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+val.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-assignment var (val (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -1043,7 +1053,7 @@ let var = var.clone();let val = val.clone();let func = func.clone();Scm::func(mo
 // (make-assignment var (val (quote transform) func))
 Scm::func(make_minus_assignment).invoke(&[var.clone(),{
 // (val (quote transform) func)
-val.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+val.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let val = val.clone();let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-add (val (quote free-vars)) (free-var-name (variable-name var)))
 imports::set_minus_add(&[{
@@ -1052,9 +1062,9 @@ val.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (free-var-name (variable-name var))
 Scm::func(free_minus_var_minus_name).invoke(&[{
 // (variable-name var)
-imports::variable_minus_name(&[var.clone()])}])}])}})});gen_minus_rust.set({// Closure
-let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
-// (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ")")) (else (error "set! on unboxed variable" name var))))
+imports::variable_minus_name(&[var.clone()])}])}])}})});Scm::anything();gen_minus_rust.set({// Closure
+let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
+// (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var))))
 {let name = {
 // (variable-name var)
 imports::variable_minus_name(&[var.clone()])};{
@@ -1068,8 +1078,8 @@ imports::print(&[module.clone(),{
 imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".with(|value| value.set(")])};{
 // (val (quote gen-rust) module)
 val.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
-// (print module "))")
-imports::print(&[module.clone(),Scm::from("))")])}}} else if ({
+// (print module "));")
+imports::print(&[module.clone(),Scm::from("));")])}}} else if ({
 // (boxed-variable? var)
 imports::boxed_minus_variable_p(&[var.clone()])}).is_true() {{{
 // (print module (rustify-identifier name) ".set(")
@@ -1078,10 +1088,12 @@ imports::print(&[module.clone(),{
 imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".set(")])};{
 // (val (quote gen-rust) module)
 val.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
-// (print module ")")
-imports::print(&[module.clone(),Scm::from(")")])}}} else {{
+// (print module ");")
+imports::print(&[module.clone(),Scm::from(");")])}}} else {{
 // (error "set! on unboxed variable" name var)
-imports::error(&[Scm::from("set! on unboxed variable"),name.clone(),var.clone()])}}}}}})});self_.set({// Closure
+imports::error(&[Scm::from("set! on unboxed variable"),name.clone(),var.clone()])}}}}};{
+// (print module "Scm::anything()")
+imports::print(&[module.clone(),Scm::from("Scm::anything()")])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1108,7 +1120,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message ASSIGNMENT" msg)
-imports::error(&[Scm::from("Unknown message ASSIGNMENT"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message ASSIGNMENT"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_boxify(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let name = args[0].clone();let body = args[1].clone();{
@@ -1122,7 +1134,7 @@ imports::cons(&[Scm::symbol("BOXIFY"),{
 // (cons name (body (quote repr)))
 imports::cons(&[name.clone(),{
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}])}})});transform.set({// Closure
+body.clone().invoke(&[Scm::symbol("repr")])}])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let name = name.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-boxify name (body (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -1130,10 +1142,10 @@ let name = name.clone();let body = body.clone();let func = func.clone();Scm::fun
 // (make-boxify name (body (quote transform) func))
 Scm::func(make_minus_boxify).invoke(&[name.clone(),{
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (body (quote free-vars))
-body.clone().invoke(&[Scm::symbol("free-vars")])}})});gen_minus_rust.set({// Closure
+body.clone().invoke(&[Scm::symbol("free-vars")])}})});Scm::anything();gen_minus_rust.set({// Closure
 let name = name.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (rust-block module (lambda () (print module "let ") (print module (rustify-identifier name)) (print module " = ") (print module (rustify-identifier name)) (print module ".into_boxed();") (body (quote gen-rust) module)))
 imports::rust_minus_block(&[module.clone(),{// Closure
@@ -1153,7 +1165,7 @@ imports::rustify_minus_identifier(&[name.clone()])}])};{
 // (print module ".into_boxed();")
 imports::print(&[module.clone(),Scm::from(".into_boxed();")])};{
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}})});self_.set({// Closure
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1180,7 +1192,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message BOXIFY" msg)
-imports::error(&[Scm::from("Unknown message BOXIFY"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message BOXIFY"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_closure(args: &[Scm]) -> Scm {
     {if args.len() != 1{panic!("invalid arity")}let function = args[0].clone();{
@@ -1190,7 +1202,7 @@ pub fn make_minus_closure(args: &[Scm]) -> Scm {
 {let [repr, transform, free_minus_vars, prepare_minus_closure, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let prepare_minus_closure = prepare_minus_closure.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let function = function.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (list (quote CLOSURE) function)
-imports::list(&[Scm::symbol("CLOSURE"),function.clone()])}})});transform.set({// Closure
+imports::list(&[Scm::symbol("CLOSURE"),function.clone()])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let function = function.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-closure (function (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -1198,10 +1210,10 @@ let function = function.clone();let func = func.clone();Scm::func(move |args: &[
 // (make-closure (function (quote transform) func))
 Scm::func(make_minus_closure).invoke(&[{
 // (function (quote transform) func)
-function.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+function.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let function = function.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (function (quote free-vars))
-function.clone().invoke(&[Scm::symbol("free-vars")])}})});prepare_minus_closure.set({// Closure
+function.clone().invoke(&[Scm::symbol("free-vars")])}})});Scm::anything();prepare_minus_closure.set({// Closure
 let prepare_minus_closure = prepare_minus_closure.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let free_minus_vars = args[1].clone();if ({
 // (pair? free-vars)
 imports::pair_p(&[free_minus_vars.clone()])}).is_true() {{
@@ -1226,7 +1238,7 @@ imports::print(&[module.clone(),Scm::from(".clone();")])};{
 // (prepare-closure module (cdr free-vars))
 prepare_minus_closure.get().invoke(&[module.clone(),{
 // (cdr free-vars)
-imports::cdr(&[free_minus_vars.clone()])}])}}}}} else {Scm::symbol("*UNSPECIFIED*")}})});gen_minus_rust.set({// Closure
+imports::cdr(&[free_minus_vars.clone()])}])}}}}} else {Scm::symbol("*UNSPECIFIED*")}})});Scm::anything();gen_minus_rust.set({// Closure
 let prepare_minus_closure = prepare_minus_closure.clone();let free_minus_vars = free_minus_vars.clone();let function = function.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (rust-block module (lambda () (println module "// Closure") (prepare-closure module (free-vars)) (print module "Scm::func(move |args: &[Scm]|") (function (quote gen-rust) module) (print module ")")))
 imports::rust_minus_block(&[module.clone(),{// Closure
@@ -1242,7 +1254,7 @@ imports::print(&[module.clone(),Scm::from("Scm::func(move |args: &[Scm]|")])};{
 // (function (quote gen-rust) module)
 function.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module ")")
-imports::print(&[module.clone(),Scm::from(")")])}}})}])}})});self_.set({// Closure
+imports::print(&[module.clone(),Scm::from(")")])}}})}])}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let function = function.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1271,7 +1283,7 @@ imports::car(&[args_.clone()])}])}} else if ({
 // (eq? (quote inner-function) msg)
 imports::eq_p(&[Scm::symbol("inner-function"),msg.clone()])}).is_true() {function.clone()} else {{
 // (error "Unknown message CLOSURE" msg)
-imports::error(&[Scm::from("Unknown message CLOSURE"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message CLOSURE"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_comment(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let comment = args[0].clone();let node = args[1].clone();{
@@ -1283,7 +1295,7 @@ let comment = comment.clone();let node = node.clone();Scm::func(move |args: &[Sc
 // (list (quote COMMENT) comment (node (quote repr)))
 imports::list(&[Scm::symbol("COMMENT"),comment.clone(),{
 // (node (quote repr))
-node.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+node.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let comment = comment.clone();let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-comment comment (node (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -1291,10 +1303,10 @@ let comment = comment.clone();let node = node.clone();let func = func.clone();Sc
 // (make-comment comment (node (quote transform) func))
 Scm::func(make_minus_comment).invoke(&[comment.clone(),{
 // (node (quote transform) func)
-node.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+node.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (node (quote free-vars))
-node.clone().invoke(&[Scm::symbol("free-vars")])}})});gen_minus_rust.set({// Closure
+node.clone().invoke(&[Scm::symbol("free-vars")])}})});Scm::anything();gen_minus_rust.set({// Closure
 let comment = comment.clone();let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (rust-block module (lambda () (println module) (print module "// ") (showln module comment) (node (quote gen-rust) module)))
 imports::rust_minus_block(&[module.clone(),{// Closure
@@ -1306,7 +1318,7 @@ imports::print(&[module.clone(),Scm::from("// ")])};{
 // (showln module comment)
 imports::showln(&[module.clone(),comment.clone()])};{
 // (node (quote gen-rust) module)
-node.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}})});gen_minus_rust_minus_inner.set({// Closure
+node.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}})});Scm::anything();gen_minus_rust_minus_inner.set({// Closure
 let comment = comment.clone();let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (println module)
 imports::println(&[module.clone()])};{
@@ -1315,7 +1327,7 @@ imports::print(&[module.clone(),Scm::from("// ")])};{
 // (showln module comment)
 imports::showln(&[module.clone(),comment.clone()])};{
 // (node (quote gen-rust-inner) module)
-node.clone().invoke(&[Scm::symbol("gen-rust-inner"),module.clone()])}}})});self_.set({// Closure
+node.clone().invoke(&[Scm::symbol("gen-rust-inner"),module.clone()])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();let node = node.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1350,7 +1362,7 @@ imports::car(&[args_.clone()])}])}} else if ({
 // (eq? (quote inner) msg)
 imports::eq_p(&[Scm::symbol("inner"),msg.clone()])}).is_true() {node.clone()} else {{
 // (error "Unknown message COMMENT" msg)
-imports::error(&[Scm::from("Unknown message COMMENT"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message COMMENT"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_constant(args: &[Scm]) -> Scm {
     {if args.len() != 1{panic!("invalid arity")}let val = args[0].clone();{
@@ -1360,14 +1372,14 @@ pub fn make_minus_constant(args: &[Scm]) -> Scm {
 {let [repr, transform, free_minus_vars, gen_minus_constant, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let gen_minus_constant = gen_minus_constant.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (cons (quote CONSTANT) val)
-imports::cons(&[Scm::symbol("CONSTANT"),val.clone()])}})});transform.set({// Closure
+imports::cons(&[Scm::symbol("CONSTANT"),val.clone()])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () self))
 func.clone().invoke(&[self_.get(),{// Closure
-let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}self_.get()})}])}})});free_minus_vars.set({// Closure
+let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}self_.get()})}])}})});Scm::anything();free_minus_vars.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (make-set)
-imports::make_minus_set(&[])}})});gen_minus_constant.set({// Closure
+imports::make_minus_set(&[])}})});Scm::anything();gen_minus_constant.set({// Closure
 let gen_minus_constant = gen_minus_constant.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let val = args[1].clone();{
 // (cond ...)
 if ({
@@ -1416,10 +1428,10 @@ imports::print(&[module.clone(),Scm::from("Scm::from(")])};{
 // (show module val)
 imports::show(&[module.clone(),val.clone()])};{
 // (print module ")")
-imports::print(&[module.clone(),Scm::from(")")])}}}}})});gen_minus_rust.set({// Closure
+imports::print(&[module.clone(),Scm::from(")")])}}}}})});Scm::anything();gen_minus_rust.set({// Closure
 let gen_minus_constant = gen_minus_constant.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (gen-constant module val)
-gen_minus_constant.get().invoke(&[module.clone(),val.clone()])}})});self_.set({// Closure
+gen_minus_constant.get().invoke(&[module.clone(),val.clone()])}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1446,13 +1458,13 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message CONSTANT" msg)
-imports::error(&[Scm::from("Unknown message CONSTANT"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message CONSTANT"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_definition(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let var = args[0].clone();let val = args[1].clone();{
-// (letrec ((repr (lambda () (list (quote DEFINE) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-definition var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((global-function? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) (else (error "definition! of non-global variable")))))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote DEFINITION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-name) msg) (variable-name var)) ((eq? (quote get-var) msg) var) ((eq? (quote get-val) msg) val) (else (error "Unknown message DEFINITION" msg)))))) self)
+// (letrec ((repr (lambda () (list (quote DEFINE) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-definition var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((global-function? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) (else (error "definition! of non-global variable")))) (print module "Scm::anything()"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote DEFINITION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-name) msg) (variable-name var)) ((eq? (quote get-var) msg) var) ((eq? (quote get-val) msg) val) (else (error "Unknown message DEFINITION" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote DEFINE) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-definition var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((global-function? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) (else (error "definition! of non-global variable")))))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote DEFINITION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-name) msg) (variable-name var)) ((eq? (quote get-var) msg) var) ((eq? (quote get-val) msg) val) (else (error "Unknown message DEFINITION" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote DEFINE) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-definition var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((global-function? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) (else (error "definition! of non-global variable")))) (print module "Scm::anything()"))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote DEFINITION)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) ((eq? (quote get-name) msg) (variable-name var)) ((eq? (quote get-var) msg) var) ((eq? (quote get-val) msg) val) (else (error "Unknown message DEFINITION" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (list (quote DEFINE) (variable-name var) (val (quote repr)))
@@ -1460,7 +1472,7 @@ imports::list(&[Scm::symbol("DEFINE"),{
 // (variable-name var)
 imports::variable_minus_name(&[var.clone()])},{
 // (val (quote repr))
-val.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+val.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-definition var (val (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -1468,7 +1480,7 @@ let var = var.clone();let val = val.clone();let func = func.clone();Scm::func(mo
 // (make-definition var (val (quote transform) func))
 Scm::func(make_minus_definition).invoke(&[var.clone(),{
 // (val (quote transform) func)
-val.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+val.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let val = val.clone();let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-add (val (quote free-vars)) (free-var-name (variable-name var)))
 imports::set_minus_add(&[{
@@ -1477,9 +1489,9 @@ val.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (free-var-name (variable-name var))
 Scm::func(free_minus_var_minus_name).invoke(&[{
 // (variable-name var)
-imports::variable_minus_name(&[var.clone()])}])}])}})});gen_minus_rust.set({// Closure
-let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
-// (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) ((global-function? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "))")) (else (error "definition! of non-global variable"))))
+imports::variable_minus_name(&[var.clone()])}])}])}})});Scm::anything();gen_minus_rust.set({// Closure
+let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
+// (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((global-function? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) (else (error "definition! of non-global variable"))))
 {let name = {
 // (variable-name var)
 imports::variable_minus_name(&[var.clone()])};{
@@ -1493,8 +1505,8 @@ imports::print(&[module.clone(),{
 imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".with(|value| value.set(")])};{
 // (val (quote gen-rust) module)
 val.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
-// (print module "))")
-imports::print(&[module.clone(),Scm::from("))")])}}} else if ({
+// (print module "));")
+imports::print(&[module.clone(),Scm::from("));")])}}} else if ({
 // (global-function? var)
 imports::global_minus_function_p(&[var.clone()])}).is_true() {{{
 // (print module (rustify-identifier name) ".with(|value| value.set(")
@@ -1503,10 +1515,12 @@ imports::print(&[module.clone(),{
 imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".with(|value| value.set(")])};{
 // (val (quote gen-rust) module)
 val.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
-// (print module "))")
-imports::print(&[module.clone(),Scm::from("))")])}}} else {{
+// (print module "));")
+imports::print(&[module.clone(),Scm::from("));")])}}} else {{
 // (error "definition! of non-global variable")
-imports::error(&[Scm::from("definition! of non-global variable")])}}}}}})});self_.set({// Closure
+imports::error(&[Scm::from("definition! of non-global variable")])}}}}};{
+// (print module "Scm::anything()")
+imports::print(&[module.clone(),Scm::from("Scm::anything()")])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1541,7 +1555,7 @@ imports::eq_p(&[Scm::symbol("get-var"),msg.clone()])}).is_true() {var.clone()} e
 // (eq? (quote get-val) msg)
 imports::eq_p(&[Scm::symbol("get-val"),msg.clone()])}).is_true() {val.clone()} else {{
 // (error "Unknown message DEFINITION" msg)
-imports::error(&[Scm::from("Unknown message DEFINITION"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message DEFINITION"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_export(args: &[Scm]) -> Scm {
     {
@@ -1590,6 +1604,7 @@ pub fn make_minus_export(args: &[Scm]) -> Scm {
                                                 }
                                             })
                                         });
+                                        Scm::anything();
                                         transform.set({
                                             // Closure
                                             let self_ = self_.clone();
@@ -1613,6 +1628,7 @@ pub fn make_minus_export(args: &[Scm]) -> Scm {
                                                 }
                                             })
                                         });
+                                        Scm::anything();
                                         gen_minus_rust.set({
                                             // Closure
                                             let name = name.clone();
@@ -1688,6 +1704,7 @@ imports::error(&[Scm::from("invalid export variable"),var.clone(),name.clone()])
                                                 }
                                             })
                                         });
+                                        Scm::anything();
                                         self_.set({
                                             // Closure
                                             let repr = repr.clone();
@@ -1768,6 +1785,7 @@ imports::error(&[Scm::from("invalid export variable"),var.clone(),name.clone()])
                                                 }
                                             })
                                         });
+                                        Scm::anything();
                                         self_.get()
                                     }
                                 }
@@ -1792,7 +1810,7 @@ imports::list(&[Scm::symbol("FIXLET"),vars.clone(),{
 // (args (quote repr))
 args_.clone().invoke(&[Scm::symbol("repr")])},{
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+body.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
 // (fnc self (lambda () (make-fixlet vars (args (quote transform) fnc) (body (quote transform) fnc))))
 fnc.clone().invoke(&[self_.get(),{// Closure
@@ -1802,7 +1820,7 @@ Scm::func(make_minus_fixlet).invoke(&[vars.clone(),{
 // (args (quote transform) fnc)
 args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},{
 // (body (quote transform) fnc)
-body.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+body.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let body = body.clone();let vars = vars.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-union (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name vars))) (args (quote free-vars)))
 imports::set_minus_union(&[{
@@ -1815,7 +1833,7 @@ imports::map(&[Scm::func(free_minus_var_minus_name),{
 // (map variable-name vars)
 imports::map(&[Scm::func(imports::variable_minus_name),vars.clone()])}])}])},{
 // (args (quote free-vars))
-args_.clone().invoke(&[Scm::symbol("free-vars")])}])}})});gen_minus_rust_minus_inner.set({// Closure
+args_.clone().invoke(&[Scm::symbol("free-vars")])}])}})});Scm::anything();gen_minus_rust_minus_inner.set({// Closure
 let vars = vars.clone();let args_ = args_.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (letrec ((gen-params (lambda (v*) (if (pair? v*) (begin (print module (rustify-identifier (variable-name (car v*))) ", ") (gen-params (cdr v*))))))) (cond ((= 0 (length vars)) (quote IGNORE)) ((= 1 (length vars)) (print module "let ") (print module (rustify-identifier (variable-name (car vars)))) (print module " = ") (args (quote gen-rust) module) (print module ";")) (else (print module "let [") (gen-params vars) (print module "] = [") (args (quote gen-rust) module) (print module "];"))) (if (eq? (quote FIXLET) (body (quote kind))) (body (quote gen-rust-inner) module) (if (and (eq? (quote COMMENT) (body (quote kind))) (eq? (quote FIXLET) ((body (quote inner)) (quote kind)))) (body (quote gen-rust-inner) module) (body (quote gen-rust) module))))
 {
@@ -1835,7 +1853,7 @@ imports::car(&[v_star_.clone()])}])}])},Scm::from(", ")])};{
 // (gen-params (cdr v*))
 gen_minus_params.get().invoke(&[{
 // (cdr v*)
-imports::cdr(&[v_star_.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}})});{
+imports::cdr(&[v_star_.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}})});Scm::anything();{
 // (cond ...)
 if ({
 // (= 0 (length vars))
@@ -1893,13 +1911,13 @@ body.clone().invoke(&[Scm::symbol("inner")])}.invoke(&[Scm::symbol("kind")])}])}
 // (body (quote gen-rust-inner) module)
 body.clone().invoke(&[Scm::symbol("gen-rust-inner"),module.clone()])}} else {{
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}}}}}}})});gen_minus_rust.set({// Closure
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}}}}}}})});Scm::anything();gen_minus_rust.set({// Closure
 let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (rust-block module (lambda () (gen-rust-inner module)))
 imports::rust_minus_block(&[module.clone(),{// Closure
 let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (gen-rust-inner module)
-gen_minus_rust_minus_inner.get().invoke(&[module.clone()])}})}])}})});self_.set({// Closure
+gen_minus_rust_minus_inner.get().invoke(&[module.clone()])}})}])}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let vars = vars.clone();let args_ = args_.clone();let body = body.clone();let gen_minus_rust = gen_minus_rust.clone();let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let arg_star_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -1942,7 +1960,7 @@ gen_minus_rust_minus_inner.get().invoke(&[{
 // (car arg*)
 imports::car(&[arg_star_.clone()])}])}} else {{
 // (error "Unknown message FIXLET" msg)
-imports::error(&[Scm::from("Unknown message FIXLET"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message FIXLET"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_function_minus_application(args: &[Scm]) -> Scm {
     {if args.len() != 3{panic!("invalid arity")}let var = args[0].clone();let args_ = args[1].clone();let tail_p = args[2].clone();{
@@ -1956,7 +1974,7 @@ imports::list(&[if (tail_p.clone()).is_true() {Scm::symbol("FN-APPLY-TC")} else 
 // (variable-name var)
 imports::variable_minus_name(&[var.clone()])},{
 // (args (quote repr))
-args_.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+args_.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let var = var.clone();let args_ = args_.clone();let tail_p = tail_p.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let fnc = args[0].clone();{
 // (fnc self (lambda () (make-function-application var (args (quote transform) fnc) tail?)))
 fnc.clone().invoke(&[self_.get(),{// Closure
@@ -1964,10 +1982,10 @@ let var = var.clone();let args_ = args_.clone();let fnc = fnc.clone();let tail_p
 // (make-function-application var (args (quote transform) fnc) tail?)
 Scm::func(make_minus_function_minus_application).invoke(&[var.clone(),{
 // (args (quote transform) fnc)
-args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},tail_p.clone()])}})}])}})});free_minus_vars.set({// Closure
+args_.clone().invoke(&[Scm::symbol("transform"),fnc.clone()])},tail_p.clone()])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (args (quote free-vars))
-args_.clone().invoke(&[Scm::symbol("free-vars")])}})});gen_minus_rust.set({// Closure
+args_.clone().invoke(&[Scm::symbol("free-vars")])}})});Scm::anything();gen_minus_rust.set({// Closure
 let var = var.clone();let args_ = args_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (cond ...)
 if ({
@@ -1990,7 +2008,7 @@ imports::variable_minus_name(&[var.clone()])}])},Scm::from("(&[")])};{
 // (args (quote gen-rust) module)
 args_.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
 // (print module "])")
-imports::print(&[module.clone(),Scm::from("])")])}}})});self_.set({// Closure
+imports::print(&[module.clone(),Scm::from("])")])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -2017,7 +2035,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message FN-APPLICATION" msg)
-imports::error(&[Scm::from("Unknown message FN-APPLICATION"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message FN-APPLICATION"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_import(args: &[Scm]) -> Scm {
     {if args.len() != 1{panic!("invalid arity")}let lib = args[0].clone();{
@@ -2027,16 +2045,16 @@ pub fn make_minus_import(args: &[Scm]) -> Scm {
 {let [repr, transform, free_minus_vars, gen_minus_libname, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let gen_minus_libname = gen_minus_libname.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let lib = lib.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (cons (quote IMPORT) lib)
-imports::cons(&[Scm::symbol("IMPORT"),lib.clone()])}})});transform.set({// Closure
+imports::cons(&[Scm::symbol("IMPORT"),lib.clone()])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let lib = lib.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-import lib)))
 func.clone().invoke(&[self_.get(),{// Closure
 let lib = lib.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (make-import lib)
-Scm::func(make_minus_import).invoke(&[lib.clone()])}})}])}})});free_minus_vars.set({// Closure
+Scm::func(make_minus_import).invoke(&[lib.clone()])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (make-set)
-imports::make_minus_set(&[])}})});gen_minus_libname.set({// Closure
+imports::make_minus_set(&[])}})});Scm::anything();gen_minus_libname.set({// Closure
 let gen_minus_libname = gen_minus_libname.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let lib = args[1].clone();if ({
 // (null? lib)
 imports::null_p(&[lib.clone()])}).is_true() {{
@@ -2059,7 +2077,7 @@ imports::print(&[module.clone(),Scm::from("::")])}};{
 // (gen-libname module (cdr lib))
 gen_minus_libname.get().invoke(&[module.clone(),{
 // (cdr lib)
-imports::cdr(&[lib.clone()])}])}}}})});gen_minus_rust.set({// Closure
+imports::cdr(&[lib.clone()])}])}}}})});Scm::anything();gen_minus_rust.set({// Closure
 let gen_minus_libname = gen_minus_libname.clone();let lib = lib.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (print module "pub use crate::")
 imports::print(&[module.clone(),Scm::from("pub use crate::")])};{
@@ -2068,7 +2086,7 @@ gen_minus_libname.get().invoke(&[module.clone(),lib.clone()])};{
 // (print module "::exports::*;")
 imports::print(&[module.clone(),Scm::from("::exports::*;")])};{
 // (println module)
-imports::println(&[module.clone()])}}})});self_.set({// Closure
+imports::println(&[module.clone()])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -2095,7 +2113,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message IMPORT" msg)
-imports::error(&[Scm::from("Unknown message IMPORT"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message IMPORT"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_import_minus_only(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let lib = args[0].clone();let names = args[1].clone();{
@@ -2107,16 +2125,16 @@ let lib = lib.clone();let names = names.clone();Scm::func(move |args: &[Scm]|{if
 // (cons (quote IMPORT-ONLY) (cons lib names))
 imports::cons(&[Scm::symbol("IMPORT-ONLY"),{
 // (cons lib names)
-imports::cons(&[lib.clone(),names.clone()])}])}})});transform.set({// Closure
+imports::cons(&[lib.clone(),names.clone()])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let lib = lib.clone();let names = names.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-import-only lib names)))
 func.clone().invoke(&[self_.get(),{// Closure
 let lib = lib.clone();let names = names.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (make-import-only lib names)
-Scm::func(make_minus_import_minus_only).invoke(&[lib.clone(),names.clone()])}})}])}})});free_minus_vars.set({// Closure
+Scm::func(make_minus_import_minus_only).invoke(&[lib.clone(),names.clone()])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (make-set)
-imports::make_minus_set(&[])}})});gen_minus_libname.set({// Closure
+imports::make_minus_set(&[])}})});Scm::anything();gen_minus_libname.set({// Closure
 let gen_minus_libname = gen_minus_libname.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let lib = args[1].clone();if ({
 // (null? lib)
 imports::null_p(&[lib.clone()])}).is_true() {{
@@ -2139,7 +2157,7 @@ imports::print(&[module.clone(),Scm::from("::")])}};{
 // (gen-libname module (cdr lib))
 gen_minus_libname.get().invoke(&[module.clone(),{
 // (cdr lib)
-imports::cdr(&[lib.clone()])}])}}}})});gen_minus_imports.set({// Closure
+imports::cdr(&[lib.clone()])}])}}}})});Scm::anything();gen_minus_imports.set({// Closure
 let gen_minus_imports = gen_minus_imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 2{panic!("invalid arity")}let module = args[0].clone();let names = args[1].clone();if ({
 // (null? names)
 imports::null_p(&[names.clone()])}).is_true() {Scm::symbol("DONE")} else {{{
@@ -2154,7 +2172,7 @@ imports::print(&[module.clone(),Scm::from(", ")])};{
 // (gen-imports module (cdr names))
 gen_minus_imports.get().invoke(&[module.clone(),{
 // (cdr names)
-imports::cdr(&[names.clone()])}])}}}})});gen_minus_rust.set({// Closure
+imports::cdr(&[names.clone()])}])}}}})});Scm::anything();gen_minus_rust.set({// Closure
 let gen_minus_libname = gen_minus_libname.clone();let lib = lib.clone();let gen_minus_imports = gen_minus_imports.clone();let names = names.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (print module "pub use crate::")
 imports::print(&[module.clone(),Scm::from("pub use crate::")])};{
@@ -2167,7 +2185,7 @@ gen_minus_imports.get().invoke(&[module.clone(),names.clone()])};{
 // (print module "};")
 imports::print(&[module.clone(),Scm::from("};")])};{
 // (println module)
-imports::println(&[module.clone()])}}})});self_.set({// Closure
+imports::println(&[module.clone()])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -2194,7 +2212,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message IMPORT" msg)
-imports::error(&[Scm::from("Unknown message IMPORT"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message IMPORT"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}}.into()
 }
 pub fn make_minus_library(args: &[Scm]) -> Scm {
     {
@@ -2323,6 +2341,7 @@ pub fn make_minus_nop(args: &[Scm]) -> Scm {
                                                     Scm::pair(Scm::symbol("NOP"), Scm::Nil)
                                                 })
                                             });
+                                            Scm::anything();
                                             transform.set({
                                                 // Closure
                                                 let self_ = self_.clone();
@@ -2346,6 +2365,7 @@ pub fn make_minus_nop(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             free_minus_vars.set({
                                                 // Closure
                                                 Scm::func(move |args: &[Scm]| {
@@ -2358,6 +2378,7 @@ pub fn make_minus_nop(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             gen_minus_rust.set({
                                                 // Closure
                                                 Scm::func(move |args: &[Scm]| {
@@ -2374,6 +2395,7 @@ pub fn make_minus_nop(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.set({
                                                 // Closure
                                                 let repr = repr.clone();
@@ -2470,6 +2492,7 @@ pub fn make_minus_nop(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.get()
                                         }
                                     }
@@ -2523,6 +2546,7 @@ pub fn make_minus_null_minus_arg(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             transform.set({
                                                 // Closure
                                                 let self_ = self_.clone();
@@ -2546,6 +2570,7 @@ pub fn make_minus_null_minus_arg(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             free_minus_vars.set({
                                                 // Closure
                                                 Scm::func(move |args: &[Scm]| {
@@ -2558,6 +2583,7 @@ pub fn make_minus_null_minus_arg(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             gen_minus_rust.set({
                                                 // Closure
                                                 Scm::func(move |args: &[Scm]| {
@@ -2574,6 +2600,7 @@ pub fn make_minus_null_minus_arg(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.set({
                                                 // Closure
                                                 let repr = repr.clone();
@@ -2670,6 +2697,7 @@ pub fn make_minus_null_minus_arg(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.get()
                                         }
                                     }
@@ -2697,7 +2725,7 @@ imports::cons(&[globals.clone(),{
 // (cons imports (body (quote repr)))
 imports::cons(&[imports.clone(),{
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}])}])}})});transform.set({// Closure
+body.clone().invoke(&[Scm::symbol("repr")])}])}])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let globals = globals.clone();let imports = imports.clone();let init = init.clone();let body = body.clone();let libraries = libraries.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-program globals imports init (body (quote transform) func) libraries)))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -2705,13 +2733,13 @@ let globals = globals.clone();let imports = imports.clone();let init = init.clon
 // (make-program globals imports init (body (quote transform) func) libraries)
 Scm::func(make_minus_program).invoke(&[globals.clone(),imports.clone(),init.clone(),{
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"),func.clone()])},libraries.clone()])}})}])}})});gen_minus_imports.set({// Closure
+body.clone().invoke(&[Scm::symbol("transform"),func.clone()])},libraries.clone()])}})}])}})});Scm::anything();gen_minus_imports.set({// Closure
 let imports = imports.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (for-each (lambda (i) (i (quote gen-rust) module)) imports)
 imports::for_minus_each(&[{// Closure
 let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let i = args[0].clone();{
 // (i (quote gen-rust) module)
-i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},imports.clone()])}})});gen_minus_rust.set({// Closure
+i.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},imports.clone()])}})});Scm::anything();gen_minus_rust.set({// Closure
 let gen_minus_imports = gen_minus_imports.clone();let globals = globals.clone();let init = init.clone();let body = body.clone();let libraries = libraries.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (println module "#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};")
 imports::println(&[module.clone(),Scm::from("#[allow(unused_imports)] use sunny_core::{Mut, Scm, MEMORY_MODEL_KIND};")])};{
@@ -2770,7 +2798,7 @@ imports::println(&[module.clone(),Scm::from(";")])}}})}])};{
 // (println module)
 imports::println(&[module.clone()])};{
 // (rust-gen-modules module libraries)
-imports::rust_minus_gen_minus_modules(&[module.clone(),libraries.clone()])}}})});self_.set({// Closure
+imports::rust_minus_gen_minus_modules(&[module.clone(),libraries.clone()])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -2793,7 +2821,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message PROGRAM" msg)
-imports::error(&[Scm::from("Unknown message PROGRAM"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message PROGRAM"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_reference(args: &[Scm]) -> Scm {
     {if args.len() != 1{panic!("invalid arity")}let var = args[0].clone();{
@@ -2805,11 +2833,11 @@ let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("i
 // (list (quote GET) (variable-name var))
 imports::list(&[Scm::symbol("GET"),{
 // (variable-name var)
-imports::variable_minus_name(&[var.clone()])}])}})});transform.set({// Closure
+imports::variable_minus_name(&[var.clone()])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () self))
 func.clone().invoke(&[self_.get(),{// Closure
-let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}self_.get()})}])}})});free_minus_vars.set({// Closure
+let self_ = self_.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}self_.get()})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}if ({
 // (bor (global-variable? var) (global-function? var) (import-variable? var))
 imports::bor(&[{
@@ -2828,7 +2856,7 @@ imports::make_minus_set(&[])},{
 // (free-var-name (variable-name var))
 Scm::func(free_minus_var_minus_name).invoke(&[{
 // (variable-name var)
-imports::variable_minus_name(&[var.clone()])}])}])}}})});gen_minus_rust.set({// Closure
+imports::variable_minus_name(&[var.clone()])}])}])}}})});Scm::anything();gen_minus_rust.set({// Closure
 let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.get())")) ((global-function? var) (print module "Scm::func(" (rustify-identifier name) ")")) ((import-variable? var) (print module "Scm::func(imports::" (rustify-identifier name) ")")) ((boxed-variable? var) (print module (rustify-identifier name) ".get()")) (else (print module (rustify-identifier name) ".clone()"))))
 {let name = {
@@ -2863,7 +2891,7 @@ imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".get()")])}} else
 // (print module (rustify-identifier name) ".clone()")
 imports::print(&[module.clone(),{
 // (rustify-identifier name)
-imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".clone()")])}}}}}})});self_.set({// Closure
+imports::rustify_minus_identifier(&[name.clone()])},Scm::from(".clone()")])}}}}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -2896,7 +2924,7 @@ imports::variable_minus_name(&[var.clone()])}} else if ({
 // (eq? (quote get-var) msg)
 imports::eq_p(&[Scm::symbol("get-var"),msg.clone()])}).is_true() {var.clone()} else {{
 // (error "Unknown message REFERENCE" msg)
-imports::error(&[Scm::from("Unknown message REFERENCE"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message REFERENCE"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_sequence(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let first = args[0].clone();let next = args[1].clone();{
@@ -2910,7 +2938,7 @@ imports::list(&[Scm::symbol("SEQUENCE"),{
 // (first (quote repr))
 first.clone().invoke(&[Scm::symbol("repr")])},{
 // (next (quote repr))
-next.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+next.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let next = next.clone();let first = first.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (let* ((a (first (quote transform) func)) (b (next (quote transform) func))) (make-sequence a b))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -2926,14 +2954,14 @@ let b = {
 // (next (quote transform) func)
 next.clone().invoke(&[Scm::symbol("transform"),func.clone()])};{
 // (make-sequence a b)
-Scm::func(make_minus_sequence).invoke(&[a.clone(),b.clone()])}}}}})}])}})});free_minus_vars.set({// Closure
+Scm::func(make_minus_sequence).invoke(&[a.clone(),b.clone()])}}}}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let first = first.clone();let next = next.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-union (first (quote free-vars)) (next (quote free-vars)))
 imports::set_minus_union(&[{
 // (first (quote free-vars))
 first.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (next (quote free-vars))
-next.clone().invoke(&[Scm::symbol("free-vars")])}])}})});gen_minus_rust_minus_inner.set({// Closure
+next.clone().invoke(&[Scm::symbol("free-vars")])}])}})});Scm::anything();gen_minus_rust_minus_inner.set({// Closure
 let first = first.clone();let next = next.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (first (quote gen-rust) module)
 first.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])};{
@@ -2946,14 +2974,14 @@ next.clone().invoke(&[Scm::symbol("kind")])}])}).is_true() {{
 // (next (quote gen-rust-inner) module)
 next.clone().invoke(&[Scm::symbol("gen-rust-inner"),module.clone()])}} else {{
 // (next (quote gen-rust) module)
-next.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}}})});gen_minus_rust.set({// Closure
+next.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}}})});Scm::anything();gen_minus_rust.set({// Closure
 let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (print module "{")
 imports::print(&[module.clone(),Scm::from("{")])};{
 // (gen-rust-inner module)
 gen_minus_rust_minus_inner.get().invoke(&[module.clone()])};{
 // (print module "}")
-imports::print(&[module.clone(),Scm::from("}")])}}})});self_.set({// Closure
+imports::print(&[module.clone(),Scm::from("}")])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let gen_minus_rust_minus_inner = gen_minus_rust_minus_inner.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -2986,7 +3014,7 @@ gen_minus_rust_minus_inner.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message SEQUENCE" msg)
-imports::error(&[Scm::from("Unknown message SEQUENCE"),msg.clone()])}}}})});self_.get()}}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message SEQUENCE"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}}.into()
 }
 pub fn make_minus_testcase(args: &[Scm]) -> Scm {
     {
@@ -3036,6 +3064,7 @@ pub fn make_minus_testcase(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             transform.set({
                                                 // Closure
                                                 let self_ = self_.clone();
@@ -3079,6 +3108,7 @@ pub fn make_minus_testcase(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             free_minus_vars.set({
                                                 // Closure
                                                 Scm::func(move |args: &[Scm]| {
@@ -3091,6 +3121,7 @@ pub fn make_minus_testcase(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             gen_minus_rust.set({
                                                 // Closure
                                                 let description = description.clone();
@@ -3146,6 +3177,7 @@ pub fn make_minus_testcase(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.set({
                                                 // Closure
                                                 let repr = repr.clone();
@@ -3242,6 +3274,7 @@ pub fn make_minus_testcase(args: &[Scm]) -> Scm {
                                                     }
                                                 })
                                             });
+                                            Scm::anything();
                                             self_.get()
                                         }
                                     }
@@ -3263,7 +3296,7 @@ pub fn make_minus_testsuite(args: &[Scm]) -> Scm {
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let name = name.clone();let cases = cases.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (list (quote TESTSUITE) name cases)
-imports::list(&[Scm::symbol("TESTSUITE"),name.clone(),cases.clone()])}})});transform.set({// Closure
+imports::list(&[Scm::symbol("TESTSUITE"),name.clone(),cases.clone()])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let name = name.clone();let cases = cases.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-testsuite name (map (lambda (c) (c (quote transform) func)) cases))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -3274,10 +3307,10 @@ Scm::func(make_minus_testsuite).invoke(&[name.clone(),{
 imports::map(&[{// Closure
 let func = func.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let c = args[0].clone();{
 // (c (quote transform) func)
-c.clone().invoke(&[Scm::symbol("transform"),func.clone()])}})},cases.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+c.clone().invoke(&[Scm::symbol("transform"),func.clone()])}})},cases.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (make-set)
-imports::make_minus_set(&[])}})});gen_minus_rust.set({// Closure
+imports::make_minus_set(&[])}})});Scm::anything();gen_minus_rust.set({// Closure
 let cases = cases.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (println module "#[cfg(test)]")
 imports::println(&[module.clone(),Scm::from("#[cfg(test)]")])};{
@@ -3291,7 +3324,7 @@ let module = module.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{pan
 // (c (quote gen-rust) module)
 c.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}})},cases.clone()])};{
 // (println module "}")
-imports::println(&[module.clone(),Scm::from("}")])}}})});self_.set({// Closure
+imports::println(&[module.clone(),Scm::from("}")])}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -3318,7 +3351,7 @@ gen_minus_rust.get().invoke(&[{
 // (car args)
 imports::car(&[args_.clone()])}])}} else {{
 // (error "Unknown message TESTSUITE" msg)
-imports::error(&[Scm::from("Unknown message TESTSUITE"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message TESTSUITE"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn make_minus_vararg_minus_abstraction(args: &[Scm]) -> Scm {
     {if args.len() != 3{panic!("invalid arity")}let vars = args[0].clone();let varvar = args[1].clone();let body = args[2].clone();{
@@ -3330,7 +3363,7 @@ let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();Scm:
 // (list (quote VARARG-ABSTRACTION) vars varvar (body (quote repr)))
 imports::list(&[Scm::symbol("VARARG-ABSTRACTION"),vars.clone(),varvar.clone(),{
 // (body (quote repr))
-body.clone().invoke(&[Scm::symbol("repr")])}])}})});transform.set({// Closure
+body.clone().invoke(&[Scm::symbol("repr")])}])}})});Scm::anything();transform.set({// Closure
 let self_ = self_.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let func = args[0].clone();{
 // (func self (lambda () (make-vararg-abstraction vars varvar (body (quote transform) func))))
 func.clone().invoke(&[self_.get(),{// Closure
@@ -3338,7 +3371,7 @@ let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();let 
 // (make-vararg-abstraction vars varvar (body (quote transform) func))
 Scm::func(make_minus_vararg_minus_abstraction).invoke(&[vars.clone(),varvar.clone(),{
 // (body (quote transform) func)
-body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});free_minus_vars.set({// Closure
+body.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
 let body = body.clone();let varvar = varvar.clone();let vars = vars.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (set-remove* (body (quote free-vars)) (map free-var-name (map variable-name (cons varvar vars))))
 imports::set_minus_remove_star_(&[{
@@ -3349,7 +3382,7 @@ imports::map(&[Scm::func(free_minus_var_minus_name),{
 // (map variable-name (cons varvar vars))
 imports::map(&[Scm::func(imports::variable_minus_name),{
 // (cons varvar vars)
-imports::cons(&[varvar.clone(),vars.clone()])}])}])}])}})});gen_minus_rust.set({// Closure
+imports::cons(&[varvar.clone(),vars.clone()])}])}])}])}})});Scm::anything();gen_minus_rust.set({// Closure
 let varvar = varvar.clone();let vars = vars.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{
 // (letrec ((gen-params (lambda (p* k) (if (pair? p*) (begin (print module "let " (rustify-identifier (variable-name (car p*))) " = args[" k "].clone();") (gen-params (cdr p*) (+ k 1))) (begin (print module "let " (rustify-identifier (variable-name varvar)) " = Scm::list(&args[" k "..]);")))))) (rust-block module (lambda () (print module "if args.len() < " (length vars) "{panic!(\"not enough args\")}") (gen-params vars 0) (body (quote gen-rust) module))))
 {
@@ -3377,7 +3410,7 @@ imports::print(&[module.clone(),Scm::from("let "),{
 // (rustify-identifier (variable-name varvar))
 imports::rustify_minus_identifier(&[{
 // (variable-name varvar)
-imports::variable_minus_name(&[varvar.clone()])}])},Scm::from(" = Scm::list(&args["),k.clone(),Scm::from("..]);")])}}})});{
+imports::variable_minus_name(&[varvar.clone()])}])},Scm::from(" = Scm::list(&args["),k.clone(),Scm::from("..]);")])}}})});Scm::anything();{
 // (rust-block module (lambda () (print module "if args.len() < " (length vars) "{panic!(\"not enough args\")}") (gen-params vars 0) (body (quote gen-rust) module)))
 imports::rust_minus_block(&[module.clone(),{// Closure
 let module = module.clone();let vars = vars.clone();let gen_minus_params = gen_minus_params.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{{
@@ -3388,7 +3421,7 @@ imports::length(&[vars.clone()])},Scm::from("{panic!(\"not enough args\")}")])};
 // (gen-params vars 0)
 gen_minus_params.get().invoke(&[vars.clone(),Scm::from(0)])};{
 // (body (quote gen-rust) module)
-body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}}}}}}})});self_.set({// Closure
+body.clone().invoke(&[Scm::symbol("gen-rust"),module.clone()])}}})}])}}}}}}})});Scm::anything();self_.set({// Closure
 let repr = repr.clone();let transform = transform.clone();let free_minus_vars = free_minus_vars.clone();let gen_minus_rust = gen_minus_rust.clone();let vars = vars.clone();let varvar = varvar.clone();let body = body.clone();Scm::func(move |args: &[Scm]|{if args.len() < 1{panic!("not enough args")}let msg = args[0].clone();let args_ = Scm::list(&args[1..]);{
 // (cond ...)
 if ({
@@ -3429,7 +3462,7 @@ imports::eq_p(&[Scm::symbol("get-varvar"),msg.clone()])}).is_true() {varvar.clon
 // (eq? (quote get-body) msg)
 imports::eq_p(&[Scm::symbol("get-body"),msg.clone()])}).is_true() {body.clone()} else {{
 // (error "Unknown message VARARG-ABSTRACTION" msg)
-imports::error(&[Scm::from("Unknown message VARARG-ABSTRACTION"),msg.clone()])}}}})});self_.get()}}}}}}}}}}.into()
+imports::error(&[Scm::from("Unknown message VARARG-ABSTRACTION"),msg.clone()])}}}})});Scm::anything();self_.get()}}}}}}}}}}.into()
 }
 pub fn procedure_minus_node_p(args: &[Scm]) -> Scm {
     {

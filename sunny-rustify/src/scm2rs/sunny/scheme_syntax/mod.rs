@@ -718,6 +718,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 transform.set({
                                     // Closure
                                     let transform = transform.clone();
@@ -772,6 +773,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 {
                                     // (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))
                                     {

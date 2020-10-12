@@ -230,6 +230,7 @@ pub fn adjoin_minus_import_star__i(args: &[Scm]) -> Scm {
                                     }
                                 })
                             });
+                            Scm::anything();
                             {
                                 // (loop name* (find-globals env))
                                 loop_.get().invoke(&[name_star_.clone(), {

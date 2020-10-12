@@ -466,7 +466,8 @@ pub fn initialize() {
                     // (make-table)
                     imports::make_minus_table(&[])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! Keyword (quote __name__) (quote Keyword))
@@ -483,7 +484,8 @@ pub fn initialize() {
                     // (make-table)
                     imports::make_minus_table(&[])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! Variable (quote __name__) (quote Variable))
@@ -552,7 +554,8 @@ pub fn initialize() {
                     // (clone Variable)
                     imports::clone(&[Variable.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! GlobalVariable (quote __name__) (quote GlobalVariable))
@@ -604,7 +607,8 @@ pub fn initialize() {
                     // (clone Variable)
                     imports::clone(&[Variable.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! GlobalFunction (quote __name__) (quote GlobalFunction))
@@ -645,7 +649,8 @@ pub fn initialize() {
                     // (clone Variable)
                     imports::clone(&[Variable.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! UndefinedGlobal (quote __name__) (quote UndefinedGlobal))
@@ -786,7 +791,8 @@ pub fn initialize() {
                     // (clone Variable)
                     imports::clone(&[Variable.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! ImportedVariable (quote __name__) (quote ImportedVariable))
@@ -840,7 +846,8 @@ pub fn initialize() {
                     // (clone Variable)
                     imports::clone(&[Variable.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! LocalVariable (quote __name__) (quote LocalVariable))
@@ -917,7 +924,8 @@ pub fn initialize() {
                     // (clone LocalVariable)
                     imports::clone(&[LocalVariable.with(|value| value.get())])
                 })
-            })
+            });
+            Scm::anything()
         };
         {
             // (set-field! BoxedVariable (quote __name__) (quote BoxedVariable))

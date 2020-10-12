@@ -122,6 +122,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 append_minus_all.set({
                                     // Closure
                                     let append_minus_all = append_minus_all.clone();
@@ -157,6 +158,7 @@ pub fn rustify_minus_identifier(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 {
                                     // (cond ...)
                                     if ({
@@ -322,6 +324,7 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 append_minus_all.set({
                                     // Closure
                                     let append_minus_all = append_minus_all.clone();
@@ -357,6 +360,7 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 {
                                     // (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))
                                     {
@@ -463,6 +467,7 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 append_minus_all.set({
                                     // Closure
                                     let append_minus_all = append_minus_all.clone();
@@ -498,6 +503,7 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                         }
                                     })
                                 });
+                                Scm::anything();
                                 {
                                     // (append-all (filter (lambda (x) x) (map char-map (string->list name))))
                                     append_minus_all.get().invoke(&[{

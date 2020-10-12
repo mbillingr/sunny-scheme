@@ -7,16 +7,27 @@
         (sunny ast-transforms boxify)
         (sunny ast-transforms close-procedures)
         (sunny ast-transforms extract-definitions)
+        (sunny ast-transforms rename-vars)
         (sunny astify-toplevel)
         (sunny rust codegen)
         (sunny table)
         (testsuite))
 
+;(define UNIQUE-COUNT 0)
+;(define (unique-name name)
+;  (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
+;  (string-append name
+;                 "_"
+;                 (number->string UNIQUE-COUNT)))
+
 (define (rust-pipeline scheme-ast)
-  (extract-definitions
-    (boxify
-      (close-procedures
-        scheme-ast))))
+  (rename-vars (lambda (name)
+                 ;(unique-name
+                   (if (string? name) name (symbol->string name)))
+    (extract-definitions
+      (boxify
+        (close-procedures
+          scheme-ast)))))
 
 (define args (command-line))
 

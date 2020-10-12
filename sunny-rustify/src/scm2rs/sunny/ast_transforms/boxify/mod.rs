@@ -159,6 +159,7 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                     }
                                 })
                             });
+                            Scm::anything();
                             {
                                 // (node (quote transform) transform)
                                 node.clone()
