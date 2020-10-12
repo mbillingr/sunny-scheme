@@ -1035,9 +1035,9 @@ pub fn make_minus_assert(args: &[Scm]) -> Scm {
 }
 pub fn make_minus_assignment(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let var = args[0].clone();let val = args[1].clone();{
-// (letrec ((repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var)))) (print module "Scm::anything()"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg)))))) self)
+// (letrec ((repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (free-vars (lambda () (if (bor (global-variable? var) (global-function? var) (import-variable? var)) (make-set) (set-add (val (quote free-vars)) (free-var-name (variable-name var)))))) (gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var)))) (print module "Scm::anything()"))) (self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg)))))) self)
 {
-// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (set! free-vars (lambda () (set-add (val (quote free-vars)) (free-var-name (variable-name var))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var)))) (print module "Scm::anything()"))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg))))) self))
+// (let ((repr (quote *uninitialized*)) (transform (quote *uninitialized*)) (free-vars (quote *uninitialized*)) (gen-rust (quote *uninitialized*)) (self (quote *uninitialized*))) (begin (set! repr (lambda () (list (quote SET!) (variable-name var) (val (quote repr))))) (set! transform (lambda (func) (func self (lambda () (make-assignment var (val (quote transform) func)))))) (set! free-vars (lambda () (if (bor (global-variable? var) (global-function? var) (import-variable? var)) (make-set) (set-add (val (quote free-vars)) (free-var-name (variable-name var)))))) (set! gen-rust (lambda (module) (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var)))) (print module "Scm::anything()"))) (set! self (lambda (msg . args) (cond ((eq? (quote repr) msg) (repr)) ((eq? (quote transform) msg) (transform (car args))) ((eq? (quote free-vars) msg) (free-vars)) ((eq? (quote kind) msg) (quote ASSIGNMENT)) ((eq? (quote gen-rust) msg) (gen-rust (car args))) (else (error "Unknown message ASSIGNMENT" msg))))) self))
 {let [repr, transform, free_minus_vars, gen_minus_rust, self_, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let self_ = self_.into_boxed();{let gen_minus_rust = gen_minus_rust.into_boxed();{let free_minus_vars = free_minus_vars.into_boxed();{let transform = transform.into_boxed();{let repr = repr.into_boxed();{repr.set({// Closure
 let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
 // (list (quote SET!) (variable-name var) (val (quote repr)))
@@ -1054,7 +1054,17 @@ let var = var.clone();let val = val.clone();let func = func.clone();Scm::func(mo
 Scm::func(make_minus_assignment).invoke(&[var.clone(),{
 // (val (quote transform) func)
 val.clone().invoke(&[Scm::symbol("transform"),func.clone()])}])}})}])}})});Scm::anything();free_minus_vars.set({// Closure
-let val = val.clone();let var = var.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}{
+let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 0{panic!("invalid arity")}if ({
+// (bor (global-variable? var) (global-function? var) (import-variable? var))
+imports::bor(&[{
+// (global-variable? var)
+imports::global_minus_variable_p(&[var.clone()])},{
+// (global-function? var)
+imports::global_minus_function_p(&[var.clone()])},{
+// (import-variable? var)
+imports::import_minus_variable_p(&[var.clone()])}])}).is_true() {{
+// (make-set)
+imports::make_minus_set(&[])}} else {{
 // (set-add (val (quote free-vars)) (free-var-name (variable-name var)))
 imports::set_minus_add(&[{
 // (val (quote free-vars))
@@ -1062,7 +1072,7 @@ val.clone().invoke(&[Scm::symbol("free-vars")])},{
 // (free-var-name (variable-name var))
 Scm::func(free_minus_var_minus_name).invoke(&[{
 // (variable-name var)
-imports::variable_minus_name(&[var.clone()])}])}])}})});Scm::anything();gen_minus_rust.set({// Closure
+imports::variable_minus_name(&[var.clone()])}])}])}}})});Scm::anything();gen_minus_rust.set({// Closure
 let var = var.clone();let val = val.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let module = args[0].clone();{{
 // (let ((name (variable-name var))) (cond ((global-variable? var) (print module (rustify-identifier name) ".with(|value| value.set(") (val (quote gen-rust) module) (print module "));")) ((boxed-variable? var) (print module (rustify-identifier name) ".set(") (val (quote gen-rust) module) (print module ");")) (else (error "set! on unboxed variable" name var))))
 {let name = {
