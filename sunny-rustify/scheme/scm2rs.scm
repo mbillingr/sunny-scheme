@@ -4,10 +4,19 @@
         (scheme read)
         (scheme write)
         (only (scheme process-context) command-line)
+        (sunny ast-transforms boxify)
+        (sunny ast-transforms close-procedures)
+        (sunny ast-transforms extract-definitions)
         (sunny astify-toplevel)
         (sunny rust codegen)
         (sunny table)
         (testsuite))
+
+(define (rust-pipeline scheme-ast)
+  (extract-definitions
+    (boxify
+      (close-procedures
+        scheme-ast))))
 
 (define args (command-line))
 
@@ -37,7 +46,7 @@
 
 (define program (load-sexpr))
 
-(define ast (astify-toplevel program))
+(define ast (astify-toplevel program rust-pipeline))
 
 (rust-gen-in-module output-module-name output-dir
   (lambda (module)

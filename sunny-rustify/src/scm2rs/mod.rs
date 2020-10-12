@@ -7,6 +7,9 @@ mod imports {
     pub use crate::scheme::process_context::exports::command_minus_line;
     pub use crate::scheme::read::exports::*;
     pub use crate::scheme::write::exports::*;
+    pub use crate::sunny::ast_transforms::boxify::exports::*;
+    pub use crate::sunny::ast_transforms::close_procedures::exports::*;
+    pub use crate::sunny::ast_transforms::extract_definitions::exports::*;
     pub use crate::sunny::astify_toplevel::exports::*;
     pub use crate::sunny::rust::codegen::exports::*;
     pub use crate::sunny::table::exports::*;
@@ -53,6 +56,25 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
 thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_dir: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-dir"))}
 thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_module_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-module-name"))}
 thread_local! {#[allow(non_upper_case_globals)] pub static program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE program"))}
+pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
+    {
+        if args.len() != 1 {
+            panic!("invalid arity")
+        }
+        let scheme_minus_ast = args[0].clone();
+        {
+            // (extract-definitions (boxify (close-procedures scheme-ast)))
+            imports::extract_minus_definitions(&[{
+                // (boxify (close-procedures scheme-ast))
+                imports::boxify(&[{
+                    // (close-procedures scheme-ast)
+                    imports::close_minus_procedures(&[scheme_minus_ast.clone()])
+                }])
+            }])
+        }
+    }
+    .into()
+}
 
 pub fn main() {
     eprintln!("built with");
@@ -64,11 +86,18 @@ pub fn main() {
     crate::scheme::read::initialize();
     crate::scheme::write::initialize();
     crate::scheme::process_context::initialize();
+    crate::sunny::ast_transforms::boxify::initialize();
+    crate::sunny::ast_transforms::close_procedures::initialize();
+    crate::sunny::ast_transforms::extract_definitions::initialize();
     crate::sunny::astify_toplevel::initialize();
     crate::sunny::rust::codegen::initialize();
     crate::sunny::table::initialize();
     crate::testsuite::initialize();
     {
+        {
+            // (define (rust-pipeline scheme-ast) ...)
+            (/*NOP*/)
+        };
         {
             // (define args (command-line))
             args_.with(|value| {
@@ -176,11 +205,14 @@ pub fn main() {
             })
         };
         {
-            // (define ast (astify-toplevel program))
+            // (define ast (astify-toplevel program rust-pipeline))
             ast.with(|value| {
                 value.set({
-                    // (astify-toplevel program)
-                    imports::astify_minus_toplevel(&[program.with(|value| value.get())])
+                    // (astify-toplevel program rust-pipeline)
+                    imports::astify_minus_toplevel(&[
+                        program.with(|value| value.get()),
+                        Scm::func(rust_minus_pipeline),
+                    ])
                 })
             })
         };
