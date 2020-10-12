@@ -35,6 +35,10 @@ pub enum Scm {
 }
 
 impl Scm {
+    pub fn anything() -> Self {
+        Scm::symbol("*UNSPECIFIED*")
+    }
+
     pub fn uninitialized() -> Self {
         Scm::symbol("*UNINITIALIZED*")
     }
