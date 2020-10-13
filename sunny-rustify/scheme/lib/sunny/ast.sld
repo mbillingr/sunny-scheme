@@ -369,6 +369,7 @@
               ((eq? 'free-vars msg) (free-vars))
               ((eq? 'kind msg) 'FN-APPLICATION)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
+              ((eq? 'get-var msg) var)
               (else (error "Unknown message FN-APPLICATION" msg))))
       self)
 

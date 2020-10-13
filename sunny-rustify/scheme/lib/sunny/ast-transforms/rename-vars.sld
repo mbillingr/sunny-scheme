@@ -23,6 +23,10 @@
         (cond ((eq? (node 'kind) 'REFERENCE)
                (do-rename! (node 'get-var)))
               ((eq? (node 'kind) 'ASSIGNMENT)
+               (do-rename! (node 'get-var)))
+              ((eq? (node 'kind) 'DEFINITION)
+               (do-rename! (node 'get-var)))
+              ((eq? (node 'kind) 'FN-APPLICATION)
                (do-rename! (node 'get-var))))
         (transform-children))
 

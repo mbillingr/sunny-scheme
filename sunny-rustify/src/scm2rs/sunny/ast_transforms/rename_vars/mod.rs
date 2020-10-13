@@ -12,9 +12,9 @@ pub mod exports {
 
 pub fn rename_minus_vars(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let rename__0 = args[0].clone();let node__18 = args[1].clone();{
-// (letrec ((renamed (quote ())) (renamed? (lambda (var) (memq var renamed))) (do-rename! (lambda (var) (if (renamed? var) (quote DONE) (begin (variable-set-name! var (rename (variable-name var) var)) (set! renamed (cons var renamed)))))) (transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote REFERENCE)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote ASSIGNMENT)) (do-rename! (node (quote get-var))))) (transform-children)))) (node (quote transform) transform))
+// (letrec ((renamed (quote ())) (renamed? (lambda (var) (memq var renamed))) (do-rename! (lambda (var) (if (renamed? var) (quote DONE) (begin (variable-set-name! var (rename (variable-name var) var)) (set! renamed (cons var renamed)))))) (transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote REFERENCE)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote ASSIGNMENT)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote DEFINITION)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote FN-APPLICATION)) (do-rename! (node (quote get-var))))) (transform-children)))) (node (quote transform) transform))
 {
-// (let ((renamed (quote *uninitialized*)) (renamed? (quote *uninitialized*)) (do-rename! (quote *uninitialized*)) (transform (quote *uninitialized*))) (begin (set! renamed (quote ())) (set! renamed? (lambda (var) (memq var renamed))) (set! do-rename! (lambda (var) (if (renamed? var) (quote DONE) (begin (variable-set-name! var (rename (variable-name var) var)) (set! renamed (cons var renamed)))))) (set! transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote REFERENCE)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote ASSIGNMENT)) (do-rename! (node (quote get-var))))) (transform-children))) (node (quote transform) transform)))
+// (let ((renamed (quote *uninitialized*)) (renamed? (quote *uninitialized*)) (do-rename! (quote *uninitialized*)) (transform (quote *uninitialized*))) (begin (set! renamed (quote ())) (set! renamed? (lambda (var) (memq var renamed))) (set! do-rename! (lambda (var) (if (renamed? var) (quote DONE) (begin (variable-set-name! var (rename (variable-name var) var)) (set! renamed (cons var renamed)))))) (set! transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote REFERENCE)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote ASSIGNMENT)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote DEFINITION)) (do-rename! (node (quote get-var)))) ((eq? (node (quote kind)) (quote FN-APPLICATION)) (do-rename! (node (quote get-var))))) (transform-children))) (node (quote transform) transform)))
 {let [renamed__0, renamed_p__0, do_minus_rename_i__0, transform__28, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let transform__28 = transform__28.into_boxed();{let do_minus_rename_i__0 = do_minus_rename_i__0.into_boxed();{let renamed_p__0 = renamed_p__0.into_boxed();{let renamed__0 = renamed__0.into_boxed();{renamed__0.set(Scm::Nil);Scm::anything();renamed_p__0.set({// Closure
 let renamed__0 = renamed__0.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let var__21 = args[0].clone();{
 // (memq var renamed)
@@ -45,6 +45,22 @@ node__17.clone().invoke(&[Scm::symbol("get-var")])}])}} else if ({
 imports::eq_p(&[{
 // (node (quote kind))
 node__17.clone().invoke(&[Scm::symbol("kind")])},Scm::symbol("ASSIGNMENT")])}).is_true() {{
+// (do-rename! (node (quote get-var)))
+do_minus_rename_i__0.get().invoke(&[{
+// (node (quote get-var))
+node__17.clone().invoke(&[Scm::symbol("get-var")])}])}} else if ({
+// (eq? (node (quote kind)) (quote DEFINITION))
+imports::eq_p(&[{
+// (node (quote kind))
+node__17.clone().invoke(&[Scm::symbol("kind")])},Scm::symbol("DEFINITION")])}).is_true() {{
+// (do-rename! (node (quote get-var)))
+do_minus_rename_i__0.get().invoke(&[{
+// (node (quote get-var))
+node__17.clone().invoke(&[Scm::symbol("get-var")])}])}} else if ({
+// (eq? (node (quote kind)) (quote FN-APPLICATION))
+imports::eq_p(&[{
+// (node (quote kind))
+node__17.clone().invoke(&[Scm::symbol("kind")])},Scm::symbol("FN-APPLICATION")])}).is_true() {{
 // (do-rename! (node (quote get-var)))
 do_minus_rename_i__0.get().invoke(&[{
 // (node (quote get-var))
