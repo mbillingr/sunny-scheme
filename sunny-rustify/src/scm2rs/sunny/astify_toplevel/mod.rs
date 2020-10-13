@@ -24,9 +24,9 @@ pub mod exports {
 
 pub fn astify_minus_library(args: &[Scm]) -> Scm {
     {if args.len() != 4{panic!("invalid arity")}let name__44 = args[0].clone();let exp_star___7 = args[1].clone();let library_minus_env__0 = args[2].clone();let ast_minus_transform__1 = args[3].clone();{
-// (letrec ((init (make-set)) (body (make-nop)) (global-env (make-core-env)) (imports (quote ())) (exports (quote ())) (process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env ast-transform) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*))))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports exports))))
+// (letrec ((init (make-set)) (body (make-nop)) (global-env (make-core-env)) (imports (quote ())) (exports (quote ())) (process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (cdar exp*))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env ast-transform) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*))))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports (astify-export exports global-env)))))
 {
-// (let ((init (quote *uninitialized*)) (body (quote *uninitialized*)) (global-env (quote *uninitialized*)) (imports (quote *uninitialized*)) (exports (quote *uninitialized*)) (process-library-decls (quote *uninitialized*))) (begin (set! init (make-set)) (set! body (make-nop)) (set! global-env (make-core-env)) (set! imports (quote ())) (set! exports (quote ())) (set! process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (astify-export (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env ast-transform) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*)))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports exports)))))
+// (let ((init (quote *uninitialized*)) (body (quote *uninitialized*)) (global-env (quote *uninitialized*)) (imports (quote *uninitialized*)) (exports (quote *uninitialized*)) (process-library-decls (quote *uninitialized*))) (begin (set! init (make-set)) (set! body (make-nop)) (set! global-env (make-core-env)) (set! imports (quote ())) (set! exports (quote ())) (set! process-library-decls (lambda (exp*) (cond ((null? exp*) (quote DONE)) ((eq? (quote export) (caar exp*)) (set! exports (append exports (cdar exp*))) (process-library-decls (cdr exp*))) ((import? (car exp*)) (register-libraries (import-libnames (car exp*)) library-env ast-transform) (set! init (set-add* init (import-libnames (car exp*)))) (set! imports (append imports (astify-import (cdar exp*) global-env))) (process-library-decls (cdr exp*))) ((eq? (quote begin) (caar exp*)) (set! body (make-sequence body (astify-sequence (cdar exp*) global-env #f))) (process-library-decls (cdr exp*)))))) (process-library-decls exp*) (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports (astify-export exports global-env))))))
 {let [init__6, body__21, global_minus_env__0, imports__4, exports__4, process_minus_library_minus_decls__0, ] = [Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*"),Scm::symbol("*uninitialized*")];{let process_minus_library_minus_decls__0 = process_minus_library_minus_decls__0.into_boxed();{let exports__4 = exports__4.into_boxed();{let imports__4 = imports__4.into_boxed();{let global_minus_env__0 = global_minus_env__0.into_boxed();{let body__21 = body__21.into_boxed();{let init__6 = init__6.into_boxed();{init__6.set({
 // (make-set)
 imports::make_minus_set(&[])});Scm::anything();body__21.set({
@@ -34,7 +34,7 @@ imports::make_minus_set(&[])});Scm::anything();body__21.set({
 imports::make_minus_nop(&[])});Scm::anything();global_minus_env__0.set({
 // (make-core-env)
 imports::make_minus_core_minus_env(&[])});Scm::anything();imports__4.set(Scm::Nil);Scm::anything();exports__4.set(Scm::Nil);Scm::anything();process_minus_library_minus_decls__0.set({// Closure
-let exports__4 = exports__4.clone();let global_minus_env__0 = global_minus_env__0.clone();let process_minus_library_minus_decls__0 = process_minus_library_minus_decls__0.clone();let library_minus_env__0 = library_minus_env__0.clone();let ast_minus_transform__1 = ast_minus_transform__1.clone();let init__6 = init__6.clone();let imports__4 = imports__4.clone();let body__21 = body__21.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star___6 = args[0].clone();{
+let exports__4 = exports__4.clone();let process_minus_library_minus_decls__0 = process_minus_library_minus_decls__0.clone();let library_minus_env__0 = library_minus_env__0.clone();let ast_minus_transform__1 = ast_minus_transform__1.clone();let init__6 = init__6.clone();let imports__4 = imports__4.clone();let global_minus_env__0 = global_minus_env__0.clone();let body__21 = body__21.clone();Scm::func(move |args: &[Scm]|{if args.len() != 1{panic!("invalid arity")}let exp_star___6 = args[0].clone();{
 // (cond ...)
 if ({
 // (null? exp*)
@@ -43,12 +43,10 @@ imports::null_p(&[exp_star___6.clone()])}).is_true() {Scm::symbol("DONE")} else 
 imports::eq_p(&[Scm::symbol("export"),{
 // (caar exp*)
 imports::caar(&[exp_star___6.clone()])}])}).is_true() {{exports__4.set({
-// (append exports (astify-export (cdar exp*) global-env))
+// (append exports (cdar exp*))
 imports::append(&[exports__4.get(),{
-// (astify-export (cdar exp*) global-env)
-imports::astify_minus_export(&[{
 // (cdar exp*)
-imports::cdar(&[exp_star___6.clone()])},global_minus_env__0.get()])}])});Scm::anything();{
+imports::cdar(&[exp_star___6.clone()])}])});Scm::anything();{
 // (process-library-decls (cdr exp*))
 process_minus_library_minus_decls__0.get().invoke(&[{
 // (cdr exp*)
@@ -95,9 +93,9 @@ process_minus_library_minus_decls__0.get().invoke(&[{
 imports::cdr(&[exp_star___6.clone()])}])}}} else {Scm::symbol("*UNSPECIFIED*")}}})});Scm::anything();{
 // (process-library-decls exp*)
 process_minus_library_minus_decls__0.get().invoke(&[exp_star___7.clone()])};{
-// (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports exports)))
+// (let* ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (ast-transform (make-library name globals init body imports (astify-export exports global-env))))
 {
-// (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (ast-transform (make-library name globals init body imports exports))))
+// (let ((globals (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env)))) (begin (ast-transform (make-library name globals init body imports (astify-export exports global-env)))))
 {let globals__3 = {
 // (sort (lambda (a b) (string<? (variable-name a) (variable-name b))) (cdr global-env))
 imports::sort(&[{// Closure
@@ -110,10 +108,12 @@ imports::variable_minus_name(&[a__6.clone()])},{
 imports::variable_minus_name(&[b__2.clone()])}])}})},{
 // (cdr global-env)
 imports::cdr(&[global_minus_env__0.get()])}])};{
-// (ast-transform (make-library name globals init body imports exports))
+// (ast-transform (make-library name globals init body imports (astify-export exports global-env)))
 ast_minus_transform__1.clone().invoke(&[{
-// (make-library name globals init body imports exports)
-imports::make_minus_library(&[name__44.clone(),globals__3.clone(),init__6.get(),body__21.get(),imports__4.get(),exports__4.get()])}])}}}}}}}}}}}}}}}.into()
+// (make-library name globals init body imports (astify-export exports global-env))
+imports::make_minus_library(&[name__44.clone(),globals__3.clone(),init__6.get(),body__21.get(),imports__4.get(),{
+// (astify-export exports global-env)
+imports::astify_minus_export(&[exports__4.get(),global_minus_env__0.get()])}])}])}}}}}}}}}}}}}}}.into()
 }
 pub fn astify_minus_program(args: &[Scm]) -> Scm {
     {if args.len() != 2{panic!("invalid arity")}let exp_star___9 = args[0].clone();let ast_minus_transform__2 = args[1].clone();{

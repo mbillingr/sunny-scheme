@@ -36,7 +36,7 @@
         (cond ((null? exp*)
                'DONE)
               ((eq? 'export (caar exp*))
-               (set! exports (append exports (astify-export (cdar exp*) global-env)))
+               (set! exports (append exports (cdar exp*)))
                (process-library-decls (cdr exp*)))
               ((import? (car exp*))
                (register-libraries (import-libnames (car exp*)) library-env ast-transform)
@@ -54,7 +54,7 @@
                                         (variable-name b)))
                             (cdr global-env))))
         (ast-transform
-          (make-library name globals init body imports exports))))
+          (make-library name globals init body imports (astify-export exports global-env)))))
 
 
     (define (astify-program exp* ast-transform)
