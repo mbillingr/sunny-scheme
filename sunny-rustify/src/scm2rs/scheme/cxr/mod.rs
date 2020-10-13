@@ -36,12 +36,12 @@ pub fn caaaar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__57 = args[0].clone();
+        let x__12 = args[0].clone();
         {
             // (caar (caar x))
             imports::caar(&[{
                 // (caar x)
-                imports::caar(&[x__57.clone()])
+                imports::caar(&[x__12.clone()])
             }])
         }
     }
@@ -52,12 +52,12 @@ pub fn caaadr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__58 = args[0].clone();
+        let x__13 = args[0].clone();
         {
             // (caar (cadr x))
             imports::caar(&[{
                 // (cadr x)
-                imports::cadr(&[x__58.clone()])
+                imports::cadr(&[x__13.clone()])
             }])
         }
     }
@@ -68,12 +68,12 @@ pub fn caaar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__49 = args[0].clone();
+        let x__4 = args[0].clone();
         {
             // (car (caar x))
             imports::car(&[{
                 // (caar x)
-                imports::caar(&[x__49.clone()])
+                imports::caar(&[x__4.clone()])
             }])
         }
     }
@@ -84,12 +84,12 @@ pub fn caadar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__59 = args[0].clone();
+        let x__14 = args[0].clone();
         {
             // (caar (cdar x))
             imports::caar(&[{
                 // (cdar x)
-                imports::cdar(&[x__59.clone()])
+                imports::cdar(&[x__14.clone()])
             }])
         }
     }
@@ -100,12 +100,12 @@ pub fn caaddr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__60 = args[0].clone();
+        let x__15 = args[0].clone();
         {
             // (caar (cddr x))
             imports::caar(&[{
                 // (cddr x)
-                imports::cddr(&[x__60.clone()])
+                imports::cddr(&[x__15.clone()])
             }])
         }
     }
@@ -116,12 +116,12 @@ pub fn caadr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__50 = args[0].clone();
+        let x__5 = args[0].clone();
         {
             // (car (cadr x))
             imports::car(&[{
                 // (cadr x)
-                imports::cadr(&[x__50.clone()])
+                imports::cadr(&[x__5.clone()])
             }])
         }
     }
@@ -132,12 +132,12 @@ pub fn cadaar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__61 = args[0].clone();
+        let x__16 = args[0].clone();
         {
             // (cadr (caar x))
             imports::cadr(&[{
                 // (caar x)
-                imports::caar(&[x__61.clone()])
+                imports::caar(&[x__16.clone()])
             }])
         }
     }
@@ -148,12 +148,12 @@ pub fn cadadr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__62 = args[0].clone();
+        let x__17 = args[0].clone();
         {
             // (cadr (cadr x))
             imports::cadr(&[{
                 // (cadr x)
-                imports::cadr(&[x__62.clone()])
+                imports::cadr(&[x__17.clone()])
             }])
         }
     }
@@ -164,12 +164,12 @@ pub fn cadar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__51 = args[0].clone();
+        let x__6 = args[0].clone();
         {
             // (car (cdar x))
             imports::car(&[{
                 // (cdar x)
-                imports::cdar(&[x__51.clone()])
+                imports::cdar(&[x__6.clone()])
             }])
         }
     }
@@ -180,12 +180,12 @@ pub fn caddar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__63 = args[0].clone();
+        let x__18 = args[0].clone();
         {
             // (cadr (cdar x))
             imports::cadr(&[{
                 // (cdar x)
-                imports::cdar(&[x__63.clone()])
+                imports::cdar(&[x__18.clone()])
             }])
         }
     }
@@ -196,12 +196,12 @@ pub fn cadddr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__64 = args[0].clone();
+        let x__19 = args[0].clone();
         {
             // (cadr (cddr x))
             imports::cadr(&[{
                 // (cddr x)
-                imports::cddr(&[x__64.clone()])
+                imports::cddr(&[x__19.clone()])
             }])
         }
     }
@@ -212,12 +212,12 @@ pub fn caddr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__52 = args[0].clone();
+        let x__7 = args[0].clone();
         {
             // (car (cddr x))
             imports::car(&[{
                 // (cddr x)
-                imports::cddr(&[x__52.clone()])
+                imports::cddr(&[x__7.clone()])
             }])
         }
     }
@@ -228,12 +228,12 @@ pub fn cdaaar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__65 = args[0].clone();
+        let x__20 = args[0].clone();
         {
             // (cdar (caar x))
             imports::cdar(&[{
                 // (caar x)
-                imports::caar(&[x__65.clone()])
+                imports::caar(&[x__20.clone()])
             }])
         }
     }
@@ -244,12 +244,12 @@ pub fn cdaadr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__66 = args[0].clone();
+        let x__21 = args[0].clone();
         {
             // (cdar (cadr x))
             imports::cdar(&[{
                 // (cadr x)
-                imports::cadr(&[x__66.clone()])
+                imports::cadr(&[x__21.clone()])
             }])
         }
     }
@@ -260,12 +260,12 @@ pub fn cdaar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__53 = args[0].clone();
+        let x__8 = args[0].clone();
         {
             // (cdr (caar x))
             imports::cdr(&[{
                 // (caar x)
-                imports::caar(&[x__53.clone()])
+                imports::caar(&[x__8.clone()])
             }])
         }
     }
@@ -276,12 +276,12 @@ pub fn cdadar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__67 = args[0].clone();
+        let x__22 = args[0].clone();
         {
             // (cdar (cdar x))
             imports::cdar(&[{
                 // (cdar x)
-                imports::cdar(&[x__67.clone()])
+                imports::cdar(&[x__22.clone()])
             }])
         }
     }
@@ -292,12 +292,12 @@ pub fn cdaddr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__68 = args[0].clone();
+        let x__23 = args[0].clone();
         {
             // (cdar (cddr x))
             imports::cdar(&[{
                 // (cddr x)
-                imports::cddr(&[x__68.clone()])
+                imports::cddr(&[x__23.clone()])
             }])
         }
     }
@@ -308,12 +308,12 @@ pub fn cdadr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__54 = args[0].clone();
+        let x__9 = args[0].clone();
         {
             // (cdr (cadr x))
             imports::cdr(&[{
                 // (cadr x)
-                imports::cadr(&[x__54.clone()])
+                imports::cadr(&[x__9.clone()])
             }])
         }
     }
@@ -324,12 +324,12 @@ pub fn cddaar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__69 = args[0].clone();
+        let x__24 = args[0].clone();
         {
             // (cddr (caar x))
             imports::cddr(&[{
                 // (caar x)
-                imports::caar(&[x__69.clone()])
+                imports::caar(&[x__24.clone()])
             }])
         }
     }
@@ -340,12 +340,12 @@ pub fn cddadr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__70 = args[0].clone();
+        let x__25 = args[0].clone();
         {
             // (cddr (cadr x))
             imports::cddr(&[{
                 // (cadr x)
-                imports::cadr(&[x__70.clone()])
+                imports::cadr(&[x__25.clone()])
             }])
         }
     }
@@ -356,12 +356,12 @@ pub fn cddar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__55 = args[0].clone();
+        let x__10 = args[0].clone();
         {
             // (cdr (cdar x))
             imports::cdr(&[{
                 // (cdar x)
-                imports::cdar(&[x__55.clone()])
+                imports::cdar(&[x__10.clone()])
             }])
         }
     }
@@ -372,12 +372,12 @@ pub fn cdddar(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__71 = args[0].clone();
+        let x__26 = args[0].clone();
         {
             // (cddr (cdar x))
             imports::cddr(&[{
                 // (cdar x)
-                imports::cdar(&[x__71.clone()])
+                imports::cdar(&[x__26.clone()])
             }])
         }
     }
@@ -388,12 +388,12 @@ pub fn cddddr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__72 = args[0].clone();
+        let x__27 = args[0].clone();
         {
             // (cddr (cddr x))
             imports::cddr(&[{
                 // (cddr x)
-                imports::cddr(&[x__72.clone()])
+                imports::cddr(&[x__27.clone()])
             }])
         }
     }
@@ -404,12 +404,12 @@ pub fn cdddr(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let x__56 = args[0].clone();
+        let x__11 = args[0].clone();
         {
             // (cdr (cddr x))
             imports::cdr(&[{
                 // (cddr x)
-                imports::cddr(&[x__56.clone()])
+                imports::cddr(&[x__11.clone()])
             }])
         }
     }

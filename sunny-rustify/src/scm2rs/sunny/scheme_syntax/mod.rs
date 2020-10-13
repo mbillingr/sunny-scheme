@@ -49,12 +49,12 @@ pub fn abstraction_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__734 = args[0].clone();
+        let expr__2 = args[0].clone();
         {
             // (and (pair? expr) (eq? (quote lambda) (car expr)))
             if ({
                 // (pair? expr)
-                imports::pair_p(&[expr__734.clone()])
+                imports::pair_p(&[expr__2.clone()])
             })
             .is_true()
             {
@@ -62,7 +62,7 @@ pub fn abstraction_p(args: &[Scm]) -> Scm {
                     // (eq? (quote lambda) (car expr))
                     imports::eq_p(&[Scm::symbol("lambda"), {
                         // (car expr)
-                        imports::car(&[expr__734.clone()])
+                        imports::car(&[expr__2.clone()])
                     }])
                 }
             } else {
@@ -77,10 +77,10 @@ pub fn and_minus_args(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__735 = args[0].clone();
+        let expr__3 = args[0].clone();
         {
             // (cdr expr)
-            imports::cdr(&[expr__735.clone()])
+            imports::cdr(&[expr__3.clone()])
         }
     }
     .into()
@@ -90,10 +90,10 @@ pub fn assert_minus_condition(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__736 = args[0].clone();
+        let expr__4 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__736.clone()])
+            imports::cadr(&[expr__4.clone()])
         }
     }
     .into()
@@ -103,10 +103,10 @@ pub fn begin_minus_statements(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__737 = args[0].clone();
+        let expr__5 = args[0].clone();
         {
             // (cdr expr)
-            imports::cdr(&[expr__737.clone()])
+            imports::cdr(&[expr__5.clone()])
         }
     }
     .into()
@@ -116,10 +116,10 @@ pub fn cond_minus_clause_minus_condition(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let clause__739 = args[0].clone();
+        let clause__0 = args[0].clone();
         {
             // (car clause)
-            imports::car(&[clause__739.clone()])
+            imports::car(&[clause__0.clone()])
         }
     }
     .into()
@@ -129,10 +129,10 @@ pub fn cond_minus_clause_minus_sequence(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let clause__740 = args[0].clone();
+        let clause__1 = args[0].clone();
         {
             // (cdr clause)
-            imports::cdr(&[clause__740.clone()])
+            imports::cdr(&[clause__1.clone()])
         }
     }
     .into()
@@ -142,10 +142,10 @@ pub fn cond_minus_clauses(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__738 = args[0].clone();
+        let expr__6 = args[0].clone();
         {
             // (cdr expr)
-            imports::cdr(&[expr__738.clone()])
+            imports::cdr(&[expr__6.clone()])
         }
     }
     .into()
@@ -155,12 +155,12 @@ pub fn cond_minus_else_minus_clause_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let clause__741 = args[0].clone();
+        let clause__2 = args[0].clone();
         {
             // (eq? (quote else) (car clause))
             imports::eq_p(&[Scm::symbol("else"), {
                 // (car clause)
-                imports::car(&[clause__741.clone()])
+                imports::car(&[clause__2.clone()])
             }])
         }
     }
@@ -171,12 +171,12 @@ pub fn definition_minus_signature(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__743 = args[0].clone();
+        let expr__8 = args[0].clone();
         if ({
             // (pair? (cadr expr))
             imports::pair_p(&[{
                 // (cadr expr)
-                imports::cadr(&[expr__743.clone()])
+                imports::cadr(&[expr__8.clone()])
             }])
         })
         .is_true()
@@ -186,7 +186,7 @@ pub fn definition_minus_signature(args: &[Scm]) -> Scm {
                 imports::list(&[
                     {
                         // (cadr expr)
-                        imports::cadr(&[expr__743.clone()])
+                        imports::cadr(&[expr__8.clone()])
                     },
                     Scm::symbol("..."),
                 ])
@@ -194,7 +194,7 @@ pub fn definition_minus_signature(args: &[Scm]) -> Scm {
         } else {
             {
                 // (cdr expr)
-                imports::cdr(&[expr__743.clone()])
+                imports::cdr(&[expr__8.clone()])
             }
         }
     }
@@ -205,12 +205,12 @@ pub fn definition_minus_value(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__745 = args[0].clone();
+        let expr__10 = args[0].clone();
         if ({
             // (pair? (cadr expr))
             imports::pair_p(&[{
                 // (cadr expr)
-                imports::cadr(&[expr__745.clone()])
+                imports::cadr(&[expr__10.clone()])
             }])
         })
         .is_true()
@@ -222,11 +222,11 @@ pub fn definition_minus_value(args: &[Scm]) -> Scm {
                     imports::cons(&[
                         {
                             // (cdadr expr)
-                            imports::cdadr(&[expr__745.clone()])
+                            imports::cdadr(&[expr__10.clone()])
                         },
                         {
                             // (cddr expr)
-                            imports::cddr(&[expr__745.clone()])
+                            imports::cddr(&[expr__10.clone()])
                         },
                     ])
                 }])
@@ -234,7 +234,7 @@ pub fn definition_minus_value(args: &[Scm]) -> Scm {
         } else {
             {
                 // (caddr expr)
-                imports::caddr(&[expr__745.clone()])
+                imports::caddr(&[expr__10.clone()])
             }
         }
     }
@@ -245,24 +245,24 @@ pub fn definition_minus_variable(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__744 = args[0].clone();
+        let expr__9 = args[0].clone();
         if ({
             // (pair? (cadr expr))
             imports::pair_p(&[{
                 // (cadr expr)
-                imports::cadr(&[expr__744.clone()])
+                imports::cadr(&[expr__9.clone()])
             }])
         })
         .is_true()
         {
             {
                 // (caadr expr)
-                imports::caadr(&[expr__744.clone()])
+                imports::caadr(&[expr__9.clone()])
             }
         } else {
             {
                 // (cadr expr)
-                imports::cadr(&[expr__744.clone()])
+                imports::cadr(&[expr__9.clone()])
             }
         }
     }
@@ -273,12 +273,12 @@ pub fn definition_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__742 = args[0].clone();
+        let expr__7 = args[0].clone();
         {
             // (and (pair? expr) (eq? (car expr) (quote define)))
             if ({
                 // (pair? expr)
-                imports::pair_p(&[expr__742.clone()])
+                imports::pair_p(&[expr__7.clone()])
             })
             .is_true()
             {
@@ -287,7 +287,7 @@ pub fn definition_p(args: &[Scm]) -> Scm {
                     imports::eq_p(&[
                         {
                             // (car expr)
-                            imports::car(&[expr__742.clone()])
+                            imports::car(&[expr__7.clone()])
                         },
                         Scm::symbol("define"),
                     ])
@@ -304,19 +304,19 @@ pub fn if_minus_alternative(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__748 = args[0].clone();
+        let expr__13 = args[0].clone();
         if ({
             // (pair? (cdddr expr))
             imports::pair_p(&[{
                 // (cdddr expr)
-                imports::cdddr(&[expr__748.clone()])
+                imports::cdddr(&[expr__13.clone()])
             }])
         })
         .is_true()
         {
             {
                 // (cadddr expr)
-                imports::cadddr(&[expr__748.clone()])
+                imports::cadddr(&[expr__13.clone()])
             }
         } else {
             Scm::pair(
@@ -332,10 +332,10 @@ pub fn if_minus_condition(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__746 = args[0].clone();
+        let expr__11 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__746.clone()])
+            imports::cadr(&[expr__11.clone()])
         }
     }
     .into()
@@ -345,10 +345,10 @@ pub fn if_minus_consequence(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__747 = args[0].clone();
+        let expr__12 = args[0].clone();
         {
             // (caddr expr)
-            imports::caddr(&[expr__747.clone()])
+            imports::caddr(&[expr__12.clone()])
         }
     }
     .into()
@@ -358,7 +358,7 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let exp_star___751 = args[0].clone();
+        let exp_star___0 = args[0].clone();
         {
             // (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*)))
             imports::filter(&[
@@ -368,13 +368,13 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let libname__750 = args[0].clone();
+                        let libname__1 = args[0].clone();
                         {
                             // (not (equal? libname (quote (sunny testing))))
                             imports::not(&[{
                                 // (equal? libname (quote (sunny testing)))
                                 imports::equal_p(&[
-                                    libname__750.clone(),
+                                    libname__1.clone(),
                                     Scm::pair(
                                         Scm::symbol("sunny"),
                                         Scm::pair(Scm::symbol("testing"), Scm::Nil),
@@ -388,7 +388,7 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
                     // (map importset-libname (cdr exp*))
                     imports::map(&[Scm::func(importset_minus_libname), {
                         // (cdr exp*)
-                        imports::cdr(&[exp_star___751.clone()])
+                        imports::cdr(&[exp_star___0.clone()])
                     }])
                 },
             ])
@@ -401,12 +401,12 @@ pub fn import_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__749 = args[0].clone();
+        let expr__14 = args[0].clone();
         {
             // (and (pair? expr) (eq? (car expr) (quote import)))
             if ({
                 // (pair? expr)
-                imports::pair_p(&[expr__749.clone()])
+                imports::pair_p(&[expr__14.clone()])
             })
             .is_true()
             {
@@ -415,7 +415,7 @@ pub fn import_p(args: &[Scm]) -> Scm {
                     imports::eq_p(&[
                         {
                             // (car expr)
-                            imports::car(&[expr__749.clone()])
+                            imports::car(&[expr__14.clone()])
                         },
                         Scm::symbol("import"),
                     ])
@@ -432,12 +432,12 @@ pub fn importset_minus_except_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let stmt__753 = args[0].clone();
+        let stmt__1 = args[0].clone();
         {
             // (eq? (quote except) (car stmt))
             imports::eq_p(&[Scm::symbol("except"), {
                 // (car stmt)
-                imports::car(&[stmt__753.clone()])
+                imports::car(&[stmt__1.clone()])
             }])
         }
     }
@@ -448,12 +448,12 @@ pub fn importset_minus_libname(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let stmt__752 = args[0].clone();
+        let stmt__0 = args[0].clone();
         {
             // (cond ...)
             if ({
                 // (importset-only? stmt)
-                Scm::func(importset_minus_only_p).invoke(&[stmt__752.clone()])
+                Scm::func(importset_minus_only_p).invoke(&[stmt__0.clone()])
             })
             .is_true()
             {
@@ -461,12 +461,12 @@ pub fn importset_minus_libname(args: &[Scm]) -> Scm {
                     // (importset-libname (cadr stmt))
                     Scm::func(importset_minus_libname).invoke(&[{
                         // (cadr stmt)
-                        imports::cadr(&[stmt__752.clone()])
+                        imports::cadr(&[stmt__0.clone()])
                     }])
                 }
             } else if ({
                 // (importset-except? stmt)
-                Scm::func(importset_minus_except_p).invoke(&[stmt__752.clone()])
+                Scm::func(importset_minus_except_p).invoke(&[stmt__0.clone()])
             })
             .is_true()
             {
@@ -474,11 +474,11 @@ pub fn importset_minus_libname(args: &[Scm]) -> Scm {
                     // (importset-libname (cadr stmt))
                     Scm::func(importset_minus_libname).invoke(&[{
                         // (cadr stmt)
-                        imports::cadr(&[stmt__752.clone()])
+                        imports::cadr(&[stmt__0.clone()])
                     }])
                 }
             } else {
-                stmt__752.clone()
+                stmt__0.clone()
             }
         }
     }
@@ -489,10 +489,10 @@ pub fn importset_minus_only_minus_names(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let stmt__755 = args[0].clone();
+        let stmt__3 = args[0].clone();
         {
             // (cddr stmt)
-            imports::cddr(&[stmt__755.clone()])
+            imports::cddr(&[stmt__3.clone()])
         }
     }
     .into()
@@ -502,12 +502,12 @@ pub fn importset_minus_only_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let stmt__754 = args[0].clone();
+        let stmt__2 = args[0].clone();
         {
             // (eq? (quote only) (car stmt))
             imports::eq_p(&[Scm::symbol("only"), {
                 // (car stmt)
-                imports::car(&[stmt__754.clone()])
+                imports::car(&[stmt__2.clone()])
             }])
         }
     }
@@ -518,10 +518,10 @@ pub fn lambda_minus_body(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__756 = args[0].clone();
+        let expr__15 = args[0].clone();
         {
             // (cddr expr)
-            imports::cddr(&[expr__756.clone()])
+            imports::cddr(&[expr__15.clone()])
         }
     }
     .into()
@@ -531,10 +531,10 @@ pub fn lambda_minus_params(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__757 = args[0].clone();
+        let expr__16 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__757.clone()])
+            imports::cadr(&[expr__16.clone()])
         }
     }
     .into()
@@ -544,10 +544,10 @@ pub fn let_star__minus_bindings(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__761 = args[0].clone();
+        let expr__20 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__761.clone()])
+            imports::cadr(&[expr__20.clone()])
         }
     }
     .into()
@@ -557,12 +557,12 @@ pub fn let_minus_args(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__758 = args[0].clone();
+        let expr__17 = args[0].clone();
         {
             // (map cadr (cadr expr))
             imports::map(&[Scm::func(imports::cadr), {
                 // (cadr expr)
-                imports::cadr(&[expr__758.clone()])
+                imports::cadr(&[expr__17.clone()])
             }])
         }
     }
@@ -573,10 +573,10 @@ pub fn let_minus_body(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__759 = args[0].clone();
+        let expr__18 = args[0].clone();
         {
             // (cddr expr)
-            imports::cddr(&[expr__759.clone()])
+            imports::cddr(&[expr__18.clone()])
         }
     }
     .into()
@@ -586,12 +586,12 @@ pub fn let_minus_vars(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__760 = args[0].clone();
+        let expr__19 = args[0].clone();
         {
             // (map car (cadr expr))
             imports::map(&[Scm::func(imports::car), {
                 // (cadr expr)
-                imports::cadr(&[expr__760.clone()])
+                imports::cadr(&[expr__19.clone()])
             }])
         }
     }
@@ -602,12 +602,12 @@ pub fn library_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let exp_star___762 = args[0].clone();
+        let exp_star___1 = args[0].clone();
         {
             // (and (pair? exp*) (eq? (quote define-library) (car exp*)))
             if ({
                 // (pair? exp*)
-                imports::pair_p(&[exp_star___762.clone()])
+                imports::pair_p(&[exp_star___1.clone()])
             })
             .is_true()
             {
@@ -615,7 +615,7 @@ pub fn library_p(args: &[Scm]) -> Scm {
                     // (eq? (quote define-library) (car exp*))
                     imports::eq_p(&[Scm::symbol("define-library"), {
                         // (car exp*)
-                        imports::car(&[exp_star___762.clone()])
+                        imports::car(&[exp_star___1.clone()])
                     }])
                 }
             } else {
@@ -630,34 +630,34 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let body__767 = args[0].clone();
+        let body__14 = args[0].clone();
         {
             // (letrec ((initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*)))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body)))))))
             {
                 // (let ((initializations (quote *uninitialized*)) (transform (quote *uninitialized*))) (begin (set! initializations (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (cons (list (definition-variable (car exp*)) (definition-value (car exp*))) (initializations (cdr exp*)))) (else (initializations (cdr exp*)))))) (set! transform (lambda (exp*) (cond ((null? exp*) (quote ())) ((definition? (car exp*)) (transform (cdr exp*))) (else (cons (car exp*) (transform (cdr exp*))))))) (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))))
                 {
-                    let [initializations__763, transform__765] = [
+                    let [initializations__0, transform__29] = [
                         Scm::symbol("*uninitialized*"),
                         Scm::symbol("*uninitialized*"),
                     ];
                     {
-                        let transform__765 = transform__765.into_boxed();
+                        let transform__29 = transform__29.into_boxed();
                         {
-                            let initializations__763 = initializations__763.into_boxed();
+                            let initializations__0 = initializations__0.into_boxed();
                             {
-                                initializations__763.set({
+                                initializations__0.set({
                                     // Closure
-                                    let initializations__763 = initializations__763.clone();
+                                    let initializations__0 = initializations__0.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let exp_star___764 = args[0].clone();
+                                        let exp_star___2 = args[0].clone();
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (null? exp*)
-                                                imports::null_p(&[exp_star___764.clone()])
+                                                imports::null_p(&[exp_star___2.clone()])
                                             })
                                             .is_true()
                                             {
@@ -666,7 +666,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                 // (definition? (car exp*))
                                                 definition_p(&[{
                                                     // (car exp*)
-                                                    imports::car(&[exp_star___764.clone()])
+                                                    imports::car(&[exp_star___2.clone()])
                                                 }])
                                             })
                                             .is_true()
@@ -682,7 +682,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                                     definition_minus_variable(&[{
                                                                         // (car exp*)
                                                                         imports::car(&[
-                                                                            exp_star___764.clone(),
+                                                                            exp_star___2.clone(),
                                                                         ])
                                                                     }])
                                                                 },
@@ -691,7 +691,7 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                                     definition_minus_value(&[{
                                                                         // (car exp*)
                                                                         imports::car(&[
-                                                                            exp_star___764.clone(),
+                                                                            exp_star___2.clone(),
                                                                         ])
                                                                     }])
                                                                 },
@@ -699,11 +699,11 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                         },
                                                         {
                                                             // (initializations (cdr exp*))
-                                                            initializations__763.get().invoke(&[{
+                                                            initializations__0.get().invoke(&[{
                                                                 // (cdr exp*)
-                                                                imports::cdr(&[
-                                                                    exp_star___764.clone()
-                                                                ])
+                                                                imports::cdr(
+                                                                    &[exp_star___2.clone()],
+                                                                )
                                                             }])
                                                         },
                                                     ])
@@ -711,9 +711,9 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                             } else {
                                                 {
                                                     // (initializations (cdr exp*))
-                                                    initializations__763.get().invoke(&[{
+                                                    initializations__0.get().invoke(&[{
                                                         // (cdr exp*)
-                                                        imports::cdr(&[exp_star___764.clone()])
+                                                        imports::cdr(&[exp_star___2.clone()])
                                                     }])
                                                 }
                                             }
@@ -721,19 +721,19 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                     })
                                 });
                                 Scm::anything();
-                                transform__765.set({
+                                transform__29.set({
                                     // Closure
-                                    let transform__765 = transform__765.clone();
+                                    let transform__29 = transform__29.clone();
                                     Scm::func(move |args: &[Scm]| {
                                         if args.len() != 1 {
                                             panic!("invalid arity")
                                         }
-                                        let exp_star___766 = args[0].clone();
+                                        let exp_star___3 = args[0].clone();
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (null? exp*)
-                                                imports::null_p(&[exp_star___766.clone()])
+                                                imports::null_p(&[exp_star___3.clone()])
                                             })
                                             .is_true()
                                             {
@@ -742,16 +742,16 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                 // (definition? (car exp*))
                                                 definition_p(&[{
                                                     // (car exp*)
-                                                    imports::car(&[exp_star___766.clone()])
+                                                    imports::car(&[exp_star___3.clone()])
                                                 }])
                                             })
                                             .is_true()
                                             {
                                                 {
                                                     // (transform (cdr exp*))
-                                                    transform__765.get().invoke(&[{
+                                                    transform__29.get().invoke(&[{
                                                         // (cdr exp*)
-                                                        imports::cdr(&[exp_star___766.clone()])
+                                                        imports::cdr(&[exp_star___3.clone()])
                                                     }])
                                                 }
                                             } else {
@@ -760,15 +760,15 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                     imports::cons(&[
                                                         {
                                                             // (car exp*)
-                                                            imports::car(&[exp_star___766.clone()])
+                                                            imports::car(&[exp_star___3.clone()])
                                                         },
                                                         {
                                                             // (transform (cdr exp*))
-                                                            transform__765.get().invoke(&[{
+                                                            transform__29.get().invoke(&[{
                                                                 // (cdr exp*)
-                                                                imports::cdr(&[
-                                                                    exp_star___766.clone()
-                                                                ])
+                                                                imports::cdr(
+                                                                    &[exp_star___3.clone()],
+                                                                )
                                                             }])
                                                         },
                                                     ])
@@ -781,17 +781,17 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                 {
                                     // (let ((ini (initializations body))) (if (null? ini) body (list (cons (quote letrec) (cons ini (transform body))))))
                                     {
-                                        let ini__768 = {
+                                        let ini__0 = {
                                             // (initializations body)
-                                            initializations__763.get().invoke(&[body__767.clone()])
+                                            initializations__0.get().invoke(&[body__14.clone()])
                                         };
                                         if ({
                                             // (null? ini)
-                                            imports::null_p(&[ini__768.clone()])
+                                            imports::null_p(&[ini__0.clone()])
                                         })
                                         .is_true()
                                         {
-                                            body__767.clone()
+                                            body__14.clone()
                                         } else {
                                             {
                                                 // (list (cons (quote letrec) (cons ini (transform body))))
@@ -799,11 +799,11 @@ pub fn scan_minus_out_minus_defines(args: &[Scm]) -> Scm {
                                                     // (cons (quote letrec) (cons ini (transform body)))
                                                     imports::cons(&[Scm::symbol("letrec"), {
                                                         // (cons ini (transform body))
-                                                        imports::cons(&[ini__768.clone(), {
+                                                        imports::cons(&[ini__0.clone(), {
                                                             // (transform body)
-                                                            transform__765
+                                                            transform__29
                                                                 .get()
-                                                                .invoke(&[body__767.clone()])
+                                                                .invoke(&[body__14.clone()])
                                                         }])
                                                     }])
                                                 }])
@@ -825,10 +825,10 @@ pub fn set_i_minus_value(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__770 = args[0].clone();
+        let expr__22 = args[0].clone();
         {
             // (caddr expr)
-            imports::caddr(&[expr__770.clone()])
+            imports::caddr(&[expr__22.clone()])
         }
     }
     .into()
@@ -838,10 +838,10 @@ pub fn set_i_minus_variable(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__769 = args[0].clone();
+        let expr__21 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__769.clone()])
+            imports::cadr(&[expr__21.clone()])
         }
     }
     .into()
@@ -851,10 +851,10 @@ pub fn testcase_minus_body(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__771 = args[0].clone();
+        let expr__23 = args[0].clone();
         {
             // (cddr expr)
-            imports::cddr(&[expr__771.clone()])
+            imports::cddr(&[expr__23.clone()])
         }
     }
     .into()
@@ -864,10 +864,10 @@ pub fn testcase_minus_description(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__772 = args[0].clone();
+        let expr__24 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__772.clone()])
+            imports::cadr(&[expr__24.clone()])
         }
     }
     .into()
@@ -877,10 +877,10 @@ pub fn testsuite_minus_cases(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__773 = args[0].clone();
+        let expr__25 = args[0].clone();
         {
             // (cddr expr)
-            imports::cddr(&[expr__773.clone()])
+            imports::cddr(&[expr__25.clone()])
         }
     }
     .into()
@@ -890,10 +890,10 @@ pub fn testsuite_minus_name(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let expr__774 = args[0].clone();
+        let expr__26 = args[0].clone();
         {
             // (cadr expr)
-            imports::cadr(&[expr__774.clone()])
+            imports::cadr(&[expr__26.clone()])
         }
     }
     .into()

@@ -15,12 +15,16 @@
         (sunny variable)
         (testsuite))
 
-(define UNIQUE-COUNT 0)
+(define UNIQUE-COUNTS '())
 (define (unique-name name)
-  (set! UNIQUE-COUNT (+ 1 UNIQUE-COUNT))
-  (string-append name
-                 "_"
-                 (number->string UNIQUE-COUNT)))
+  (let* ((entry (assoc name UNIQUE-COUNTS))
+         (nr (cond (entry
+                    (set-cdr! entry (+ 1 (cdr entry)))
+                    (cdr entry))
+                   (else
+                    (set! UNIQUE-COUNTS (cons (cons name 0) UNIQUE-COUNTS))
+                    0))))
+    (string-append name "_" (number->string nr))))
 
 (define (rust-pipeline scheme-ast)
   (extract-definitions
