@@ -64,12 +64,12 @@ mod tests {
             {
                 // (let ((x 1)) (let ((y (quote 1))) (begin (begin (assert (= x y))))))
                 {
-                    let x__954 = Scm::from(1);
+                    let x__953 = Scm::from(1);
                     // (let ((y (quote 1))) (begin (begin (assert (= x y)))))
-                    let y__953 = Scm::from(1);
+                    let y__954 = Scm::from(1);
                     assert!({
                         // (= x y)
-                        imports::_e_(&[x__954.clone(), y__953.clone()])
+                        imports::_e_(&[x__953.clone(), y__954.clone()])
                     }
                     .is_true());
                 }

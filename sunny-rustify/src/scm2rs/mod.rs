@@ -13,6 +13,7 @@ mod imports {
     pub use crate::sunny::ast_transforms::rename_vars::exports::*;
     pub use crate::sunny::astify_toplevel::exports::*;
     pub use crate::sunny::rust::codegen::exports::*;
+    pub use crate::sunny::rust::rustify::exports::*;
     pub use crate::sunny::table::exports::*;
     pub use crate::sunny::variable::exports::*;
     pub use crate::testsuite::exports::*;
@@ -31,13 +32,13 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
         {
             // (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
             {
-                let expr__960 = {
+                let expr__961 = {
                     // (read input-file)
                     imports::read(&[input_minus_file.with(|value| value.get())])
                 };
                 if ({
                     // (eof-object? expr)
-                    imports::eof_minus_object_p(&[expr__960.clone()])
+                    imports::eof_minus_object_p(&[expr__961.clone()])
                 })
                 .is_true()
                 {
@@ -45,7 +46,7 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
                 } else {
                     {
                         // (cons expr (load-sexpr))
-                        imports::cons(&[expr__960.clone(), {
+                        imports::cons(&[expr__961.clone(), {
                             // (load-sexpr)
                             Scm::func(load_minus_sexpr).invoke(&[])
                         }])
@@ -64,13 +65,13 @@ pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let scheme_minus_ast__956 = args[0].clone();
+        let scheme_minus_ast__960 = args[0].clone();
         {
-            // (extract-definitions (boxify (rename-vars (lambda (name var) (let ((str-name (if (string? name) name (symbol->string name)))) (if (local-variable? var) (unique-name str-name) str-name))) (close-procedures scheme-ast))))
+            // (extract-definitions (boxify (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast))))
             imports::extract_minus_definitions(&[{
-                // (boxify (rename-vars (lambda (name var) (let ((str-name (if (string? name) name (symbol->string name)))) (if (local-variable? var) (unique-name str-name) str-name))) (close-procedures scheme-ast)))
+                // (boxify (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast)))
                 imports::boxify(&[{
-                    // (rename-vars (lambda (name var) (let ((str-name (if (string? name) name (symbol->string name)))) (if (local-variable? var) (unique-name str-name) str-name))) (close-procedures scheme-ast))
+                    // (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast))
                     imports::rename_minus_vars(&[
                         {
                             // Closure
@@ -78,38 +79,45 @@ pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
                                 if args.len() != 2 {
                                     panic!("invalid arity")
                                 }
-                                let name__959 = args[0].clone();
+                                let name__956 = args[0].clone();
                                 let var__958 = args[1].clone();
                                 {
-                                    // (let ((str-name (if (string? name) name (symbol->string name)))) (if (local-variable? var) (unique-name str-name) str-name))
+                                    // (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))
                                     {
-                                        let str_minus_name__957 = if ({
-                                            // (string? name)
-                                            imports::string_p(&[name__959.clone()])
-                                        })
-                                        .is_true()
+                                        // (let ((str-name (if (string? name) name (symbol->string name)))) (let ((rust-name str-name)) (begin (if (local-variable? var) (unique-name rust-name) rust-name))))
                                         {
-                                            name__959.clone()
-                                        } else {
+                                            let str_minus_name__957 = if ({
+                                                // (string? name)
+                                                imports::string_p(&[name__956.clone()])
+                                            })
+                                            .is_true()
                                             {
-                                                // (symbol->string name)
-                                                imports::symbol_minus__g_string(
-                                                    &[name__959.clone()],
-                                                )
-                                            }
-                                        };
-                                        if ({
-                                            // (local-variable? var)
-                                            imports::local_minus_variable_p(&[var__958.clone()])
-                                        })
-                                        .is_true()
-                                        {
+                                                name__956.clone()
+                                            } else {
+                                                {
+                                                    // (symbol->string name)
+                                                    imports::symbol_minus__g_string(&[
+                                                        name__956.clone()
+                                                    ])
+                                                }
+                                            };
+                                            // (let ((rust-name str-name)) (begin (if (local-variable? var) (unique-name rust-name) rust-name)))
+                                            let rust_minus_name__959 = str_minus_name__957.clone();
+                                            if ({
+                                                // (local-variable? var)
+                                                imports::local_minus_variable_p(&[var__958.clone()])
+                                            })
+                                            .is_true()
                                             {
-                                                // (unique-name str-name)
-                                                unique_minus_name(&[str_minus_name__957.clone()])
+                                                {
+                                                    // (unique-name rust-name)
+                                                    unique_minus_name(&[
+                                                        rust_minus_name__959.clone()
+                                                    ])
+                                                }
+                                            } else {
+                                                rust_minus_name__959.clone()
                                             }
-                                        } else {
-                                            str_minus_name__957.clone()
                                         }
                                     }
                                 }
@@ -117,7 +125,7 @@ pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
                         },
                         {
                             // (close-procedures scheme-ast)
-                            imports::close_minus_procedures(&[scheme_minus_ast__956.clone()])
+                            imports::close_minus_procedures(&[scheme_minus_ast__960.clone()])
                         },
                     ])
                 }])
@@ -168,6 +176,7 @@ pub fn main() {
     crate::sunny::ast_transforms::rename_vars::initialize();
     crate::sunny::astify_toplevel::initialize();
     crate::sunny::rust::codegen::initialize();
+    crate::sunny::rust::rustify::initialize();
     crate::sunny::table::initialize();
     crate::sunny::variable::initialize();
     crate::testsuite::initialize();
@@ -321,11 +330,11 @@ pub fn main() {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let module__961 = args[0].clone();
+                        let module__962 = args[0].clone();
                         {
                             // (ast (quote gen-rust) module)
                             ast.with(|value| value.get())
-                                .invoke(&[Scm::symbol("gen-rust"), module__961.clone()])
+                                .invoke(&[Scm::symbol("gen-rust"), module__962.clone()])
                         }
                     })
                 },

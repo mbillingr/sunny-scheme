@@ -358,7 +358,7 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let exp_star___750 = args[0].clone();
+        let exp_star___751 = args[0].clone();
         {
             // (filter (lambda (libname) (not (equal? libname (quote (sunny testing))))) (map importset-libname (cdr exp*)))
             imports::filter(&[
@@ -368,13 +368,13 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let libname__751 = args[0].clone();
+                        let libname__750 = args[0].clone();
                         {
                             // (not (equal? libname (quote (sunny testing))))
                             imports::not(&[{
                                 // (equal? libname (quote (sunny testing)))
                                 imports::equal_p(&[
-                                    libname__751.clone(),
+                                    libname__750.clone(),
                                     Scm::pair(
                                         Scm::symbol("sunny"),
                                         Scm::pair(Scm::symbol("testing"), Scm::Nil),
@@ -388,7 +388,7 @@ pub fn import_minus_libnames(args: &[Scm]) -> Scm {
                     // (map importset-libname (cdr exp*))
                     imports::map(&[Scm::func(importset_minus_libname), {
                         // (cdr exp*)
-                        imports::cdr(&[exp_star___750.clone()])
+                        imports::cdr(&[exp_star___751.clone()])
                     }])
                 },
             ])

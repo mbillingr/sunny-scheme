@@ -22,11 +22,11 @@ pub fn make_minus_module_minus_tree_minus_leaf(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let name__299 = args[0].clone();
-        let lib__298 = args[1].clone();
+        let name__298 = args[0].clone();
+        let lib__299 = args[1].clone();
         {
             // (cons name lib)
-            imports::cons(&[name__299.clone(), lib__298.clone()])
+            imports::cons(&[name__298.clone(), lib__299.clone()])
         }
     }
     .into()
@@ -118,9 +118,9 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let tree__313 = args[0].clone();
+        let tree__311 = args[0].clone();
         let libname__310 = args[1].clone();
-        let libobj__311 = args[2].clone();
+        let libobj__313 = args[2].clone();
         {
             if ({
                 // (null? libname)
@@ -138,23 +138,23 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
             {
                 // (let ((child (module-tree-find-child tree (car libname)))) (if child (module-tree-insert! child (cdr libname) libobj) (if (null? (cdr libname)) (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj)) (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node)))))
                 {
-                    let child__314 = {
+                    let child__312 = {
                         // (module-tree-find-child tree (car libname))
-                        module_minus_tree_minus_find_minus_child(&[tree__313.clone(), {
+                        module_minus_tree_minus_find_minus_child(&[tree__311.clone(), {
                             // (car libname)
                             imports::car(&[libname__310.clone()])
                         }])
                     };
-                    if (child__314.clone()).is_true() {
+                    if (child__312.clone()).is_true() {
                         {
                             // (module-tree-insert! child (cdr libname) libobj)
                             Scm::func(module_minus_tree_minus_insert_i).invoke(&[
-                                child__314.clone(),
+                                child__312.clone(),
                                 {
                                     // (cdr libname)
                                     imports::cdr(&[libname__310.clone()])
                                 },
-                                libobj__311.clone(),
+                                libobj__313.clone(),
                             ])
                         }
                     } else if ({
@@ -168,14 +168,14 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                     {
                         {
                             // (module-tree-append-child! tree (make-module-tree-leaf (car libname) libobj))
-                            module_minus_tree_minus_append_minus_child_i(&[tree__313.clone(), {
+                            module_minus_tree_minus_append_minus_child_i(&[tree__311.clone(), {
                                 // (make-module-tree-leaf (car libname) libobj)
                                 make_minus_module_minus_tree_minus_leaf(&[
                                     {
                                         // (car libname)
                                         imports::car(&[libname__310.clone()])
                                     },
-                                    libobj__311.clone(),
+                                    libobj__313.clone(),
                                 ])
                             }])
                         }
@@ -183,7 +183,7 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                         {
                             // (let ((new-node (make-module-tree-node (car libname)))) (module-tree-insert! new-node (cdr libname) libobj) (module-tree-append-child! tree new-node))
                             {
-                                let new_minus_node__312 = {
+                                let new_minus_node__314 = {
                                     // (make-module-tree-node (car libname))
                                     make_minus_module_minus_tree_minus_node(&[{
                                         // (car libname)
@@ -194,19 +194,19 @@ pub fn module_minus_tree_minus_insert_i(args: &[Scm]) -> Scm {
                                     {
                                         // (module-tree-insert! new-node (cdr libname) libobj)
                                         Scm::func(module_minus_tree_minus_insert_i).invoke(&[
-                                            new_minus_node__312.clone(),
+                                            new_minus_node__314.clone(),
                                             {
                                                 // (cdr libname)
                                                 imports::cdr(&[libname__310.clone()])
                                             },
-                                            libobj__311.clone(),
+                                            libobj__313.clone(),
                                         ])
                                     };
                                     {
                                         // (module-tree-append-child! tree new-node)
                                         module_minus_tree_minus_append_minus_child_i(&[
-                                            tree__313.clone(),
-                                            new_minus_node__312.clone(),
+                                            tree__311.clone(),
+                                            new_minus_node__314.clone(),
                                         ])
                                     }
                                 }
@@ -308,11 +308,11 @@ pub fn module_minus_tree_minus_set_minus_children_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let node__305 = args[0].clone();
-        let children__304 = args[1].clone();
+        let node__304 = args[0].clone();
+        let children__305 = args[1].clone();
         {
             // (set-cdr! node children)
-            imports::set_minus_cdr_i(&[node__305.clone(), children__304.clone()])
+            imports::set_minus_cdr_i(&[node__304.clone(), children__305.clone()])
         }
     }
     .into()

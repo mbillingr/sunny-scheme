@@ -96,24 +96,24 @@ pub fn rust_minus_gen_minus_in_minus_module(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let name__331 = args[0].clone();
-        let base_minus_path__330 = args[1].clone();
-        let body__329 = args[2].clone();
+        let name__328 = args[0].clone();
+        let base_minus_path__329 = args[1].clone();
+        let body__330 = args[2].clone();
         {
             // (let ((module (open-module name base-path))) (body module) (close-module module))
             {
-                let module__328 = {
+                let module__331 = {
                     // (open-module name base-path)
-                    imports::open_minus_module(&[name__331.clone(), base_minus_path__330.clone()])
+                    imports::open_minus_module(&[name__328.clone(), base_minus_path__329.clone()])
                 };
                 {
                     {
                         // (body module)
-                        body__329.clone().invoke(&[module__328.clone()])
+                        body__330.clone().invoke(&[module__331.clone()])
                     };
                     {
                         // (close-module module)
-                        imports::close_minus_module(&[module__328.clone()])
+                        imports::close_minus_module(&[module__331.clone()])
                     }
                 }
             }
@@ -126,24 +126,24 @@ pub fn rust_minus_gen_minus_in_minus_submodule(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let name__335 = args[0].clone();
-        let parent__334 = args[1].clone();
-        let body__333 = args[2].clone();
+        let name__332 = args[0].clone();
+        let parent__333 = args[1].clone();
+        let body__334 = args[2].clone();
         {
             // (let ((module (open-submodule name parent))) (body module) (close-module module))
             {
-                let module__332 = {
+                let module__335 = {
                     // (open-submodule name parent)
-                    imports::open_minus_submodule(&[name__335.clone(), parent__334.clone()])
+                    imports::open_minus_submodule(&[name__332.clone(), parent__333.clone()])
                 };
                 {
                     {
                         // (body module)
-                        body__333.clone().invoke(&[module__332.clone()])
+                        body__334.clone().invoke(&[module__335.clone()])
                     };
                     {
                         // (close-module module)
-                        imports::close_minus_module(&[module__332.clone()])
+                        imports::close_minus_module(&[module__335.clone()])
                     }
                 }
             }
@@ -156,19 +156,19 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let module__322 = args[0].clone();
-        let node__321 = args[1].clone();
+        let module__321 = args[0].clone();
+        let node__322 = args[1].clone();
         {
             {
                 // (println module "pub mod " (rustify-libname (module-tree-name node)) ";")
                 imports::println(&[
-                    module__322.clone(),
+                    module__321.clone(),
                     Scm::from("pub mod "),
                     {
                         // (rustify-libname (module-tree-name node))
                         imports::rustify_minus_libname(&[{
                             // (module-tree-name node)
-                            imports::module_minus_tree_minus_name(&[node__321.clone()])
+                            imports::module_minus_tree_minus_name(&[node__322.clone()])
                         }])
                     },
                     Scm::from(";"),
@@ -176,7 +176,7 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
             };
             if ({
                 // (module-tree-leaf? node)
-                imports::module_minus_tree_minus_leaf_p(&[node__321.clone()])
+                imports::module_minus_tree_minus_leaf_p(&[node__322.clone()])
             })
             .is_true()
             {
@@ -185,26 +185,26 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
                     Scm::func(rust_minus_gen_minus_in_minus_submodule).invoke(&[
                         {
                             // (module-tree-name node)
-                            imports::module_minus_tree_minus_name(&[node__321.clone()])
+                            imports::module_minus_tree_minus_name(&[node__322.clone()])
                         },
-                        module__322.clone(),
+                        module__321.clone(),
                         {
                             // Closure
-                            let node__321 = node__321.clone();
+                            let node__322 = node__322.clone();
                             Scm::func(move |args: &[Scm]| {
                                 if args.len() != 1 {
                                     panic!("invalid arity")
                                 }
-                                let submod__324 = args[0].clone();
+                                let submod__323 = args[0].clone();
                                 {
                                     // ((module-tree-libobj node) (quote gen-rust) submod)
                                     {
                                         // (module-tree-libobj node)
                                         imports::module_minus_tree_minus_libobj(
-                                            &[node__321.clone()],
+                                            &[node__322.clone()],
                                         )
                                     }
-                                    .invoke(&[Scm::symbol("gen-rust"), submod__324.clone()])
+                                    .invoke(&[Scm::symbol("gen-rust"), submod__323.clone()])
                                 }
                             })
                         },
@@ -216,24 +216,24 @@ pub fn rust_minus_gen_minus_module_minus_tree(args: &[Scm]) -> Scm {
                     Scm::func(rust_minus_gen_minus_in_minus_submodule).invoke(&[
                         {
                             // (module-tree-name node)
-                            imports::module_minus_tree_minus_name(&[node__321.clone()])
+                            imports::module_minus_tree_minus_name(&[node__322.clone()])
                         },
-                        module__322.clone(),
+                        module__321.clone(),
                         {
                             // Closure
-                            let node__321 = node__321.clone();
+                            let node__322 = node__322.clone();
                             Scm::func(move |args: &[Scm]| {
                                 if args.len() != 1 {
                                     panic!("invalid arity")
                                 }
-                                let submod__323 = args[0].clone();
+                                let submod__324 = args[0].clone();
                                 {
                                     // (rust-gen-module-tree-list submod (module-tree-children node))
                                     Scm::func(rust_minus_gen_minus_module_minus_tree_minus_list)
-                                        .invoke(&[submod__323.clone(), {
+                                        .invoke(&[submod__324.clone(), {
                                             // (module-tree-children node)
                                             imports::module_minus_tree_minus_children(&[
-                                                node__321.clone()
+                                                node__322.clone()
                                             ])
                                         }])
                                 }
@@ -251,14 +251,14 @@ pub fn rust_minus_gen_minus_module_minus_tree_minus_list(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let module__327 = args[0].clone();
-        let nodes__325 = args[1].clone();
+        let module__325 = args[0].clone();
+        let nodes__327 = args[1].clone();
         {
             // (for-each (lambda (child) (rust-gen-module-tree module child)) nodes)
             imports::for_minus_each(&[
                 {
                     // Closure
-                    let module__327 = module__327.clone();
+                    let module__325 = module__325.clone();
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -267,13 +267,13 @@ pub fn rust_minus_gen_minus_module_minus_tree_minus_list(args: &[Scm]) -> Scm {
                         {
                             // (rust-gen-module-tree module child)
                             rust_minus_gen_minus_module_minus_tree(&[
-                                module__327.clone(),
+                                module__325.clone(),
                                 child__326.clone(),
                             ])
                         }
                     })
                 },
-                nodes__325.clone(),
+                nodes__327.clone(),
             ])
         }
     }
@@ -285,11 +285,11 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let module__320 = args[0].clone();
-        let libs__317 = args[1].clone();
+        let libs__319 = args[1].clone();
         {
             // (let ((module-tree (make-module-tree-node (quote root)))) (for-each (lambda (lib) (module-tree-insert! module-tree (car lib) (cdr lib))) libs) (rust-gen-module-tree-list module (module-tree-children module-tree)))
             {
-                let module_minus_tree__319 = {
+                let module_minus_tree__317 = {
                     // (make-module-tree-node (quote root))
                     imports::make_minus_module_minus_tree_minus_node(&[Scm::symbol("root")])
                 };
@@ -299,7 +299,7 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
                         imports::for_minus_each(&[
                             {
                                 // Closure
-                                let module_minus_tree__319 = module_minus_tree__319.clone();
+                                let module_minus_tree__317 = module_minus_tree__317.clone();
                                 Scm::func(move |args: &[Scm]| {
                                     if args.len() != 1 {
                                         panic!("invalid arity")
@@ -308,7 +308,7 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
                                     {
                                         // (module-tree-insert! module-tree (car lib) (cdr lib))
                                         imports::module_minus_tree_minus_insert_i(&[
-                                            module_minus_tree__319.clone(),
+                                            module_minus_tree__317.clone(),
                                             {
                                                 // (car lib)
                                                 imports::car(&[lib__318.clone()])
@@ -321,7 +321,7 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
                                     }
                                 })
                             },
-                            libs__317.clone(),
+                            libs__319.clone(),
                         ])
                     };
                     {
@@ -331,7 +331,7 @@ pub fn rust_minus_gen_minus_modules(args: &[Scm]) -> Scm {
                             {
                                 // (module-tree-children module-tree)
                                 imports::module_minus_tree_minus_children(&[
-                                    module_minus_tree__319.clone()
+                                    module_minus_tree__317.clone()
                                 ])
                             },
                         ])

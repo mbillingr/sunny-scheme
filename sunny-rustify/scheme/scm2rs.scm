@@ -10,6 +10,7 @@
         (sunny ast-transforms rename-vars)
         (sunny astify-toplevel)
         (sunny rust codegen)
+        (sunny rust rustify)
         (sunny table)
         (sunny variable)
         (testsuite))
@@ -25,10 +26,11 @@
   (extract-definitions
     (boxify
       (rename-vars (lambda (name var)
-                     (let ((str-name (if (string? name) name (symbol->string name))))
+                     (let* ((str-name (if (string? name) name (symbol->string name)))
+                            (rust-name str-name));(rustify-identifier str-name)))
                        (if (local-variable? var)
-                           (unique-name str-name)
-                           str-name)))
+                           (unique-name rust-name)
+                           rust-name)))
         (close-procedures
           scheme-ast)))))
 

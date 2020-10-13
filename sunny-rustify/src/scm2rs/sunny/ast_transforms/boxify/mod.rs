@@ -31,8 +31,8 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                     if args.len() != 2 {
                                         panic!("invalid arity")
                                     }
-                                    let node__680 = args[0].clone();
-                                    let ignore__679 = args[1].clone();
+                                    let node__679 = args[0].clone();
+                                    let ignore__680 = args[1].clone();
                                     {
                                         // (cond ...)
                                         if ({
@@ -40,7 +40,7 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                             imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
-                                                    node__680.clone().invoke(&[Scm::symbol("kind")])
+                                                    node__679.clone().invoke(&[Scm::symbol("kind")])
                                                 },
                                                 Scm::symbol("ABSTRACTION"),
                                             ])
@@ -52,19 +52,19 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                                 Scm::func(boxify_minus_abstraction).invoke(&[
                                                     {
                                                         // (node (quote get-vars))
-                                                        node__680
+                                                        node__679
                                                             .clone()
                                                             .invoke(&[Scm::symbol("get-vars")])
                                                     },
                                                     {
                                                         // (node (quote get-vars))
-                                                        node__680
+                                                        node__679
                                                             .clone()
                                                             .invoke(&[Scm::symbol("get-vars")])
                                                     },
                                                     {
                                                         // (node (quote get-body))
-                                                        node__680
+                                                        node__679
                                                             .clone()
                                                             .invoke(&[Scm::symbol("get-body")])
                                                     },
@@ -75,7 +75,7 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                             imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
-                                                    node__680.clone().invoke(&[Scm::symbol("kind")])
+                                                    node__679.clone().invoke(&[Scm::symbol("kind")])
                                                 },
                                                 Scm::symbol("VARARG-ABSTRACTION"),
                                             ])
@@ -88,13 +88,13 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                                     .invoke(&[
                                                         {
                                                             // (node (quote get-vars))
-                                                            node__680
+                                                            node__679
                                                                 .clone()
                                                                 .invoke(&[Scm::symbol("get-vars")])
                                                         },
                                                         {
                                                             // (node (quote get-varvar))
-                                                            node__680.clone().invoke(&[
+                                                            node__679.clone().invoke(&[
                                                                 Scm::symbol("get-varvar"),
                                                             ])
                                                         },
@@ -103,13 +103,13 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                                             imports::cons(&[
                                                                 {
                                                                     // (node (quote get-varvar))
-                                                                    node__680.clone().invoke(&[
+                                                                    node__679.clone().invoke(&[
                                                                         Scm::symbol("get-varvar"),
                                                                     ])
                                                                 },
                                                                 {
                                                                     // (node (quote get-vars))
-                                                                    node__680.clone().invoke(&[
+                                                                    node__679.clone().invoke(&[
                                                                         Scm::symbol("get-vars"),
                                                                     ])
                                                                 },
@@ -117,7 +117,7 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                                         },
                                                         {
                                                             // (node (quote get-body))
-                                                            node__680
+                                                            node__679
                                                                 .clone()
                                                                 .invoke(&[Scm::symbol("get-body")])
                                                         },
@@ -128,7 +128,7 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                             imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
-                                                    node__680.clone().invoke(&[Scm::symbol("kind")])
+                                                    node__679.clone().invoke(&[Scm::symbol("kind")])
                                                 },
                                                 Scm::symbol("FIXLET"),
                                             ])
@@ -140,19 +140,19 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                                 Scm::func(boxify_minus_fixlet).invoke(&[
                                                     {
                                                         // (node (quote get-vars))
-                                                        node__680
+                                                        node__679
                                                             .clone()
                                                             .invoke(&[Scm::symbol("get-vars")])
                                                     },
                                                     {
                                                         // (node (quote get-args))
-                                                        node__680
+                                                        node__679
                                                             .clone()
                                                             .invoke(&[Scm::symbol("get-args")])
                                                     },
                                                     {
                                                         // (node (quote get-body))
-                                                        node__680
+                                                        node__679
                                                             .clone()
                                                             .invoke(&[Scm::symbol("get-body")])
                                                     },
@@ -161,7 +161,7 @@ pub fn boxify(args: &[Scm]) -> Scm {
                                         } else {
                                             {
                                                 // (ignore)
-                                                ignore__679.clone().invoke(&[])
+                                                ignore__680.clone().invoke(&[])
                                             }
                                         }
                                     }
@@ -187,29 +187,29 @@ pub fn boxify_minus_abstraction(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let vars__684 = args[0].clone();
-        let var_star___683 = args[1].clone();
-        let body__682 = args[2].clone();
+        let vars__683 = args[0].clone();
+        let var_star___682 = args[1].clone();
+        let body__684 = args[2].clone();
         {
             // (cond ...)
             if ({
                 // (null? var*)
-                imports::null_p(&[var_star___683.clone()])
+                imports::null_p(&[var_star___682.clone()])
             })
             .is_true()
             {
                 {
                     // (make-abstraction vars (boxify body))
-                    imports::make_minus_abstraction(&[vars__684.clone(), {
+                    imports::make_minus_abstraction(&[vars__683.clone(), {
                         // (boxify body)
-                        boxify(&[body__682.clone()])
+                        boxify(&[body__684.clone()])
                     }])
                 }
             } else if ({
                 // (variable-mutable? (car var*))
                 imports::variable_minus_mutable_p(&[{
                     // (car var*)
-                    imports::car(&[var_star___683.clone()])
+                    imports::car(&[var_star___682.clone()])
                 }])
             })
             .is_true()
@@ -219,28 +219,25 @@ pub fn boxify_minus_abstraction(args: &[Scm]) -> Scm {
                         // (local-boxify! (car var*))
                         imports::local_minus_boxify_i(&[{
                             // (car var*)
-                            imports::car(&[var_star___683.clone()])
+                            imports::car(&[var_star___682.clone()])
                         }])
                     };
                     {
-                        // (boxify-abstraction vars (cdr var*) (make-boxify (variable-name (car var*)) body))
+                        // (boxify-abstraction vars (cdr var*) (make-boxify (car var*) body))
                         Scm::func(boxify_minus_abstraction).invoke(&[
-                            vars__684.clone(),
+                            vars__683.clone(),
                             {
                                 // (cdr var*)
-                                imports::cdr(&[var_star___683.clone()])
+                                imports::cdr(&[var_star___682.clone()])
                             },
                             {
-                                // (make-boxify (variable-name (car var*)) body)
+                                // (make-boxify (car var*) body)
                                 imports::make_minus_boxify(&[
                                     {
-                                        // (variable-name (car var*))
-                                        imports::variable_minus_name(&[{
-                                            // (car var*)
-                                            imports::car(&[var_star___683.clone()])
-                                        }])
+                                        // (car var*)
+                                        imports::car(&[var_star___682.clone()])
                                     },
-                                    body__682.clone(),
+                                    body__684.clone(),
                                 ])
                             },
                         ])
@@ -250,12 +247,12 @@ pub fn boxify_minus_abstraction(args: &[Scm]) -> Scm {
                 {
                     // (boxify-abstraction vars (cdr var*) body)
                     Scm::func(boxify_minus_abstraction).invoke(&[
-                        vars__684.clone(),
+                        vars__683.clone(),
                         {
                             // (cdr var*)
-                            imports::cdr(&[var_star___683.clone()])
+                            imports::cdr(&[var_star___682.clone()])
                         },
-                        body__682.clone(),
+                        body__684.clone(),
                     ])
                 }
             }
@@ -268,16 +265,16 @@ pub fn boxify_minus_fixlet(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let vars__690 = args[0].clone();
-        let args__691 = args[1].clone();
-        let body__689 = args[2].clone();
+        let vars__689 = args[0].clone();
+        let args__690 = args[1].clone();
+        let body__691 = args[2].clone();
         {
             // (make-fixlet vars args (boxify-vars! vars (boxify body)))
-            imports::make_minus_fixlet(&[vars__690.clone(), args__691.clone(), {
+            imports::make_minus_fixlet(&[vars__689.clone(), args__690.clone(), {
                 // (boxify-vars! vars (boxify body))
-                Scm::func(boxify_minus_vars_i).invoke(&[vars__690.clone(), {
+                Scm::func(boxify_minus_vars_i).invoke(&[vars__689.clone(), {
                     // (boxify body)
-                    boxify(&[body__689.clone()])
+                    boxify(&[body__691.clone()])
                 }])
             }])
         }
@@ -289,24 +286,24 @@ pub fn boxify_minus_vararg_minus_abstraction(args: &[Scm]) -> Scm {
         if args.len() != 4 {
             panic!("invalid arity")
         }
-        let vars__688 = args[0].clone();
+        let vars__686 = args[0].clone();
         let varvar__687 = args[1].clone();
-        let var_star___686 = args[2].clone();
-        let body__685 = args[3].clone();
+        let var_star___685 = args[2].clone();
+        let body__688 = args[3].clone();
         if ({
             // (null? var*)
-            imports::null_p(&[var_star___686.clone()])
+            imports::null_p(&[var_star___685.clone()])
         })
         .is_true()
         {
             {
                 // (make-vararg-abstraction vars varvar (boxify body))
                 imports::make_minus_vararg_minus_abstraction(&[
-                    vars__688.clone(),
+                    vars__686.clone(),
                     varvar__687.clone(),
                     {
                         // (boxify body)
-                        boxify(&[body__685.clone()])
+                        boxify(&[body__688.clone()])
                     },
                 ])
             }
@@ -314,7 +311,7 @@ pub fn boxify_minus_vararg_minus_abstraction(args: &[Scm]) -> Scm {
             // (variable-mutable? (car var*))
             imports::variable_minus_mutable_p(&[{
                 // (car var*)
-                imports::car(&[var_star___686.clone()])
+                imports::car(&[var_star___685.clone()])
             }])
         })
         .is_true()
@@ -324,30 +321,27 @@ pub fn boxify_minus_vararg_minus_abstraction(args: &[Scm]) -> Scm {
                     // (local-boxify! (car var*))
                     imports::local_minus_boxify_i(&[{
                         // (car var*)
-                        imports::car(&[var_star___686.clone()])
+                        imports::car(&[var_star___685.clone()])
                     }])
                 };
                 {
-                    // (boxify-vararg-abstraction vars varvar (cdr var*) (make-boxify (variable-name (car var*) body)))
+                    // (boxify-vararg-abstraction vars varvar (cdr var*) (make-boxify (car var*) body))
                     Scm::func(boxify_minus_vararg_minus_abstraction).invoke(&[
-                        vars__688.clone(),
+                        vars__686.clone(),
                         varvar__687.clone(),
                         {
                             // (cdr var*)
-                            imports::cdr(&[var_star___686.clone()])
+                            imports::cdr(&[var_star___685.clone()])
                         },
                         {
-                            // (make-boxify (variable-name (car var*) body))
-                            imports::make_minus_boxify(&[{
-                                // (variable-name (car var*) body)
-                                imports::variable_minus_name(&[
-                                    {
-                                        // (car var*)
-                                        imports::car(&[var_star___686.clone()])
-                                    },
-                                    body__685.clone(),
-                                ])
-                            }])
+                            // (make-boxify (car var*) body)
+                            imports::make_minus_boxify(&[
+                                {
+                                    // (car var*)
+                                    imports::car(&[var_star___685.clone()])
+                                },
+                                body__688.clone(),
+                            ])
                         },
                     ])
                 }
@@ -356,13 +350,13 @@ pub fn boxify_minus_vararg_minus_abstraction(args: &[Scm]) -> Scm {
             {
                 // (boxify-vararg-abstraction vars varvar (cdr var*) body)
                 Scm::func(boxify_minus_vararg_minus_abstraction).invoke(&[
-                    vars__688.clone(),
+                    vars__686.clone(),
                     varvar__687.clone(),
                     {
                         // (cdr var*)
-                        imports::cdr(&[var_star___686.clone()])
+                        imports::cdr(&[var_star___685.clone()])
                     },
-                    body__685.clone(),
+                    body__688.clone(),
                 ])
             }
         }
@@ -374,22 +368,22 @@ pub fn boxify_minus_vars_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let var_star___693 = args[0].clone();
-        let body__692 = args[1].clone();
+        let var_star___692 = args[0].clone();
+        let body__693 = args[1].clone();
         {
             // (cond ...)
             if ({
                 // (null? var*)
-                imports::null_p(&[var_star___693.clone()])
+                imports::null_p(&[var_star___692.clone()])
             })
             .is_true()
             {
-                body__692.clone()
+                body__693.clone()
             } else if ({
                 // (variable-mutable? (car var*))
                 imports::variable_minus_mutable_p(&[{
                     // (car var*)
-                    imports::car(&[var_star___693.clone()])
+                    imports::car(&[var_star___692.clone()])
                 }])
             })
             .is_true()
@@ -399,27 +393,24 @@ pub fn boxify_minus_vars_i(args: &[Scm]) -> Scm {
                         // (local-boxify! (car var*))
                         imports::local_minus_boxify_i(&[{
                             // (car var*)
-                            imports::car(&[var_star___693.clone()])
+                            imports::car(&[var_star___692.clone()])
                         }])
                     };
                     {
-                        // (boxify-vars! (cdr var*) (make-boxify (variable-name (car var*)) body))
+                        // (boxify-vars! (cdr var*) (make-boxify (car var*) body))
                         Scm::func(boxify_minus_vars_i).invoke(&[
                             {
                                 // (cdr var*)
-                                imports::cdr(&[var_star___693.clone()])
+                                imports::cdr(&[var_star___692.clone()])
                             },
                             {
-                                // (make-boxify (variable-name (car var*)) body)
+                                // (make-boxify (car var*) body)
                                 imports::make_minus_boxify(&[
                                     {
-                                        // (variable-name (car var*))
-                                        imports::variable_minus_name(&[{
-                                            // (car var*)
-                                            imports::car(&[var_star___693.clone()])
-                                        }])
+                                        // (car var*)
+                                        imports::car(&[var_star___692.clone()])
                                     },
-                                    body__692.clone(),
+                                    body__693.clone(),
                                 ])
                             },
                         ])
@@ -431,9 +422,9 @@ pub fn boxify_minus_vars_i(args: &[Scm]) -> Scm {
                     Scm::func(boxify_minus_vars_i).invoke(&[
                         {
                             // (cdr var*)
-                            imports::cdr(&[var_star___693.clone()])
+                            imports::cdr(&[var_star___692.clone()])
                         },
-                        body__692.clone(),
+                        body__693.clone(),
                     ])
                 }
             }

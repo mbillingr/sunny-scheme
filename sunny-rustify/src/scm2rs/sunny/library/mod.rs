@@ -23,12 +23,12 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let imports__732 = args[0].clone();
-        let exports__733 = args[1].clone();
-        let lib__731 = args[2].clone();
+        let imports__731 = args[0].clone();
+        let exports__732 = args[1].clone();
+        let lib__733 = args[2].clone();
         if ({
             // (null? imports)
-            imports::null_p(&[imports__732.clone()])
+            imports::null_p(&[imports__731.clone()])
         })
         .is_true()
         {
@@ -38,9 +38,9 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
             imports::memq(&[
                 {
                     // (car imports)
-                    imports::car(&[imports__732.clone()])
+                    imports::car(&[imports__731.clone()])
                 },
-                exports__733.clone(),
+                exports__732.clone(),
             ])
         })
         .is_true()
@@ -50,10 +50,10 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
                 Scm::func(check_minus_imports).invoke(&[
                     {
                         // (cdr imports)
-                        imports::cdr(&[imports__732.clone()])
+                        imports::cdr(&[imports__731.clone()])
                     },
-                    exports__733.clone(),
-                    lib__731.clone(),
+                    exports__732.clone(),
+                    lib__733.clone(),
                 ])
             }
         } else {
@@ -63,9 +63,9 @@ pub fn check_minus_imports(args: &[Scm]) -> Scm {
                     Scm::from("Invalid import"),
                     {
                         // (car imports)
-                        imports::car(&[imports__732.clone()])
+                        imports::car(&[imports__731.clone()])
                     },
-                    lib__731.clone(),
+                    lib__733.clone(),
                 ])
             }
         }
@@ -77,12 +77,12 @@ pub fn find_minus_library(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let base_minus_path_star___722 = args[0].clone();
+        let base_minus_path_star___720 = args[0].clone();
         let relative_minus_path__721 = args[1].clone();
-        let extension_star___720 = args[2].clone();
+        let extension_star___723 = args[2].clone();
         if ({
             // (null? base-path*)
-            imports::null_p(&[base_minus_path_star___722.clone()])
+            imports::null_p(&[base_minus_path_star___720.clone()])
         })
         .is_true()
         {
@@ -93,34 +93,34 @@ pub fn find_minus_library(args: &[Scm]) -> Scm {
                 {
                     // (let ((path (string-append (car base-path*) relative-path))) (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*)))))
                     {
-                        let path__724 = {
+                        let path__722 = {
                             // (string-append (car base-path*) relative-path)
                             imports::string_minus_append(&[
                                 {
                                     // (car base-path*)
-                                    imports::car(&[base_minus_path_star___722.clone()])
+                                    imports::car(&[base_minus_path_star___720.clone()])
                                 },
                                 relative_minus_path__721.clone(),
                             ])
                         };
                         // (let ((full-path (find-library-ext path extension*))) (begin (if full-path full-path (find-library (cdr base-path*) relative-path extension*))))
-                        let full_minus_path__723 = {
+                        let full_minus_path__724 = {
                             // (find-library-ext path extension*)
                             Scm::func(find_minus_library_minus_ext)
-                                .invoke(&[path__724.clone(), extension_star___720.clone()])
+                                .invoke(&[path__722.clone(), extension_star___723.clone()])
                         };
-                        if (full_minus_path__723.clone()).is_true() {
-                            full_minus_path__723.clone()
+                        if (full_minus_path__724.clone()).is_true() {
+                            full_minus_path__724.clone()
                         } else {
                             {
                                 // (find-library (cdr base-path*) relative-path extension*)
                                 Scm::func(find_minus_library).invoke(&[
                                     {
                                         // (cdr base-path*)
-                                        imports::cdr(&[base_minus_path_star___722.clone()])
+                                        imports::cdr(&[base_minus_path_star___720.clone()])
                                     },
                                     relative_minus_path__721.clone(),
-                                    extension_star___720.clone(),
+                                    extension_star___723.clone(),
                                 ])
                             }
                         }
@@ -319,7 +319,7 @@ pub fn library_minus_path(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let lib__728 = args[0].clone();
+        let lib__730 = args[0].clone();
         {
             // (reduce (lambda (left right) (string-append left (string-append "/" right))) "" (map symbol->string lib))
             imports::reduce(&[
@@ -329,11 +329,11 @@ pub fn library_minus_path(args: &[Scm]) -> Scm {
                         if args.len() != 2 {
                             panic!("invalid arity")
                         }
-                        let left__730 = args[0].clone();
+                        let left__728 = args[0].clone();
                         let right__729 = args[1].clone();
                         {
                             // (string-append left (string-append "/" right))
-                            imports::string_minus_append(&[left__730.clone(), {
+                            imports::string_minus_append(&[left__728.clone(), {
                                 // (string-append "/" right)
                                 imports::string_minus_append(&[Scm::from("/"), right__729.clone()])
                             }])
@@ -343,7 +343,7 @@ pub fn library_minus_path(args: &[Scm]) -> Scm {
                 Scm::from(""),
                 {
                     // (map symbol->string lib)
-                    imports::map(&[Scm::func(imports::symbol_minus__g_string), lib__728.clone()])
+                    imports::map(&[Scm::func(imports::symbol_minus__g_string), lib__730.clone()])
                 },
             ])
         }

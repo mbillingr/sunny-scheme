@@ -274,7 +274,7 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name__266 = args[0].clone();
+        let name__265 = args[0].clone();
         {
             // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\_) "__") ((eq? ch #\-) "_") (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name)))))))
             {
@@ -364,27 +364,27 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                 {
                                     // (let ((name (if (symbol? name) (symbol->string name) name))) (cond ((eq? name (quote fn)) "fn_") (else (append-all (map char-map (string->list name))))))
                                     {
-                                        let name__265 = if ({
+                                        let name__266 = if ({
                                             // (symbol? name)
-                                            imports::symbol_p(&[name__266.clone()])
+                                            imports::symbol_p(&[name__265.clone()])
                                         })
                                         .is_true()
                                         {
                                             {
                                                 // (symbol->string name)
                                                 imports::symbol_minus__g_string(
-                                                    &[name__266.clone()],
+                                                    &[name__265.clone()],
                                                 )
                                             }
                                         } else {
-                                            name__266.clone()
+                                            name__265.clone()
                                         };
                                         {
                                             // (cond ...)
                                             if ({
                                                 // (eq? name (quote fn))
                                                 imports::eq_p(&[
-                                                    name__265.clone(),
+                                                    name__266.clone(),
                                                     Scm::symbol("fn"),
                                                 ])
                                             })
@@ -401,7 +401,7 @@ pub fn rustify_minus_libname(args: &[Scm]) -> Scm {
                                                             {
                                                                 // (string->list name)
                                                                 imports::string_minus__g_list(&[
-                                                                    name__265.clone(),
+                                                                    name__266.clone(),
                                                                 ])
                                                             },
                                                         ])
@@ -425,7 +425,7 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name__271 = args[0].clone();
+        let name__272 = args[0].clone();
         {
             // (letrec ((char-map (lambda (ch) (cond ((eq? ch #\ ) "_") ((eq? ch #\') #f) (else (list->string (list ch)))))) (append-all (lambda (strs) (if (null? strs) "" (string-append (car strs) (append-all (cdr strs))))))) (append-all (filter (lambda (x) x) (map char-map (string->list name)))))
             {
@@ -526,8 +526,8 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                                     if args.len() != 1 {
                                                         panic!("invalid arity")
                                                     }
-                                                    let x__272 = args[0].clone();
-                                                    x__272.clone()
+                                                    let x__271 = args[0].clone();
+                                                    x__271.clone()
                                                 })
                                             },
                                             {
@@ -535,7 +535,7 @@ pub fn rustify_minus_testname(args: &[Scm]) -> Scm {
                                                 imports::map(&[char_minus_map__267.get(), {
                                                     // (string->list name)
                                                     imports::string_minus__g_list(&[
-                                                        name__271.clone()
+                                                        name__272.clone()
                                                     ])
                                                 }])
                                             },

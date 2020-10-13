@@ -32,7 +32,7 @@
             ((variable-mutable? (car var*))
              (local-boxify! (car var*))
              (boxify-abstraction vars (cdr var*)
-                                 (make-boxify (variable-name (car var*)) body)))
+                                 (make-boxify (car var*) body)))
             (else
               (boxify-abstraction vars (cdr var*) body))))
 
@@ -43,7 +43,7 @@
               (begin (local-boxify! (car var*))
                      (boxify-vararg-abstraction vars varvar
                                                 (cdr var*)
-                                                (make-boxify (variable-name (car var*) body))))
+                                                (make-boxify (car var*) body)))
               (boxify-vararg-abstraction vars varvar (cdr var*) body))))
 
     (define (boxify-fixlet vars args body)
@@ -56,6 +56,6 @@
             ((variable-mutable? (car var*))
              (local-boxify! (car var*))
              (boxify-vars! (cdr var*)
-                           (make-boxify (variable-name (car var*))
+                           (make-boxify (car var*)
                                         body)))
             (else (boxify-vars! (cdr var*) body))))))

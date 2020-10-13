@@ -227,31 +227,31 @@ pub fn append2(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let list1__18 = args[0].clone();
-        let list2__17 = args[1].clone();
+        let list1__17 = args[0].clone();
+        let list2__18 = args[1].clone();
         if ({
             // (null? list1)
-            imports::null_p(&[list1__18.clone()])
+            imports::null_p(&[list1__17.clone()])
         })
         .is_true()
         {
-            list2__17.clone()
+            list2__18.clone()
         } else {
             {
                 // (cons (car list1) (append2 (cdr list1) list2))
                 imports::cons(&[
                     {
                         // (car list1)
-                        imports::car(&[list1__18.clone()])
+                        imports::car(&[list1__17.clone()])
                     },
                     {
                         // (append2 (cdr list1) list2)
                         Scm::func(append2).invoke(&[
                             {
                                 // (cdr list1)
-                                imports::cdr(&[list1__18.clone()])
+                                imports::cdr(&[list1__17.clone()])
                             },
-                            list2__17.clone(),
+                            list2__18.clone(),
                         ])
                     },
                 ])
@@ -420,11 +420,11 @@ pub fn for_minus_each(args: &[Scm]) -> Scm {
         if args.len() < 1 {
             panic!("not enough args")
         }
-        let proc__28 = args[0].clone();
-        let seq_star___27 = Scm::list(&args[1..]);
+        let proc__27 = args[0].clone();
+        let seq_star___28 = Scm::list(&args[1..]);
         {
             // (_for-each proc seq*)
-            Scm::func(__for_minus_each).invoke(&[proc__28.clone(), seq_star___27.clone()])
+            Scm::func(__for_minus_each).invoke(&[proc__27.clone(), seq_star___28.clone()])
         }
     }
     .into()
@@ -434,7 +434,7 @@ pub fn length(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let seq__4 = args[0].clone();
+        let seq__5 = args[0].clone();
         {
             // (fold-left (lambda (acc _) (+ acc 1)) 0 seq)
             Scm::func(fold_minus_left).invoke(&[
@@ -444,16 +444,16 @@ pub fn length(args: &[Scm]) -> Scm {
                         if args.len() != 2 {
                             panic!("invalid arity")
                         }
-                        let acc__5 = args[0].clone();
+                        let acc__4 = args[0].clone();
                         let __ = args[1].clone();
                         {
                             // (+ acc 1)
-                            imports::_plus_(&[acc__5.clone(), Scm::from(1)])
+                            imports::_plus_(&[acc__4.clone(), Scm::from(1)])
                         }
                     })
                 },
                 Scm::from(0),
-                seq__4.clone(),
+                seq__5.clone(),
             ])
         }
     }
@@ -526,11 +526,11 @@ pub fn map(args: &[Scm]) -> Scm {
         if args.len() < 1 {
             panic!("not enough args")
         }
-        let func__30 = args[0].clone();
-        let seq_star___29 = Scm::list(&args[1..]);
+        let func__29 = args[0].clone();
+        let seq_star___30 = Scm::list(&args[1..]);
         {
             // (_map func seq*)
-            Scm::func(__map).invoke(&[func__30.clone(), seq_star___29.clone()])
+            Scm::func(__map).invoke(&[func__29.clone(), seq_star___30.clone()])
         }
     }
     .into()
@@ -540,34 +540,34 @@ pub fn map_minus_1(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let func__42 = args[0].clone();
-        let seq__39 = args[1].clone();
+        let func__39 = args[0].clone();
+        let seq__42 = args[1].clone();
         {
             // (fold-right (lambda (x acc) (cons (func x) acc)) (quote ()) seq)
             Scm::func(fold_minus_right).invoke(&[
                 {
                     // Closure
-                    let func__42 = func__42.clone();
+                    let func__39 = func__39.clone();
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 2 {
                             panic!("invalid arity")
                         }
-                        let x__41 = args[0].clone();
-                        let acc__40 = args[1].clone();
+                        let x__40 = args[0].clone();
+                        let acc__41 = args[1].clone();
                         {
                             // (cons (func x) acc)
                             imports::cons(&[
                                 {
                                     // (func x)
-                                    func__42.clone().invoke(&[x__41.clone()])
+                                    func__39.clone().invoke(&[x__40.clone()])
                                 },
-                                acc__40.clone(),
+                                acc__41.clone(),
                             ])
                         }
                     })
                 },
                 Scm::Nil,
-                seq__39.clone(),
+                seq__42.clone(),
             ])
         }
     }
@@ -630,7 +630,7 @@ pub fn reverse(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let seq__6 = args[0].clone();
+        let seq__8 = args[0].clone();
         {
             // (fold-left (lambda (acc x) (cons x acc)) (quote ()) seq)
             Scm::func(fold_minus_left).invoke(&[
@@ -641,15 +641,15 @@ pub fn reverse(args: &[Scm]) -> Scm {
                             panic!("invalid arity")
                         }
                         let acc__7 = args[0].clone();
-                        let x__8 = args[1].clone();
+                        let x__6 = args[1].clone();
                         {
                             // (cons x acc)
-                            imports::cons(&[x__8.clone(), acc__7.clone()])
+                            imports::cons(&[x__6.clone(), acc__7.clone()])
                         }
                     })
                 },
                 Scm::Nil,
-                seq__6.clone(),
+                seq__8.clone(),
             ])
         }
     }
@@ -660,14 +660,14 @@ pub fn string_minus_append(args: &[Scm]) -> Scm {
         if args.len() < 1 {
             panic!("not enough args")
         }
-        let s1__26 = args[0].clone();
-        let args__25 = Scm::list(&args[1..]);
+        let s1__25 = args[0].clone();
+        let args__26 = Scm::list(&args[1..]);
         {
             // (fold-left string-cons s1 args)
             Scm::func(fold_minus_left).invoke(&[
                 Scm::func(imports::string_minus_cons),
-                s1__26.clone(),
-                args__25.clone(),
+                s1__25.clone(),
+                args__26.clone(),
             ])
         }
     }
@@ -678,14 +678,14 @@ pub fn string_e__p(args: &[Scm]) -> Scm {
         if args.len() < 1 {
             panic!("not enough args")
         }
-        let s1__24 = args[0].clone();
-        let args__22 = Scm::list(&args[1..]);
+        let s1__22 = args[0].clone();
+        let args__24 = Scm::list(&args[1..]);
         {
             // (all? (lambda (s) (equal? s1 s)) args)
             Scm::func(all_p).invoke(&[
                 {
                     // Closure
-                    let s1__24 = s1__24.clone();
+                    let s1__22 = s1__22.clone();
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -693,11 +693,11 @@ pub fn string_e__p(args: &[Scm]) -> Scm {
                         let s__23 = args[0].clone();
                         {
                             // (equal? s1 s)
-                            imports::equal_p(&[s1__24.clone(), s__23.clone()])
+                            imports::equal_p(&[s1__22.clone(), s__23.clone()])
                         }
                     })
                 },
-                args__22.clone(),
+                args__24.clone(),
             ])
         }
     }
@@ -708,14 +708,14 @@ pub fn symbol_e__p(args: &[Scm]) -> Scm {
         if args.len() < 1 {
             panic!("not enough args")
         }
-        let s1__21 = args[0].clone();
-        let args__19 = Scm::list(&args[1..]);
+        let s1__19 = args[0].clone();
+        let args__21 = Scm::list(&args[1..]);
         {
             // (all? (lambda (s) (eq? s1 s)) args)
             Scm::func(all_p).invoke(&[
                 {
                     // Closure
-                    let s1__21 = s1__21.clone();
+                    let s1__19 = s1__19.clone();
                     Scm::func(move |args: &[Scm]| {
                         if args.len() != 1 {
                             panic!("invalid arity")
@@ -723,11 +723,11 @@ pub fn symbol_e__p(args: &[Scm]) -> Scm {
                         let s__20 = args[0].clone();
                         {
                             // (eq? s1 s)
-                            imports::eq_p(&[s1__21.clone(), s__20.clone()])
+                            imports::eq_p(&[s1__19.clone(), s__20.clone()])
                         }
                     })
                 },
-                args__19.clone(),
+                args__21.clone(),
             ])
         }
     }
