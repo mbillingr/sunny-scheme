@@ -748,14 +748,14 @@
               (else (error "Unknown message BOXIFY" msg))))
       self)
 
-    (define (make-export env name exname)
+    (define (make-export var exname)
       (define (repr)
-        (list 'EXPORT name 'AS exname))
+        (list 'EXPORT var 'AS exname))
       (define (transform func)
         (func self (lambda () self)))
       (define (gen-rust module)
         (print module "pub use super::")
-        (let ((var (lookup name env)))
+        (let* ((name (variable-name var)))
           (cond ((not var)
                  (error "undefined export" name))
                 ((global-variable? var)
@@ -764,12 +764,12 @@
                  (print module ""))
                 ((import-variable? var)
                  (print module "imports::"))
-                (else (error "invalid export variable" var name))))
-        (println module
-          (rustify-identifier name)
-          " as "
-          (rustify-identifier exname)
-          ";"))
+                (else (error "invalid export variable" var name)))
+          (println module
+            (rustify-identifier name)
+            " as "
+            (rustify-identifier exname)
+            ";")))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (repr))
               ((eq? 'transform msg) (transform (car args)))

@@ -123,7 +123,7 @@
     (define (astify-export export-spec* env)
       (cond ((null? export-spec*)
              '())
-            (else (cons (make-export env (car export-spec*) (car export-spec*))
+            (else (cons (make-export (lookup (car export-spec*) env) (car export-spec*))
                         (astify-export (cdr export-spec*) env)))))
 
     (define (astify-import stmt* env)

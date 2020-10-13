@@ -19,7 +19,7 @@ pub fn expand_minus_and(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__4 = args[0].clone();
-        let env__36 = args[1].clone();
+        let env__35 = args[1].clone();
         let tail_p__10 = args[2].clone();
         {
             // (astify-comment exp (astify-and (and-args exp) env tail?))
@@ -30,7 +30,7 @@ pub fn expand_minus_and(args: &[Scm]) -> Scm {
                         // (and-args exp)
                         imports::and_minus_args(&[exp__4.clone()])
                     },
-                    env__36.clone(),
+                    env__35.clone(),
                     tail_p__10.clone(),
                 ])
             }])
@@ -44,7 +44,7 @@ pub fn expand_minus_assert(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__5 = args[0].clone();
-        let env__37 = args[1].clone();
+        let env__36 = args[1].clone();
         let tail_p = args[2].clone();
         {
             // (astify-assert (assert-condition exp) env)
@@ -53,7 +53,7 @@ pub fn expand_minus_assert(args: &[Scm]) -> Scm {
                     // (assert-condition exp)
                     imports::assert_minus_condition(&[exp__5.clone()])
                 },
-                env__37.clone(),
+                env__36.clone(),
             ])
         }
     }
@@ -65,7 +65,7 @@ pub fn expand_minus_begin(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__6 = args[0].clone();
-        let env__38 = args[1].clone();
+        let env__37 = args[1].clone();
         let tail_p__11 = args[2].clone();
         {
             // (astify-sequence (begin-statements exp) env tail?)
@@ -74,7 +74,7 @@ pub fn expand_minus_begin(args: &[Scm]) -> Scm {
                     // (begin-statements exp)
                     imports::begin_minus_statements(&[exp__6.clone()])
                 },
-                env__38.clone(),
+                env__37.clone(),
                 tail_p__11.clone(),
             ])
         }
@@ -87,7 +87,7 @@ pub fn expand_minus_cond(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__7 = args[0].clone();
-        let env__39 = args[1].clone();
+        let env__38 = args[1].clone();
         let tail_p__12 = args[2].clone();
         {
             // (astify-comment (quote (cond ...)) (astify-cond (cond-clauses exp) env tail?))
@@ -100,7 +100,7 @@ pub fn expand_minus_cond(args: &[Scm]) -> Scm {
                             // (cond-clauses exp)
                             imports::cond_minus_clauses(&[exp__7.clone()])
                         },
-                        env__39.clone(),
+                        env__38.clone(),
                         tail_p__12.clone(),
                     ])
                 },
@@ -115,7 +115,7 @@ pub fn expand_minus_define(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__8 = args[0].clone();
-        let env__40 = args[1].clone();
+        let env__39 = args[1].clone();
         let tail_p = args[2].clone();
         {
             // (astify-comment (cons (quote define) (definition-signature exp)) (astify-definition (definition-variable exp) (definition-value exp) env))
@@ -138,7 +138,7 @@ pub fn expand_minus_define(args: &[Scm]) -> Scm {
                             // (definition-value exp)
                             imports::definition_minus_value(&[exp__8.clone()])
                         },
-                        env__40.clone(),
+                        env__39.clone(),
                     ])
                 },
             ])
@@ -152,7 +152,7 @@ pub fn expand_minus_if(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__9 = args[0].clone();
-        let env__41 = args[1].clone();
+        let env__40 = args[1].clone();
         let tail_p__13 = args[2].clone();
         {
             // (astify-alternative (if-condition exp) (if-consequence exp) (if-alternative exp) env tail?)
@@ -169,7 +169,7 @@ pub fn expand_minus_if(args: &[Scm]) -> Scm {
                     // (if-alternative exp)
                     imports::if_minus_alternative(&[exp__9.clone()])
                 },
-                env__41.clone(),
+                env__40.clone(),
                 tail_p__13.clone(),
             ])
         }
@@ -182,7 +182,7 @@ pub fn expand_minus_lambda(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__10 = args[0].clone();
-        let env__42 = args[1].clone();
+        let env__41 = args[1].clone();
         let tail_p = args[2].clone();
         {
             // (astify-abstraction (lambda-params exp) (lambda-body exp) env)
@@ -195,7 +195,7 @@ pub fn expand_minus_lambda(args: &[Scm]) -> Scm {
                     // (lambda-body exp)
                     imports::lambda_minus_body(&[exp__10.clone()])
                 },
-                env__42.clone(),
+                env__41.clone(),
             ])
         }
     }
@@ -207,7 +207,7 @@ pub fn expand_minus_let(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__11 = args[0].clone();
-        let env__43 = args[1].clone();
+        let env__42 = args[1].clone();
         let tail_p__14 = args[2].clone();
         {
             // (astify-comment exp (astify-application (astify-abstraction (let-vars exp) (let-body exp) env) (let-args exp) env tail?))
@@ -225,14 +225,14 @@ pub fn expand_minus_let(args: &[Scm]) -> Scm {
                                 // (let-body exp)
                                 imports::let_minus_body(&[exp__11.clone()])
                             },
-                            env__43.clone(),
+                            env__42.clone(),
                         ])
                     },
                     {
                         // (let-args exp)
                         imports::let_minus_args(&[exp__11.clone()])
                     },
-                    env__43.clone(),
+                    env__42.clone(),
                     tail_p__14.clone(),
                 ])
             }])
@@ -246,7 +246,7 @@ pub fn expand_minus_let_star_(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__12 = args[0].clone();
-        let env__44 = args[1].clone();
+        let env__43 = args[1].clone();
         let tail_p__15 = args[2].clone();
         {
             // (letrec ((loop (lambda (bindings) (if (null? bindings) (cons (quote begin) (let-body exp)) (list (quote let) (list (car bindings)) (loop (cdr bindings))))))) (astify-comment exp (expand-let (loop (let*-bindings exp)) env tail?)))
@@ -318,7 +318,7 @@ pub fn expand_minus_let_star_(args: &[Scm]) -> Scm {
                                                 )
                                             }])
                                         },
-                                        env__44.clone(),
+                                        env__43.clone(),
                                         tail_p__15.clone(),
                                     ])
                                 }])
@@ -337,7 +337,7 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__13 = args[0].clone();
-        let env__45 = args[1].clone();
+        let env__44 = args[1].clone();
         let tail_p__16 = args[2].clone();
         {
             // (astify-comment exp (expand-let (list (quote let) (map (lambda (name) (list name (quote (quote *uninitialized*)))) (let-vars exp)) (cons (quote begin) (append (map (lambda (name val) (list (quote set!) name val)) (let-vars exp) (let-args exp)) (let-body exp)))) env tail?))
@@ -424,7 +424,7 @@ pub fn expand_minus_letrec(args: &[Scm]) -> Scm {
                             },
                         ])
                     },
-                    env__45.clone(),
+                    env__44.clone(),
                     tail_p__16.clone(),
                 ])
             }])
@@ -438,7 +438,7 @@ pub fn expand_minus_or(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__14 = args[0].clone();
-        let env__46 = args[1].clone();
+        let env__45 = args[1].clone();
         let tail_p__17 = args[2].clone();
         {
             // (let ((x1 (make-syntactic-closure env (quote ()) (cadr exp))) (x2 (make-syntactic-closure env (quote ()) (caddr exp)))) (astify (make-syntactic-closure (make-core-env) (quote ()) (list (list (quote lambda) (list (quote tmp)) (list (quote if) (quote tmp) (quote tmp) x2)) x1)) env tail?))
@@ -446,14 +446,14 @@ pub fn expand_minus_or(args: &[Scm]) -> Scm {
                 let [x1__0, x2__0] = [
                     {
                         // (make-syntactic-closure env (quote ()) (cadr exp))
-                        imports::make_minus_syntactic_minus_closure(&[env__46.clone(), Scm::Nil, {
+                        imports::make_minus_syntactic_minus_closure(&[env__45.clone(), Scm::Nil, {
                             // (cadr exp)
                             imports::cadr(&[exp__14.clone()])
                         }])
                     },
                     {
                         // (make-syntactic-closure env (quote ()) (caddr exp))
-                        imports::make_minus_syntactic_minus_closure(&[env__46.clone(), Scm::Nil, {
+                        imports::make_minus_syntactic_minus_closure(&[env__45.clone(), Scm::Nil, {
                             // (caddr exp)
                             imports::caddr(&[exp__14.clone()])
                         }])
@@ -497,7 +497,7 @@ pub fn expand_minus_or(args: &[Scm]) -> Scm {
                                 },
                             ])
                         },
-                        env__46.clone(),
+                        env__45.clone(),
                         tail_p__17.clone(),
                     ])
                 }
@@ -512,7 +512,7 @@ pub fn expand_minus_quote(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__15 = args[0].clone();
-        let env__47 = args[1].clone();
+        let env__46 = args[1].clone();
         let tail_p = args[2].clone();
         {
             // (astify-constant (cadr exp) env)
@@ -521,7 +521,7 @@ pub fn expand_minus_quote(args: &[Scm]) -> Scm {
                     // (cadr exp)
                     imports::cadr(&[exp__15.clone()])
                 },
-                env__47.clone(),
+                env__46.clone(),
             ])
         }
     }
@@ -533,7 +533,7 @@ pub fn expand_minus_set_i(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__16 = args[0].clone();
-        let env__48 = args[1].clone();
+        let env__47 = args[1].clone();
         let tail_p = args[2].clone();
         {
             // (astify-assignment (set!-variable exp) (set!-value exp) env)
@@ -546,7 +546,7 @@ pub fn expand_minus_set_i(args: &[Scm]) -> Scm {
                     // (set!-value exp)
                     imports::set_i_minus_value(&[exp__16.clone()])
                 },
-                env__48.clone(),
+                env__47.clone(),
             ])
         }
     }
@@ -558,7 +558,7 @@ pub fn expand_minus_testsuite(args: &[Scm]) -> Scm {
             panic!("invalid arity")
         }
         let exp__17 = args[0].clone();
-        let env__49 = args[1].clone();
+        let env__48 = args[1].clone();
         let tail_p = args[2].clone();
         {
             // (astify-testsuite (testsuite-name exp) (testsuite-cases exp) env)
@@ -571,7 +571,7 @@ pub fn expand_minus_testsuite(args: &[Scm]) -> Scm {
                     // (testsuite-cases exp)
                     imports::testsuite_minus_cases(&[exp__17.clone()])
                 },
-                env__49.clone(),
+                env__48.clone(),
             ])
         }
     }
