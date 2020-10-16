@@ -15,24 +15,24 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let node__13 = args[0].clone();
+        let node_12 = args[0].clone();
         {
             // (letrec ((transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (make-closure (transform-children))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (make-closure (transform-children))) ((eq? (node (quote kind)) (quote CLOSURE)) node) (else (transform-children)))))) (node (quote transform) transform))
             {
                 // (let ((transform (quote *uninitialized*))) (begin (set! transform (lambda (node transform-children) (cond ((eq? (node (quote kind)) (quote ABSTRACTION)) (make-closure (transform-children))) ((eq? (node (quote kind)) (quote VARARG-ABSTRACTION)) (make-closure (transform-children))) ((eq? (node (quote kind)) (quote CLOSURE)) node) (else (transform-children))))) (node (quote transform) transform)))
                 {
-                    let transform__26 = Scm::symbol("*uninitialized*");
+                    let transform_26 = Scm::symbol("*uninitialized*");
                     {
-                        let transform__26 = transform__26.into_boxed();
+                        let transform_26 = transform_26.into_boxed();
                         {
-                            transform__26.set({
+                            transform_26.set({
                                 // Closure
                                 Scm::func(move |args: &[Scm]| {
                                     if args.len() != 2 {
                                         panic!("invalid arity")
                                     }
-                                    let node__12 = args[0].clone();
-                                    let transform_minus_children__0 = args[1].clone();
+                                    let node_13 = args[0].clone();
+                                    let transform_minus_children_0 = args[1].clone();
                                     {
                                         // (cond ...)
                                         if ({
@@ -40,7 +40,7 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                             imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
-                                                    node__12.clone().invoke(&[Scm::symbol("kind")])
+                                                    node_13.clone().invoke(&[Scm::symbol("kind")])
                                                 },
                                                 Scm::symbol("ABSTRACTION"),
                                             ])
@@ -51,7 +51,7 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                                 // (make-closure (transform-children))
                                                 imports::make_minus_closure(&[{
                                                     // (transform-children)
-                                                    transform_minus_children__0.clone().invoke(&[])
+                                                    transform_minus_children_0.clone().invoke(&[])
                                                 }])
                                             }
                                         } else if ({
@@ -59,7 +59,7 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                             imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
-                                                    node__12.clone().invoke(&[Scm::symbol("kind")])
+                                                    node_13.clone().invoke(&[Scm::symbol("kind")])
                                                 },
                                                 Scm::symbol("VARARG-ABSTRACTION"),
                                             ])
@@ -70,7 +70,7 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                                 // (make-closure (transform-children))
                                                 imports::make_minus_closure(&[{
                                                     // (transform-children)
-                                                    transform_minus_children__0.clone().invoke(&[])
+                                                    transform_minus_children_0.clone().invoke(&[])
                                                 }])
                                             }
                                         } else if ({
@@ -78,18 +78,18 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                                             imports::eq_p(&[
                                                 {
                                                     // (node (quote kind))
-                                                    node__12.clone().invoke(&[Scm::symbol("kind")])
+                                                    node_13.clone().invoke(&[Scm::symbol("kind")])
                                                 },
                                                 Scm::symbol("CLOSURE"),
                                             ])
                                         })
                                         .is_true()
                                         {
-                                            node__12.clone()
+                                            node_13.clone()
                                         } else {
                                             {
                                                 // (transform-children)
-                                                transform_minus_children__0.clone().invoke(&[])
+                                                transform_minus_children_0.clone().invoke(&[])
                                             }
                                         }
                                     }
@@ -98,9 +98,9 @@ pub fn close_minus_procedures(args: &[Scm]) -> Scm {
                             Scm::anything();
                             {
                                 // (node (quote transform) transform)
-                                node__13
+                                node_12
                                     .clone()
-                                    .invoke(&[Scm::symbol("transform"), transform__26.get()])
+                                    .invoke(&[Scm::symbol("transform"), transform_26.get()])
                             }
                         }
                     }

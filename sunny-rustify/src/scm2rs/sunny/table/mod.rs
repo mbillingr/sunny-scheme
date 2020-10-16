@@ -19,19 +19,19 @@ pub mod exports {
     pub use super::table_p;
 }
 
-thread_local! {#[allow(non_upper_case_globals)] pub static TABLE_minus_ID: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE TABLE-ID"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static TABLE_minus_ID: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE TABLE_minus_ID"))}
 pub fn ancestor_p(args: &[Scm]) -> Scm {
     {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let obj__4 = args[0].clone();
-        let ancestor__0 = args[1].clone();
+        let obj_4 = args[0].clone();
+        let ancestor_0 = args[1].clone();
         {
             // (and (table? obj) (if (eq? (parent obj) ancestor) #t (ancestor? (parent obj) ancestor)))
             if ({
                 // (table? obj)
-                table_p(&[obj__4.clone()])
+                table_p(&[obj_4.clone()])
             })
             .is_true()
             {
@@ -40,9 +40,9 @@ pub fn ancestor_p(args: &[Scm]) -> Scm {
                     imports::eq_p(&[
                         {
                             // (parent obj)
-                            parent(&[obj__4.clone()])
+                            parent(&[obj_4.clone()])
                         },
-                        ancestor__0.clone(),
+                        ancestor_0.clone(),
                     ])
                 })
                 .is_true()
@@ -54,9 +54,9 @@ pub fn ancestor_p(args: &[Scm]) -> Scm {
                         Scm::func(ancestor_p).invoke(&[
                             {
                                 // (parent obj)
-                                parent(&[obj__4.clone()])
+                                parent(&[obj_4.clone()])
                             },
-                            ancestor__0.clone(),
+                            ancestor_0.clone(),
                         ])
                     }
                 }
@@ -72,17 +72,17 @@ pub fn call_minus_method(args: &[Scm]) -> Scm {
         if args.len() < 2 {
             panic!("not enough args")
         }
-        let table__7 = args[0].clone();
-        let key__2 = args[1].clone();
+        let table_7 = args[0].clone();
+        let key_2 = args[1].clone();
         let args__4 = Scm::list(&args[2..]);
         {
             // (apply (get-field table key) table args)
             imports::apply(&[
                 {
                     // (get-field table key)
-                    get_minus_field(&[table__7.clone(), key__2.clone()])
+                    get_minus_field(&[table_7.clone(), key_2.clone()])
                 },
-                table__7.clone(),
+                table_7.clone(),
                 args__4.clone(),
             ])
         }
@@ -94,10 +94,10 @@ pub fn clone(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let table__0 = args[0].clone();
+        let table_0 = args[0].clone();
         {
             // (list TABLE-ID table)
-            imports::list(&[TABLE_minus_ID.with(|value| value.get()), table__0.clone()])
+            imports::list(&[TABLE_minus_ID.with(|value| value.get()), table_0.clone()])
         }
     }
     .into()
@@ -107,10 +107,10 @@ pub fn fields(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let table__3 = args[0].clone();
+        let table_3 = args[0].clone();
         {
             // (cddr table)
-            imports::cddr(&[table__3.clone()])
+            imports::cddr(&[table_3.clone()])
         }
     }
     .into()
@@ -120,28 +120,28 @@ pub fn get_minus_field(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let table__5 = args[0].clone();
-        let key__0 = args[1].clone();
+        let table_5 = args[0].clone();
+        let key_0 = args[1].clone();
         {
             // (let ((entry (assq key (fields table)))) (cond (entry (cdr entry)) ((parent table) (get-field (parent table) key)) (else #f)))
             {
-                let entry__0 = {
+                let entry_0 = {
                     // (assq key (fields table))
-                    imports::assq(&[key__0.clone(), {
+                    imports::assq(&[key_0.clone(), {
                         // (fields table)
-                        fields(&[table__5.clone()])
+                        fields(&[table_5.clone()])
                     }])
                 };
                 {
                     // (cond ...)
-                    if (entry__0.clone()).is_true() {
+                    if (entry_0.clone()).is_true() {
                         {
                             // (cdr entry)
-                            imports::cdr(&[entry__0.clone()])
+                            imports::cdr(&[entry_0.clone()])
                         }
                     } else if ({
                         // (parent table)
-                        parent(&[table__5.clone()])
+                        parent(&[table_5.clone()])
                     })
                     .is_true()
                     {
@@ -150,9 +150,9 @@ pub fn get_minus_field(args: &[Scm]) -> Scm {
                             Scm::func(get_minus_field).invoke(&[
                                 {
                                     // (parent table)
-                                    parent(&[table__5.clone()])
+                                    parent(&[table_5.clone()])
                                 },
-                                key__0.clone(),
+                                key_0.clone(),
                             ])
                         }
                     } else {
@@ -181,10 +181,10 @@ pub fn parent(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let table__1 = args[0].clone();
+        let table_1 = args[0].clone();
         {
             // (cadr table)
-            imports::cadr(&[table__1.clone()])
+            imports::cadr(&[table_1.clone()])
         }
     }
     .into()
@@ -194,21 +194,21 @@ pub fn replace_minus_table_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let table__8 = args[0].clone();
-        let source__0 = args[1].clone();
+        let table_8 = args[0].clone();
+        let source_0 = args[1].clone();
         {
             {
                 // (set-parent! table (parent source))
-                set_minus_parent_i(&[table__8.clone(), {
+                set_minus_parent_i(&[table_8.clone(), {
                     // (parent source)
-                    parent(&[source__0.clone()])
+                    parent(&[source_0.clone()])
                 }])
             };
             {
                 // (set-fields! table (fields source))
-                set_minus_fields_i(&[table__8.clone(), {
+                set_minus_fields_i(&[table_8.clone(), {
                     // (fields source)
-                    fields(&[source__0.clone()])
+                    fields(&[source_0.clone()])
                 }])
             }
         }
@@ -229,37 +229,37 @@ pub fn set_minus_field_i(args: &[Scm]) -> Scm {
         if args.len() != 3 {
             panic!("invalid arity")
         }
-        let table__6 = args[0].clone();
-        let key__1 = args[1].clone();
-        let value__0 = args[2].clone();
+        let table_6 = args[0].clone();
+        let key_1 = args[1].clone();
+        let value_0 = args[2].clone();
         {
             // (let ((entry (assq key (fields table)))) (if entry (set-cdr! entry value) (set-fields! table (cons (cons key value) (fields table)))))
             {
-                let entry__1 = {
+                let entry_1 = {
                     // (assq key (fields table))
-                    imports::assq(&[key__1.clone(), {
+                    imports::assq(&[key_1.clone(), {
                         // (fields table)
-                        fields(&[table__6.clone()])
+                        fields(&[table_6.clone()])
                     }])
                 };
-                if (entry__1.clone()).is_true() {
+                if (entry_1.clone()).is_true() {
                     {
                         // (set-cdr! entry value)
-                        imports::set_minus_cdr_i(&[entry__1.clone(), value__0.clone()])
+                        imports::set_minus_cdr_i(&[entry_1.clone(), value_0.clone()])
                     }
                 } else {
                     {
                         // (set-fields! table (cons (cons key value) (fields table)))
-                        set_minus_fields_i(&[table__6.clone(), {
+                        set_minus_fields_i(&[table_6.clone(), {
                             // (cons (cons key value) (fields table))
                             imports::cons(&[
                                 {
                                     // (cons key value)
-                                    imports::cons(&[key__1.clone(), value__0.clone()])
+                                    imports::cons(&[key_1.clone(), value_0.clone()])
                                 },
                                 {
                                     // (fields table)
-                                    fields(&[table__6.clone()])
+                                    fields(&[table_6.clone()])
                                 },
                             ])
                         }])
@@ -275,16 +275,16 @@ pub fn set_minus_fields_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let table__4 = args[0].clone();
-        let fields__0 = args[1].clone();
+        let table_4 = args[0].clone();
+        let fields_0 = args[1].clone();
         {
             // (set-cdr! (cdr table) fields)
             imports::set_minus_cdr_i(&[
                 {
                     // (cdr table)
-                    imports::cdr(&[table__4.clone()])
+                    imports::cdr(&[table_4.clone()])
                 },
-                fields__0.clone(),
+                fields_0.clone(),
             ])
         }
     }
@@ -295,16 +295,16 @@ pub fn set_minus_parent_i(args: &[Scm]) -> Scm {
         if args.len() != 2 {
             panic!("invalid arity")
         }
-        let table__2 = args[0].clone();
-        let parent__0 = args[1].clone();
+        let table_2 = args[0].clone();
+        let parent_0 = args[1].clone();
         {
             // (set-car! (cdr table) parent)
             imports::set_minus_car_i(&[
                 {
                     // (cdr table)
-                    imports::cdr(&[table__2.clone()])
+                    imports::cdr(&[table_2.clone()])
                 },
-                parent__0.clone(),
+                parent_0.clone(),
             ])
         }
     }
@@ -315,12 +315,12 @@ pub fn table_p(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let obj__3 = args[0].clone();
+        let obj_3 = args[0].clone();
         {
             // (and (pair? obj) (eq? (car obj) TABLE-ID))
             if ({
                 // (pair? obj)
-                imports::pair_p(&[obj__3.clone()])
+                imports::pair_p(&[obj_3.clone()])
             })
             .is_true()
             {
@@ -329,7 +329,7 @@ pub fn table_p(args: &[Scm]) -> Scm {
                     imports::eq_p(&[
                         {
                             // (car obj)
-                            imports::car(&[obj__3.clone()])
+                            imports::car(&[obj_3.clone()])
                         },
                         TABLE_minus_ID.with(|value| value.get()),
                     ])
@@ -430,13 +430,13 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (begin (assert (table? t)))))
                 {
-                    let t__0 = {
+                    let t_0 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     assert!({
                         // (table? t)
-                        table_p(&[t__0.clone()])
+                        table_p(&[t_0.clone()])
                     }
                     .is_true());
                 }
@@ -451,7 +451,7 @@ mod tests {
             {
                 // (let ((t (list (cons (quote <table>) (quote ()))))) (begin (begin (assert (not (table? t))))))
                 {
-                    let t__1 = {
+                    let t_1 = {
                         // (list (cons (quote <table>) (quote ())))
                         imports::list(&[{
                             // (cons (quote <table>) (quote ()))
@@ -462,7 +462,7 @@ mod tests {
                         // (not (table? t))
                         imports::not(&[{
                             // (table? t)
-                            table_p(&[t__1.clone()])
+                            table_p(&[t_1.clone()])
                         }])
                     }
                     .is_true());
@@ -478,7 +478,7 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (begin (assert (not (parent t))))))
                 {
-                    let t__2 = {
+                    let t_2 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
@@ -486,7 +486,7 @@ mod tests {
                         // (not (parent t))
                         imports::not(&[{
                             // (parent t)
-                            parent(&[t__2.clone()])
+                            parent(&[t_2.clone()])
                         }])
                     }
                     .is_true());
@@ -502,23 +502,23 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (let ((s (clone t))) (begin (assert (eq? (parent s) t))))))
                 {
-                    let t__3 = {
+                    let t_3 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((s (clone t))) (begin (assert (eq? (parent s) t))))
-                    let s__2 = {
+                    let s_2 = {
                         // (clone t)
-                        clone(&[t__3.clone()])
+                        clone(&[t_3.clone()])
                     };
                     assert!({
                         // (eq? (parent s) t)
                         imports::eq_p(&[
                             {
                                 // (parent s)
-                                parent(&[s__2.clone()])
+                                parent(&[s_2.clone()])
                             },
-                            t__3.clone(),
+                            t_3.clone(),
                         ])
                     }
                     .is_true());
@@ -534,18 +534,18 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (let ((f (fields t))) (begin (assert (null? f))))))
                 {
-                    let t__4 = {
+                    let t_4 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((f (fields t))) (begin (assert (null? f))))
-                    let f__3 = {
+                    let f_3 = {
                         // (fields t)
-                        fields(&[t__4.clone()])
+                        fields(&[t_4.clone()])
                     };
                     assert!({
                         // (null? f)
-                        imports::null_p(&[f__3.clone()])
+                        imports::null_p(&[f_3.clone()])
                     }
                     .is_true());
                 }
@@ -560,18 +560,18 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (let ((value (get-field t (quote x)))) (begin (assert (not value))))))
                 {
-                    let t__5 = {
+                    let t_5 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((value (get-field t (quote x)))) (begin (assert (not value))))
-                    let value__1 = {
+                    let value_1 = {
                         // (get-field t (quote x))
-                        get_minus_field(&[t__5.clone(), Scm::symbol("x")])
+                        get_minus_field(&[t_5.clone(), Scm::symbol("x")])
                     };
                     assert!({
                         // (not value)
-                        imports::not(&[value__1.clone()])
+                        imports::not(&[value_1.clone()])
                     }
                     .is_true());
                 }
@@ -586,21 +586,21 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (begin (set-field! t (quote x) 1) (begin (assert (= (get-field t (quote x)) 1))))))
                 {
-                    let t__6 = {
+                    let t_6 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     {
                         {
                             // (set-field! t (quote x) 1)
-                            set_minus_field_i(&[t__6.clone(), Scm::symbol("x"), Scm::from(1)])
+                            set_minus_field_i(&[t_6.clone(), Scm::symbol("x"), Scm::from(1)])
                         };
                         assert!({
                             // (= (get-field t (quote x)) 1)
                             imports::_e_(&[
                                 {
                                     // (get-field t (quote x))
-                                    get_minus_field(&[t__6.clone(), Scm::symbol("x")])
+                                    get_minus_field(&[t_6.clone(), Scm::symbol("x")])
                                 },
                                 Scm::from(1),
                             ])
@@ -619,28 +619,28 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1)))))))
                 {
-                    let t__7 = {
+                    let t_7 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     {
                         {
                             // (set-field! t (quote x) 1)
-                            set_minus_field_i(&[t__7.clone(), Scm::symbol("x"), Scm::from(1)])
+                            set_minus_field_i(&[t_7.clone(), Scm::symbol("x"), Scm::from(1)])
                         };
                         {
                             // (let ((s (clone t))) (begin (assert (= (get-field s (quote x)) 1))))
                             {
-                                let s__3 = {
+                                let s_3 = {
                                     // (clone t)
-                                    clone(&[t__7.clone()])
+                                    clone(&[t_7.clone()])
                                 };
                                 assert!({
                                     // (= (get-field s (quote x)) 1)
                                     imports::_e_(&[
                                         {
                                             // (get-field s (quote x))
-                                            get_minus_field(&[s__3.clone(), Scm::symbol("x")])
+                                            get_minus_field(&[s_3.clone(), Scm::symbol("x")])
                                         },
                                         Scm::from(1),
                                     ])
@@ -661,27 +661,27 @@ mod tests {
             {
                 // (let ((t (make-table))) (begin (begin (set-field! t (quote x) 1) (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1))))))))
                 {
-                    let t__8 = {
+                    let t_8 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     {
                         {
                             // (set-field! t (quote x) 1)
-                            set_minus_field_i(&[t__8.clone(), Scm::symbol("x"), Scm::from(1)])
+                            set_minus_field_i(&[t_8.clone(), Scm::symbol("x"), Scm::from(1)])
                         };
                         {
                             // (let ((s (clone t))) (begin (set-field! s (quote x) 2) (begin (assert (= (get-field t (quote x)) 1)))))
                             {
-                                let s__4 = {
+                                let s_4 = {
                                     // (clone t)
-                                    clone(&[t__8.clone()])
+                                    clone(&[t_8.clone()])
                                 };
                                 {
                                     {
                                         // (set-field! s (quote x) 2)
                                         set_minus_field_i(&[
-                                            s__4.clone(),
+                                            s_4.clone(),
                                             Scm::symbol("x"),
                                             Scm::from(2),
                                         ])
@@ -691,7 +691,7 @@ mod tests {
                                         imports::_e_(&[
                                             {
                                                 // (get-field t (quote x))
-                                                get_minus_field(&[t__8.clone(), Scm::symbol("x")])
+                                                get_minus_field(&[t_8.clone(), Scm::symbol("x")])
                                             },
                                             Scm::from(1),
                                         ])
@@ -713,10 +713,10 @@ mod tests {
             {
                 // (let ((t (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t))) (begin (begin (call-method t (quote inc)) (begin (assert (= (get-field t (quote count)) 1))))))
                 {
-                    let t__10 = {
+                    let t_9 = {
                         // (let ((t (make-table))) (set-field! t (quote count) 0) (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count)))))) t)
                         {
-                            let t__9 = {
+                            let t_10 = {
                                 // (make-table)
                                 make_minus_table(&[])
                             };
@@ -724,14 +724,14 @@ mod tests {
                                 {
                                     // (set-field! t (quote count) 0)
                                     set_minus_field_i(&[
-                                        t__9.clone(),
+                                        t_10.clone(),
                                         Scm::symbol("count"),
                                         Scm::from(0),
                                     ])
                                 };
                                 {
                                     // (set-field! t (quote inc) (lambda (self) (set-field! self (quote count) (+ 1 (get-field self (quote count))))))
-                                    set_minus_field_i(&[t__9.clone(), Scm::symbol("inc"), {
+                                    set_minus_field_i(&[t_10.clone(), Scm::symbol("inc"), {
                                         // Closure
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 1 {
@@ -758,21 +758,21 @@ mod tests {
                                         })
                                     }])
                                 };
-                                t__9.clone()
+                                t_10.clone()
                             }
                         }
                     };
                     {
                         {
                             // (call-method t (quote inc))
-                            call_minus_method(&[t__10.clone(), Scm::symbol("inc")])
+                            call_minus_method(&[t_9.clone(), Scm::symbol("inc")])
                         };
                         assert!({
                             // (= (get-field t (quote count)) 1)
                             imports::_e_(&[
                                 {
                                     // (get-field t (quote count))
-                                    get_minus_field(&[t__10.clone(), Scm::symbol("count")])
+                                    get_minus_field(&[t_9.clone(), Scm::symbol("count")])
                                 },
                                 Scm::from(1),
                             ])
@@ -791,10 +791,10 @@ mod tests {
             {
                 // (let ((t (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t))) (begin (begin (call-method t (quote add) t) (begin (assert (= (get-field t (quote value)) 2))))))
                 {
-                    let t__12 = {
+                    let t_11 = {
                         // (let ((t (make-table))) (set-field! t (quote value) 1) (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value)))))) t)
                         {
-                            let t__11 = {
+                            let t_12 = {
                                 // (make-table)
                                 make_minus_table(&[])
                             };
@@ -802,21 +802,21 @@ mod tests {
                                 {
                                     // (set-field! t (quote value) 1)
                                     set_minus_field_i(&[
-                                        t__11.clone(),
+                                        t_12.clone(),
                                         Scm::symbol("value"),
                                         Scm::from(1),
                                     ])
                                 };
                                 {
                                     // (set-field! t (quote add) (lambda (self other) (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value))))))
-                                    set_minus_field_i(&[t__11.clone(), Scm::symbol("add"), {
+                                    set_minus_field_i(&[t_12.clone(), Scm::symbol("add"), {
                                         // Closure
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 2 {
                                                 panic!("invalid arity")
                                             }
                                             let self__1 = args[0].clone();
-                                            let other__0 = args[1].clone();
+                                            let other_0 = args[1].clone();
                                             {
                                                 // (set-field! self (quote value) (+ (get-field self (quote value)) (get-field other (quote value))))
                                                 set_minus_field_i(&[
@@ -835,7 +835,7 @@ mod tests {
                                                             {
                                                                 // (get-field other (quote value))
                                                                 get_minus_field(&[
-                                                                    other__0.clone(),
+                                                                    other_0.clone(),
                                                                     Scm::symbol("value"),
                                                                 ])
                                                             },
@@ -846,21 +846,21 @@ mod tests {
                                         })
                                     }])
                                 };
-                                t__11.clone()
+                                t_12.clone()
                             }
                         }
                     };
                     {
                         {
                             // (call-method t (quote add) t)
-                            call_minus_method(&[t__12.clone(), Scm::symbol("add"), t__12.clone()])
+                            call_minus_method(&[t_11.clone(), Scm::symbol("add"), t_11.clone()])
                         };
                         assert!({
                             // (= (get-field t (quote value)) 2)
                             imports::_e_(&[
                                 {
                                     // (get-field t (quote value))
-                                    get_minus_field(&[t__12.clone(), Scm::symbol("value")])
+                                    get_minus_field(&[t_11.clone(), Scm::symbol("value")])
                                 },
                                 Scm::from(2),
                             ])
@@ -879,10 +879,10 @@ mod tests {
             {
                 // (let ((goblin (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin))) (let ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (begin (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))))))
                 {
-                    let goblin__1 = {
+                    let goblin_0 = {
                         // (let ((goblin (make-table))) (set-field! goblin (quote health) 30) (set-field! goblin (quote armor) 10) (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0))) (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor)))))))) (set-field! goblin (quote spawn) (lambda (self) (clone self))) goblin)
                         {
-                            let goblin__0 = {
+                            let goblin_1 = {
                                 // (make-table)
                                 make_minus_table(&[])
                             };
@@ -890,7 +890,7 @@ mod tests {
                                 {
                                     // (set-field! goblin (quote health) 30)
                                     set_minus_field_i(&[
-                                        goblin__0.clone(),
+                                        goblin_1.clone(),
                                         Scm::symbol("health"),
                                         Scm::from(30),
                                     ])
@@ -898,44 +898,40 @@ mod tests {
                                 {
                                     // (set-field! goblin (quote armor) 10)
                                     set_minus_field_i(&[
-                                        goblin__0.clone(),
+                                        goblin_1.clone(),
                                         Scm::symbol("armor"),
                                         Scm::from(10),
                                     ])
                                 };
                                 {
                                     // (set-field! goblin (quote alive?) (lambda (self) (> (get-field self (quote health)) 0)))
-                                    set_minus_field_i(&[
-                                        goblin__0.clone(),
-                                        Scm::symbol("alive?"),
-                                        {
-                                            // Closure
-                                            Scm::func(move |args: &[Scm]| {
-                                                if args.len() != 1 {
-                                                    panic!("invalid arity")
-                                                }
-                                                let self__2 = args[0].clone();
-                                                {
-                                                    // (> (get-field self (quote health)) 0)
-                                                    imports::_g_(&[
-                                                        {
-                                                            // (get-field self (quote health))
-                                                            get_minus_field(&[
-                                                                self__2.clone(),
-                                                                Scm::symbol("health"),
-                                                            ])
-                                                        },
-                                                        Scm::from(0),
-                                                    ])
-                                                }
-                                            })
-                                        },
-                                    ])
+                                    set_minus_field_i(&[goblin_1.clone(), Scm::symbol("alive?"), {
+                                        // Closure
+                                        Scm::func(move |args: &[Scm]| {
+                                            if args.len() != 1 {
+                                                panic!("invalid arity")
+                                            }
+                                            let self__2 = args[0].clone();
+                                            {
+                                                // (> (get-field self (quote health)) 0)
+                                                imports::_g_(&[
+                                                    {
+                                                        // (get-field self (quote health))
+                                                        get_minus_field(&[
+                                                            self__2.clone(),
+                                                            Scm::symbol("health"),
+                                                        ])
+                                                    },
+                                                    Scm::from(0),
+                                                ])
+                                            }
+                                        })
+                                    }])
                                 };
                                 {
                                     // (set-field! goblin (quote take-damage!) (lambda (self amount) (if (> amount (get-field self (quote armor))) (set-field! self (quote health) (- (get-field self (quote health)) (- amount (get-field self (quote armor))))))))
                                     set_minus_field_i(&[
-                                        goblin__0.clone(),
+                                        goblin_1.clone(),
                                         Scm::symbol("take-damage!"),
                                         {
                                             // Closure
@@ -944,10 +940,10 @@ mod tests {
                                                     panic!("invalid arity")
                                                 }
                                                 let self__3 = args[0].clone();
-                                                let amount__0 = args[1].clone();
+                                                let amount_0 = args[1].clone();
                                                 if ({
                                                     // (> amount (get-field self (quote armor)))
-                                                    imports::_g_(&[amount__0.clone(), {
+                                                    imports::_g_(&[amount_0.clone(), {
                                                         // (get-field self (quote armor))
                                                         get_minus_field(&[
                                                             self__3.clone(),
@@ -975,7 +971,7 @@ mod tests {
                                                                     {
                                                                         // (- amount (get-field self (quote armor)))
                                                                         imports::_minus_(&[
-                                                                            amount__0.clone(),
+                                                                            amount_0.clone(),
                                                                             {
                                                                                 // (get-field self (quote armor))
                                                                                 get_minus_field(&[
@@ -1000,7 +996,7 @@ mod tests {
                                 };
                                 {
                                     // (set-field! goblin (quote spawn) (lambda (self) (clone self)))
-                                    set_minus_field_i(&[goblin__0.clone(), Scm::symbol("spawn"), {
+                                    set_minus_field_i(&[goblin_1.clone(), Scm::symbol("spawn"), {
                                         // Closure
                                         Scm::func(move |args: &[Scm]| {
                                             if args.len() != 1 {
@@ -1014,23 +1010,23 @@ mod tests {
                                         })
                                     }])
                                 };
-                                goblin__0.clone()
+                                goblin_1.clone()
                             }
                         }
                     };
                     // (let ((goblin-wizard (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard))) (begin (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))))
-                    let goblin_minus_wizard__1 = {
+                    let goblin_minus_wizard_0 = {
                         // (let ((goblin-wizard (clone goblin))) (set-field! goblin-wizard (quote health) 20) (set-field! goblin-wizard (quote armor) 0) goblin-wizard)
                         {
-                            let goblin_minus_wizard__0 = {
+                            let goblin_minus_wizard_1 = {
                                 // (clone goblin)
-                                clone(&[goblin__1.clone()])
+                                clone(&[goblin_0.clone()])
                             };
                             {
                                 {
                                     // (set-field! goblin-wizard (quote health) 20)
                                     set_minus_field_i(&[
-                                        goblin_minus_wizard__0.clone(),
+                                        goblin_minus_wizard_1.clone(),
                                         Scm::symbol("health"),
                                         Scm::from(20),
                                     ])
@@ -1038,40 +1034,40 @@ mod tests {
                                 {
                                     // (set-field! goblin-wizard (quote armor) 0)
                                     set_minus_field_i(&[
-                                        goblin_minus_wizard__0.clone(),
+                                        goblin_minus_wizard_1.clone(),
                                         Scm::symbol("armor"),
                                         Scm::from(0),
                                     ])
                                 };
-                                goblin_minus_wizard__0.clone()
+                                goblin_minus_wizard_1.clone()
                             }
                         }
                     };
                     // (let ((krog (call-method goblin (quote spawn)))) (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))))
-                    let krog__0 = {
+                    let krog_0 = {
                         // (call-method goblin (quote spawn))
-                        call_minus_method(&[goblin__1.clone(), Scm::symbol("spawn")])
+                        call_minus_method(&[goblin_0.clone(), Scm::symbol("spawn")])
                     };
                     // (let ((kold (call-method goblin (quote spawn)))) (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))))
-                    let kold__0 = {
+                    let kold_0 = {
                         // (call-method goblin (quote spawn))
-                        call_minus_method(&[goblin__1.clone(), Scm::symbol("spawn")])
+                        call_minus_method(&[goblin_0.clone(), Scm::symbol("spawn")])
                     };
                     // (let ((vard (call-method goblin (quote spawn)))) (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?)))))))))))
-                    let vard__0 = {
+                    let vard_0 = {
                         // (call-method goblin (quote spawn))
-                        call_minus_method(&[goblin__1.clone(), Scm::symbol("spawn")])
+                        call_minus_method(&[goblin_0.clone(), Scm::symbol("spawn")])
                     };
                     // (let ((dega (call-method goblin-wizard (quote spawn)))) (begin (call-method krog (quote take-damage!) 15) (begin (call-method kold (quote take-damage!) 30) (begin (call-method vard (quote take-damage!) 45) (begin (call-method dega (quote take-damage!) 20) (begin (assert (call-method krog (quote alive?))) (assert (call-method kold (quote alive?))) (assert (not (call-method vard (quote alive?)))) (assert (not (call-method dega (quote alive?))))))))))
-                    let dega__0 = {
+                    let dega_0 = {
                         // (call-method goblin-wizard (quote spawn))
-                        call_minus_method(&[goblin_minus_wizard__1.clone(), Scm::symbol("spawn")])
+                        call_minus_method(&[goblin_minus_wizard_0.clone(), Scm::symbol("spawn")])
                     };
                     {
                         {
                             // (call-method krog (quote take-damage!) 15)
                             call_minus_method(&[
-                                krog__0.clone(),
+                                krog_0.clone(),
                                 Scm::symbol("take-damage!"),
                                 Scm::from(15),
                             ])
@@ -1079,7 +1075,7 @@ mod tests {
                         {
                             // (call-method kold (quote take-damage!) 30)
                             call_minus_method(&[
-                                kold__0.clone(),
+                                kold_0.clone(),
                                 Scm::symbol("take-damage!"),
                                 Scm::from(30),
                             ])
@@ -1087,7 +1083,7 @@ mod tests {
                         {
                             // (call-method vard (quote take-damage!) 45)
                             call_minus_method(&[
-                                vard__0.clone(),
+                                vard_0.clone(),
                                 Scm::symbol("take-damage!"),
                                 Scm::from(45),
                             ])
@@ -1095,26 +1091,26 @@ mod tests {
                         {
                             // (call-method dega (quote take-damage!) 20)
                             call_minus_method(&[
-                                dega__0.clone(),
+                                dega_0.clone(),
                                 Scm::symbol("take-damage!"),
                                 Scm::from(20),
                             ])
                         };
                         assert!({
                             // (call-method krog (quote alive?))
-                            call_minus_method(&[krog__0.clone(), Scm::symbol("alive?")])
+                            call_minus_method(&[krog_0.clone(), Scm::symbol("alive?")])
                         }
                         .is_true());
                         assert!({
                             // (call-method kold (quote alive?))
-                            call_minus_method(&[kold__0.clone(), Scm::symbol("alive?")])
+                            call_minus_method(&[kold_0.clone(), Scm::symbol("alive?")])
                         }
                         .is_true());
                         assert!({
                             // (not (call-method vard (quote alive?)))
                             imports::not(&[{
                                 // (call-method vard (quote alive?))
-                                call_minus_method(&[vard__0.clone(), Scm::symbol("alive?")])
+                                call_minus_method(&[vard_0.clone(), Scm::symbol("alive?")])
                             }])
                         }
                         .is_true());
@@ -1122,7 +1118,7 @@ mod tests {
                             // (not (call-method dega (quote alive?)))
                             imports::not(&[{
                                 // (call-method dega (quote alive?))
-                                call_minus_method(&[dega__0.clone(), Scm::symbol("alive?")])
+                                call_minus_method(&[dega_0.clone(), Scm::symbol("alive?")])
                             }])
                         }
                         .is_true());
@@ -1139,17 +1135,17 @@ mod tests {
             {
                 // (let ((t0 (make-table))) (let ((obj (quote not-a-table))) (begin (begin (assert (not (ancestor? obj t0)))))))
                 {
-                    let t0__0 = {
+                    let t0_0 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((obj (quote not-a-table))) (begin (begin (assert (not (ancestor? obj t0))))))
-                    let obj__5 = Scm::symbol("not-a-table");
+                    let obj_5 = Scm::symbol("not-a-table");
                     assert!({
                         // (not (ancestor? obj t0))
                         imports::not(&[{
                             // (ancestor? obj t0)
-                            ancestor_p(&[obj__5.clone(), t0__0.clone()])
+                            ancestor_p(&[obj_5.clone(), t0_0.clone()])
                         }])
                     }
                     .is_true());
@@ -1165,12 +1161,12 @@ mod tests {
             {
                 // (let ((t0 (make-table))) (let ((t1 (make-table))) (begin (begin (assert (not (ancestor? t1 t0)))))))
                 {
-                    let t0__1 = {
+                    let t0_1 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((t1 (make-table))) (begin (begin (assert (not (ancestor? t1 t0))))))
-                    let t1__0 = {
+                    let t1_0 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
@@ -1178,7 +1174,7 @@ mod tests {
                         // (not (ancestor? t1 t0))
                         imports::not(&[{
                             // (ancestor? t1 t0)
-                            ancestor_p(&[t1__0.clone(), t0__1.clone()])
+                            ancestor_p(&[t1_0.clone(), t0_1.clone()])
                         }])
                     }
                     .is_true());
@@ -1194,26 +1190,26 @@ mod tests {
             {
                 // (let ((t0 (make-table))) (let ((t1 (clone t0))) (begin (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1)))))))
                 {
-                    let t0__2 = {
+                    let t0_2 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((t1 (clone t0))) (begin (begin (assert (ancestor? t1 t0)) (assert (not (ancestor? t0 t1))))))
-                    let t1__1 = {
+                    let t1_1 = {
                         // (clone t0)
-                        clone(&[t0__2.clone()])
+                        clone(&[t0_2.clone()])
                     };
                     {
                         assert!({
                             // (ancestor? t1 t0)
-                            ancestor_p(&[t1__1.clone(), t0__2.clone()])
+                            ancestor_p(&[t1_1.clone(), t0_2.clone()])
                         }
                         .is_true());
                         assert!({
                             // (not (ancestor? t0 t1))
                             imports::not(&[{
                                 // (ancestor? t0 t1)
-                                ancestor_p(&[t0__2.clone(), t1__1.clone()])
+                                ancestor_p(&[t0_2.clone(), t1_1.clone()])
                             }])
                         }
                         .is_true());
@@ -1230,28 +1226,28 @@ mod tests {
             {
                 // (let ((t0 (make-table))) (let ((t1 (clone t0))) (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0))))))))
                 {
-                    let t0__3 = {
+                    let t0_3 = {
                         // (make-table)
                         make_minus_table(&[])
                     };
                     // (let ((t1 (clone t0))) (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0)))))))
-                    let t1__2 = {
+                    let t1_2 = {
                         // (clone t0)
-                        clone(&[t0__3.clone()])
+                        clone(&[t0_3.clone()])
                     };
                     // (let ((t2 (clone t1))) (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0))))))
-                    let t2__0 = {
+                    let t2_0 = {
                         // (clone t1)
-                        clone(&[t1__2.clone()])
+                        clone(&[t1_2.clone()])
                     };
                     // (let ((t3 (clone t2))) (begin (begin (assert (ancestor? t3 t0)))))
-                    let t3__0 = {
+                    let t3_0 = {
                         // (clone t2)
-                        clone(&[t2__0.clone()])
+                        clone(&[t2_0.clone()])
                     };
                     assert!({
                         // (ancestor? t3 t0)
-                        ancestor_p(&[t3__0.clone(), t0__3.clone()])
+                        ancestor_p(&[t3_0.clone(), t0_3.clone()])
                     }
                     .is_true());
                 }

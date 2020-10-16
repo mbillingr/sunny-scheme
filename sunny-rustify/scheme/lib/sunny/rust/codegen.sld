@@ -24,7 +24,7 @@
                 ((global-variable? (car g))
                  (println module
                           "thread_local!{#[allow(non_upper_case_globals)] pub static "
-                          (rustify-identifier (variable-name (car g)))
+                          (variable-name (car g))
                           ": Mut<Scm> = Mut::new(Scm::symbol(\"UNINITIALIZED GLOBAL VARIABLE "
                           (variable-name (car g))
                           "\"))}")
@@ -32,7 +32,7 @@
                 ((global-function? (car g))
                  (println module
                           "pub fn "
-                          (rustify-identifier (variable-name (car g)))
+                          (variable-name (car g))
                           "(args: &[Scm]) -> Scm { ")
                  ((global-function-get-value (car g)) 'gen-rust module)
                  (println module

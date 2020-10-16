@@ -141,22 +141,22 @@
         (let ((name (variable-name var)))
           (cond ((global-variable? var)
                  (print module
-                        (rustify-identifier name)
+                        name
                         ".with(|value| value.get())"))
                 ((global-function? var)
                  (print module
                         "Scm::func("
-                        (rustify-identifier name)
+                        name
                         ")"))
                 ((import-variable? var)
                  (print module
                         "Scm::func(imports::"
-                        (rustify-identifier name)
+                        name
                         ")"))
                 ((boxed-variable? var)
-                 (print module (rustify-identifier name) ".get()"))
+                 (print module name ".get()"))
                 (else
-                  (print module (rustify-identifier name) ".clone()")))))
+                  (print module name ".clone()")))))
       (define (self msg . args)
         (cond ((eq? 'repr msg) (repr))
               ((eq? 'transform msg) (transform (car args)))
@@ -186,12 +186,12 @@
         (let ((name (variable-name var)))
           (cond ((global-variable? var)
                  (print module
-                        (rustify-identifier name)
+                        name
                         ".with(|value| value.set(")
                  (val 'gen-rust module)
                  (print module "));"))
                 ((boxed-variable? var)
-                 (print module (rustify-identifier name) ".set(")
+                 (print module name ".set(")
                  (val 'gen-rust module)
                  (print module ");"))
                 (else (error "set! on unboxed variable" name var))))
@@ -220,13 +220,13 @@
         (let ((name (variable-name var)))
           (cond ((global-variable? var)
                  (print module
-                        (rustify-identifier name)
+                        name
                         ".with(|value| value.set(")
                  (val 'gen-rust module)
                  (print module "));"))
                 ((global-function? var)
                  (print module
-                        (rustify-identifier name)
+                        name
                         ".with(|value| value.set(")
                  (val 'gen-rust module)
                  (print module "));"))
@@ -359,7 +359,7 @@
               (else
                 (error "invalid function application" var)))
         (print module
-               (rustify-identifier (variable-name var))
+               (variable-name var)
                "(&[")
         (args 'gen-rust module)
         (print module "])"))
@@ -434,14 +434,14 @@
         (define (gen-params v*)
           (if (pair? v*)
               (begin (print module
-                            (rustify-identifier (variable-name (car v*)))
+                            (variable-name (car v*))
                             ", ")
                      (gen-params (cdr v*)))))
         (cond ((= 0 (length vars))
                'IGNORE)
               ((= 1 (length vars))
                (print module "let ")
-               (print module (rustify-identifier (variable-name (car vars))))
+               (print module (variable-name (car vars)))
                (print module " = ")
                (args 'gen-rust module)
                (print module ";"))
@@ -487,9 +487,9 @@
         (if (pair? free-vars)
             (let ((name (car free-vars)))
               (print module "let ")
-              (print module (rustify-identifier name))
+              (print module name)
               (print module " = ")
-              (print module (rustify-identifier name))
+              (print module name)
               (print module ".clone();")
               (prepare-closure module (cdr free-vars)))))
       (define (gen-rust module)
@@ -525,7 +525,7 @@
         (define (gen-params p* k)
           (if (pair? p*)
               (begin (print module "let ")
-                     (print module (rustify-identifier (variable-name (car p*))))
+                     (print module (variable-name (car p*)))
                      (print module " = args[")
                      (print module k)
                      (print module "].clone();")
@@ -564,13 +564,13 @@
         (define (gen-params p* k)
           (if (pair? p*)
               (begin (print module "let "
-                                   (rustify-identifier (variable-name (car p*)))
+                                   (variable-name (car p*))
                                    " = args["
                                    k
                                    "].clone();")
                      (gen-params (cdr p*) (+ k 1)))
               (begin (print module "let "
-                                   (rustify-identifier (variable-name varvar))
+                                   (variable-name varvar)
                                    " = Scm::list(&args["
                                    k
                                    "..]);"))))
@@ -670,8 +670,8 @@
                                globals
                                init
                                (body 'transform func)
-                               imports
-                               exports
+                               (map (lambda (i) (i 'transform func)) imports)
+                               (map (lambda (e) (e 'transform func)) exports)
                                (map (lambda (t) (t 'transform func))
                                     testsuite)))))
       (define (gen-exports module exports)
@@ -735,9 +735,9 @@
         (rust-block module
           (lambda ()
             (print module "let ")
-            (print module (rustify-identifier (variable-name var)))
+            (print module (variable-name var))
             (print module " = ")
-            (print module (rustify-identifier (variable-name var)))
+            (print module (variable-name var))
             (print module ".into_boxed();")
             (body 'gen-rust module))))
       (define (self msg . args)
@@ -767,7 +767,7 @@
                  (print module "imports::"))
                 (else (error "invalid export variable" var name)))
           (println module
-            (rustify-identifier name)
+            name
             " as "
             (rustify-identifier exname)
             ";")))
@@ -776,6 +776,7 @@
               ((eq? 'transform msg) (transform (car args)))
               ((eq? 'kind msg) 'EXPORT)
               ((eq? 'gen-rust msg) (gen-rust (car args)))
+              ((eq? 'get-var msg) var)
               (else (error "Unknown message EXPORT" msg))))
       self)
 

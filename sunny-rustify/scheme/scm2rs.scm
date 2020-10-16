@@ -31,7 +31,7 @@
     (boxify
       (rename-vars (lambda (name var)
                      (let* ((str-name (if (string? name) name (symbol->string name)))
-                            (rust-name str-name));(rustify-identifier str-name)))
+                            (rust-name (rustify-identifier str-name)))
                        (if (local-variable? var)
                            (unique-name rust-name)
                            rust-name)))

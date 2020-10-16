@@ -19,11 +19,11 @@ mod imports {
     pub use crate::testsuite::exports::*;
 }
 
-thread_local! {#[allow(non_upper_case_globals)] pub static UNIQUE_minus_COUNTS: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE UNIQUE-COUNTS"))}
-thread_local! {#[allow(non_upper_case_globals)] pub static args_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE args"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static UNIQUE_minus_COUNTS: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE UNIQUE_minus_COUNTS"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static args_: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE args_"))}
 thread_local! {#[allow(non_upper_case_globals)] pub static ast: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE ast"))}
-thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input-file"))}
-thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input-file-name"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input_minus_file"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static input_minus_file_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE input_minus_file_minus_name"))}
 pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
     {
         if args.len() != 0 {
@@ -32,13 +32,13 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
         {
             // (let ((expr (read input-file))) (if (eof-object? expr) (quote ()) (cons expr (load-sexpr))))
             {
-                let expr__27 = {
+                let expr_27 = {
                     // (read input-file)
                     imports::read(&[input_minus_file.with(|value| value.get())])
                 };
                 if ({
                     // (eof-object? expr)
-                    imports::eof_minus_object_p(&[expr__27.clone()])
+                    imports::eof_minus_object_p(&[expr_27.clone()])
                 })
                 .is_true()
                 {
@@ -46,7 +46,7 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
                 } else {
                     {
                         // (cons expr (load-sexpr))
-                        imports::cons(&[expr__27.clone(), {
+                        imports::cons(&[expr_27.clone(), {
                             // (load-sexpr)
                             Scm::func(load_minus_sexpr).invoke(&[])
                         }])
@@ -57,21 +57,21 @@ pub fn load_minus_sexpr(args: &[Scm]) -> Scm {
     }
     .into()
 }
-thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_dir: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-dir"))}
-thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_module_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output-module-name"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_dir: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output_minus_dir"))}
+thread_local! {#[allow(non_upper_case_globals)] pub static output_minus_module_minus_name: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE output_minus_module_minus_name"))}
 thread_local! {#[allow(non_upper_case_globals)] pub static program: Mut<Scm> = Mut::new(Scm::symbol("UNINITIALIZED GLOBAL VARIABLE program"))}
 pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
     {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let scheme_minus_ast__0 = args[0].clone();
+        let scheme_minus_ast_0 = args[0].clone();
         {
-            // (extract-definitions (boxify (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast))))
+            // (extract-definitions (boxify (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name (rustify-identifier str-name))) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast))))
             imports::extract_minus_definitions(&[{
-                // (boxify (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast)))
+                // (boxify (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name (rustify-identifier str-name))) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast)))
                 imports::boxify(&[{
-                    // (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast))
+                    // (rename-vars (lambda (name var) (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name (rustify-identifier str-name))) (if (local-variable? var) (unique-name rust-name) rust-name))) (close-procedures scheme-ast))
                     imports::rename_minus_vars(&[
                         {
                             // Closure
@@ -79,42 +79,47 @@ pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
                                 if args.len() != 2 {
                                     panic!("invalid arity")
                                 }
-                                let name__46 = args[0].clone();
-                                let var__26 = args[1].clone();
+                                let name_46 = args[0].clone();
+                                let var_26 = args[1].clone();
                                 {
-                                    // (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name str-name)) (if (local-variable? var) (unique-name rust-name) rust-name))
+                                    // (let* ((str-name (if (string? name) name (symbol->string name))) (rust-name (rustify-identifier str-name))) (if (local-variable? var) (unique-name rust-name) rust-name))
                                     {
-                                        // (let ((str-name (if (string? name) name (symbol->string name)))) (let ((rust-name str-name)) (begin (if (local-variable? var) (unique-name rust-name) rust-name))))
+                                        // (let ((str-name (if (string? name) name (symbol->string name)))) (let ((rust-name (rustify-identifier str-name))) (begin (if (local-variable? var) (unique-name rust-name) rust-name))))
                                         {
-                                            let str_minus_name__0 = if ({
+                                            let str_minus_name_0 = if ({
                                                 // (string? name)
-                                                imports::string_p(&[name__46.clone()])
+                                                imports::string_p(&[name_46.clone()])
                                             })
                                             .is_true()
                                             {
-                                                name__46.clone()
+                                                name_46.clone()
                                             } else {
                                                 {
                                                     // (symbol->string name)
                                                     imports::symbol_minus__g_string(&[
-                                                        name__46.clone()
+                                                        name_46.clone()
                                                     ])
                                                 }
                                             };
-                                            // (let ((rust-name str-name)) (begin (if (local-variable? var) (unique-name rust-name) rust-name)))
-                                            let rust_minus_name__0 = str_minus_name__0.clone();
+                                            // (let ((rust-name (rustify-identifier str-name))) (begin (if (local-variable? var) (unique-name rust-name) rust-name)))
+                                            let rust_minus_name_0 = {
+                                                // (rustify-identifier str-name)
+                                                imports::rustify_minus_identifier(&[
+                                                    str_minus_name_0.clone(),
+                                                ])
+                                            };
                                             if ({
                                                 // (local-variable? var)
-                                                imports::local_minus_variable_p(&[var__26.clone()])
+                                                imports::local_minus_variable_p(&[var_26.clone()])
                                             })
                                             .is_true()
                                             {
                                                 {
                                                     // (unique-name rust-name)
-                                                    unique_minus_name(&[rust_minus_name__0.clone()])
+                                                    unique_minus_name(&[rust_minus_name_0.clone()])
                                                 }
                                             } else {
-                                                rust_minus_name__0.clone()
+                                                rust_minus_name_0.clone()
                                             }
                                         }
                                     }
@@ -123,7 +128,7 @@ pub fn rust_minus_pipeline(args: &[Scm]) -> Scm {
                         },
                         {
                             // (close-procedures scheme-ast)
-                            imports::close_minus_procedures(&[scheme_minus_ast__0.clone()])
+                            imports::close_minus_procedures(&[scheme_minus_ast_0.clone()])
                         },
                     ])
                 }])
@@ -137,37 +142,37 @@ pub fn unique_minus_name(args: &[Scm]) -> Scm {
         if args.len() != 1 {
             panic!("invalid arity")
         }
-        let name__45 = args[0].clone();
+        let name_45 = args[0].clone();
         {
             // (let* ((entry (assoc name UNIQUE-COUNTS)) (nr (cond (entry (set-cdr! entry (+ 1 (cdr entry))) (cdr entry)) (else (set! UNIQUE-COUNTS (cons (cons name 0) UNIQUE-COUNTS)) 0)))) (string-append name "_" (number->string nr)))
             {
                 // (let ((entry (assoc name UNIQUE-COUNTS))) (let ((nr (cond (entry (set-cdr! entry (+ 1 (cdr entry))) (cdr entry)) (else (set! UNIQUE-COUNTS (cons (cons name 0) UNIQUE-COUNTS)) 0)))) (begin (string-append name "_" (number->string nr)))))
                 {
-                    let entry__4 = {
+                    let entry_4 = {
                         // (assoc name UNIQUE-COUNTS)
                         imports::assoc(&[
-                            name__45.clone(),
+                            name_45.clone(),
                             UNIQUE_minus_COUNTS.with(|value| value.get()),
                         ])
                     };
                     // (let ((nr (cond (entry (set-cdr! entry (+ 1 (cdr entry))) (cdr entry)) (else (set! UNIQUE-COUNTS (cons (cons name 0) UNIQUE-COUNTS)) 0)))) (begin (string-append name "_" (number->string nr))))
-                    let nr__0 = {
+                    let nr_0 = {
                         // (cond ...)
-                        if (entry__4.clone()).is_true() {
+                        if (entry_4.clone()).is_true() {
                             {
                                 {
                                     // (set-cdr! entry (+ 1 (cdr entry)))
-                                    imports::set_minus_cdr_i(&[entry__4.clone(), {
+                                    imports::set_minus_cdr_i(&[entry_4.clone(), {
                                         // (+ 1 (cdr entry))
                                         imports::_plus_(&[Scm::from(1), {
                                             // (cdr entry)
-                                            imports::cdr(&[entry__4.clone()])
+                                            imports::cdr(&[entry_4.clone()])
                                         }])
                                     }])
                                 };
                                 {
                                     // (cdr entry)
-                                    imports::cdr(&[entry__4.clone()])
+                                    imports::cdr(&[entry_4.clone()])
                                 }
                             }
                         } else {
@@ -178,7 +183,7 @@ pub fn unique_minus_name(args: &[Scm]) -> Scm {
                                         imports::cons(&[
                                             {
                                                 // (cons name 0)
-                                                imports::cons(&[name__45.clone(), Scm::from(0)])
+                                                imports::cons(&[name_45.clone(), Scm::from(0)])
                                             },
                                             UNIQUE_minus_COUNTS.with(|value| value.get()),
                                         ])
@@ -191,9 +196,9 @@ pub fn unique_minus_name(args: &[Scm]) -> Scm {
                     };
                     {
                         // (string-append name "_" (number->string nr))
-                        imports::string_minus_append(&[name__45.clone(), Scm::from("_"), {
+                        imports::string_minus_append(&[name_45.clone(), Scm::from("_"), {
                             // (number->string nr)
-                            imports::number_minus__g_string(&[nr__0.clone()])
+                            imports::number_minus__g_string(&[nr_0.clone()])
                         }])
                     }
                 }
@@ -373,11 +378,11 @@ pub fn main() {
                         if args.len() != 1 {
                             panic!("invalid arity")
                         }
-                        let module__46 = args[0].clone();
+                        let module_46 = args[0].clone();
                         {
                             // (ast (quote gen-rust) module)
                             ast.with(|value| value.get())
-                                .invoke(&[Scm::symbol("gen-rust"), module__46.clone()])
+                                .invoke(&[Scm::symbol("gen-rust"), module_46.clone()])
                         }
                     })
                 },
