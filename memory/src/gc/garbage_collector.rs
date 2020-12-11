@@ -3,7 +3,7 @@ use std::any::Any;
 use std::collections::HashSet;
 
 pub struct GarbageCollector<'a> {
-    reachable: HashSet<usize>,
+    reachable: HashSet<*const ()>,
     objects: &'a mut Vec<Box<dyn Any>>,
 }
 
@@ -20,7 +20,7 @@ impl<'a> GarbageCollector<'a> {
     }
 
     pub(crate) fn trace_pointer<T: Traceable>(&mut self, ptr: *const T) {
-        let unmarked = self.reachable.insert(ptr_as_address(ptr));
+        let unmarked = self.set_reachable(ptr);
         if unmarked {
             let obj = unsafe { &*ptr };
             obj.trace(self);
@@ -38,13 +38,17 @@ impl<'a> GarbageCollector<'a> {
         *self.objects = new_objects;
     }
 
+    fn set_reachable<T: ?Sized>(&mut self, ptr: *const T) -> bool {
+        self.reachable.insert(normalize(ptr))
+    }
+
     fn is_reachable<T: ?Sized>(&self, ptr: *const T) -> bool {
-        self.reachable.contains(&ptr_as_address(ptr))
+        self.reachable.contains(&normalize(ptr))
     }
 }
 
-fn ptr_as_address<T: ?Sized>(ptr: *const T) -> usize {
-    ptr as *const () as usize
+fn normalize<T: ?Sized>(ptr: *const T) -> *const () {
+    ptr as *const ()
 }
 
 #[cfg(test)]
@@ -56,9 +60,11 @@ mod tests {
         let mut objects: Vec<Box<dyn Any>> = vec![];
         let mut gc = GarbageCollector::new(&mut objects);
 
-        gc.trace_pointer(0x1234 as *const ());
+        let ptr = 0x1234 as *const ();
 
-        assert!(gc.reachable.contains(&0x1234))
+        gc.trace_pointer(ptr);
+
+        assert!(gc.reachable.contains(&ptr))
     }
 
     #[test]
@@ -92,10 +98,10 @@ mod tests {
         let b = Box::new(2);
         let c = Box::new(3);
         let mut objects: Vec<Box<dyn Any>> = vec![a, b, c];
-        let b_addr = ptr_as_address(&*objects[1]);
+        let b_ptr = &*objects[1] as *const _ as *const ();
         let mut gc = GarbageCollector::new(&mut objects);
 
-        gc.reachable.insert(b_addr);
+        gc.reachable.insert(b_ptr);
 
         gc.sweep();
 
