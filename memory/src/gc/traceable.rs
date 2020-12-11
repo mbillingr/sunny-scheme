@@ -62,3 +62,11 @@ impl<T: Traceable, U: Traceable> Traceable for (T, U) {
         self.1.trace(gc);
     }
 }
+
+impl<T: Traceable> Traceable for Vec<T> {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        for item in self {
+            item.trace(gc);
+        }
+    }
+}

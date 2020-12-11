@@ -1,4 +1,5 @@
 use crate::mem::{GarbageCollector, Ref, Traceable};
+use crate::vm::Closure;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -6,6 +7,8 @@ pub enum Value {
     Nil,
     Int(i64),
     Pair(Ref<(Value, Value)>),
+
+    Closure(Ref<Closure>),
 }
 
 macro_rules! impl_accessor {
@@ -48,6 +51,7 @@ impl Value {
     impl_accessor!(is_nil, Value::Nil);
     impl_accessor!(is_int, as_int, Value::Int, i64);
     impl_accessor!(is_pair, as_pair, Value::Pair, ref (Value, Value));
+    impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
 }
 
 impl Traceable for Value {
@@ -57,6 +61,7 @@ impl Traceable for Value {
             Value::Nil => {}
             Value::Int(_) => {}
             Value::Pair(p) => p.trace(gc),
+            Value::Closure(p) => p.trace(gc),
         }
     }
 }
