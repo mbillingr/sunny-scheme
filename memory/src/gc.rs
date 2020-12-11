@@ -155,9 +155,10 @@ mod tests {
     #[test]
     fn gc_without_root_clears_storage() {
         let mut storage = Storage::new(1);
-        storage.insert(0).unwrap();
+        let obj = storage.insert(0).unwrap();
         unsafe { storage.collect_garbage(&()) }
         assert_eq!(storage.objects.len(), 0);
+        assert!(!storage.is_valid(&obj));
     }
 
     #[test]
@@ -166,5 +167,25 @@ mod tests {
         let obj = storage.insert("foo").unwrap();
         unsafe { storage.collect_garbage(&obj) }
         assert_eq!(storage.objects.len(), 1);
+        assert!(storage.is_valid(&obj));
+    }
+
+    #[test]
+    fn gc_preserves_object_chain() {
+        let mut storage = Storage::new(4);
+        let a = storage.insert("foo").unwrap();
+        let b = storage.insert(a.clone()).unwrap();
+        let c = storage.insert(b.clone()).unwrap();
+        let d = storage.insert(c.clone()).unwrap();
+        unsafe { storage.collect_garbage(&c) }
+
+        assert_eq!(storage.objects.len(), 3);
+
+        assert!(storage.is_valid(&a));
+        assert!(storage.is_valid(&b));
+        assert!(storage.is_valid(&c));
+        assert!(!storage.is_valid(&d));
+
+        assert_eq!(***c, "foo");
     }
 }
