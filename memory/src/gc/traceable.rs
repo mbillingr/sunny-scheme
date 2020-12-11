@@ -55,3 +55,10 @@ impl<T: Traceable> Traceable for Option<T> {
         }
     }
 }
+
+impl<T: Traceable, U: Traceable> Traceable for (T, U) {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        self.0.trace(gc);
+        self.1.trace(gc);
+    }
+}

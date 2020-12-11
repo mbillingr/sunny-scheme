@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Ref<T>(Rc<T>);
 
 impl<T> Deref for Ref<T> {
@@ -28,3 +28,11 @@ impl Storage {
 
     pub fn collect_garbage<T>(&mut self, _root: T) {}
 }
+
+pub trait Traceable {
+    fn trace(&self, _: &mut GarbageCollector) {}
+}
+
+impl<T> Traceable for Ref<T> { }
+
+pub struct GarbageCollector;
