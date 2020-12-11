@@ -28,7 +28,7 @@ impl<T> Deref for Ref<T> {
 
 impl<T: Traceable> Traceable for Ref<T> {
     fn trace(&self, gc: &mut GarbageCollector) {
-        gc.trace_pointer(self.ptr)
+        self.ptr.trace(gc)
     }
 }
 
