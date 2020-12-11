@@ -1,4 +1,4 @@
-use crate::mem::{Ref, Traceable, GarbageCollector};
+use crate::mem::{GarbageCollector, Ref, Traceable};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -7,7 +7,6 @@ pub enum Value {
     Int(i64),
     Pair(Ref<(Value, Value)>),
 }
-
 
 macro_rules! impl_accessor {
     ($pred:ident, $variant:path) => {
@@ -20,7 +19,9 @@ macro_rules! impl_accessor {
     };
 
     ($pred:ident, $conv:ident, $variant:path, ref $output:ty) => {
-        pub fn $pred(&self) -> bool { self.$conv().is_some() }
+        pub fn $pred(&self) -> bool {
+            self.$conv().is_some()
+        }
         pub fn $conv(&self) -> Option<&$output> {
             match self {
                 $variant(x) => Some(&*x),
@@ -30,7 +31,9 @@ macro_rules! impl_accessor {
     };
 
     ($pred:ident, $conv:ident, $variant:path, $output:ty) => {
-        pub fn $pred(&self) -> bool { self.$conv().is_some() }
+        pub fn $pred(&self) -> bool {
+            self.$conv().is_some()
+        }
         pub fn $conv(&self) -> Option<$output> {
             match self {
                 $variant(x) => Some(*x),

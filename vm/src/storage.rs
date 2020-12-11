@@ -2,7 +2,7 @@ use crate::mem::{Storage, Traceable};
 use crate::Value;
 
 pub struct ValueStorage {
-    storage: Storage
+    storage: Storage,
 }
 
 impl Default for ValueStorage {
@@ -14,13 +14,16 @@ impl Default for ValueStorage {
 impl ValueStorage {
     pub fn new(capacity: usize) -> Self {
         ValueStorage {
-            storage: Storage::new(capacity)
+            storage: Storage::new(capacity),
         }
     }
 
     pub fn cons(&mut self, car: impl Into<Value>, cdr: impl Into<Value>) -> Value {
         let pair = (car.into(), cdr.into());
-        let obj = self.storage.insert(pair).expect("TODO: should we trigger GC here or pass on the error?");
+        let obj = self
+            .storage
+            .insert(pair)
+            .expect("TODO: should we trigger GC here or pass on the error?");
 
         Value::Pair(obj)
     }
@@ -38,7 +41,6 @@ impl ValueStorage {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -67,7 +69,9 @@ mod tests {
         let ab = storage.cons(a.clone(), b.clone());
         let abc = storage.cons(ab.clone(), c.clone());
 
-        unsafe { storage.collect_garbage(&abc); }
+        unsafe {
+            storage.collect_garbage(&abc);
+        }
 
         assert!(storage.is_valid(&abc));
         assert!(storage.is_valid(&ab));

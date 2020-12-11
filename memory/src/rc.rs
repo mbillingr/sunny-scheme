@@ -33,6 +33,6 @@ pub trait Traceable {
     fn trace(&self, _: &mut GarbageCollector) {}
 }
 
-impl<T> Traceable for Ref<T> { }
+impl<T> Traceable for Ref<T> {}
 
 pub struct GarbageCollector;
