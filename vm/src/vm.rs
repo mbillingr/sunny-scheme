@@ -14,9 +14,9 @@ pub enum Error {
 
 #[derive(Debug, Clone)]
 pub struct Closure {
-    code: Vec<Op>,
-    constants: Vec<Value>,
-    free_vars: Vec<Value>,
+    code: Box<[Op]>,
+    constants: Box<[Value]>,
+    free_vars: Box<[Value]>,
 }
 
 impl Traceable for Closure {

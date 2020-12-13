@@ -70,3 +70,19 @@ impl<T: Traceable> Traceable for Vec<T> {
         }
     }
 }
+
+impl<T: Traceable> Traceable for Box<[T]> {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        for item in self.iter() {
+            item.trace(gc);
+        }
+    }
+}
+
+impl<T: Traceable> Traceable for &[T] {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        for item in *self {
+            item.trace(gc);
+        }
+    }
+}
