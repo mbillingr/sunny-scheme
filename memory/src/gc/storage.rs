@@ -37,9 +37,11 @@ impl Storage {
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
-        let mut gc = GarbageCollector::new(&mut self.objects);
-        gc.mark(root);
-        gc.sweep();
+        GarbageCollector::new(&mut self.objects).mark(root).sweep();
+    }
+
+    pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
+        GarbageCollector::new(&mut self.objects)
     }
 }
 

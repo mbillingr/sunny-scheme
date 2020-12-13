@@ -1,4 +1,4 @@
-use crate::mem::{Storage, Traceable};
+use crate::mem::{GarbageCollector, Storage, Traceable};
 use crate::Value;
 
 pub struct ValueStorage {
@@ -31,6 +31,10 @@ impl ValueStorage {
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
         self.storage.collect_garbage(root)
+    }
+
+    pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
+        self.storage.begin_garbage_collection()
     }
 
     pub fn is_valid(&self, value: &Value) -> bool {

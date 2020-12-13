@@ -1,5 +1,5 @@
 use crate::{
-    mem::{GarbageCollector, Traceable},
+    mem::{GarbageCollector, Ref, Traceable},
     storage::ValueStorage,
     Value,
 };
@@ -40,58 +40,75 @@ pub enum Op {
 pub struct Vm {
     storage: ValueStorage,
     value_stack: Vec<Value>,
+    current_closure: Ref<Closure>,
+
+    ip: usize,
+}
+
+impl Traceable for Vm {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        self.value_stack.trace(gc);
+        self.current_closure.trace(gc);
+    }
 }
 
 impl Vm {
-    fn eval(&mut self, closure: Value) -> Result<()> {
-        let cls = closure.as_closure().ok_or(Error::NotCallable)?;
-        let code = &cls.code;
-        let constants = &cls.constants;
+    pub fn collect_garbage(&mut self) {
+        unsafe {
+            // This is safe if all state values (registers, etc.) are accessible through
+            // the VM struct.
+            self.storage
+                .begin_garbage_collection()
+                .mark(&self.value_stack)
+                .mark(&self.current_closure)
+                .sweep()
+        }
+    }
 
-        let mut ip = 0;
-        let mut arg: usize = 0;
+    fn eval(&mut self, closure: Ref<Closure>) -> Result<()> {
+        self.current_closure = closure;
+        self.ip = 0;
 
-        /// inner loop
-        let mut runner = |this: &mut Self, ip: &mut usize| -> Result<()> {
-            loop {
-                let op = code[*ip];
-                *ip += 1;
-
-                match op {
-                    Op::Nop => {}
-                    Op::ExtArg(a) => {
-                        arg = extend_arg(a, arg);
-                        continue;
-                    }
-                    Op::Const(a) => this.push_value(constants[extend_arg(a, arg)].clone()),
-                    Op::Cons => this.cons()?,
-                }
-
-                arg = 0;
-            }
-        };
-
-        /// outer loop, may recover from errors and restart inner loop
         loop {
-            let err = match runner(self, &mut ip) {
+            match self.eval_next_op() {
                 Ok(()) => return Ok(()),
                 Err(e @ Error::AllocationError) => e,
                 Err(e) => return Err(e),
             };
 
-            self.push_value(closure);
-
-            /// This is safe if all state values (registers, etc.) are pushed on the
-            /// value stack so they are not collected.
-            unsafe {
-                self.storage.collect_garbage(&self.value_stack)
-            }
-
-            closure = self.pop_value().unwrap();
-
             // Retry last instruction, which triggered the allocation error
-            ip -= 1;
+            self.ip -= 1;
         }
+    }
+
+    fn eval_next_op(&mut self) -> Result<()> {
+        let mut arg: usize = 0;
+        loop {
+            match self.fetch_op() {
+                Op::Nop => {}
+                Op::ExtArg(a) => {
+                    arg = extend_arg(a, arg);
+                    continue;
+                }
+                Op::Const(a) => {
+                    let c = self.fetch_constant(extend_arg(a, arg));
+                    self.push_value(c);
+                }
+                Op::Cons => self.cons()?,
+            }
+            break;
+        }
+        Ok(())
+    }
+
+    fn fetch_op(&mut self) -> Op {
+        let op = self.current_closure.code[self.ip];
+        self.ip += 1;
+        op
+    }
+
+    fn fetch_constant(&mut self, index: usize) -> Value {
+        self.current_closure.constants[index].clone()
     }
 
     fn push_value(&mut self, val: Value) {

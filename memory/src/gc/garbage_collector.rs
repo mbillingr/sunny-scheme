@@ -15,8 +15,9 @@ impl<'a> GarbageCollector<'a> {
         }
     }
 
-    pub(crate) fn mark(&mut self, root: &impl Traceable) {
-        root.trace(self)
+    pub fn mark(mut self, root: &impl Traceable) -> Self {
+        root.trace(&mut self);
+        self
     }
 
     pub(crate) fn trace_pointer<T: Traceable>(&mut self, ptr: *const T) {
@@ -27,7 +28,7 @@ impl<'a> GarbageCollector<'a> {
         }
     }
 
-    pub(crate) fn sweep(self) {
+    pub unsafe fn sweep(self) {
         let mut objects = std::mem::replace(self.objects, vec![]);
 
         let new_objects = objects
@@ -83,7 +84,7 @@ mod tests {
     #[test]
     fn starting_mark_phase_triggers_tracing_of_root() {
         let mut objects: Vec<Box<dyn Any>> = vec![];
-        let mut gc = GarbageCollector::new(&mut objects);
+        let gc = GarbageCollector::new(&mut objects);
 
         let spy = TraceSpy::new();
 
@@ -103,7 +104,9 @@ mod tests {
 
         gc.reachable.insert(b_ptr);
 
-        gc.sweep();
+        unsafe {
+            gc.sweep();
+        }
 
         assert_eq!(objects.len(), 1);
         assert_eq!(objects[0].downcast_ref::<i32>(), Some(&2));
