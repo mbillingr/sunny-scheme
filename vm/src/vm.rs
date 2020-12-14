@@ -71,7 +71,7 @@ impl Vm {
         loop {
             match self.eval_loop() {
                 Ok(ret_val) => return Ok(ret_val),
-                Err(e @ Error::AllocationError) => {
+                Err(Error::AllocationError) => {
                     self.collect_garbage();
                 }
                 Err(e) => return Err(e),
@@ -177,7 +177,7 @@ mod tests {
             }
         }
 
-        fn with_value_stack(mut self, values: Vec<Value>) -> Self {
+        fn with_value_stack(self, values: Vec<Value>) -> Self {
             VmRunner {
                 value_stack: Some(values),
                 ..self
@@ -202,7 +202,7 @@ mod tests {
 
     #[test]
     fn default_program_halts_immediately() {
-        let mut storage = ValueStorage::new(1);
+        let storage = ValueStorage::new(1);
         let mut vm = Vm::new(storage).unwrap();
         let ret = vm.eval_loop();
         assert_eq!(ret, Err(Error::Halted));

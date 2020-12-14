@@ -1,4 +1,5 @@
 use super::Traceable;
+use log::{debug, info, trace};
 use std::any::Any;
 use std::collections::HashSet;
 
@@ -9,6 +10,7 @@ pub struct GarbageCollector<'a> {
 
 impl<'a> GarbageCollector<'a> {
     pub(crate) fn new(objects: &'a mut Vec<Box<dyn Any>>) -> Self {
+        info!("Initializing garbage collecction");
         GarbageCollector {
             reachable: HashSet::new(),
             objects,
@@ -17,14 +19,18 @@ impl<'a> GarbageCollector<'a> {
 
     pub fn mark(mut self, root: &impl Traceable) -> Self {
         root.trace(&mut self);
+        debug!("Mark phase: {} reachable addresses", self.reachable.len());
         self
     }
 
     pub(crate) fn trace_pointer<T: Traceable>(&mut self, ptr: *const T) {
         let unmarked = self.set_reachable(ptr);
         if unmarked {
+            trace!("tracing {:p}: diving in...", ptr);
             let obj = unsafe { &*ptr };
             obj.trace(self);
+        } else {
+            trace!("tracing {:p}: reached before", ptr)
         }
     }
 
@@ -40,11 +46,14 @@ impl<'a> GarbageCollector<'a> {
 
         *self.objects = new_objects;
 
-        eprintln!(
-            "{} free and {} live objects, after collecting {}.",
-            self.objects.capacity() - self.objects.len(),
-            self.objects.len(),
+        debug!(
+            "Sweep phase: collected {} objects",
             n_before - self.objects.len()
+        );
+        debug!(
+            "Sweep phase: {} live and {} free objects",
+            self.objects.len(),
+            self.objects.capacity() - self.objects.len()
         );
     }
 

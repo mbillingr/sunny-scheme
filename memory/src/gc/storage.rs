@@ -1,4 +1,5 @@
 use crate::gc::{GarbageCollector, Ref, Traceable};
+use log::debug;
 use std::any::Any;
 
 pub struct Storage {
@@ -10,6 +11,10 @@ impl Storage {
         Storage {
             objects: Vec::with_capacity(_capacity),
         }
+    }
+
+    pub fn free(&self) -> usize {
+        self.objects.capacity() - self.objects.len()
     }
 
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
@@ -41,16 +46,10 @@ impl Storage {
         let n_add = if self.objects.capacity() == 0 {
             1
         } else {
-            usize::saturating_sub(self.objects.len() * 2, self.objects.capacity())
+            self.objects.len()
         };
-        let cap_before = self.objects.capacity();
         self.objects.reserve(n_add);
-        eprintln!(
-            "{} free and {} live objects, after growing storage by {}.",
-            self.objects.capacity() - self.objects.len(),
-            self.objects.len(),
-            self.objects.capacity() - cap_before
-        );
+        debug!("Growing storage to {}", self.objects.capacity());
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
@@ -115,5 +114,65 @@ mod tests {
         assert!(!storage.is_valid(&d));
 
         assert_eq!(***c, "foo");
+    }
+
+    #[test]
+    fn growing_zero_storage_results_in_empty_storage() {
+        let mut storage = Storage::new(0);
+        storage.grow();
+        assert!(storage.free() > 0)
+    }
+
+    #[test]
+    fn growing_empty_storage_does_nothing() {
+        let mut storage = Storage::new(5);
+        let free_before = storage.free();
+
+        storage.grow();
+
+        assert_eq!(storage.free(), free_before)
+    }
+
+    #[test]
+    fn growing_full_storage_at_least_doubles_capacity() {
+        let mut storage = Storage::new(8);
+        for i in 0..storage.free() {
+            storage.insert(i).unwrap();
+        }
+
+        storage.grow();
+
+        assert!(storage.objects.capacity() >= 8 * 2);
+    }
+
+    #[test]
+    fn growing_half_full_storage_does_nothing() {
+        let mut storage = Storage::new(8);
+        storage.insert("a").unwrap();
+        storage.insert("b").unwrap();
+        storage.insert("c").unwrap();
+        storage.insert("d").unwrap();
+
+        let free_before = storage.free();
+
+        storage.grow();
+
+        assert_eq!(storage.free(), free_before)
+    }
+
+    #[test]
+    fn growing_more_than_half_full_storage_allocates_more_memory() {
+        let mut storage = Storage::new(7);
+        let cap_before = storage.objects.capacity();
+        assert_eq!(cap_before, 7);
+
+        storage.insert("a").unwrap();
+        storage.insert("b").unwrap();
+        storage.insert("c").unwrap();
+        storage.insert("d").unwrap();
+
+        storage.grow();
+
+        assert!(storage.objects.capacity() >= 4 * 2);
     }
 }
