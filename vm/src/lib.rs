@@ -5,3 +5,4 @@ mod vm;
 use sunny_memory::gc as mem;
 
 pub use value::Value;
+pub use vm::Vm;

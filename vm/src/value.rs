@@ -1,7 +1,7 @@
 use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::vm::Closure;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Void,
     Nil,

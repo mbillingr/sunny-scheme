@@ -1,4 +1,4 @@
-use crate::mem::{GarbageCollector, Storage, Traceable};
+use crate::mem::{GarbageCollector, Ref, Storage, Traceable};
 use crate::Value;
 
 pub struct ValueStorage {
@@ -24,9 +24,13 @@ impl ValueStorage {
         cdr: impl Into<Value>,
     ) -> Result<Value, (Value, Value)> {
         let pair = (car.into(), cdr.into());
-        let obj = self.storage.insert(pair)?;
+        let obj = self.insert(pair)?;
 
         Ok(Value::Pair(obj))
+    }
+
+    pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
+        self.storage.insert(obj)
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
