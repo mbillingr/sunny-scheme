@@ -23,7 +23,7 @@ impl<'a> GarbageCollector<'a> {
         self
     }
 
-    pub(crate) fn trace_pointer<T: Traceable>(&mut self, ptr: *const T) {
+    pub(crate) fn trace_pointer<T: ?Sized + Traceable>(&mut self, ptr: *const T) {
         let unmarked = self.set_reachable(ptr);
         if unmarked {
             trace!("tracing {:p}: diving in...", ptr);

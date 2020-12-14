@@ -1,22 +1,22 @@
-use super::GarbageCollector;
+use super::{GarbageCollector, Ref};
 
 pub trait Traceable {
     fn trace(&self, gc: &mut GarbageCollector);
 }
 
-impl<T: Traceable> Traceable for *const T {
+impl<T: ?Sized + Traceable> Traceable for *const T {
     fn trace(&self, gc: &mut GarbageCollector) {
         gc.trace_pointer(*self)
     }
 }
 
-impl<T: Traceable> Traceable for *mut T {
+impl<T: ?Sized + Traceable> Traceable for *mut T {
     fn trace(&self, gc: &mut GarbageCollector) {
         gc.trace_pointer(*self)
     }
 }
 
-impl<T: Traceable> Traceable for &T {
+impl<T: ?Sized + Traceable> Traceable for &T {
     fn trace(&self, gc: &mut GarbageCollector) {
         gc.trace_pointer(*self)
     }
@@ -44,7 +44,7 @@ impl_primitive_tracable!(
     u64,
     u128,
     &str,
-    str,
+    //str,
     String,
 );
 
@@ -56,7 +56,7 @@ impl<T: Traceable> Traceable for Option<T> {
     }
 }
 
-impl<T: Traceable, U: Traceable> Traceable for (T, U) {
+impl<T: Traceable, U: ?Sized + Traceable> Traceable for (T, U) {
     fn trace(&self, gc: &mut GarbageCollector) {
         self.0.trace(gc);
         self.1.trace(gc);
@@ -72,6 +72,14 @@ impl<T: Traceable> Traceable for Vec<T> {
 }
 
 impl<T: Traceable> Traceable for Box<[T]> {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        for item in self.iter() {
+            item.trace(gc);
+        }
+    }
+}
+
+impl<T: Traceable> Traceable for Ref<[T]> {
     fn trace(&self, gc: &mut GarbageCollector) {
         for item in self.iter() {
             item.trace(gc);
