@@ -33,6 +33,11 @@ impl ValueStorage {
         self.storage.insert(obj)
     }
 
+    /// Make sure the storage is at most half full
+    pub fn grow(&mut self) {
+        self.storage.grow();
+    }
+
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
         self.storage.collect_garbage(root)
     }

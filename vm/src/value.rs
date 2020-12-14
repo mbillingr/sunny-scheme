@@ -1,5 +1,5 @@
+use crate::closure::Closure;
 use crate::mem::{GarbageCollector, Ref, Traceable};
-use crate::vm::Closure;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -63,5 +63,13 @@ impl Traceable for Value {
             Value::Pair(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
         }
+    }
+}
+
+impl PartialEq<[Value; 2]> for Value {
+    fn eq(&self, rhs: &[Value; 2]) -> bool {
+        self.as_pair()
+            .map(|lhs| lhs.0 == rhs[0] && lhs.1 == rhs[1])
+            .unwrap_or(false)
     }
 }

@@ -1,46 +1,10 @@
 use crate::{
+    closure::Closure,
     mem::{GarbageCollector, Ref, Traceable},
+    opcode::Op,
     storage::ValueStorage,
-    Value,
+    Error, Result, Value,
 };
-
-pub type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum Error {
-    StackUnderflow,
-    AllocationError,
-    NotCallable,
-    Halted,
-}
-
-#[derive(Debug, Clone)]
-pub struct Closure {
-    code: Box<[Op]>,
-    constants: Box<[Value]>,
-    free_vars: Box<[Value]>,
-}
-
-impl Traceable for Closure {
-    fn trace(&self, gc: &mut GarbageCollector) {
-        self.constants.trace(gc);
-        self.free_vars.trace(gc);
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-#[repr(u16)]
-pub enum Op {
-    Nop,
-    ExtArg(u8),
-
-    Halt,
-    Return,
-
-    Const(u8),
-
-    Cons,
-}
 
 #[derive(Clone)] // todo: should be Copy, but Ref is not Copy yet
 struct CallStackFrame {
@@ -79,7 +43,8 @@ impl Vm {
                 .mark(&self.value_stack)
                 .mark(&self.call_stack)
                 .mark(&self.current_frame)
-                .sweep()
+                .sweep();
+            self.storage.grow();
         }
     }
 
@@ -106,11 +71,13 @@ impl Vm {
         loop {
             match self.eval_loop() {
                 Ok(ret_val) => return Ok(ret_val),
-                Err(e @ Error::AllocationError) => e,
+                Err(e @ Error::AllocationError) => {
+                    self.collect_garbage();
+                }
                 Err(e) => return Err(e),
             };
 
-            // Retry last instruction, which triggered the allocation error
+            // Retry last instruction, which triggered the error
             self.current_frame.ip -= 1;
         }
     }
@@ -133,8 +100,13 @@ impl Vm {
                         return Ok(ret_val);
                     }
                 }
+                Op::Integer(a) => {
+                    //self.push_value(Value::Int(extend_arg(a, arg) as i64))
+                    self.push_value(Value::Int(a as i64))
+                }
                 Op::Const(a) => {
-                    let c = self.fetch_constant(extend_arg(a, arg));
+                    //let c = self.fetch_constant(extend_arg(a, arg));
+                    let c = self.fetch_constant(a as usize);
                     self.push_value(c);
                 }
                 Op::Cons => self.cons()?,
@@ -177,12 +149,56 @@ impl Vm {
 
 #[inline(always)]
 fn extend_arg(a: u8, arg: usize) -> usize {
-    a as usize + arg * u8::max_value() as usize
+    a as usize + arg << 8 as usize
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::closure::ClosureBuilder;
+
+    struct VmRunner {
+        storage_capacity: usize,
+        value_stack: Option<Vec<Value>>,
+    }
+
+    impl VmRunner {
+        fn new() -> Self {
+            VmRunner {
+                storage_capacity: 1024,
+                value_stack: None,
+            }
+        }
+
+        fn with_capacity(self, capacity: usize) -> Self {
+            VmRunner {
+                storage_capacity: capacity,
+                ..self
+            }
+        }
+
+        fn with_value_stack(mut self, values: Vec<Value>) -> Self {
+            VmRunner {
+                value_stack: Some(values),
+                ..self
+            }
+        }
+
+        fn run_closure(self, closure: Closure) -> (Result<Value>, Vm) {
+            let mut storage = ValueStorage::new(self.storage_capacity);
+
+            let run_closure = storage.insert(closure).unwrap();
+
+            let mut vm = Vm::new(storage).unwrap();
+
+            if let Some(value_stack) = self.value_stack {
+                vm.value_stack = value_stack;
+            }
+
+            let ret = vm.eval(run_closure);
+            (ret, vm)
+        }
+    }
 
     #[test]
     fn default_program_halts_immediately() {
@@ -193,20 +209,79 @@ mod tests {
     }
 
     #[test]
-    fn evaluating_a_closure_returns_value() {
-        let mut storage = ValueStorage::new(2);
+    fn op_nop_does_nothing() {
+        let (_, vm) =
+            VmRunner::new().run_closure(ClosureBuilder::new().op(Op::Nop).op(Op::Halt).build());
 
-        let run_closure = storage
-            .insert(Closure {
-                code: vec![Op::Const(0), Op::Return].into_boxed_slice(),
-                constants: vec![Value::Int(123)].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            })
-            .unwrap();
+        assert!(vm.call_stack.is_empty());
+        assert!(vm.value_stack.is_empty());
+        assert_eq!(vm.current_frame.ip, 2);
+    }
 
-        let mut vm = Vm::new(storage).unwrap();
-        let ret = vm.eval(run_closure).unwrap();
+    #[test]
+    fn no_instructions_executed_after_op_halt() {
+        let (_, vm) = VmRunner::new().run_closure(
+            ClosureBuilder::new()
+                .op(Op::Halt)
+                .op(Op::Integer(0))
+                .build(),
+        );
 
-        assert_eq!(ret, Value::Int(123));
+        assert_eq!(vm.current_frame.ip, 1);
+    }
+
+    #[test]
+    fn op_return_pops_value_stack() {
+        let (ret, vm) = VmRunner::new()
+            .with_value_stack(vec![Value::Int(0), Value::Int(1)])
+            .run_closure(ClosureBuilder::new().op(Op::Return).build());
+
+        assert_eq!(ret, Ok(Value::Int(1)));
+        assert_eq!(vm.value_stack, vec![Value::Int(0)]);
+    }
+
+    #[test]
+    fn op_integer_pushes_int_value() {
+        let (_, vm) = VmRunner::new().run_closure(
+            ClosureBuilder::new()
+                .op(Op::Integer(123))
+                .op(Op::Halt)
+                .build(),
+        );
+
+        assert_eq!(vm.value_stack, vec![Value::Int(123)]);
+    }
+
+    #[test]
+    fn op_const_pushes_constant() {
+        let (_, vm) = VmRunner::new().run_closure(
+            ClosureBuilder::new()
+                .constant(Value::Void)
+                .constant(Value::Nil)
+                .constant(Value::Int(0))
+                .op(Op::Halt)
+                .build(),
+        );
+
+        assert_eq!(vm.value_stack, vec![Value::Void, Value::Nil, Value::Int(0)]);
+    }
+
+    #[test]
+    fn op_cons_pops_two_values_and_pushes_pair() {
+        let (_, vm) = VmRunner::new()
+            .with_value_stack(vec![Value::Int(0), Value::Nil])
+            .run_closure(ClosureBuilder::new().op(Op::Cons).op(Op::Halt).build());
+
+        assert_eq!(vm.value_stack.last().unwrap(), &[Value::Int(0), Value::Nil]);
+    }
+
+    #[test]
+    fn op_cons_can_trigger_garbage_collection() {
+        let (_, vm) = VmRunner::new()
+            .with_capacity(2)
+            .with_value_stack(vec![Value::Int(0), Value::Nil])
+            .run_closure(ClosureBuilder::new().op(Op::Cons).op(Op::Halt).build());
+
+        assert_eq!(vm.value_stack.last().unwrap(), &[Value::Int(0), Value::Nil]);
     }
 }

@@ -1,3 +1,5 @@
+mod closure;
+mod opcode;
 mod storage;
 mod value;
 mod vm;
@@ -6,3 +8,13 @@ use sunny_memory::gc as mem;
 
 pub use value::Value;
 pub use vm::Vm;
+
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Error {
+    StackUnderflow,
+    AllocationError,
+    NotCallable,
+    Halted,
+}

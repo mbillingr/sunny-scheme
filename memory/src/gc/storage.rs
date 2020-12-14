@@ -36,8 +36,26 @@ impl Storage {
             .any(|ptr| ptr == obj.as_ptr())
     }
 
+    /// Make sure the storage is at most half full
+    pub fn grow(&mut self) {
+        let n_add = if self.objects.capacity() == 0 {
+            1
+        } else {
+            usize::saturating_sub(self.objects.len() * 2, self.objects.capacity())
+        };
+        let cap_before = self.objects.capacity();
+        self.objects.reserve(n_add);
+        eprintln!(
+            "{} free and {} live objects, after growing storage by {}.",
+            self.objects.capacity() - self.objects.len(),
+            self.objects.len(),
+            self.objects.capacity() - cap_before
+        );
+    }
+
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
         GarbageCollector::new(&mut self.objects).mark(root).sweep();
+        self.grow();
     }
 
     pub fn begin_garbage_collection(&mut self) -> GarbageCollector {

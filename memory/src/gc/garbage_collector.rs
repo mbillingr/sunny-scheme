@@ -31,12 +31,21 @@ impl<'a> GarbageCollector<'a> {
     pub unsafe fn sweep(self) {
         let mut objects = std::mem::replace(self.objects, vec![]);
 
+        let n_before = objects.len();
+
         let new_objects = objects
             .drain(..)
             .filter(|obj| self.is_reachable(&**obj))
             .collect();
 
         *self.objects = new_objects;
+
+        eprintln!(
+            "{} free and {} live objects, after collecting {}.",
+            self.objects.capacity() - self.objects.len(),
+            self.objects.len(),
+            n_before - self.objects.len()
+        );
     }
 
     fn set_reachable<T: ?Sized>(&mut self, ptr: *const T) -> bool {
