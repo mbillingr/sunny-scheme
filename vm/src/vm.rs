@@ -90,13 +90,16 @@ impl CodePointer {
 
 #[derive(Clone)] // todo: should be Copy, but Ref is not Copy yet
 struct CallStackFrame {
-    closure: Closure,
-    ip: CodePointer,
+    free_vars: Ref<Box<[Value]>>,
+    args: Box<[Value]>,
+    code: CodePointer,
 }
 
 impl Traceable for CallStackFrame {
     fn trace(&self, gc: &mut GarbageCollector) {
-        self.closure.trace(gc);
+        self.free_vars.trace(gc);
+        self.args.trace(gc);
+        self.code.trace(gc);
     }
 }
 
@@ -149,8 +152,9 @@ impl Vm {
             value_stack: vec![],
             call_stack: vec![],
             current_frame: CallStackFrame {
-                ip: closure.code.clone(),
-                closure,
+                free_vars: closure.free_vars.clone(),
+                args: vec![].into_boxed_slice(),
+                code: closure.code.clone(),
             },
             no_values,
         })
@@ -161,13 +165,14 @@ impl Vm {
             code,
             free_vars: self.no_values.clone(),
         };
-        self.eval_closure(closure)
+        self.eval_closure(&closure)
     }
 
-    pub fn eval_closure(&mut self, closure: Closure) -> Result<Value> {
+    pub fn eval_closure(&mut self, closure: &Closure) -> Result<Value> {
         self.current_frame = CallStackFrame {
-            ip: closure.code.clone(),
-            closure,
+            free_vars: closure.free_vars.clone(),
+            args: vec![].into_boxed_slice(),
+            code: closure.code.clone(),
         };
 
         loop {
@@ -180,7 +185,7 @@ impl Vm {
             };
 
             // Retry last instruction, which triggered the error
-            self.current_frame.ip.step_back()
+            self.current_frame.code.step_back()
         }
     }
 
@@ -218,11 +223,11 @@ impl Vm {
     }
 
     fn fetch_op(&mut self) -> Op {
-        self.current_frame.ip.fetch()
+        self.current_frame.code.fetch()
     }
 
     fn fetch_constant(&mut self, index: usize) -> Value {
-        self.current_frame.closure.code.get_constant(index).clone()
+        self.current_frame.code.get_constant(index).clone()
     }
 
     fn push_value(&mut self, val: Value) {
@@ -296,7 +301,7 @@ mod tests {
                 vm.value_stack = value_stack;
             }
 
-            let ret = vm.eval_closure(closure);
+            let ret = vm.eval_closure(&closure);
             (ret, vm)
         }
     }
