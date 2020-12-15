@@ -1,15 +1,31 @@
 use crate::gc::{GarbageCollector, Ref, Traceable};
-use log::debug;
+use log::{debug, warn};
 use std::any::Any;
 
+/// Managed object storage with garbage collection.
+///
+/// When the storage is dropped all remaining objects are leaked.
+/// To avoid leakage run garbage collection before dropping the storage
+/// and make sure no references to any objects in the storage remain.
 pub struct Storage {
-    objects: Vec<Box<dyn Any>>,
+    objects: &'static mut Vec<Box<dyn Any>>,
+}
+
+impl Drop for Storage {
+    fn drop(&mut self) {
+        if !self.objects.is_empty() {
+            warn!(
+                "Leaked {} objects from dropped storage. (Hint: did you run garbage collection?)",
+                self.objects.len()
+            )
+        }
+    }
 }
 
 impl Storage {
     pub fn new(_capacity: usize) -> Self {
         Storage {
-            objects: Vec::with_capacity(_capacity),
+            objects: Box::leak(Box::new(Vec::with_capacity(_capacity))),
         }
     }
 

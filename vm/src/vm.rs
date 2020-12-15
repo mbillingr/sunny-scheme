@@ -115,6 +115,7 @@ impl Traceable for Vm {
     fn trace(&self, gc: &mut GarbageCollector) {
         self.value_stack.trace(gc);
         self.call_stack.trace(gc);
+        self.current_frame.trace(gc);
         self.no_values.trace(gc);
     }
 }
@@ -122,8 +123,7 @@ impl Traceable for Vm {
 impl Vm {
     pub fn collect_garbage(&mut self) {
         unsafe {
-            // This is safe if all state values (registers, etc.) are accessible through
-            // the VM struct.
+            // This is safe if all state values (registers, etc.) are marked as roots
             self.storage
                 .begin_garbage_collection()
                 .mark(&self.value_stack)
