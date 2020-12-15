@@ -65,7 +65,7 @@ impl Vm {
         })
     }
 
-    fn eval(&mut self, closure: Ref<Closure>) -> Result<Value> {
+    pub fn eval(&mut self, closure: Ref<Closure>) -> Result<Value> {
         self.current_frame = CallStackFrame { closure, ip: 0 };
 
         loop {

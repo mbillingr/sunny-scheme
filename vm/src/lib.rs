@@ -1,8 +1,8 @@
-mod closure;
+pub mod closure;
 mod opcode;
 mod storage;
 mod value;
-mod vm;
+pub mod vm;
 
 use sunny_memory::gc as mem;
 

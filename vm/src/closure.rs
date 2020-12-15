@@ -1,4 +1,4 @@
-use crate::mem::{GarbageCollector, Ref, Traceable};
+use crate::mem::{GarbageCollector, Traceable};
 use crate::opcode::Op;
 use crate::Value;
 
