@@ -1,6 +1,6 @@
+use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::opcode::Op;
 use crate::Value;
-use sunny_memory::gc::{GarbageCollector, Ref, Traceable};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
