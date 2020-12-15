@@ -13,6 +13,8 @@ pub enum Op {
     Const(u8),
 
     Cons,
+
+    MakeClosure(u8),
 }
 
 impl Traceable for Op {

@@ -17,4 +17,5 @@ pub enum Error {
     AllocationError,
     NotCallable,
     Halted,
+    TypeError,
 }

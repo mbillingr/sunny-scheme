@@ -65,6 +65,13 @@ impl CodePointer {
         CodePointer { position, ..self }
     }
 
+    pub fn offset(&self, offset: isize) -> Self {
+        CodePointer {
+            segment: self.segment.clone(),
+            position: (self.position as isize + offset) as usize,
+        }
+    }
+
     pub fn get_constant(&self, index: usize) -> &Value {
         self.segment.get_constant(index)
     }
@@ -169,12 +176,19 @@ impl Vm {
     }
 
     pub fn eval_closure(&mut self, closure: &Closure) -> Result<Value> {
+        self.load_closure(closure);
+        self.eval_gc()
+    }
+
+    fn load_closure(&mut self, closure: &Closure) {
         self.current_frame = CallStackFrame {
             free_vars: closure.free_vars.clone(),
             args: vec![].into_boxed_slice(),
             code: closure.code.clone(),
         };
+    }
 
+    fn eval_gc(&mut self) -> Result<Value> {
         loop {
             match self.eval_loop() {
                 Ok(ret_val) => return Ok(ret_val),
@@ -217,6 +231,7 @@ impl Vm {
                     self.push_value(c);
                 }
                 Op::Cons => self.cons()?,
+                Op::MakeClosure(a) => self.make_closure(a as usize)?,
             }
             arg = 0;
         }
@@ -239,16 +254,36 @@ impl Vm {
     }
 
     fn cons(&mut self) -> Result<()> {
+        if self.storage.free() < 1 {
+            return Err(Error::AllocationError);
+        }
+
         let cdr = self.pop_value()?;
         let car = self.pop_value()?;
-        match self.storage.cons(car, cdr) {
-            Ok(pair) => Ok(self.push_value(pair)),
-            Err((car, cdr)) => {
-                self.push_value(car);
-                self.push_value(cdr);
-                Err(Error::AllocationError)
-            }
+        let pair = self.storage.cons(car, cdr).unwrap();
+        self.push_value(pair);
+        Ok(())
+    }
+
+    fn make_closure(&mut self, n_free: usize) -> Result<()> {
+        if self.storage.free() < 2 {
+            return Err(Error::AllocationError);
         }
+
+        let code_offset = self.pop_value()?.as_int().ok_or(Error::TypeError)? as isize;
+        let code = self.current_frame.code.offset(code_offset);
+
+        let mut free_vars = Vec::with_capacity(n_free);
+        for _ in 0..n_free {
+            free_vars.push(self.pop_value()?);
+        }
+        let free_vars = self.storage.insert(free_vars.into_boxed_slice()).unwrap();
+
+        let closure = Closure { code, free_vars };
+        let closure = self.storage.insert(closure).unwrap();
+
+        self.push_value(Value::Closure(closure));
+        Ok(())
     }
 }
 
@@ -290,7 +325,7 @@ mod tests {
         }
 
         fn run_closure(self, cb: ClosureBuilder) -> (Result<Value>, Vm) {
-            let additional_capacity = 3 + 3; // required by the vm's default closure and by the closure being run
+            let additional_capacity = 2 + 3; // required by the vm's default closure and by the closure being run
             let mut storage = ValueStorage::new(self.storage_capacity + additional_capacity);
 
             let closure = cb.build(&mut storage).unwrap();
@@ -301,7 +336,8 @@ mod tests {
                 vm.value_stack = value_stack;
             }
 
-            let ret = vm.eval_closure(&closure);
+            vm.load_closure(&closure);
+            let ret = vm.eval_loop();
             (ret, vm)
         }
     }
@@ -371,12 +407,39 @@ mod tests {
     }
 
     #[test]
-    fn op_cons_can_trigger_garbage_collection() {
-        let (_, vm) = VmRunner::new()
+    fn op_cons_preserves_state_on_allocation_error() {
+        let (ret, vm) = VmRunner::new()
             .with_capacity(0)
             .with_value_stack(vec![Value::Int(0), Value::Nil])
             .run_closure(ClosureBuilder::new().op(Op::Cons).op(Op::Halt));
 
-        assert_eq!(vm.value_stack.last().unwrap(), &[Value::Int(0), Value::Nil]);
+        assert_eq!(ret, Err(Error::AllocationError));
+        assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Nil]);
+    }
+
+    #[test]
+    fn op_make_closure_pops_n_free_vars_and_pushes_closure() {
+        let (_, mut vm) = VmRunner::new()
+            .with_value_stack(vec![Value::Int(2), Value::Int(1), Value::Int(0)])
+            .run_closure(ClosureBuilder::new().op(Op::MakeClosure(2)).op(Op::Halt));
+
+        let closure = vm.value_stack.pop().unwrap();
+        let closure = closure.as_closure().unwrap();
+
+        assert!(vm.value_stack.is_empty());
+
+        assert_eq!(&**closure.free_vars, vec![Value::Int(1), Value::Int(2)]);
+        assert_eq!(closure.code.clone().fetch(), Op::Halt);
+    }
+
+    #[test]
+    fn op_make_closure_preserves_state_on_memory_error() {
+        let (ret, vm) = VmRunner::new()
+            .with_capacity(0)
+            .with_value_stack(vec![Value::Int(0), Value::Int(0)])
+            .run_closure(ClosureBuilder::new().op(Op::MakeClosure(1)).op(Op::Halt));
+
+        assert_eq!(ret, Err(Error::AllocationError));
+        assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Int(0)]);
     }
 }
