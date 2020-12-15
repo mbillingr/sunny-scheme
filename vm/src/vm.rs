@@ -7,9 +7,43 @@ use crate::{
     Error, Result, Value,
 };
 
+#[derive(Debug, Clone)]
+pub struct CodeSegment {
+    code: Box<[Op]>,
+    constants: Box<[Value]>,
+}
+
+impl Traceable for CodeSegment {
+    fn trace(&self, gc: &mut GarbageCollector) {
+        self.constants.trace(gc);
+    }
+}
+
+impl CodeSegment {
+    pub fn new(code: Box<[Op]>, constants: Box<[Value]>) -> Self {
+        CodeSegment { code, constants }
+    }
+
+    pub fn get_constant(&self, index: usize) -> &Value {
+        &self.constants[index]
+    }
+
+    pub fn get_op(&self, position: usize) -> Op {
+        self.code[position]
+    }
+
+    pub fn code_slice(&self) -> &[Op] {
+        &*self.code
+    }
+
+    pub fn constant_slice(&self) -> &[Value] {
+        &*self.constants
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CodePointer {
-    segment: Ref<Box<[Op]>>,
+    segment: Ref<CodeSegment>,
     position: usize,
 }
 
@@ -20,7 +54,7 @@ impl Traceable for CodePointer {
 }
 
 impl CodePointer {
-    pub fn new(segment: Ref<Box<[Op]>>) -> Self {
+    pub fn new(segment: Ref<CodeSegment>) -> Self {
         CodePointer {
             segment,
             position: 0,
@@ -31,8 +65,12 @@ impl CodePointer {
         CodePointer { position, ..self }
     }
 
+    pub fn get_constant(&self, index: usize) -> &Value {
+        self.segment.get_constant(index)
+    }
+
     pub fn fetch(&mut self) -> Op {
-        let op = self.segment[self.position];
+        let op = self.segment.get_op(self.position);
         self.position += 1;
         op
     }
@@ -41,8 +79,12 @@ impl CodePointer {
         self.position -= 1;
     }
 
-    pub fn as_slice(&self) -> &[Op] {
-        &self.segment[self.position..]
+    pub fn code_slice(&self) -> &[Op] {
+        &self.segment.code_slice()[self.position..]
+    }
+
+    pub fn constant_slice(&self) -> &[Value] {
+        self.segment.constant_slice()
     }
 }
 
@@ -64,12 +106,16 @@ pub struct Vm {
     call_stack: Vec<CallStackFrame>,
 
     current_frame: CallStackFrame,
+
+    // constants
+    no_values: Ref<Box<[Value]>>,
 }
 
 impl Traceable for Vm {
     fn trace(&self, gc: &mut GarbageCollector) {
         self.value_stack.trace(gc);
         self.call_stack.trace(gc);
+        self.no_values.trace(gc);
     }
 }
 
@@ -94,9 +140,9 @@ impl Vm {
             .build(&mut storage)
             .map_err(|_| Error::AllocationError)?;
 
-        /*let closure = storage
-        .insert(ClosureBuilder::new().op(Op::Halt).build())
-        .map_err(|_| Error::AllocationError)?;*/
+        let no_values = storage
+            .insert(vec![].into_boxed_slice())
+            .map_err(|_| Error::AllocationError)?;
 
         Ok(Vm {
             storage,
@@ -106,10 +152,19 @@ impl Vm {
                 ip: closure.code.clone(),
                 closure,
             },
+            no_values,
         })
     }
 
-    pub fn eval(&mut self, closure: Closure) -> Result<Value> {
+    pub fn eval(&mut self, code: CodePointer) -> Result<Value> {
+        let closure = Closure {
+            code,
+            free_vars: self.no_values.clone(),
+        };
+        self.eval_closure(closure)
+    }
+
+    pub fn eval_closure(&mut self, closure: Closure) -> Result<Value> {
         self.current_frame = CallStackFrame {
             ip: closure.code.clone(),
             closure,
@@ -167,7 +222,7 @@ impl Vm {
     }
 
     fn fetch_constant(&mut self, index: usize) -> Value {
-        self.current_frame.closure.constants[index].clone()
+        self.current_frame.closure.code.get_constant(index).clone()
     }
 
     fn push_value(&mut self, val: Value) {
@@ -241,7 +296,7 @@ mod tests {
                 vm.value_stack = value_stack;
             }
 
-            let ret = vm.eval(closure);
+            let ret = vm.eval_closure(closure);
             (ret, vm)
         }
     }

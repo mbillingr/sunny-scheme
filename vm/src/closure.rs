@@ -1,20 +1,18 @@
 use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::opcode::Op;
 use crate::storage::ValueStorage;
-use crate::vm::CodePointer;
+use crate::vm::{CodePointer, CodeSegment};
 use crate::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
     pub(crate) code: CodePointer,
-    pub(crate) constants: Ref<Box<[Value]>>,
     pub(crate) free_vars: Ref<Box<[Value]>>,
 }
 
 impl Traceable for Closure {
     fn trace(&self, gc: &mut GarbageCollector) {
         self.code.trace(gc);
-        self.constants.trace(gc);
         self.free_vars.trace(gc);
     }
 }
@@ -34,15 +32,19 @@ impl ClosureBuilder {
     }
 
     pub fn build(self, storage: &mut ValueStorage) -> Result<Closure, Self> {
-        if storage.free() < 3 {
+        if storage.free() < 2 {
             return Err(self);
         }
 
-        Ok(Closure {
-            code: CodePointer::new(storage.insert(self.code.into_boxed_slice()).unwrap()),
-            constants: storage.insert(self.constants.into_boxed_slice()).unwrap(),
-            free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
-        })
+        let bytecode = self.code.into_boxed_slice();
+        let constants = self.constants.into_boxed_slice();
+        let segment = storage
+            .insert(CodeSegment::new(bytecode, constants))
+            .unwrap();
+        let code = CodePointer::new(segment);
+
+        let free_vars = storage.insert(vec![].into_boxed_slice()).unwrap();
+        Ok(Closure { code, free_vars })
     }
 
     pub fn constant(mut self, value: Value) -> Self {
@@ -97,8 +99,8 @@ mod tests {
     fn build_empty_closure() {
         let mut storage = ValueStorage::new(1024);
         let cls = ClosureBuilder::new().build(&mut storage).unwrap();
-        assert_eq!(cls.code.as_slice(), &[]);
-        assert!(cls.constants.is_empty());
+        assert_eq!(cls.code.code_slice(), &[]);
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -109,8 +111,8 @@ mod tests {
             .op(Op::Halt)
             .build(&mut storage)
             .unwrap();
-        assert_eq!(cls.code.as_slice(), &[Op::Halt]);
-        assert!(cls.constants.is_empty());
+        assert_eq!(cls.code.code_slice(), &[Op::Halt]);
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -121,8 +123,8 @@ mod tests {
             .with(Op::Const, 0)
             .build(&mut storage)
             .unwrap();
-        assert_eq!(cls.code.as_slice(), &[Op::Const(0)]);
-        assert!(cls.constants.is_empty());
+        assert_eq!(cls.code.code_slice(), &[Op::Const(0)]);
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -133,8 +135,8 @@ mod tests {
             .with(Op::Const, 255)
             .build(&mut storage)
             .unwrap();
-        assert_eq!(cls.code.as_slice(), &[Op::Const(255)]);
-        assert!(cls.constants.is_empty());
+        assert_eq!(cls.code.code_slice(), &[Op::Const(255)]);
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -145,8 +147,8 @@ mod tests {
             .with(Op::Const, 256)
             .build(&mut storage)
             .unwrap();
-        assert_eq!(cls.code.as_slice(), &[Op::ExtArg(1), Op::Const(0)]);
-        assert!(cls.constants.is_empty());
+        assert_eq!(cls.code.code_slice(), &[Op::ExtArg(1), Op::Const(0)]);
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -158,7 +160,7 @@ mod tests {
             .build(&mut storage)
             .unwrap();
         assert_eq!(
-            cls.code.as_slice(),
+            cls.code.code_slice(),
             &[
                 Op::ExtArg(0x01),
                 Op::ExtArg(0x23),
@@ -170,7 +172,7 @@ mod tests {
                 Op::Const(0xef)
             ]
         );
-        assert!(cls.constants.is_empty());
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -182,7 +184,7 @@ mod tests {
             .build(&mut storage)
             .unwrap();
         assert_eq!(
-            cls.code.as_slice(),
+            cls.code.code_slice(),
             &[
                 Op::ExtArg(255),
                 Op::ExtArg(255),
@@ -194,7 +196,7 @@ mod tests {
                 Op::Const(255)
             ]
         );
-        assert!(cls.constants.is_empty());
+        assert!(cls.code.constant_slice().is_empty());
         assert!(cls.free_vars.is_empty());
     }
 
@@ -205,8 +207,8 @@ mod tests {
             .constant(Value::Nil)
             .build(&mut storage)
             .unwrap();
-        assert_eq!(cls.code.as_slice(), &[Op::Const(0)]);
-        assert_eq!(&**cls.constants, &[Value::Nil]);
+        assert_eq!(cls.code.code_slice(), &[Op::Const(0)]);
+        assert_eq!(cls.code.constant_slice(), &[Value::Nil]);
         assert!(cls.free_vars.is_empty());
     }
 
@@ -218,8 +220,8 @@ mod tests {
             .constant(Value::Int(2))
             .build(&mut storage)
             .unwrap();
-        assert_eq!(cls.code.as_slice(), &[Op::Const(0), Op::Const(1)]);
-        assert_eq!(&**cls.constants, &[Value::Int(1), Value::Int(2)]);
+        assert_eq!(cls.code.code_slice(), &[Op::Const(0), Op::Const(1)]);
+        assert_eq!(cls.code.constant_slice(), &[Value::Int(1), Value::Int(2)]);
         assert!(cls.free_vars.is_empty());
     }
 
@@ -233,10 +235,10 @@ mod tests {
             .build(&mut storage)
             .unwrap();
         assert_eq!(
-            cls.code.as_slice(),
+            cls.code.code_slice(),
             &[Op::Const(0), Op::Const(1), Op::Const(0)]
         );
-        assert_eq!(&**cls.constants, &[Value::Int(1), Value::Int(2)]);
+        assert_eq!(cls.code.constant_slice(), &[Value::Int(1), Value::Int(2)]);
         assert!(cls.free_vars.is_empty());
     }
 }
