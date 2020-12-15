@@ -57,7 +57,7 @@ impl<'a> GarbageCollector<'a> {
         );
     }
 
-    fn set_reachable<T: ?Sized>(&mut self, ptr: *const T) -> bool {
+    pub fn set_reachable<T: ?Sized>(&mut self, ptr: *const T) -> bool {
         self.reachable.insert(normalize(ptr))
     }
 

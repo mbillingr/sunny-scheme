@@ -1,15 +1,23 @@
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Ref<T: ?Sized>(Rc<T>);
 
-impl<T> Deref for Ref<T> {
+impl<T: ?Sized> Deref for Ref<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &*self.0
     }
 }
+
+impl<T: ?Sized> Clone for Ref<T> {
+    fn clone(&self) -> Self {
+        Ref(self.0.clone())
+    }
+}
+
+impl<T: ?Sized> Eq for Ref<T> {}
 
 impl<T: ?Sized> PartialEq for Ref<T> {
     fn eq(&self, rhs: &Self) -> bool {
@@ -24,6 +32,10 @@ impl Storage {
         Storage {}
     }
 
+    pub fn free(&self) -> usize {
+        usize::max_value()
+    }
+
     pub fn insert<T>(&mut self, obj: T) -> Result<Ref<T>, T> {
         Ok(Ref(Rc::new(obj)))
     }
@@ -34,7 +46,7 @@ impl Storage {
 
     pub fn grow(&mut self) {}
 
-    pub fn collect_garbage<T>(&mut self, _root: T) {}
+    pub unsafe fn collect_garbage<T>(&mut self, _root: T) {}
 
     pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
         GarbageCollector
@@ -64,5 +76,5 @@ impl GarbageCollector {
         self
     }
 
-    pub fn sweep(self) {}
+    pub unsafe fn sweep(self) {}
 }

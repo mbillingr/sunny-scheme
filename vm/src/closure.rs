@@ -1,21 +1,25 @@
-use crate::mem::{GarbageCollector, Traceable};
+use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::opcode::Op;
+use crate::storage::ValueStorage;
+use crate::vm::CodePointer;
 use crate::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
-    pub(crate) code: Box<[Op]>,
-    pub(crate) constants: Box<[Value]>,
-    pub(crate) free_vars: Box<[Value]>,
+    pub(crate) code: CodePointer,
+    pub(crate) constants: Ref<Box<[Value]>>,
+    pub(crate) free_vars: Ref<Box<[Value]>>,
 }
 
 impl Traceable for Closure {
     fn trace(&self, gc: &mut GarbageCollector) {
+        self.code.trace(gc);
         self.constants.trace(gc);
         self.free_vars.trace(gc);
     }
 }
 
+#[derive(Debug)]
 pub struct ClosureBuilder {
     code: Vec<Op>,
     constants: Vec<Value>,
@@ -29,12 +33,16 @@ impl ClosureBuilder {
         }
     }
 
-    pub fn build(self) -> Closure {
-        Closure {
-            code: self.code.into_boxed_slice(),
-            constants: self.constants.into_boxed_slice(),
-            free_vars: vec![].into_boxed_slice(),
+    pub fn build(self, storage: &mut ValueStorage) -> Result<Closure, Self> {
+        if storage.free() < 3 {
+            return Err(self);
         }
+
+        Ok(Closure {
+            code: CodePointer::new(storage.insert(self.code.into_boxed_slice()).unwrap()),
+            constants: storage.insert(self.constants.into_boxed_slice()).unwrap(),
+            free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+        })
     }
 
     pub fn constant(mut self, value: Value) -> Self {
@@ -87,162 +95,148 @@ mod tests {
 
     #[test]
     fn build_empty_closure() {
-        let cls = ClosureBuilder::new().build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![].into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+        let mut storage = ValueStorage::new(1024);
+        let cls = ClosureBuilder::new().build(&mut storage).unwrap();
+        assert_eq!(cls.code.as_slice(), &[]);
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_append_opcode() {
-        let cls = ClosureBuilder::new().op(Op::Halt).build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::Halt].into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+        let mut storage = ValueStorage::new(1024);
+        let cls = ClosureBuilder::new()
+            .op(Op::Halt)
+            .build(&mut storage)
+            .unwrap();
+        assert_eq!(cls.code.as_slice(), &[Op::Halt]);
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_with_zero_arg() {
-        let cls = ClosureBuilder::new().with(Op::Const, 0).build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::Const(0)].into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+        let mut storage = ValueStorage::new(1024);
+        let cls = ClosureBuilder::new()
+            .with(Op::Const, 0)
+            .build(&mut storage)
+            .unwrap();
+        assert_eq!(cls.code.as_slice(), &[Op::Const(0)]);
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_with_max_arg_value() {
-        let cls = ClosureBuilder::new().with(Op::Const, 255).build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::Const(255)].into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+        let mut storage = ValueStorage::new(1024);
+        let cls = ClosureBuilder::new()
+            .with(Op::Const, 255)
+            .build(&mut storage)
+            .unwrap();
+        assert_eq!(cls.code.as_slice(), &[Op::Const(255)]);
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_with_smallest_extension_value() {
-        let cls = ClosureBuilder::new().with(Op::Const, 256).build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::ExtArg(1), Op::Const(0)].into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+        let mut storage = ValueStorage::new(1024);
+        let cls = ClosureBuilder::new()
+            .with(Op::Const, 256)
+            .build(&mut storage)
+            .unwrap();
+        assert_eq!(cls.code.as_slice(), &[Op::ExtArg(1), Op::Const(0)]);
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_with_large_extension_value() {
+        let mut storage = ValueStorage::new(1024);
         let cls = ClosureBuilder::new()
             .with(Op::Const, 0x0123_4567_89ab_cdef)
-            .build();
+            .build(&mut storage)
+            .unwrap();
         assert_eq!(
-            cls,
-            Closure {
-                code: vec![
-                    Op::ExtArg(0x01),
-                    Op::ExtArg(0x23),
-                    Op::ExtArg(0x45),
-                    Op::ExtArg(0x67),
-                    Op::ExtArg(0x89),
-                    Op::ExtArg(0xab),
-                    Op::ExtArg(0xcd),
-                    Op::Const(0xef)
-                ]
-                .into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+            cls.code.as_slice(),
+            &[
+                Op::ExtArg(0x01),
+                Op::ExtArg(0x23),
+                Op::ExtArg(0x45),
+                Op::ExtArg(0x67),
+                Op::ExtArg(0x89),
+                Op::ExtArg(0xab),
+                Op::ExtArg(0xcd),
+                Op::Const(0xef)
+            ]
+        );
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_with_largest_extension_value() {
+        let mut storage = ValueStorage::new(1024);
         let cls = ClosureBuilder::new()
             .with(Op::Const, 0xffff_ffff_ffff_ffff)
-            .build();
+            .build(&mut storage)
+            .unwrap();
         assert_eq!(
-            cls,
-            Closure {
-                code: vec![
-                    Op::ExtArg(255),
-                    Op::ExtArg(255),
-                    Op::ExtArg(255),
-                    Op::ExtArg(255),
-                    Op::ExtArg(255),
-                    Op::ExtArg(255),
-                    Op::ExtArg(255),
-                    Op::Const(255)
-                ]
-                .into_boxed_slice(),
-                constants: vec![].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+            cls.code.as_slice(),
+            &[
+                Op::ExtArg(255),
+                Op::ExtArg(255),
+                Op::ExtArg(255),
+                Op::ExtArg(255),
+                Op::ExtArg(255),
+                Op::ExtArg(255),
+                Op::ExtArg(255),
+                Op::Const(255)
+            ]
+        );
+        assert!(cls.constants.is_empty());
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_constant() {
-        let cls = ClosureBuilder::new().constant(Value::Nil).build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::Const(0)].into_boxed_slice(),
-                constants: vec![Value::Nil].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+        let mut storage = ValueStorage::new(1024);
+        let cls = ClosureBuilder::new()
+            .constant(Value::Nil)
+            .build(&mut storage)
+            .unwrap();
+        assert_eq!(cls.code.as_slice(), &[Op::Const(0)]);
+        assert_eq!(&**cls.constants, &[Value::Nil]);
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_different_constants() {
+        let mut storage = ValueStorage::new(1024);
         let cls = ClosureBuilder::new()
             .constant(Value::Int(1))
             .constant(Value::Int(2))
-            .build();
-        assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::Const(0), Op::Const(1)].into_boxed_slice(),
-                constants: vec![Value::Int(1), Value::Int(2)].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+            .build(&mut storage)
+            .unwrap();
+        assert_eq!(cls.code.as_slice(), &[Op::Const(0), Op::Const(1)]);
+        assert_eq!(&**cls.constants, &[Value::Int(1), Value::Int(2)]);
+        assert!(cls.free_vars.is_empty());
     }
 
     #[test]
     fn build_reuse_same_constants() {
+        let mut storage = ValueStorage::new(1024);
         let cls = ClosureBuilder::new()
             .constant(Value::Int(1))
             .constant(Value::Int(2))
             .constant(Value::Int(1))
-            .build();
+            .build(&mut storage)
+            .unwrap();
         assert_eq!(
-            cls,
-            Closure {
-                code: vec![Op::Const(0), Op::Const(1), Op::Const(0)].into_boxed_slice(),
-                constants: vec![Value::Int(1), Value::Int(2)].into_boxed_slice(),
-                free_vars: vec![].into_boxed_slice(),
-            }
-        )
+            cls.code.as_slice(),
+            &[Op::Const(0), Op::Const(1), Op::Const(0)]
+        );
+        assert_eq!(&**cls.constants, &[Value::Int(1), Value::Int(2)]);
+        assert!(cls.free_vars.is_empty());
     }
 }

@@ -18,13 +18,17 @@ impl Storage {
     }
 
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
+        let boxed = Box::new(obj);
+        self.insert_box(boxed).map_err(|x| *x)
+    }
+
+    pub fn insert_box<T: 'static>(&mut self, mut obj: Box<T>) -> Result<Ref<T>, Box<T>> {
         if self.is_full() {
             return Err(obj);
         }
 
-        let mut boxed = Box::new(obj);
-        let ptr = (&mut *boxed) as *mut T;
-        self.objects.push(boxed);
+        let ptr = (&mut *obj) as *mut T;
+        self.objects.push(obj);
         Ok(Ref::new(ptr))
     }
 

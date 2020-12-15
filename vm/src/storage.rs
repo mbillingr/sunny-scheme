@@ -29,6 +29,10 @@ impl ValueStorage {
         Ok(Value::Pair(obj))
     }
 
+    pub fn free(&self) -> usize {
+        self.storage.free()
+    }
+
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
         self.storage.insert(obj)
     }
