@@ -15,8 +15,7 @@ pub struct CodePointer {
 
 impl Traceable for CodePointer {
     fn trace(&self, gc: &mut GarbageCollector) {
-        //self.segment.trace(gc);
-        unimplemented!("how should we trace Ref<T> where T is not Traceable? They need be marked too to avoid collection, but should not be traced further...")
+        self.segment.trace(gc);
     }
 }
 
