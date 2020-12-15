@@ -221,17 +221,13 @@ impl Vm {
                         return Ok(ret_val);
                     }
                 }
-                Op::Integer(a) => {
-                    //self.push_value(Value::Int(extend_arg(a, arg) as i64))
-                    self.push_value(Value::Int(a as i64))
-                }
+                Op::Integer(a) => self.push_value(Value::Int(extend_arg(a, arg) as i64)),
                 Op::Const(a) => {
-                    //let c = self.fetch_constant(extend_arg(a, arg));
-                    let c = self.fetch_constant(a as usize);
+                    let c = self.fetch_constant(extend_arg(a, arg));
                     self.push_value(c);
                 }
                 Op::Cons => self.cons()?,
-                Op::MakeClosure(a) => self.make_closure(a as usize)?,
+                Op::MakeClosure(a) => self.make_closure(extend_arg(a, arg))?,
             }
             arg = 0;
         }
@@ -289,7 +285,7 @@ impl Vm {
 
 #[inline(always)]
 fn extend_arg(a: u8, arg: usize) -> usize {
-    a as usize + arg << 8 as usize
+    a as usize + (arg << 8)
 }
 
 #[cfg(test)]
@@ -374,6 +370,24 @@ mod tests {
 
         assert_eq!(ret, Ok(Value::Int(1)));
         assert_eq!(vm.value_stack, vec![Value::Int(0)]);
+    }
+
+    #[test]
+    fn op_extarg_allows_large_arguments() {
+        let (_, vm) = VmRunner::new().run_closure(
+            ClosureBuilder::new()
+                .op(Op::ExtArg(0x01))
+                .op(Op::ExtArg(0x23))
+                .op(Op::ExtArg(0x45))
+                .op(Op::ExtArg(0x67))
+                .op(Op::ExtArg(0x89))
+                .op(Op::ExtArg(0xab))
+                .op(Op::ExtArg(0xcd))
+                .op(Op::Integer(0xef))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(vm.value_stack, vec![Value::Int(0x0123456789abcdef)]);
     }
 
     #[test]
