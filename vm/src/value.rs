@@ -3,6 +3,8 @@ use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::storage::ValueStorage;
 use crate::Result;
 
+pub type Symbol = Box<str>;
+
 #[derive(Clone)]
 pub enum Value {
     Void,
@@ -10,6 +12,7 @@ pub enum Value {
     False,
     True,
     Int(i64),
+    Symbol(Ref<Symbol>),
     Pair(Ref<(Value, Value)>),
 
     Closure(Ref<Closure>),
@@ -55,6 +58,7 @@ impl Value {
     impl_accessor!(is_void, Value::Void);
     impl_accessor!(is_nil, Value::Nil);
     impl_accessor!(is_int, as_int, Value::Int, i64);
+    impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, Value::Pair, ref (Value, Value));
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
 
@@ -87,6 +91,7 @@ impl Traceable for Value {
             Value::False => {}
             Value::True => {}
             Value::Int(_) => {}
+            Value::Symbol(p) => p.trace(gc),
             Value::Pair(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
             Value::Primitive(_) => {}
@@ -110,6 +115,7 @@ impl std::fmt::Debug for Value {
             Value::False => write!(f, "#f"),
             Value::True => write!(f, "#t"),
             Value::Int(i) => write!(f, "{}", i),
+            Value::Symbol(p) => write!(f, "'{}", **p),
             Value::Pair(p) => write!(f, "{:?}", p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}", p),
@@ -126,6 +132,7 @@ impl PartialEq for Value {
             (False, False) => true,
             (True, True) => true,
             (Int(a), Int(b)) => a == b,
+            (Symbol(a), Symbol(b)) => a == b,
             (Pair(a), Pair(b)) => a == b,
             (Closure(a), Closure(b)) => a == b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),

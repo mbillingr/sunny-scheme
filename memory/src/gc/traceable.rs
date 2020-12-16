@@ -44,8 +44,8 @@ impl_primitive_tracable!(
     u64,
     u128,
     &str,
-    //str,
     String,
+    Box<str>,
 );
 
 impl<T: Traceable> Traceable for Option<T> {
