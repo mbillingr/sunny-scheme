@@ -9,6 +9,7 @@ pub enum Op {
 
     Halt,
     Return,
+    Call { n_args: u8 },
 
     Integer(u8),
     Const(u8),

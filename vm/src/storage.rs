@@ -1,3 +1,4 @@
+use crate::closure::Closure;
 use crate::mem::{GarbageCollector, Ref, Storage, Traceable};
 use crate::Value;
 
@@ -27,6 +28,12 @@ impl ValueStorage {
         let obj = self.insert(pair)?;
 
         Ok(Value::Pair(obj))
+    }
+
+    pub fn store_closure(&mut self, cls: Closure) -> Result<Value, Closure> {
+        let obj = self.insert(cls)?;
+
+        Ok(Value::Closure(obj))
     }
 
     pub fn free(&self) -> usize {

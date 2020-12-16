@@ -4,10 +4,10 @@ use crate::{
     closure::Closure,
     mem::{GarbageCollector, Ref, Traceable},
     storage::ValueStorage,
-    Error, Result, Value,
+    Error, ErrorKind, Result, RuntimeResult, Value,
 };
 
-#[derive(Clone)] // todo: should be Copy, but Ref is not Copy yet
+#[derive(Debug, Clone)] // todo: should be Copy, but Ref is not Copy yet
 struct CallStackFrame {
     free_vars: Ref<Box<[Value]>>,
     args: Box<[Value]>,
@@ -59,7 +59,7 @@ impl Vm {
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
         let empty_value_array = storage
             .insert(vec![].into_boxed_slice())
-            .map_err(|_| Error::AllocationError)?;
+            .map_err(|_| ErrorKind::AllocationError)?;
 
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
@@ -82,7 +82,7 @@ impl Vm {
         })
     }
 
-    pub fn eval(&mut self, code: CodePointer) -> Result<Value> {
+    pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Value> {
         let closure = Closure {
             code,
             free_vars: self.empty_value_array.clone(),
@@ -90,7 +90,7 @@ impl Vm {
         self.eval_closure(&closure)
     }
 
-    pub fn eval_closure(&mut self, closure: &Closure) -> Result<Value> {
+    pub fn eval_closure(&mut self, closure: &Closure) -> RuntimeResult<Value> {
         self.load_closure(closure);
         self.eval_gc()
     }
@@ -103,14 +103,19 @@ impl Vm {
         };
     }
 
-    fn eval_gc(&mut self) -> Result<Value> {
+    fn eval_gc(&mut self) -> RuntimeResult<Value> {
         loop {
             match self.eval_loop() {
                 Ok(ret_val) => return Ok(ret_val),
-                Err(Error::AllocationError) => {
+                Err(ErrorKind::AllocationError) => {
                     self.collect_garbage();
                 }
-                Err(e) => return Err(e),
+                Err(e) => {
+                    return Err(Error {
+                        kind: e,
+                        location: self.current_frame.code.offset(-1),
+                    })
+                }
             };
 
             // Retry last instruction, which triggered the error
@@ -127,7 +132,7 @@ impl Vm {
                     arg = extend_arg(a, arg);
                     continue;
                 }
-                Op::Halt => return Err(Error::Halted),
+                Op::Halt => return Err(ErrorKind::Halted),
                 Op::Return => {
                     if let Some(frame) = self.call_stack.pop() {
                         self.current_frame = frame;
@@ -136,6 +141,7 @@ impl Vm {
                         return Ok(ret_val);
                     }
                 }
+                Op::Call { n_args } => self.call(extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(extend_arg(a, arg) as i64)),
                 Op::Const(a) => {
                     let c = self.fetch_constant(extend_arg(a, arg));
@@ -157,16 +163,47 @@ impl Vm {
     }
 
     fn push_value(&mut self, val: Value) {
+        //println!("pushing {:?}", val);
         self.value_stack.push(val);
     }
 
     fn pop_value(&mut self) -> Result<Value> {
-        self.value_stack.pop().ok_or(Error::StackUnderflow)
+        //println!("popping");
+        self.value_stack.pop().ok_or(ErrorKind::StackUnderflow)
+        //self.value_stack.pop().ok_or_else(||panic!())
+    }
+
+    fn pop_values(&mut self, n: usize) -> Result<Box<[Value]>> {
+        let mut values = Vec::with_capacity(n);
+        for _ in 0..n {
+            values.push(self.pop_value()?);
+        }
+        Ok(values.into_boxed_slice())
+    }
+
+    fn call(&mut self, n_args: usize) -> Result<()> {
+        let func = self.pop_value()?;
+        match func {
+            Value::Closure(cls) => self.call_closure(cls, n_args),
+            _ => Err(ErrorKind::TypeError),
+        }
+    }
+
+    fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
+        let args = self.pop_values(n_args)?;
+        let frame = CallStackFrame {
+            code: cls.code.clone(),
+            free_vars: cls.free_vars.clone(),
+            args,
+        };
+        let old_frame = std::mem::replace(&mut self.current_frame, frame);
+        self.call_stack.push(old_frame);
+        Ok(())
     }
 
     fn cons(&mut self) -> Result<()> {
         if self.storage.free() < 1 {
-            return Err(Error::AllocationError);
+            return Err(ErrorKind::AllocationError);
         }
 
         let cdr = self.pop_value()?;
@@ -178,17 +215,14 @@ impl Vm {
 
     fn make_closure(&mut self, n_free: usize) -> Result<()> {
         if self.storage.free() < 2 {
-            return Err(Error::AllocationError);
+            return Err(ErrorKind::AllocationError);
         }
 
-        let code_offset = self.pop_value()?.as_int().ok_or(Error::TypeError)? as isize;
+        let code_offset = self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)? as isize;
         let code = self.current_frame.code.offset(code_offset);
 
-        let mut free_vars = Vec::with_capacity(n_free);
-        for _ in 0..n_free {
-            free_vars.push(self.pop_value()?);
-        }
-        let free_vars = self.storage.insert(free_vars.into_boxed_slice()).unwrap();
+        let free_vars = self.pop_values(n_free)?;
+        let free_vars = self.storage.insert(free_vars).unwrap();
 
         let closure = Closure { code, free_vars };
         let closure = self.storage.insert(closure).unwrap();
@@ -264,7 +298,7 @@ mod tests {
         let storage = ValueStorage::new(1024);
         let mut vm = Vm::new(storage).unwrap();
         let ret = vm.eval_loop();
-        assert_eq!(ret, Err(Error::Halted));
+        assert_eq!(ret, Err(ErrorKind::Halted));
     }
 
     #[test]
@@ -283,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn op_return_pops_value_stack() {
+    fn op_return_from_toplevel_pops_value_stack() {
         let (ret, vm) = VmRunner::new()
             .with_value_stack(vec![Value::Int(0), Value::Int(1)])
             .run_code(CodeBuilder::new().op(Op::Return));
@@ -347,7 +381,7 @@ mod tests {
             .with_value_stack(vec![Value::Int(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
-        assert_eq!(ret, Err(Error::AllocationError));
+        assert_eq!(ret, Err(ErrorKind::AllocationError));
         assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Nil]);
     }
 
@@ -381,7 +415,99 @@ mod tests {
                     .op(Op::Halt),
             );
 
-        assert_eq!(ret, Err(Error::AllocationError));
+        assert_eq!(ret, Err(ErrorKind::AllocationError));
         assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Int(0)]);
+    }
+
+    #[test]
+    fn op_call_expects_callable_on_top_of_stack() {
+        let (ret, _) = VmRunner::new()
+            .with_capacity(0)
+            .with_value_stack(vec![Value::Int(0)])
+            .run_code(CodeBuilder::new().op(Op::Call { n_args: 0 }));
+
+        assert_eq!(ret, Err(ErrorKind::TypeError));
+    }
+
+    #[test]
+    fn op_call_executes_closure() {
+        let mut storage = ValueStorage::new(1024);
+
+        let code = CodeBuilder::new()
+            // main
+            .op(Op::Call { n_args: 0 })
+            .op(Op::Halt)
+            // callee
+            .op(Op::Integer(1))
+            .op(Op::Halt)
+            .build()
+            .unwrap();
+        let code_segment = storage.insert(code).unwrap();
+
+        let main = Closure {
+            code: CodePointer::new(code_segment.clone()).at(0),
+            free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+        };
+
+        let callee = Closure {
+            code: CodePointer::new(code_segment.clone()).at(2),
+            free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+        };
+
+        let value_stack = vec![storage.store_closure(callee).unwrap()];
+
+        let mut vm = Vm::new(storage).unwrap();
+
+        vm.value_stack = value_stack;
+
+        vm.load_closure(&main);
+        let ret = vm.eval_loop();
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(vm.call_stack.len(), 1);
+        assert_eq!(vm.value_stack, vec![Value::Int(1)]);
+    }
+
+    #[test]
+    fn op_call_puts_args_in_frame() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                // args for call
+                .op(Op::Integer(10))
+                .op(Op::Integer(11))
+                .op(Op::Integer(12))
+                // callee code offset
+                .op(Op::Integer(2))
+                .op(Op::MakeClosure { n_free: 0 })
+                .op(Op::Call { n_args: 3 })
+                .op(Op::Halt)
+                // callee
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(
+            &*vm.current_frame.args,
+            vec![Value::Int(12), Value::Int(11), Value::Int(10)]
+        )
+    }
+
+    #[test]
+    fn op_return_continues_at_call_site() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                // callee code offset
+                .op(Op::Integer(3))
+                .op(Op::MakeClosure { n_free: 0 })
+                .op(Op::Call { n_args: 0 })
+                .op(Op::Integer(34))
+                .op(Op::Halt)
+                // callee
+                .op(Op::Integer(12))
+                .op(Op::Return),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(12), Value::Int(34)])
     }
 }
