@@ -66,6 +66,7 @@ impl ValueStorage {
             Value::Int(_) => true,
             Value::Pair(p) => self.storage.is_valid(p),
             Value::Closure(p) => self.storage.is_valid(p),
+            Value::Primitive(_) => true,
         }
     }
 }

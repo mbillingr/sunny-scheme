@@ -1,7 +1,9 @@
 use crate::closure::Closure;
 use crate::mem::{GarbageCollector, Ref, Traceable};
+use crate::storage::ValueStorage;
+use crate::Result;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub enum Value {
     Void,
     Nil,
@@ -11,6 +13,7 @@ pub enum Value {
     Pair(Ref<(Value, Value)>),
 
     Closure(Ref<Closure>),
+    Primitive(fn(&mut Vec<Value>, &mut ValueStorage) -> Result<()>),
 }
 
 macro_rules! impl_accessor {
@@ -86,6 +89,7 @@ impl Traceable for Value {
             Value::Int(_) => {}
             Value::Pair(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
+            Value::Primitive(_) => {}
         }
     }
 }
@@ -95,5 +99,37 @@ impl PartialEq<[Value; 2]> for Value {
         self.as_pair()
             .map(|lhs| lhs.0 == rhs[0] && lhs.1 == rhs[1])
             .unwrap_or(false)
+    }
+}
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Value::Void => write!(f, "<void>"),
+            Value::Nil => write!(f, "<nil>"),
+            Value::False => write!(f, "#f"),
+            Value::True => write!(f, "#t"),
+            Value::Int(i) => write!(f, "{}", i),
+            Value::Pair(p) => write!(f, "{:?}", p),
+            Value::Closure(p) => write!(f, "{:?}", p),
+            Value::Primitive(p) => write!(f, "<primitive {:p}", p),
+        }
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, rhs: &Self) -> bool {
+        use Value::*;
+        match (self, rhs) {
+            (Void, Void) => true,
+            (Nil, Nil) => true,
+            (False, False) => true,
+            (True, True) => true,
+            (Int(a), Int(b)) => a == b,
+            (Pair(a), Pair(b)) => a == b,
+            (Closure(a), Closure(b)) => a == b,
+            (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
+            _ => false,
+        }
     }
 }

@@ -199,6 +199,7 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.call_closure(cls, n_args),
+            Value::Primitive(func) => func(&mut self.value_stack, &mut self.storage),
             _ => Err(ErrorKind::TypeError),
         }
     }
@@ -587,5 +588,26 @@ mod tests {
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(&*vm.value_stack, vec![Value::Int(1)])
+    }
+
+    #[test]
+    fn op_call_primitive() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        static PRIM_CALLED: AtomicBool = AtomicBool::new(false);
+        fn prim(_stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+            PRIM_CALLED.store(true, Ordering::SeqCst);
+            Ok(())
+        }
+
+        let (ret, _) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .constant(Value::Primitive(prim))
+                .op(Op::Call { n_args: 0 })
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(PRIM_CALLED.load(Ordering::SeqCst), true);
     }
 }
