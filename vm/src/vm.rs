@@ -199,7 +199,13 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.call_closure(cls, n_args),
-            Value::Primitive(func) => func(&mut self.value_stack, &mut self.storage),
+            Value::Primitive(f) => match f(&mut self.value_stack, &mut self.storage) {
+                Ok(()) => Ok(()),
+                Err(e) => {
+                    self.push_value(func);
+                    Err(e)
+                }
+            },
             _ => Err(ErrorKind::TypeError),
         }
     }
@@ -285,6 +291,18 @@ mod tests {
         }
 
         fn run_code(self, cb: CodeBuilder) -> (Result<Value>, Vm) {
+            let mut vm = self.prepare_vm(cb);
+            let ret = vm.eval_loop();
+            (ret, vm)
+        }
+
+        fn run_code_with_gc(self, cb: CodeBuilder) -> (RuntimeResult<Value>, Vm) {
+            let mut vm = self.prepare_vm(cb);
+            let ret = vm.eval_gc();
+            (ret, vm)
+        }
+
+        fn prepare_vm(self, cb: CodeBuilder) -> Vm {
             let additional_capacity = 2 + 2; // required by the vm's default closure and by the closure being run
             let mut storage = ValueStorage::new(self.storage_capacity + additional_capacity);
 
@@ -303,8 +321,7 @@ mod tests {
             }
 
             vm.load_closure(&closure);
-            let ret = vm.eval_loop();
-            (ret, vm)
+            vm
         }
     }
 
@@ -609,5 +626,28 @@ mod tests {
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(PRIM_CALLED.load(Ordering::SeqCst), true);
+    }
+
+    #[test]
+    fn op_fail_allocation_in_primitive() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        static PRIM_CALLED: AtomicUsize = AtomicUsize::new(0);
+        fn fail_alloc(_stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+            if PRIM_CALLED.fetch_add(1, Ordering::SeqCst) < 2 {
+                Err(ErrorKind::AllocationError)
+            } else {
+                Ok(())
+            }
+        }
+
+        let (_, _) = VmRunner::new().run_code_with_gc(
+            CodeBuilder::new()
+                .constant(Value::Primitive(fail_alloc))
+                .op(Op::Call { n_args: 0 })
+                .op(Op::Halt),
+        );
+
+        assert_eq!(PRIM_CALLED.load(Ordering::SeqCst), 3);
     }
 }
