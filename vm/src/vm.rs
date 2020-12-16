@@ -1,5 +1,4 @@
-use crate::closure::ClosureBuilder;
-use crate::code::CodePointer;
+use crate::code::{CodeBuilder, CodePointer};
 use crate::{
     closure::Closure,
     code::Op,
@@ -58,14 +57,17 @@ impl Vm {
     }
 
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
-        let closure = ClosureBuilder::new()
-            .op(Op::Halt)
-            .build(&mut storage)
-            .map_err(|_| Error::AllocationError)?;
-
-        let no_values = storage
+        let empty_value_array = storage
             .insert(vec![].into_boxed_slice())
             .map_err(|_| Error::AllocationError)?;
+
+        let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
+        let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
+
+        let closure = Closure {
+            code: code_ptr,
+            free_vars: empty_value_array.clone(),
+        };
 
         Ok(Vm {
             storage,
@@ -76,7 +78,7 @@ impl Vm {
                 args: vec![].into_boxed_slice(),
                 code: closure.code.clone(),
             },
-            empty_value_array: no_values,
+            empty_value_array,
         })
     }
 
@@ -204,7 +206,7 @@ fn extend_arg(a: u8, arg: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::closure::ClosureBuilder;
+    use crate::code::CodeBuilder;
 
     struct VmRunner {
         storage_capacity: usize,
@@ -233,11 +235,17 @@ mod tests {
             }
         }
 
-        fn run_closure(self, cb: ClosureBuilder) -> (Result<Value>, Vm) {
-            let additional_capacity = 2 + 3; // required by the vm's default closure and by the closure being run
+        fn run_code(self, cb: CodeBuilder) -> (Result<Value>, Vm) {
+            let additional_capacity = 2 + 2; // required by the vm's default closure and by the closure being run
             let mut storage = ValueStorage::new(self.storage_capacity + additional_capacity);
 
-            let closure = cb.build(&mut storage).unwrap();
+            let code_segment = cb.build().unwrap();
+            let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
+
+            let closure = Closure {
+                code: code_ptr,
+                free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+            };
 
             let mut vm = Vm::new(storage).unwrap();
 
@@ -261,7 +269,7 @@ mod tests {
 
     #[test]
     fn op_nop_does_nothing() {
-        let (_, vm) = VmRunner::new().run_closure(ClosureBuilder::new().op(Op::Nop).op(Op::Halt));
+        let (_, vm) = VmRunner::new().run_code(CodeBuilder::new().op(Op::Nop).op(Op::Halt));
 
         assert!(vm.call_stack.is_empty());
         assert!(vm.value_stack.is_empty());
@@ -269,8 +277,7 @@ mod tests {
 
     #[test]
     fn no_instructions_executed_after_op_halt() {
-        let (_, vm) =
-            VmRunner::new().run_closure(ClosureBuilder::new().op(Op::Halt).op(Op::Integer(0)));
+        let (_, vm) = VmRunner::new().run_code(CodeBuilder::new().op(Op::Halt).op(Op::Integer(0)));
         assert!(vm.call_stack.is_empty());
         assert!(vm.value_stack.is_empty());
     }
@@ -279,7 +286,7 @@ mod tests {
     fn op_return_pops_value_stack() {
         let (ret, vm) = VmRunner::new()
             .with_value_stack(vec![Value::Int(0), Value::Int(1)])
-            .run_closure(ClosureBuilder::new().op(Op::Return));
+            .run_code(CodeBuilder::new().op(Op::Return));
 
         assert_eq!(ret, Ok(Value::Int(1)));
         assert_eq!(vm.value_stack, vec![Value::Int(0)]);
@@ -287,8 +294,8 @@ mod tests {
 
     #[test]
     fn op_extarg_allows_large_arguments() {
-        let (_, vm) = VmRunner::new().run_closure(
-            ClosureBuilder::new()
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
                 .op(Op::ExtArg(0x01))
                 .op(Op::ExtArg(0x23))
                 .op(Op::ExtArg(0x45))
@@ -306,15 +313,15 @@ mod tests {
     #[test]
     fn op_integer_pushes_int_value() {
         let (_, vm) =
-            VmRunner::new().run_closure(ClosureBuilder::new().op(Op::Integer(123)).op(Op::Halt));
+            VmRunner::new().run_code(CodeBuilder::new().op(Op::Integer(123)).op(Op::Halt));
 
         assert_eq!(vm.value_stack, vec![Value::Int(123)]);
     }
 
     #[test]
     fn op_const_pushes_constant() {
-        let (_, vm) = VmRunner::new().run_closure(
-            ClosureBuilder::new()
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
                 .constant(Value::Void)
                 .constant(Value::Nil)
                 .constant(Value::Int(0))
@@ -328,7 +335,7 @@ mod tests {
     fn op_cons_pops_two_values_and_pushes_pair() {
         let (_, vm) = VmRunner::new()
             .with_value_stack(vec![Value::Int(0), Value::Nil])
-            .run_closure(ClosureBuilder::new().op(Op::Cons).op(Op::Halt));
+            .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
         assert_eq!(vm.value_stack.last().unwrap(), &[Value::Int(0), Value::Nil]);
     }
@@ -338,7 +345,7 @@ mod tests {
         let (ret, vm) = VmRunner::new()
             .with_capacity(0)
             .with_value_stack(vec![Value::Int(0), Value::Nil])
-            .run_closure(ClosureBuilder::new().op(Op::Cons).op(Op::Halt));
+            .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
         assert_eq!(ret, Err(Error::AllocationError));
         assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Nil]);
@@ -348,7 +355,7 @@ mod tests {
     fn op_make_closure_pops_n_free_vars_and_pushes_closure() {
         let (_, mut vm) = VmRunner::new()
             .with_value_stack(vec![Value::Int(2), Value::Int(1), Value::Int(0)])
-            .run_closure(ClosureBuilder::new().op(Op::MakeClosure(2)).op(Op::Halt));
+            .run_code(CodeBuilder::new().op(Op::MakeClosure(2)).op(Op::Halt));
 
         let closure = vm.value_stack.pop().unwrap();
         let closure = closure.as_closure().unwrap();
@@ -364,7 +371,7 @@ mod tests {
         let (ret, vm) = VmRunner::new()
             .with_capacity(0)
             .with_value_stack(vec![Value::Int(0), Value::Int(0)])
-            .run_closure(ClosureBuilder::new().op(Op::MakeClosure(1)).op(Op::Halt));
+            .run_code(CodeBuilder::new().op(Op::MakeClosure(1)).op(Op::Halt));
 
         assert_eq!(ret, Err(Error::AllocationError));
         assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Int(0)]);
