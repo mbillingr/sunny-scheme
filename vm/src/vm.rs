@@ -519,9 +519,9 @@ mod tests {
     fn op_zero_jump_is_like_nop() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .op(Op::Jump {forward: 0})
+                .op(Op::Jump { forward: 0 })
                 .op(Op::Integer(0))
-                .op(Op::Halt)
+                .op(Op::Halt),
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
@@ -532,12 +532,12 @@ mod tests {
     fn op_zero_jump_skips_instructions() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .op(Op::Jump {forward: 2})
+                .op(Op::Jump { forward: 2 })
                 .op(Op::Integer(0))
                 .op(Op::Integer(1))
                 .op(Op::Integer(2))
                 .op(Op::Integer(3))
-                .op(Op::Halt)
+                .op(Op::Halt),
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));

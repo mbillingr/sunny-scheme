@@ -167,6 +167,24 @@ impl CodeBuilder {
         self.with(Op::Const, idx)
     }
 
+    pub fn jump_to(mut self, label: impl ToString) -> Self {
+        let position_reference = self.code.len() + 1;
+        self.code.push(BuildOp::LabelRef(
+            label.to_string(),
+            Box::new(move |label_idx| {
+                let offset = label_idx - position_reference;
+                if offset > u8::max_value() as usize {
+                    panic!("label placeholders more than 255 away are not yet possible")
+                }
+                Op::Jump {
+                    forward: offset as u8,
+                }
+            }),
+        ));
+
+        self
+    }
+
     pub fn make_closure(mut self, label: impl ToString, n_free: usize) -> Self {
         let placeholder_pos = self.code.len();
         self = self.op(Op::Nop); // placeholder
@@ -220,6 +238,20 @@ impl CodeBuilder {
 
         self.constants.push(value);
         self.constants.len() - 1
+    }
+}
+
+enum BuildOp {
+    Op(Op),
+    LabelRef(String, Box<dyn Fn(usize) -> Op>),
+}
+
+impl std::fmt::Debug for BuildOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            BuildOp::Op(op) => op.fmt(f),
+            BuildOp::LabelRef(name, _) => write!(f, "?@{}", name),
+        }
     }
 }
 
@@ -374,18 +406,19 @@ mod tests {
             ]
         );
     }
-}
 
-enum BuildOp {
-    Op(Op),
-    LabelRef(String, Box<dyn Fn(usize) -> Op>),
-}
-
-impl std::fmt::Debug for BuildOp {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            BuildOp::Op(op) => op.fmt(f),
-            BuildOp::LabelRef(name, _) => write!(f, "?@{}", name),
-        }
+    #[test]
+    fn build_jump_to_label() {
+        let segment = CodeBuilder::new()
+            .jump_to("func")
+            .op(Op::Halt)
+            .label("func")
+            .op(Op::Halt)
+            .build()
+            .unwrap();
+        assert_eq!(
+            segment.code_slice(),
+            &[Op::Jump { forward: 1 }, Op::Halt, Op::Halt]
+        );
     }
 }
