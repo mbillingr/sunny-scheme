@@ -1,7 +1,7 @@
-use crate::code::{CodeBuilder, CodePointer};
+use crate::bytecode::{CodeBuilder, CodePointer};
 use crate::{
     closure::Closure,
-    code::Op,
+    bytecode::Op,
     mem::{GarbageCollector, Ref, Traceable},
     storage::ValueStorage,
     Error, Result, Value,
@@ -206,7 +206,7 @@ fn extend_arg(a: u8, arg: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::code::CodeBuilder;
+    use crate::bytecode::CodeBuilder;
 
     struct VmRunner {
         storage_capacity: usize,

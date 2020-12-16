@@ -1,4 +1,4 @@
-use crate::code::CodePointer;
+use crate::bytecode::CodePointer;
 use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::Value;
 
