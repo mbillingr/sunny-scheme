@@ -1,7 +1,6 @@
+use crate::code::{CodePointer, CodeSegment, Op};
 use crate::mem::{GarbageCollector, Ref, Traceable};
-use crate::opcode::Op;
 use crate::storage::ValueStorage;
-use crate::vm::{CodePointer, CodeSegment};
 use crate::Value;
 
 #[derive(Debug, Clone, PartialEq)]
