@@ -133,6 +133,7 @@ impl Vm {
                     continue;
                 }
                 Op::Halt => return Err(ErrorKind::Halted),
+                Op::Jump { forward } => self.jump(extend_arg(forward, arg)),
                 Op::Return => {
                     if let Some(frame) = self.call_stack.pop() {
                         self.current_frame = frame;
@@ -179,6 +180,10 @@ impl Vm {
             values.push(self.pop_value()?);
         }
         Ok(values.into_boxed_slice())
+    }
+
+    fn jump(&mut self, forward: usize) {
+        self.current_frame.code.step_forward(forward)
     }
 
     fn call(&mut self, n_args: usize) -> Result<()> {
@@ -508,5 +513,34 @@ mod tests {
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(&*vm.value_stack, vec![Value::Int(12), Value::Int(34)])
+    }
+
+    #[test]
+    fn op_zero_jump_is_like_nop() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Jump {forward: 0})
+                .op(Op::Integer(0))
+                .op(Op::Halt)
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(0)])
+    }
+
+    #[test]
+    fn op_zero_jump_skips_instructions() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Jump {forward: 2})
+                .op(Op::Integer(0))
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::Integer(3))
+                .op(Op::Halt)
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(2), Value::Int(3)])
     }
 }

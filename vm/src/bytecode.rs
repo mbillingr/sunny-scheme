@@ -9,6 +9,7 @@ pub enum Op {
     ExtArg(u8),
 
     Halt,
+    Jump { forward: u8 },
     Return,
     Call { n_args: u8 },
 
@@ -97,6 +98,10 @@ impl CodePointer {
         let op = self.segment.get_op(self.position);
         self.position += 1;
         op
+    }
+
+    pub fn step_forward(&mut self, amount: usize) {
+        self.position += amount;
     }
 
     pub fn step_back(&mut self) {
