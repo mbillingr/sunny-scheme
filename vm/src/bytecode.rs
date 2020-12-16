@@ -10,6 +10,7 @@ pub enum Op {
 
     Halt,
     Jump { forward: u8 },
+    JumpIfTrue { forward: u8 },
     Return,
     Call { n_args: u8 },
 
@@ -177,6 +178,24 @@ impl CodeBuilder {
                     panic!("label placeholders more than 255 away are not yet possible")
                 }
                 Op::Jump {
+                    forward: offset as u8,
+                }
+            }),
+        ));
+
+        self
+    }
+
+    pub fn branch_to(mut self, label: impl ToString) -> Self {
+        let position_reference = self.code.len() + 1;
+        self.code.push(BuildOp::LabelRef(
+            label.to_string(),
+            Box::new(move |label_idx| {
+                let offset = label_idx - position_reference;
+                if offset > u8::max_value() as usize {
+                    panic!("label placeholders more than 255 away are not yet possible")
+                }
+                Op::JumpIfTrue {
                     forward: offset as u8,
                 }
             }),
@@ -419,6 +438,21 @@ mod tests {
         assert_eq!(
             segment.code_slice(),
             &[Op::Jump { forward: 1 }, Op::Halt, Op::Halt]
+        );
+    }
+
+    #[test]
+    fn build_branch_to_label() {
+        let segment = CodeBuilder::new()
+            .branch_to("func")
+            .op(Op::Halt)
+            .label("func")
+            .op(Op::Halt)
+            .build()
+            .unwrap();
+        assert_eq!(
+            segment.code_slice(),
+            &[Op::JumpIfTrue { forward: 1 }, Op::Halt, Op::Halt]
         );
     }
 }

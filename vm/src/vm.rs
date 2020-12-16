@@ -134,6 +134,7 @@ impl Vm {
                 }
                 Op::Halt => return Err(ErrorKind::Halted),
                 Op::Jump { forward } => self.jump(extend_arg(forward, arg)),
+                Op::JumpIfTrue { forward } => self.jump_if_true(extend_arg(forward, arg))?,
                 Op::Return => {
                     if let Some(frame) = self.call_stack.pop() {
                         self.current_frame = frame;
@@ -180,6 +181,14 @@ impl Vm {
             values.push(self.pop_value()?);
         }
         Ok(values.into_boxed_slice())
+    }
+
+    fn jump_if_true(&mut self, forward: usize) -> Result<()> {
+        let condition = self.pop_value()?;
+        if condition.is_like_true() {
+            self.jump(forward);
+        }
+        Ok(())
     }
 
     fn jump(&mut self, forward: usize) {
@@ -542,5 +551,41 @@ mod tests {
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(&*vm.value_stack, vec![Value::Int(2), Value::Int(3)])
+    }
+
+    #[test]
+    fn op_jump_conditionally_take_false_branch() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .constant(Value::False)
+                .branch_to("then")
+                .label("else")
+                .op(Op::Integer(0))
+                .op(Op::Halt)
+                .label("then")
+                .op(Op::Integer(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(0)])
+    }
+
+    #[test]
+    fn op_jump_conditionally_take_true_branch() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .constant(Value::True)
+                .branch_to("then")
+                .label("else")
+                .op(Op::Integer(0))
+                .op(Op::Halt)
+                .label("then")
+                .op(Op::Integer(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(1)])
     }
 }
