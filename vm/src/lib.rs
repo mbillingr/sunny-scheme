@@ -1,5 +1,5 @@
-mod closure;
 pub mod bytecode;
+mod closure;
 mod storage;
 mod value;
 pub mod vm;

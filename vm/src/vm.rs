@@ -1,7 +1,7 @@
 use crate::bytecode::{CodeBuilder, CodePointer};
 use crate::{
-    closure::Closure,
     bytecode::Op,
+    closure::Closure,
     mem::{GarbageCollector, Ref, Traceable},
     storage::ValueStorage,
     Error, Result, Value,
@@ -142,7 +142,7 @@ impl Vm {
                     self.push_value(c);
                 }
                 Op::Cons => self.cons()?,
-                Op::MakeClosure(a) => self.make_closure(extend_arg(a, arg))?,
+                Op::MakeClosure { n_free } => self.make_closure(extend_arg(n_free, arg))?,
             }
             arg = 0;
         }
@@ -355,7 +355,11 @@ mod tests {
     fn op_make_closure_pops_n_free_vars_and_pushes_closure() {
         let (_, mut vm) = VmRunner::new()
             .with_value_stack(vec![Value::Int(2), Value::Int(1), Value::Int(0)])
-            .run_code(CodeBuilder::new().op(Op::MakeClosure(2)).op(Op::Halt));
+            .run_code(
+                CodeBuilder::new()
+                    .op(Op::MakeClosure { n_free: 2 })
+                    .op(Op::Halt),
+            );
 
         let closure = vm.value_stack.pop().unwrap();
         let closure = closure.as_closure().unwrap();
@@ -371,7 +375,11 @@ mod tests {
         let (ret, vm) = VmRunner::new()
             .with_capacity(0)
             .with_value_stack(vec![Value::Int(0), Value::Int(0)])
-            .run_code(CodeBuilder::new().op(Op::MakeClosure(1)).op(Op::Halt));
+            .run_code(
+                CodeBuilder::new()
+                    .op(Op::MakeClosure { n_free: 2 })
+                    .op(Op::Halt),
+            );
 
         assert_eq!(ret, Err(Error::AllocationError));
         assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Int(0)]);

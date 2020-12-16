@@ -15,7 +15,7 @@ pub enum Op {
 
     Cons,
 
-    MakeClosure(u8),
+    MakeClosure { n_free: u8 },
 }
 
 impl Traceable for Op {
