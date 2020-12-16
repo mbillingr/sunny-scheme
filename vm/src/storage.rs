@@ -61,6 +61,8 @@ impl ValueStorage {
         match value {
             Value::Void => true,
             Value::Nil => true,
+            Value::False => true,
+            Value::True => true,
             Value::Int(_) => true,
             Value::Pair(p) => self.storage.is_valid(p),
             Value::Closure(p) => self.storage.is_valid(p),

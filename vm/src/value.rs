@@ -5,6 +5,8 @@ use crate::mem::{GarbageCollector, Ref, Traceable};
 pub enum Value {
     Void,
     Nil,
+    False,
+    True,
     Int(i64),
     Pair(Ref<(Value, Value)>),
 
@@ -52,6 +54,26 @@ impl Value {
     impl_accessor!(is_int, as_int, Value::Int, i64);
     impl_accessor!(is_pair, as_pair, Value::Pair, ref (Value, Value));
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
+
+    pub fn is_like_true(&self) -> bool {
+        match self {
+            Value::Void => false,
+            Value::False => false,
+            _ => true,
+        }
+    }
+
+    pub fn is_bool(&self) -> bool {
+        self.as_bool().is_some()
+    }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            Value::True => Some(true),
+            Value::False => Some(false),
+            _ => None,
+        }
+    }
 }
 
 impl Traceable for Value {
@@ -59,6 +81,8 @@ impl Traceable for Value {
         match self {
             Value::Void => {}
             Value::Nil => {}
+            Value::False => {}
+            Value::True => {}
             Value::Int(_) => {}
             Value::Pair(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
