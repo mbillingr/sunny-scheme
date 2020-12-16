@@ -31,7 +31,7 @@ pub struct Vm {
     current_frame: CallStackFrame,
 
     // constants
-    no_values: Ref<Box<[Value]>>,
+    empty_value_array: Ref<Box<[Value]>>,
 }
 
 impl Traceable for Vm {
@@ -39,7 +39,7 @@ impl Traceable for Vm {
         self.value_stack.trace(gc);
         self.call_stack.trace(gc);
         self.current_frame.trace(gc);
-        self.no_values.trace(gc);
+        self.empty_value_array.trace(gc);
     }
 }
 
@@ -76,14 +76,14 @@ impl Vm {
                 args: vec![].into_boxed_slice(),
                 code: closure.code.clone(),
             },
-            no_values,
+            empty_value_array: no_values,
         })
     }
 
     pub fn eval(&mut self, code: CodePointer) -> Result<Value> {
         let closure = Closure {
             code,
-            free_vars: self.no_values.clone(),
+            free_vars: self.empty_value_array.clone(),
         };
         self.eval_closure(&closure)
     }
