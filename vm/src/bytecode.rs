@@ -1,5 +1,6 @@
 use crate::mem::{GarbageCollector, Ref, Traceable};
 use crate::Value;
+use std::collections::HashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]
@@ -110,10 +111,12 @@ impl CodePointer {
         self.segment.constant_slice()
     }
 }
+
 #[derive(Debug)]
 pub struct CodeBuilder {
-    code: Vec<Op>,
+    code: Vec<BuildOp>,
     constants: Vec<Value>,
+    labels: HashMap<String, usize>,
 }
 
 impl CodeBuilder {
@@ -121,14 +124,37 @@ impl CodeBuilder {
         CodeBuilder {
             code: vec![],
             constants: vec![],
+            labels: HashMap::new(),
         }
     }
 
     pub fn build(self) -> Result<CodeSegment, Self> {
-        let bytecode = self.code.into_boxed_slice();
+        let bytecode = Self::build_code(self.code, self.labels);
         let constants = self.constants.into_boxed_slice();
         let segment = CodeSegment::new(bytecode, constants);
         Ok(segment)
+    }
+
+    fn build_code(code: Vec<BuildOp>, labels: HashMap<String, usize>) -> Box<[Op]> {
+        let mut bytecode = vec![];
+        for op_builder in code {
+            match op_builder {
+                BuildOp::Op(op) => bytecode.push(op),
+                BuildOp::LabelRef(label, builder) => bytecode.push(builder(labels[&label])),
+            }
+        }
+        bytecode.into_boxed_slice()
+    }
+
+    pub fn label(mut self, name: impl ToString) -> Self {
+        if self
+            .labels
+            .insert(name.to_string(), self.code.len())
+            .is_some()
+        {
+            panic!("Duplicate label: {:?}", name.to_string())
+        }
+        self
     }
 
     pub fn constant(mut self, value: Value) -> Self {
@@ -136,10 +162,29 @@ impl CodeBuilder {
         self.with(Op::Const, idx)
     }
 
+    pub fn make_closure(mut self, label: impl ToString, n_free: usize) -> Self {
+        let placeholder_pos = self.code.len();
+        self = self.op(Op::Nop); // placeholder
+        self = self.with(|n_free| Op::MakeClosure { n_free }, n_free);
+        let position_reference = self.code.len();
+
+        self.code[placeholder_pos] = BuildOp::LabelRef(
+            label.to_string(),
+            Box::new(move |label_idx| {
+                let offset = label_idx - position_reference;
+                if offset > u8::max_value() as usize {
+                    panic!("label placeholders more than 255 away are not yet possible")
+                }
+                Op::Integer(offset as u8)
+            }),
+        );
+
+        self
+    }
+
     pub fn with(mut self, op: impl Fn(u8) -> Op, mut arg: usize) -> Self {
         if arg <= u8::max_value() as usize {
-            self.code.push(op(arg as u8));
-            return self;
+            return self.op(op(arg as u8));
         }
 
         let mut reverse_args = vec![];
@@ -151,17 +196,15 @@ impl CodeBuilder {
 
         while reverse_args.len() > 1 {
             let ext = reverse_args.pop().unwrap();
-            self.code.push(Op::ExtArg(ext as u8));
+            self = self.op(Op::ExtArg(ext as u8));
         }
 
         let arg = reverse_args.pop().unwrap();
-        self.code.push(op(arg as u8));
-
-        self
+        self.op(op(arg as u8))
     }
 
     pub fn op(mut self, op: Op) -> Self {
-        self.code.push(op);
+        self.code.push(BuildOp::Op(op));
         self
     }
 
@@ -289,5 +332,55 @@ mod tests {
             &[Op::Const(0), Op::Const(1), Op::Const(0)]
         );
         assert_eq!(segment.constant_slice(), &[Value::Int(1), Value::Int(2)]);
+    }
+
+    #[test]
+    fn build_labels() {
+        let cb = CodeBuilder::new()
+            .label("a")
+            .op(Op::Nop)
+            .label("b")
+            .label("c")
+            .op(Op::Nop)
+            .op(Op::Nop)
+            .label("d");
+        assert_eq!(cb.labels["a"], 0);
+        assert_eq!(cb.labels["b"], 1);
+        assert_eq!(cb.labels["c"], 1);
+        assert_eq!(cb.labels["d"], 3);
+    }
+
+    #[test]
+    fn build_labelled_closure() {
+        let segment = CodeBuilder::new()
+            .make_closure("func", 0)
+            .op(Op::Halt)
+            .label("func")
+            .op(Op::Halt)
+            .build()
+            .unwrap();
+        assert_eq!(
+            segment.code_slice(),
+            &[
+                Op::Integer(1),
+                Op::MakeClosure { n_free: 0 },
+                Op::Halt,
+                Op::Halt
+            ]
+        );
+    }
+}
+
+enum BuildOp {
+    Op(Op),
+    LabelRef(String, Box<dyn Fn(usize) -> Op>),
+}
+
+impl std::fmt::Debug for BuildOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            BuildOp::Op(op) => op.fmt(f),
+            BuildOp::LabelRef(name, _) => write!(f, "?@{}", name),
+        }
     }
 }

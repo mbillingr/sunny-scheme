@@ -497,12 +497,11 @@ mod tests {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
                 // callee code offset
-                .op(Op::Integer(3))
-                .op(Op::MakeClosure { n_free: 0 })
+                .make_closure("callee", 0)
                 .op(Op::Call { n_args: 0 })
                 .op(Op::Integer(34))
                 .op(Op::Halt)
-                // callee
+                .label("callee")
                 .op(Op::Integer(12))
                 .op(Op::Return),
         );
