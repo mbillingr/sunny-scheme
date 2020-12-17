@@ -33,6 +33,10 @@ impl Storage {
         self.objects.capacity() - self.objects.len()
     }
 
+    fn is_full(&self) -> bool {
+        self.objects.len() >= self.objects.capacity()
+    }
+
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
         let boxed = Box::new(obj);
         self.insert_box(boxed).map_err(|x| *x)
@@ -48,8 +52,12 @@ impl Storage {
         Ok(Ref::new(ptr))
     }
 
-    fn is_full(&self) -> bool {
-        self.objects.len() >= self.objects.capacity()
+    pub fn find_object<T: 'static>(&mut self, predicate: impl Fn(&T)->bool) -> Option<Ref<T>> {
+        self.objects.iter_mut()
+            .map(|obj|&mut **obj)
+            .filter_map(Any::downcast_mut::<T>)
+            .next()
+            .map(|x| Ref::new(x))
     }
 
     pub fn is_valid<T>(&self, obj: &Ref<T>) -> bool {

@@ -1,6 +1,7 @@
 use crate::closure::Closure;
 use crate::mem::{GarbageCollector, Ref, Storage, Traceable};
 use crate::Value;
+use crate::value::Symbol;
 
 pub struct ValueStorage {
     storage: Storage,
@@ -17,6 +18,22 @@ impl ValueStorage {
         ValueStorage {
             storage: Storage::new(capacity),
         }
+    }
+
+    pub fn interned_symbol(&mut self, name: &str) -> Result<Value, ()> {
+        let symbol = if let Some(s) = self.storage.find_object(|s: &Symbol| &**s == name) {
+            s
+        } else {
+            let symbol = name.to_string().into_boxed_str();
+            self.insert(symbol).map_err(|_|())?
+        };
+        Ok(Value::Symbol(symbol))
+    }
+
+    pub fn uninterned_symbol(&mut self, name: impl ToString) -> Result<Value, Symbol> {
+        let symbol = name.to_string().into_boxed_str();
+        let obj = self.insert(symbol)?;
+        Ok(Value::Symbol(obj))
     }
 
     pub fn cons(
@@ -108,5 +125,36 @@ mod tests {
         assert!(storage.is_valid(&a));
         assert!(storage.is_valid(&b));
         assert!(storage.is_valid(&c));
+    }
+
+    #[test]
+    fn interned_symbols_with_same_name_are_equal() {
+        let mut storage = ValueStorage::new(2);
+        let a = storage.interned_symbol("foo").unwrap();
+        let b = storage.interned_symbol("foo").unwrap();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn interned_symbols_with_same_name_do_not_take_up_extra_space() {
+        let mut storage = ValueStorage::new(1);
+        let a = storage.interned_symbol("foo").unwrap();
+        let b = storage.interned_symbol("foo").unwrap();
+    }
+
+    #[test]
+    fn uninterned_symbols_with_same_name_are_not_equal() {
+        let mut storage = ValueStorage::new(2);
+        let a = storage.uninterned_symbol("foo").unwrap();
+        let b = storage.uninterned_symbol("foo").unwrap();
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn uninterned_symbols_with_same_name_are_not_equal_to_interned_symbol() {
+        let mut storage = ValueStorage::new(2);
+        let a = storage.uninterned_symbol("foo").unwrap();
+        let b = storage.interned_symbol("foo").unwrap();
+        assert_ne!(a, b);
     }
 }
