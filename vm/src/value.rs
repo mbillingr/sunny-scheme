@@ -99,14 +99,6 @@ impl Traceable for Value {
     }
 }
 
-impl PartialEq<[Value; 2]> for Value {
-    fn eq(&self, rhs: &[Value; 2]) -> bool {
-        self.as_pair()
-            .map(|lhs| lhs.0 == rhs[0] && lhs.1 == rhs[1])
-            .unwrap_or(false)
-    }
-}
-
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -138,6 +130,14 @@ impl PartialEq for Value {
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             _ => false,
         }
+    }
+}
+
+impl PartialEq<[Value; 2]> for Value {
+    fn eq(&self, rhs: &[Value; 2]) -> bool {
+        self.as_pair()
+            .map(|lhs| lhs.0 == rhs[0] && lhs.1 == rhs[1])
+            .unwrap_or(false)
     }
 }
 
