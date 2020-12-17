@@ -1,4 +1,4 @@
-use crate::gc::{Tracer, GcMarker, Ref, Traceable};
+use crate::gc::{GcMarker, Ref, Traceable, Tracer};
 use log::{debug, warn};
 use std::any::Any;
 

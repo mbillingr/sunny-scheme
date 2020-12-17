@@ -2,7 +2,7 @@ use crate::bytecode::{CodeBuilder, CodePointer};
 use crate::{
     bytecode::Op,
     closure::Closure,
-    mem::{Tracer, Ref, Traceable},
+    mem::{Ref, Traceable, Tracer},
     storage::ValueStorage,
     Error, ErrorKind, Result, RuntimeResult, Value,
 };
@@ -43,20 +43,6 @@ impl Traceable for Vm {
 }
 
 impl Vm {
-    pub fn collect_garbage(&mut self) {
-        unsafe {
-            // This is safe if all state values (registers, etc.) are marked as roots
-            let gc = self
-                .storage
-                .begin_garbage_collection()
-                .mark(&self.value_stack)
-                .mark(&self.call_stack)
-                .mark(&self.current_frame);
-            self.storage.finish_garbage_collection(gc);
-            self.storage.grow();
-        }
-    }
-
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
         let empty_value_array = storage
             .insert(vec![].into_boxed_slice())
@@ -251,6 +237,14 @@ impl Vm {
 
         self.push_value(Value::Closure(closure));
         Ok(())
+    }
+
+    fn collect_garbage(&mut self) {
+        unsafe {
+            // This is safe if all state values (registers, etc.) are marked as roots
+            let gc = self.storage.begin_garbage_collection().mark(self);
+            self.storage.finish_garbage_collection(gc);
+        }
     }
 }
 

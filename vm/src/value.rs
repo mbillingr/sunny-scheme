@@ -1,5 +1,5 @@
 use crate::closure::Closure;
-use crate::mem::{Tracer, Ref, Traceable};
+use crate::mem::{Ref, Traceable, Tracer};
 use crate::storage::ValueStorage;
 use crate::Result;
 

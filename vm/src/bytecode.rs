@@ -1,4 +1,4 @@
-use crate::mem::{Tracer, Ref, Traceable};
+use crate::mem::{Ref, Traceable, Tracer};
 use crate::Value;
 use std::collections::HashMap;
 

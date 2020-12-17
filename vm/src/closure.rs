@@ -1,5 +1,5 @@
 use crate::bytecode::CodePointer;
-use crate::mem::{Tracer, Ref, Traceable};
+use crate::mem::{Ref, Traceable, Tracer};
 use crate::Value;
 
 #[derive(Debug, Clone, PartialEq)]

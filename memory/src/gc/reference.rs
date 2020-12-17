@@ -1,4 +1,4 @@
-use crate::gc::{Tracer, Traceable};
+use crate::gc::{Traceable, Tracer};
 use std::ops::Deref;
 
 pub struct Ref<T: ?Sized> {

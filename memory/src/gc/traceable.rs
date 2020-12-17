@@ -1,4 +1,4 @@
-use super::{Tracer, Ref};
+use super::{Ref, Tracer};
 
 pub trait Traceable {
     fn trace(&self, gc: &mut Tracer);
