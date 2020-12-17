@@ -1,10 +1,16 @@
-use super::Traceable;
+use super::{GcMarker, Traceable};
 use log::{debug, info, trace};
 use std::any::Any;
 use std::collections::HashSet;
 
 pub struct GarbageCollector {
     reachable: HashSet<*const ()>,
+}
+
+impl GcMarker for GarbageCollector {
+    fn is_reachable<T: ?Sized>(&self, ptr: *const T) -> bool {
+        self.reachable.contains(&normalize(ptr))
+    }
 }
 
 impl GarbageCollector {
@@ -32,35 +38,8 @@ impl GarbageCollector {
         }
     }
 
-    pub unsafe fn sweep(self, objects: &mut Vec<Box<dyn Any>>) {
-        let n_before = objects.len();
-
-        let mut i = 0;
-        while i < objects.len() {
-            if self.is_reachable(&*objects[i]) {
-                i += 1;
-            } else {
-                objects.swap_remove(i);
-            }
-        }
-
-        debug!(
-            "Sweep phase: collected {} objects",
-            n_before - objects.len()
-        );
-        debug!(
-            "Sweep phase: {} live and {} free objects",
-            objects.len(),
-            objects.capacity() - objects.len()
-        );
-    }
-
     pub fn set_reachable<T: ?Sized>(&mut self, ptr: *const T) -> bool {
         self.reachable.insert(normalize(ptr))
-    }
-
-    fn is_reachable<T: ?Sized>(&self, ptr: *const T) -> bool {
-        self.reachable.contains(&normalize(ptr))
     }
 }
 
@@ -104,25 +83,6 @@ mod tests {
         gc.mark(&spy);
 
         assert!(spy.was_traced());
-    }
-
-    #[test]
-    fn sweeping_removes_unreachable_objects() {
-        let a = Box::new(1);
-        let b = Box::new(2);
-        let c = Box::new(3);
-        let mut objects: Vec<Box<dyn Any>> = vec![a, b, c];
-        let b_ptr = &*objects[1] as *const _ as *const ();
-        let mut gc = GarbageCollector::new();
-
-        gc.reachable.insert(b_ptr);
-
-        unsafe {
-            gc.sweep(&mut objects);
-        }
-
-        assert_eq!(objects.len(), 1);
-        assert_eq!(objects[0].downcast_ref::<i32>(), Some(&2));
     }
 
     struct TraceSpy(std::cell::Cell<bool>);

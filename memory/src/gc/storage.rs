@@ -1,4 +1,4 @@
-use crate::gc::{GarbageCollector, Ref, Traceable};
+use crate::gc::{GarbageCollector, GcMarker, Ref, Traceable};
 use log::{debug, warn};
 use std::any::Any;
 
@@ -94,14 +94,35 @@ impl Storage {
     }
 
     pub unsafe fn finish_garbage_collection(&mut self, gc: GarbageCollector) {
-        gc.sweep(&mut self.objects);
+        self.sweep(gc);
         self.grow();
+    }
+
+    unsafe fn sweep(&mut self, gc: impl GcMarker) {
+        let n_before = self.used();
+
+        let mut i = 0;
+        while i < self.objects.len() {
+            if gc.is_reachable(&*self.objects[i]) {
+                i += 1;
+            } else {
+                self.objects.swap_remove(i);
+            }
+        }
+
+        debug!("Sweep phase: collected {} objects", n_before - self.used());
+        debug!(
+            "Sweep phase: {} live and {} free objects",
+            self.used(),
+            self.free()
+        );
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     #[test]
     fn cant_insert_into_full_storage() {
@@ -211,5 +232,30 @@ mod tests {
         storage.grow();
 
         assert!(storage.objects.capacity() >= 4 * 2);
+    }
+
+    #[test]
+    fn sweeping_removes_unreachable_objects() {
+        let mut storage = Storage::new(3);
+        let _ = storage.insert(1).unwrap();
+        let b = storage.insert(2).unwrap();
+        let _ = storage.insert(3).unwrap();
+
+        static B_ADDR: AtomicUsize = AtomicUsize::new(0);
+        B_ADDR.store(&*b as *const _ as usize, Ordering::SeqCst);
+
+        struct DummyGc;
+        impl GcMarker for DummyGc {
+            fn is_reachable<T: ?Sized>(&self, ptr: *const T) -> bool {
+                ptr as *const u8 as usize == B_ADDR.load(Ordering::SeqCst)
+            }
+        }
+
+        let mut gc = DummyGc;
+
+        unsafe { storage.sweep(gc) }
+
+        assert_eq!(storage.used(), 1);
+        assert_eq!(storage.objects[0].downcast_ref::<i32>(), Some(&2));
     }
 }
