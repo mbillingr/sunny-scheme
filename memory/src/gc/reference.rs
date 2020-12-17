@@ -1,6 +1,6 @@
 use crate::gc::{Traceable, Tracer};
-use std::ops::Deref;
 use std::hash::{Hash, Hasher};
+use std::ops::Deref;
 
 pub struct Ref<T: ?Sized> {
     ptr: *mut T,

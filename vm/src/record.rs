@@ -1,8 +1,8 @@
-use std::ops::{Deref, DerefMut, Index};
-use std::collections::{HashMap};
-use std::hash::Hash;
-use std::fmt::Debug;
 use std::borrow::Borrow;
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::ops::{Deref, DerefMut, Index};
 
 pub struct Record<K, V> {
     fields: Vec<V>,
@@ -27,7 +27,8 @@ impl<K, V> Record<K, V> {
 }
 
 impl<K, V> Record<K, V>
-where K: Eq + Hash
+where
+    K: Eq + Hash,
 {
     pub fn append_named(&mut self, name: K, value: V) {
         self.names.insert(name, self.fields.len());
@@ -35,7 +36,9 @@ where K: Eq + Hash
     }
 
     pub fn get_named(&self, name: impl Borrow<K>) -> Option<&V> {
-        self.names.get(name.borrow()).and_then(|&i| self.fields.get(i))
+        self.names
+            .get(name.borrow())
+            .and_then(|&i| self.fields.get(i))
     }
 }
 
@@ -59,7 +62,8 @@ where
 {
     type Output = V;
     fn index(&self, index: I) -> &Self::Output {
-        self.get_named(index.borrow()).unwrap_or_else(||panic!("unknown field: {:?}", index))
+        self.get_named(index.borrow())
+            .unwrap_or_else(|| panic!("unknown field: {:?}", index))
     }
 }
 

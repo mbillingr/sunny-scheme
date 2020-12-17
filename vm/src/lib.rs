@@ -1,8 +1,9 @@
 pub mod bytecode;
 mod closure;
-mod storage;
-mod value;
 mod record;
+mod storage;
+mod table;
+mod value;
 pub mod vm;
 
 use sunny_memory::gc as mem;
