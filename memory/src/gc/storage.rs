@@ -1,4 +1,4 @@
-use crate::gc::{GarbageCollector, GcMarker, Ref, Traceable};
+use crate::gc::{Tracer, GcMarker, Ref, Traceable};
 use log::{debug, warn};
 use std::any::Any;
 
@@ -89,11 +89,11 @@ impl Storage {
         self.finish_garbage_collection(gc);
     }
 
-    pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
-        GarbageCollector::new()
+    pub fn begin_garbage_collection(&mut self) -> Tracer {
+        Tracer::new()
     }
 
-    pub unsafe fn finish_garbage_collection(&mut self, gc: GarbageCollector) {
+    pub unsafe fn finish_garbage_collection(&mut self, gc: Tracer) {
         self.sweep(gc);
         self.grow();
     }
@@ -251,9 +251,7 @@ mod tests {
             }
         }
 
-        let mut gc = DummyGc;
-
-        unsafe { storage.sweep(gc) }
+        unsafe { storage.sweep(DummyGc) }
 
         assert_eq!(storage.used(), 1);
         assert_eq!(storage.objects[0].downcast_ref::<i32>(), Some(&2));

@@ -1,5 +1,5 @@
 use crate::closure::Closure;
-use crate::mem::{GarbageCollector, Ref, Storage, Traceable};
+use crate::mem::{Tracer, Ref, Storage, Traceable};
 use crate::value::Symbol;
 use crate::Value;
 
@@ -70,11 +70,11 @@ impl ValueStorage {
         self.storage.collect_garbage(root)
     }
 
-    pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
+    pub fn begin_garbage_collection(&mut self) -> Tracer {
         self.storage.begin_garbage_collection()
     }
 
-    pub unsafe fn finish_garbage_collection(&mut self, gc: GarbageCollector) {
+    pub unsafe fn finish_garbage_collection(&mut self, gc: Tracer) {
         self.storage.finish_garbage_collection(gc)
     }
 

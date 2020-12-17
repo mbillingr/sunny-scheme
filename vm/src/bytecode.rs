@@ -1,4 +1,4 @@
-use crate::mem::{GarbageCollector, Ref, Traceable};
+use crate::mem::{Tracer, Ref, Traceable};
 use crate::Value;
 use std::collections::HashMap;
 
@@ -23,7 +23,7 @@ pub enum Op {
 }
 
 impl Traceable for Op {
-    fn trace(&self, _: &mut GarbageCollector) {}
+    fn trace(&self, _: &mut Tracer) {}
 }
 
 #[derive(Debug, Clone)]
@@ -33,7 +33,7 @@ pub struct CodeSegment {
 }
 
 impl Traceable for CodeSegment {
-    fn trace(&self, gc: &mut GarbageCollector) {
+    fn trace(&self, gc: &mut Tracer) {
         self.constants.trace(gc);
     }
 }
@@ -67,7 +67,7 @@ pub struct CodePointer {
 }
 
 impl Traceable for CodePointer {
-    fn trace(&self, gc: &mut GarbageCollector) {
+    fn trace(&self, gc: &mut Tracer) {
         self.segment.trace(gc);
     }
 }

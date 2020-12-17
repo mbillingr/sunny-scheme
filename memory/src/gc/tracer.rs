@@ -1,22 +1,21 @@
 use super::{GcMarker, Traceable};
 use log::{debug, info, trace};
-use std::any::Any;
 use std::collections::HashSet;
 
-pub struct GarbageCollector {
+pub struct Tracer {
     reachable: HashSet<*const ()>,
 }
 
-impl GcMarker for GarbageCollector {
+impl GcMarker for Tracer {
     fn is_reachable<T: ?Sized>(&self, ptr: *const T) -> bool {
         self.reachable.contains(&normalize(ptr))
     }
 }
 
-impl GarbageCollector {
+impl Tracer {
     pub(crate) fn new() -> Self {
         info!("Initializing garbage collecction");
-        GarbageCollector {
+        Tracer {
             reachable: HashSet::new(),
         }
     }
@@ -53,7 +52,7 @@ mod tests {
 
     #[test]
     fn tracing_a_pointer_marks_address_as_reachable() {
-        let mut gc = GarbageCollector::new();
+        let mut gc = Tracer::new();
 
         let ptr = 0x1234 as *const ();
 
@@ -64,7 +63,7 @@ mod tests {
 
     #[test]
     fn tracing_a_pointer_triggers_tracing_of_pointed_object() {
-        let mut gc = GarbageCollector::new();
+        let mut gc = Tracer::new();
 
         let spy = TraceSpy::new();
 
@@ -76,7 +75,7 @@ mod tests {
 
     #[test]
     fn starting_mark_phase_triggers_tracing_of_root() {
-        let gc = GarbageCollector::new();
+        let gc = Tracer::new();
 
         let spy = TraceSpy::new();
 
@@ -87,7 +86,7 @@ mod tests {
 
     struct TraceSpy(std::cell::Cell<bool>);
     impl Traceable for TraceSpy {
-        fn trace(&self, _: &mut GarbageCollector) {
+        fn trace(&self, _: &mut Tracer) {
             self.0.set(true)
         }
     }

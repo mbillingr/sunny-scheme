@@ -2,7 +2,7 @@ use crate::bytecode::{CodeBuilder, CodePointer};
 use crate::{
     bytecode::Op,
     closure::Closure,
-    mem::{GarbageCollector, Ref, Traceable},
+    mem::{Tracer, Ref, Traceable},
     storage::ValueStorage,
     Error, ErrorKind, Result, RuntimeResult, Value,
 };
@@ -15,7 +15,7 @@ struct CallStackFrame {
 }
 
 impl Traceable for CallStackFrame {
-    fn trace(&self, gc: &mut GarbageCollector) {
+    fn trace(&self, gc: &mut Tracer) {
         self.free_vars.trace(gc);
         self.args.trace(gc);
         self.code.trace(gc);
@@ -34,7 +34,7 @@ pub struct Vm {
 }
 
 impl Traceable for Vm {
-    fn trace(&self, gc: &mut GarbageCollector) {
+    fn trace(&self, gc: &mut Tracer) {
         self.value_stack.trace(gc);
         self.call_stack.trace(gc);
         self.current_frame.trace(gc);

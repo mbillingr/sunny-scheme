@@ -1,5 +1,5 @@
 use crate::closure::Closure;
-use crate::mem::{GarbageCollector, Ref, Traceable};
+use crate::mem::{Tracer, Ref, Traceable};
 use crate::storage::ValueStorage;
 use crate::Result;
 
@@ -84,7 +84,7 @@ impl Value {
 }
 
 impl Traceable for Value {
-    fn trace(&self, gc: &mut GarbageCollector) {
+    fn trace(&self, gc: &mut Tracer) {
         match self {
             Value::Void => {}
             Value::Nil => {}

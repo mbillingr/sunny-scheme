@@ -52,15 +52,15 @@ impl Storage {
 
     pub unsafe fn collect_garbage<T>(&mut self, _root: T) {}
 
-    pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
-        GarbageCollector
+    pub fn begin_garbage_collection(&mut self) -> Tracer {
+        Tracer
     }
 
-    pub unsafe fn finish_garbage_collection(&mut self, _: GarbageCollector) {}
+    pub unsafe fn finish_garbage_collection(&mut self, _: Tracer) {}
 }
 
 pub trait Traceable {
-    fn trace(&self, _: &mut GarbageCollector) {}
+    fn trace(&self, _: &mut Tracer) {}
 }
 
 impl<T: ?Sized> Traceable for Ref<T> {}
@@ -75,12 +75,10 @@ impl<T: ?Sized> Traceable for Box<T> {}
 
 impl<T> Traceable for &[T] {}
 
-pub struct GarbageCollector;
+pub struct Tracer;
 
-impl GarbageCollector {
+impl Tracer {
     pub fn mark(self, _: &impl Traceable) -> Self {
         self
     }
-
-    pub unsafe fn sweep(self) {}
 }

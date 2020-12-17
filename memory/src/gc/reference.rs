@@ -1,4 +1,4 @@
-use crate::gc::{GarbageCollector, Traceable};
+use crate::gc::{Tracer, Traceable};
 use std::ops::Deref;
 
 pub struct Ref<T: ?Sized> {
@@ -32,7 +32,7 @@ impl<T: ?Sized> Clone for Ref<T> {
 }
 
 impl<T: ?Sized + Traceable> Traceable for Ref<T> {
-    fn trace(&self, gc: &mut GarbageCollector) {
+    fn trace(&self, gc: &mut Tracer) {
         self.ptr.trace(gc)
     }
 }
