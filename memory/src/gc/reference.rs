@@ -1,5 +1,6 @@
 use crate::gc::{Traceable, Tracer};
 use std::ops::Deref;
+use std::hash::{Hash, Hasher};
 
 pub struct Ref<T: ?Sized> {
     ptr: *mut T,
@@ -48,5 +49,11 @@ impl<T: ?Sized> PartialEq for Ref<T> {
 impl<T: ?Sized> std::fmt::Debug for Ref<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}@{:?}", std::any::type_name::<T>(), self.ptr)
+    }
+}
+
+impl<T: ?Sized> Hash for Ref<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ptr.hash(state)
     }
 }
