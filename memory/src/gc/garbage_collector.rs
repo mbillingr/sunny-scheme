@@ -3,17 +3,15 @@ use log::{debug, info, trace};
 use std::any::Any;
 use std::collections::HashSet;
 
-pub struct GarbageCollector<'a> {
+pub struct GarbageCollector {
     reachable: HashSet<*const ()>,
-    objects: &'a mut Vec<Box<dyn Any>>,
 }
 
-impl<'a> GarbageCollector<'a> {
-    pub(crate) fn new(objects: &'a mut Vec<Box<dyn Any>>) -> Self {
+impl GarbageCollector {
+    pub(crate) fn new() -> Self {
         info!("Initializing garbage collecction");
         GarbageCollector {
             reachable: HashSet::new(),
-            objects,
         }
     }
 
@@ -34,26 +32,26 @@ impl<'a> GarbageCollector<'a> {
         }
     }
 
-    pub unsafe fn sweep(self) {
-        let mut objects = std::mem::replace(self.objects, vec![]);
-
+    pub unsafe fn sweep(self, objects: &mut Vec<Box<dyn Any>>) {
         let n_before = objects.len();
 
-        let new_objects = objects
-            .drain(..)
-            .filter(|obj| self.is_reachable(&**obj))
-            .collect();
-
-        *self.objects = new_objects;
+        let mut i = 0;
+        while i < objects.len() {
+            if self.is_reachable(&*objects[i]) {
+                i += 1;
+            } else {
+                objects.swap_remove(i);
+            }
+        }
 
         debug!(
             "Sweep phase: collected {} objects",
-            n_before - self.objects.len()
+            n_before - objects.len()
         );
         debug!(
             "Sweep phase: {} live and {} free objects",
-            self.objects.len(),
-            self.objects.capacity() - self.objects.len()
+            objects.len(),
+            objects.capacity() - objects.len()
         );
     }
 
@@ -76,8 +74,7 @@ mod tests {
 
     #[test]
     fn tracing_a_pointer_marks_address_as_reachable() {
-        let mut objects: Vec<Box<dyn Any>> = vec![];
-        let mut gc = GarbageCollector::new(&mut objects);
+        let mut gc = GarbageCollector::new();
 
         let ptr = 0x1234 as *const ();
 
@@ -88,8 +85,7 @@ mod tests {
 
     #[test]
     fn tracing_a_pointer_triggers_tracing_of_pointed_object() {
-        let mut objects: Vec<Box<dyn Any>> = vec![];
-        let mut gc = GarbageCollector::new(&mut objects);
+        let mut gc = GarbageCollector::new();
 
         let spy = TraceSpy::new();
 
@@ -101,8 +97,7 @@ mod tests {
 
     #[test]
     fn starting_mark_phase_triggers_tracing_of_root() {
-        let mut objects: Vec<Box<dyn Any>> = vec![];
-        let gc = GarbageCollector::new(&mut objects);
+        let gc = GarbageCollector::new();
 
         let spy = TraceSpy::new();
 
@@ -118,12 +113,12 @@ mod tests {
         let c = Box::new(3);
         let mut objects: Vec<Box<dyn Any>> = vec![a, b, c];
         let b_ptr = &*objects[1] as *const _ as *const ();
-        let mut gc = GarbageCollector::new(&mut objects);
+        let mut gc = GarbageCollector::new();
 
         gc.reachable.insert(b_ptr);
 
         unsafe {
-            gc.sweep();
+            gc.sweep(&mut objects);
         }
 
         assert_eq!(objects.len(), 1);

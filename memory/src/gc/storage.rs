@@ -32,7 +32,9 @@ impl Storage {
     pub fn free(&self) -> usize {
         self.objects.capacity() - self.objects.len()
     }
-
+    pub fn used(&self) -> usize {
+        self.objects.len()
+    }
     fn is_full(&self) -> bool {
         self.objects.len() >= self.objects.capacity()
     }
@@ -52,10 +54,12 @@ impl Storage {
         Ok(Ref::new(ptr))
     }
 
-    pub fn find_object<T: 'static>(&mut self, predicate: impl Fn(&T)->bool) -> Option<Ref<T>> {
-        self.objects.iter_mut()
-            .map(|obj|&mut **obj)
+    pub fn find_object<T: 'static>(&mut self, predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
+        self.objects
+            .iter_mut()
+            .map(|obj| &mut **obj)
             .filter_map(Any::downcast_mut::<T>)
+            .filter(|obj| predicate(obj))
             .next()
             .map(|x| Ref::new(x))
     }
@@ -81,12 +85,17 @@ impl Storage {
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
-        GarbageCollector::new(&mut self.objects).mark(root).sweep();
-        self.grow();
+        let gc = self.begin_garbage_collection().mark(root);
+        self.finish_garbage_collection(gc);
     }
 
     pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
-        GarbageCollector::new(&mut self.objects)
+        GarbageCollector::new()
+    }
+
+    pub unsafe fn finish_garbage_collection(&mut self, gc: GarbageCollector) {
+        gc.sweep(&mut self.objects);
+        self.grow();
     }
 }
 

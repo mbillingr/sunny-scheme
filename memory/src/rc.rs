@@ -40,6 +40,10 @@ impl Storage {
         Ok(Ref(Rc::new(obj)))
     }
 
+    pub fn find_object<T: 'static>(&mut self, _predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
+        unimplemented!()
+    }
+
     pub fn is_valid<T>(&self, _: &Ref<T>) -> bool {
         true
     }
@@ -51,6 +55,8 @@ impl Storage {
     pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
         GarbageCollector
     }
+
+    pub unsafe fn finish_garbage_collection(&mut self, _: GarbageCollector) {}
 }
 
 pub trait Traceable {

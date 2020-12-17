@@ -46,12 +46,13 @@ impl Vm {
     pub fn collect_garbage(&mut self) {
         unsafe {
             // This is safe if all state values (registers, etc.) are marked as roots
-            self.storage
+            let gc = self
+                .storage
                 .begin_garbage_collection()
                 .mark(&self.value_stack)
                 .mark(&self.call_stack)
-                .mark(&self.current_frame)
-                .sweep();
+                .mark(&self.current_frame);
+            self.storage.finish_garbage_collection(gc);
             self.storage.grow();
         }
     }

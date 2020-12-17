@@ -1,7 +1,7 @@
 use crate::closure::Closure;
 use crate::mem::{GarbageCollector, Ref, Storage, Traceable};
-use crate::Value;
 use crate::value::Symbol;
+use crate::Value;
 
 pub struct ValueStorage {
     storage: Storage,
@@ -25,7 +25,7 @@ impl ValueStorage {
             s
         } else {
             let symbol = name.to_string().into_boxed_str();
-            self.insert(symbol).map_err(|_|())?
+            self.insert(symbol).map_err(|_| ())?
         };
         Ok(Value::Symbol(symbol))
     }
@@ -72,6 +72,10 @@ impl ValueStorage {
 
     pub fn begin_garbage_collection(&mut self) -> GarbageCollector {
         self.storage.begin_garbage_collection()
+    }
+
+    pub unsafe fn finish_garbage_collection(&mut self, gc: GarbageCollector) {
+        self.storage.finish_garbage_collection(gc)
     }
 
     pub fn is_valid(&self, value: &Value) -> bool {
@@ -138,8 +142,8 @@ mod tests {
     #[test]
     fn interned_symbols_with_same_name_do_not_take_up_extra_space() {
         let mut storage = ValueStorage::new(1);
-        let a = storage.interned_symbol("foo").unwrap();
-        let b = storage.interned_symbol("foo").unwrap();
+        storage.interned_symbol("foo").unwrap();
+        storage.interned_symbol("foo").unwrap();
     }
 
     #[test]
