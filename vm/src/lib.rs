@@ -1,6 +1,5 @@
 pub mod bytecode;
 mod closure;
-mod record;
 mod storage;
 mod table;
 mod value;
