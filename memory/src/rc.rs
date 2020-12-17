@@ -2,8 +2,19 @@ use std::any::Any;
 use std::ops::Deref;
 use std::rc::{Rc, Weak};
 
-#[derive(Debug)]
 pub struct Ref<T: ?Sized>(Rc<T>);
+
+impl<T> Ref<T> {
+    pub fn from_leaked_static(obj: T) -> Self {
+        Ref(Rc::new(obj))
+    }
+}
+
+impl<T: ?Sized> Ref<T> {
+    pub fn as_ptr(&self) -> *const T {
+        Rc::as_ptr(&self.0)
+    }
+}
 
 impl<T: ?Sized> Deref for Ref<T> {
     type Target = T;
@@ -23,6 +34,12 @@ impl<T: ?Sized> Eq for Ref<T> {}
 impl<T: ?Sized> PartialEq for Ref<T> {
     fn eq(&self, rhs: &Self) -> bool {
         Rc::ptr_eq(&self.0, &rhs.0)
+    }
+}
+
+impl<T: ?Sized> std::fmt::Debug for Ref<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}@{:?}", std::any::type_name::<T>(), self.as_ptr())
     }
 }
 

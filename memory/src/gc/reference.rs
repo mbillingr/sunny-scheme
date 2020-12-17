@@ -6,6 +6,13 @@ pub struct Ref<T: ?Sized> {
     ptr: *mut T,
 }
 
+impl<T> Ref<T> {
+    pub fn from_leaked_static(obj: T) -> Self {
+        let ptr = Box::leak(Box::new(obj));
+        Ref { ptr }
+    }
+}
+
 impl<T: ?Sized> Ref<T> {
     pub(crate) fn new(ptr: *mut T) -> Self {
         Ref { ptr }

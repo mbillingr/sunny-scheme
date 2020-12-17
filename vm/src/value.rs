@@ -209,4 +209,14 @@ mod tests {
         assert_eq!(table[&Value::True], Value::Int(4));
         assert_eq!(table[&Value::Int(0)], Value::Int(5));
     }
+
+    #[test]
+    fn compound_values_are_compared_by_pointer() {
+        let pair1 = Value::Pair(Ref::from_leaked_static((Value::Int(1), Value::Int(2))));
+        let pair2 = Value::Pair(Ref::from_leaked_static((Value::Int(1), Value::Int(2))));
+
+        assert_eq!(pair1, pair1);
+        assert_eq!(pair2, pair2);
+        assert_ne!(pair1, pair2);
+    }
 }
