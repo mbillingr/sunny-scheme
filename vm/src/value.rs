@@ -140,3 +140,15 @@ impl PartialEq for Value {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_size_of_value_type() {
+        let value_size = std::mem::size_of::<Value>();
+        let pointer_size = std::mem::size_of::<usize>();
+        assert_eq!(value_size, 2 * pointer_size);
+    }
+}
