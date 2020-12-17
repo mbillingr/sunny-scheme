@@ -21,11 +21,11 @@ impl ValueStorage {
     }
 
     pub fn interned_symbol(&mut self, name: &str) -> Result<Value, ()> {
-        let symbol = if let Some(s) = self.storage.find_object(|s: &Symbol| &**s == name) {
+        let symbol = if let Some(s) = self.storage.find_interned(|s: &Symbol| &**s == name) {
             s
         } else {
             let symbol = name.to_string().into_boxed_str();
-            self.insert(symbol).map_err(|_| ())?
+            self.storage.insert_interned(symbol).map_err(|_| ())?
         };
         Ok(Value::Symbol(symbol))
     }

@@ -1,6 +1,7 @@
 use crate::gc::{GcMarker, Ref, Traceable, Tracer};
 use log::{debug, warn};
 use std::any::Any;
+use std::collections::HashSet;
 
 /// Managed object storage with garbage collection.
 ///
@@ -9,6 +10,7 @@ use std::any::Any;
 /// and make sure no references to any objects in the storage remain.
 pub struct Storage {
     objects: &'static mut Vec<Box<dyn Any>>,
+    interned: HashSet<*mut dyn Any>,
 }
 
 impl Drop for Storage {
@@ -26,6 +28,7 @@ impl Storage {
     pub fn new(_capacity: usize) -> Self {
         Storage {
             objects: Box::leak(Box::new(Vec::with_capacity(_capacity))),
+            interned: HashSet::new(),
         }
     }
 
@@ -37,6 +40,16 @@ impl Storage {
     }
     fn is_full(&self) -> bool {
         self.objects.len() >= self.objects.capacity()
+    }
+
+    pub fn insert_interned<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
+        match self.insert(obj) {
+            Ok(r) => {
+                self.interned.insert(r.as_ptr() as *mut _);
+                Ok(r)
+            }
+            err => err,
+        }
     }
 
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
@@ -54,10 +67,10 @@ impl Storage {
         Ok(Ref::new(ptr))
     }
 
-    pub fn find_object<T: 'static>(&mut self, predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
-        self.objects
-            .iter_mut()
-            .map(|obj| &mut **obj)
+    pub fn find_interned<T: 'static>(&self, predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
+        self.interned
+            .iter()
+            .map(|&obj| unsafe { &mut *obj })
             .filter_map(Any::downcast_mut::<T>)
             .filter(|obj| predicate(obj))
             .next()
@@ -106,7 +119,8 @@ impl Storage {
             if gc.is_reachable(&*self.objects[i]) {
                 i += 1;
             } else {
-                self.objects.swap_remove(i);
+                let mut obj = self.objects.swap_remove(i);
+                self.interned.remove(&(&mut *obj as *mut _ as *mut _));
             }
         }
 

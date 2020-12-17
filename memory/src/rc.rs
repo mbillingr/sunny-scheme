@@ -1,5 +1,6 @@
+use std::any::Any;
 use std::ops::Deref;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 
 #[derive(Debug)]
 pub struct Ref<T: ?Sized>(Rc<T>);
@@ -25,23 +26,45 @@ impl<T: ?Sized> PartialEq for Ref<T> {
     }
 }
 
-pub struct Storage {}
+pub struct Storage {
+    interned: Vec<Weak<dyn Any>>,
+}
 
 impl Storage {
     pub fn new(_capacity: usize) -> Self {
-        Storage {}
+        Storage { interned: vec![] }
     }
 
     pub fn free(&self) -> usize {
         usize::max_value()
     }
 
+    pub fn insert_interned<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
+        let rc = Rc::new(obj);
+        let wc = Rc::downgrade(&rc);
+        self.interned.push(wc);
+        Ok(Ref(rc))
+    }
+
     pub fn insert<T>(&mut self, obj: T) -> Result<Ref<T>, T> {
         Ok(Ref(Rc::new(obj)))
     }
 
-    pub fn find_object<T: 'static>(&mut self, _predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
-        unimplemented!()
+    pub fn find_interned<T: 'static>(&mut self, predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
+        let mut i = 0;
+        while i < self.interned.len() {
+            if let Some(any) = self.interned[i].upgrade() {
+                if let Ok(concrete) = any.downcast::<T>() {
+                    if predicate(&concrete) {
+                        return Some(Ref(concrete));
+                    }
+                }
+                i += 1;
+            } else {
+                self.interned.swap_remove(i);
+            }
+        }
+        None
     }
 
     pub fn is_valid<T>(&self, _: &Ref<T>) -> bool {
