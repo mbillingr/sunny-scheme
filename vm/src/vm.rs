@@ -246,10 +246,7 @@ impl Vm {
     }
 
     fn cons(&mut self) -> Result<()> {
-        if self.storage.free() < 1 {
-            return Err(ErrorKind::AllocationError);
-        }
-
+        self.check_storage_space(1)?;
         let cdr = self.pop_value()?;
         let car = self.pop_value()?;
         let pair = self.storage.cons(car, cdr).unwrap();
@@ -258,29 +255,21 @@ impl Vm {
     }
 
     fn car(&mut self) -> Result<()> {
-        let pair = self.pop_value()?;
-        if let Some((car, _)) = pair.as_pair() {
-            self.push_value(car.clone());
-            Ok(())
-        } else {
-            Err(ErrorKind::TypeError)
-        }
+        self.pop_value()?
+            .car()
+            .ok_or(ErrorKind::TypeError)
+            .map(|x| self.push_value(x.clone()))
     }
 
     fn cdr(&mut self) -> Result<()> {
-        let pair = self.pop_value()?;
-        if let Some((_, cdr)) = pair.as_pair() {
-            self.push_value(cdr.clone());
-            Ok(())
-        } else {
-            Err(ErrorKind::TypeError)
-        }
+        self.pop_value()?
+            .cdr()
+            .ok_or(ErrorKind::TypeError)
+            .map(|x| self.push_value(x.clone()))
     }
 
     fn table(&mut self) -> Result<()> {
-        if self.storage.free() < 1 {
-            return Err(ErrorKind::AllocationError);
-        }
+        self.check_storage_space(1)?;
         let table = self.storage.new_table().unwrap();
         self.push_value(table);
         Ok(())
@@ -290,11 +279,7 @@ impl Vm {
         let value = self.pop_value()?;
         let field = self.pop_value()?;
         let mut table = self.pop_value()?;
-        if let Some(t) = table.as_mut_table() {
-            t.insert(field, value);
-        } else {
-            return Err(ErrorKind::TypeError);
-        }
+        table.table_set(field, value).ok_or(ErrorKind::TypeError)?;
         self.push_value(table);
         Ok(())
     }
@@ -302,19 +287,14 @@ impl Vm {
     fn table_get(&mut self) -> Result<()> {
         let field = self.pop_value()?;
         let table = self.pop_value()?;
-        if let Some(t) = table.as_table() {
-            let val = t.get(&field).cloned().unwrap_or(Value::Void);
-            self.push_value(val);
-            Ok(())
-        } else {
-            Err(ErrorKind::TypeError)
-        }
+        table
+            .table_get(&field)
+            .ok_or(ErrorKind::TypeError)
+            .map(|x| self.push_value(x.clone()))
     }
 
     fn make_closure(&mut self, n_free: usize) -> Result<()> {
-        if self.storage.free() < 2 {
-            return Err(ErrorKind::AllocationError);
-        }
+        self.check_storage_space(2)?;
 
         let code_offset = self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)? as isize;
         let code = self.current_frame.code.offset(code_offset);
@@ -327,6 +307,14 @@ impl Vm {
 
         self.push_value(Value::Closure(closure));
         Ok(())
+    }
+
+    fn check_storage_space(&mut self, n_objects: usize) -> Result<()> {
+        if self.storage.free() < n_objects {
+            Err(ErrorKind::AllocationError)
+        } else {
+            Ok(())
+        }
     }
 
     fn collect_garbage(&mut self) {
@@ -984,6 +972,16 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::Int(1), Value::Int(2), Value::Int(3), Value::Int(1), Value::Int(3), Value::Int(3)])
+        assert_eq!(
+            &*vm.value_stack,
+            vec![
+                Value::Int(1),
+                Value::Int(2),
+                Value::Int(3),
+                Value::Int(1),
+                Value::Int(3),
+                Value::Int(3)
+            ]
+        )
     }
 }

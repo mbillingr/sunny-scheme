@@ -112,6 +112,25 @@ impl Value {
             _ => None,
         }
     }
+
+    pub fn car(&self) -> Option<&Value> {
+        self.as_pair().map(|(car, _)| car)
+    }
+
+    pub fn cdr(&self) -> Option<&Value> {
+        self.as_pair().map(|(_, cdr)| cdr)
+    }
+
+    pub fn table_set(&mut self, key: Value, value: Value) -> Option<()> {
+        self.as_mut_table().map(|table| {
+            table.insert(key, value);
+        })
+    }
+
+    pub fn table_get(&self, key: &Value) -> Option<&Value> {
+        self.as_table()
+            .map(|table| table.get(key).unwrap_or(&Value::Void))
+    }
 }
 
 impl Traceable for Value {
