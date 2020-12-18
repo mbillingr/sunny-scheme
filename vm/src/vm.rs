@@ -133,14 +133,9 @@ impl Vm {
                 }
                 Op::Call { n_args } => self.call(extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(extend_arg(a, arg) as i64)),
-                Op::Const(a) => {
-                    let c = self.fetch_constant(extend_arg(a, arg));
-                    self.push_value(c);
-                }
-                Op::GetArg(a) => {
-                    let x = self.fetch_arg(extend_arg(a, arg));
-                    self.push_value(x);
-                }
+                Op::Const(a) => self.push_const(extend_arg(a, arg))?,
+                Op::GetArg(a) => self.push_arg(extend_arg(a, arg))?,
+                Op::GetFree(a) => self.push_free(extend_arg(a, arg))?,
                 Op::Cons => self.cons()?,
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
@@ -155,14 +150,6 @@ impl Vm {
 
     fn fetch_op(&mut self) -> Op {
         self.current_frame.code.fetch()
-    }
-
-    fn fetch_constant(&mut self, index: usize) -> Value {
-        self.current_frame.code.get_constant(index).clone()
-    }
-
-    fn fetch_arg(&mut self, index: usize) -> Value {
-        self.current_frame.args[index].clone()
     }
 
     fn push_value(&mut self, val: Value) {
@@ -182,6 +169,24 @@ impl Vm {
             values.push(self.pop_value()?);
         }
         Ok(values.into_boxed_slice())
+    }
+
+    fn push_const(&mut self, idx: usize) -> Result<()> {
+        let x = self.current_frame.code.get_constant(idx).clone();
+        self.push_value(x);
+        Ok(())
+    }
+
+    fn push_arg(&mut self, idx: usize) -> Result<()> {
+        let x = self.current_frame.args[idx].clone();
+        self.push_value(x);
+        Ok(())
+    }
+
+    fn push_free(&mut self, idx: usize) -> Result<()> {
+        let x = self.current_frame.free_vars[idx].clone();
+        self.push_value(x);
+        Ok(())
     }
 
     fn jump_if_true(&mut self, forward: usize) -> Result<()> {
@@ -614,6 +619,36 @@ mod tests {
                 .op(Op::GetArg(2))
                 .op(Op::GetArg(2))
                 .op(Op::GetArg(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(
+            &*vm.value_stack,
+            vec![
+                Value::Int(12),
+                Value::Int(10),
+                Value::Int(10),
+                Value::Int(11)
+            ]
+        )
+    }
+
+    #[test]
+    fn op_getfree_references_closure_vars() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                // free vars
+                .op(Op::Integer(10))
+                .op(Op::Integer(11))
+                .op(Op::Integer(12))
+                .make_closure("callee", 3)
+                .op(Op::Call { n_args: 0 })
+                .op(Op::Halt)
+                .label("callee")
+                .op(Op::GetFree(0))
+                .op(Op::GetFree(2))
+                .op(Op::GetFree(2))
+                .op(Op::GetFree(1))
                 .op(Op::Halt),
         );
 
