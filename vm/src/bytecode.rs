@@ -22,6 +22,8 @@ pub enum Op {
     Cdr,
 
     Table,
+    TableSet,
+    TableGet,
 
     MakeClosure { n_free: u8 },
 }

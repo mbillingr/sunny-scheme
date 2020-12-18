@@ -140,6 +140,8 @@ impl Vm {
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
                 Op::Table => self.table()?,
+                Op::TableSet => self.table_set()?,
+                Op::TableGet => self.table_get()?,
                 Op::MakeClosure { n_free } => self.make_closure(extend_arg(n_free, arg))?,
             }
             arg = 0;
@@ -251,6 +253,31 @@ impl Vm {
         let table = self.storage.new_table().unwrap();
         self.push_value(table);
         Ok(())
+    }
+
+    fn table_set(&mut self) -> Result<()> {
+        let value = self.pop_value()?;
+        let field = self.pop_value()?;
+        let mut table = self.pop_value()?;
+        if let Some(t) = table.as_mut_table() {
+            t.insert(field, value);
+        } else {
+            return Err(ErrorKind::TypeError);
+        }
+        self.push_value(table);
+        Ok(())
+    }
+
+    fn table_get(&mut self) -> Result<()> {
+        let field = self.pop_value()?;
+        let table = self.pop_value()?;
+        if let Some(t) = table.as_table() {
+            let val = t.get(&field).ok_or(ErrorKind::KeyError)?;
+            self.push_value(val.clone());
+            Ok(())
+        } else {
+            Err(ErrorKind::TypeError)
+        }
     }
 
     fn make_closure(&mut self, n_free: usize) -> Result<()> {
@@ -734,5 +761,89 @@ mod tests {
             .run_code(CodeBuilder::new().op(Op::Table).op(Op::Halt));
 
         assert_eq!(vm.value_stack.last().unwrap(), &hashmap! {});
+    }
+
+    #[test]
+    fn op_table_fails_on_allocation_error() {
+        let (ret, vm) = VmRunner::new()
+            .with_capacity(0)
+            .run_code(CodeBuilder::new().op(Op::Table));
+
+        assert_eq!(ret, Err(ErrorKind::AllocationError));
+        assert!(vm.value_stack.is_empty());
+    }
+
+    #[test]
+    fn op_table_set_pops_three_values_and_return_type_error_if_deepest_is_no_table() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Integer(0))
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::TableSet),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert!(vm.value_stack.is_empty());
+    }
+
+    #[test]
+    fn op_table_set_pops_key_and_value_but_updates_table() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Table)
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::TableSet)
+                .op(Op::Halt),
+        );
+
+        assert_eq!(
+            vm.value_stack.last().unwrap(),
+            &hashmap! {Value::Int(1) => Value::Int(2)}
+        );
+    }
+
+    #[test]
+    fn op_table_get_pops_two_values_and_return_type_error_if_deeper_is_no_table() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Integer(0))
+                .op(Op::Integer(1))
+                .op(Op::TableGet),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert!(vm.value_stack.is_empty());
+    }
+
+    #[test]
+    fn op_table_get_pops_two_values_and_returns_key_error() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Table)
+                .op(Op::Integer(1))
+                .op(Op::TableGet)
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::KeyError));
+        assert!(vm.value_stack.is_empty());
+    }
+
+    #[test]
+    fn op_table_get_pops_key_and_table_and_pushes_value() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Table)
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::TableSet)
+                .op(Op::Integer(1))
+                .op(Op::TableGet)
+                .op(Op::Halt),
+        );
+
+        assert_eq!(&*vm.value_stack, vec![Value::Int(2)])
     }
 }

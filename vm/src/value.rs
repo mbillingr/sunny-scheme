@@ -34,6 +34,16 @@ macro_rules! impl_accessor {
         }
     };
 
+    ($pred:ident, $conv:ident, $conv_mut:ident, $variant:path, ref $output:ty) => {
+        impl_accessor! {$pred, $conv, $variant, ref $output}
+        pub fn $conv_mut(&mut self) -> Option<&mut $output> {
+            match self {
+                $variant(x) => Some(&mut *x),
+                _ => None,
+            }
+        }
+    };
+
     ($pred:ident, $conv:ident, $variant:path, ref $output:ty) => {
         pub fn $pred(&self) -> bool {
             self.$conv().is_some()
@@ -64,8 +74,8 @@ impl Value {
     impl_accessor!(is_nil, Value::Nil);
     impl_accessor!(is_int, as_int, Value::Int, i64);
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
-    impl_accessor!(is_pair, as_pair, Value::Pair, ref (Value, Value));
-    impl_accessor!(is_table, as_table, Value::Table, ref Table);
+    impl_accessor!(is_pair, as_pair, as_mut_pair, Value::Pair, ref (Value, Value));
+    impl_accessor!(is_table, as_table, as_mut_table, Value::Table, ref Table);
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
 
     pub fn get_tag(&self) -> u8 {
