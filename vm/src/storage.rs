@@ -67,8 +67,12 @@ impl ValueStorage {
     }
 
     /// Make sure the storage is at most half full
-    pub fn grow(&mut self) {
-        self.storage.grow();
+    pub fn auto_grow(&mut self) {
+        self.storage.auto_grow();
+    }
+
+    pub fn ensure(&mut self, n: usize) {
+        self.storage.ensure(n);
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {

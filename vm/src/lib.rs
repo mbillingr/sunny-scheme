@@ -17,7 +17,6 @@ pub type RuntimeResult<T> = std::result::Result<T, Error>;
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ErrorKind {
     StackUnderflow,
-    AllocationError,
     NotCallable,
     Halted,
     TypeError,

@@ -44,9 +44,8 @@ impl Traceable for Vm {
 
 impl Vm {
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
-        let empty_value_array = storage
-            .insert(vec![].into_boxed_slice())
-            .map_err(|_| ErrorKind::AllocationError)?;
+        storage.ensure(2);
+        let empty_value_array = storage.insert(vec![].into_boxed_slice()).unwrap();
 
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
@@ -79,7 +78,7 @@ impl Vm {
 
     pub fn eval_closure(&mut self, closure: &Closure) -> RuntimeResult<Value> {
         self.load_closure(closure);
-        self.eval_gc()
+        self.run().map_err(|e| self.add_error_context(e))
     }
 
     fn load_closure(&mut self, closure: &Closure) {
@@ -90,27 +89,14 @@ impl Vm {
         };
     }
 
-    fn eval_gc(&mut self) -> RuntimeResult<Value> {
-        loop {
-            match self.eval_loop() {
-                Ok(ret_val) => return Ok(ret_val),
-                Err(ErrorKind::AllocationError) => {
-                    self.collect_garbage();
-                }
-                Err(e) => {
-                    return Err(Error {
-                        kind: e,
-                        location: self.current_frame.code.offset(-1),
-                    })
-                }
-            };
-
-            // Retry last instruction, which triggered the error
-            self.current_frame.code.step_back()
+    fn add_error_context(&mut self, kind: ErrorKind) -> Error {
+        Error {
+            kind,
+            location: self.current_frame.code.offset(-1),
         }
     }
 
-    fn eval_loop(&mut self) -> Result<Value> {
+    fn run(&mut self) -> Result<Value> {
         let mut arg: usize = 0;
         loop {
             match self.fetch_op() {
@@ -246,7 +232,7 @@ impl Vm {
     }
 
     fn cons(&mut self) -> Result<()> {
-        self.check_storage_space(1)?;
+        self.ensure_storage_space(1)?;
         let cdr = self.pop_value()?;
         let car = self.pop_value()?;
         let pair = self.storage.cons(car, cdr).unwrap();
@@ -269,7 +255,7 @@ impl Vm {
     }
 
     fn table(&mut self) -> Result<()> {
-        self.check_storage_space(1)?;
+        self.ensure_storage_space(1)?;
         let table = self.storage.new_table().unwrap();
         self.push_value(table);
         Ok(())
@@ -294,7 +280,7 @@ impl Vm {
     }
 
     fn make_closure(&mut self, n_free: usize) -> Result<()> {
-        self.check_storage_space(2)?;
+        self.ensure_storage_space(2)?;
 
         let code_offset = self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)? as isize;
         let code = self.current_frame.code.offset(code_offset);
@@ -309,12 +295,12 @@ impl Vm {
         Ok(())
     }
 
-    fn check_storage_space(&mut self, n_objects: usize) -> Result<()> {
+    fn ensure_storage_space(&mut self, n_objects: usize) -> Result<()> {
         if self.storage.free() < n_objects {
-            Err(ErrorKind::AllocationError)
-        } else {
-            Ok(())
+            self.collect_garbage();
+            self.storage.ensure(n_objects);
         }
+        Ok(())
     }
 
     fn collect_garbage(&mut self) {
@@ -366,13 +352,7 @@ mod tests {
 
         fn run_code(self, cb: CodeBuilder) -> (Result<Value>, Vm) {
             let mut vm = self.prepare_vm(cb);
-            let ret = vm.eval_loop();
-            (ret, vm)
-        }
-
-        fn run_code_with_gc(self, cb: CodeBuilder) -> (RuntimeResult<Value>, Vm) {
-            let mut vm = self.prepare_vm(cb);
-            let ret = vm.eval_gc();
+            let ret = vm.run();
             (ret, vm)
         }
 
@@ -403,7 +383,7 @@ mod tests {
     fn default_program_halts_immediately() {
         let storage = ValueStorage::new(1024);
         let mut vm = Vm::new(storage).unwrap();
-        let ret = vm.eval_loop();
+        let ret = vm.run();
         assert_eq!(ret, Err(ErrorKind::Halted));
     }
 
@@ -481,14 +461,13 @@ mod tests {
     }
 
     #[test]
-    fn op_cons_preserves_state_on_allocation_error() {
-        let (ret, vm) = VmRunner::new()
+    fn op_cons_succeeds_even_when_storage_is_full() {
+        let (_, vm) = VmRunner::new()
             .with_capacity(0)
             .with_value_stack(vec![Value::Int(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
-        assert_eq!(ret, Err(ErrorKind::AllocationError));
-        assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Nil]);
+        assert_eq!(vm.value_stack.last().unwrap(), &(Value::Int(0), Value::Nil));
     }
 
     #[test]
@@ -511,18 +490,23 @@ mod tests {
     }
 
     #[test]
-    fn op_make_closure_preserves_state_on_memory_error() {
-        let (ret, vm) = VmRunner::new()
+    fn op_make_closure_succeeds_even_when_storage_is_full() {
+        let (_, mut vm) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::Int(0), Value::Int(0)])
+            .with_value_stack(vec![Value::Int(2), Value::Int(1), Value::Int(0)])
             .run_code(
                 CodeBuilder::new()
                     .op(Op::MakeClosure { n_free: 2 })
                     .op(Op::Halt),
             );
 
-        assert_eq!(ret, Err(ErrorKind::AllocationError));
-        assert_eq!(vm.value_stack, vec![Value::Int(0), Value::Int(0)]);
+        let closure = vm.value_stack.pop().unwrap();
+        let closure = closure.as_closure().unwrap();
+
+        assert!(vm.value_stack.is_empty());
+
+        assert_eq!(&**closure.free_vars, vec![Value::Int(1), Value::Int(2)]);
+        assert_eq!(closure.code.clone().fetch(), Op::Halt);
     }
 
     #[test]
@@ -567,7 +551,7 @@ mod tests {
         vm.value_stack = value_stack;
 
         vm.load_closure(&main);
-        let ret = vm.eval_loop();
+        let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(vm.call_stack.len(), 1);
@@ -797,29 +781,6 @@ mod tests {
     }
 
     #[test]
-    fn op_fail_allocation_in_primitive() {
-        use std::sync::atomic::{AtomicUsize, Ordering};
-
-        static PRIM_CALLED: AtomicUsize = AtomicUsize::new(0);
-        fn fail_alloc(_stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
-            if PRIM_CALLED.fetch_add(1, Ordering::SeqCst) < 2 {
-                Err(ErrorKind::AllocationError)
-            } else {
-                Ok(())
-            }
-        }
-
-        let (_, _) = VmRunner::new().run_code_with_gc(
-            CodeBuilder::new()
-                .constant(Value::Primitive(fail_alloc))
-                .op(Op::Call { n_args: 0 })
-                .op(Op::Halt),
-        );
-
-        assert_eq!(PRIM_CALLED.load(Ordering::SeqCst), 3);
-    }
-
-    #[test]
     fn op_car_returns_value_error_if_no_pair_on_top() {
         let (ret, vm) = VmRunner::new()
             .with_value_stack(vec![Value::Nil])
@@ -877,13 +838,12 @@ mod tests {
     }
 
     #[test]
-    fn op_table_fails_on_allocation_error() {
-        let (ret, vm) = VmRunner::new()
+    fn op_table_succeeds_even_when_storage_is_full() {
+        let (_, vm) = VmRunner::new()
             .with_capacity(0)
-            .run_code(CodeBuilder::new().op(Op::Table));
+            .run_code(CodeBuilder::new().op(Op::Table).op(Op::Halt));
 
-        assert_eq!(ret, Err(ErrorKind::AllocationError));
-        assert!(vm.value_stack.is_empty());
+        assert_eq!(vm.value_stack.last().unwrap(), &hashmap! {});
     }
 
     #[test]

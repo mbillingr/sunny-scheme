@@ -87,13 +87,20 @@ impl Storage {
     }
 
     /// Make sure the storage is at most half full
-    pub fn grow(&mut self) {
-        let n_add = if self.objects.capacity() == 0 {
-            1
-        } else {
-            self.objects.len()
-        };
-        self.objects.reserve(n_add);
+    pub fn auto_grow(&mut self) {
+        self.ensure(self.objects.len());
+    }
+
+    /// Double storage capacity until at least n slots are free
+    pub fn ensure(&mut self, n: usize) {
+        let required_capacity = n + self.used();
+
+        let mut target_cap = self.objects.capacity().max(1);
+        while target_cap < required_capacity {
+            target_cap *= 2;
+        }
+
+        self.objects.reserve(target_cap - self.used());
         debug!("Growing storage to {}", self.objects.capacity());
     }
 
@@ -108,7 +115,7 @@ impl Storage {
 
     pub unsafe fn finish_garbage_collection(&mut self, gc: Tracer) {
         self.sweep(gc);
-        self.grow();
+        self.auto_grow();
     }
 
     unsafe fn sweep(&mut self, gc: impl GcMarker) {
@@ -191,7 +198,7 @@ mod tests {
     #[test]
     fn growing_zero_storage_results_in_empty_storage() {
         let mut storage = Storage::new(0);
-        storage.grow();
+        storage.auto_grow();
         assert!(storage.free() > 0)
     }
 
@@ -200,7 +207,7 @@ mod tests {
         let mut storage = Storage::new(5);
         let free_before = storage.free();
 
-        storage.grow();
+        storage.auto_grow();
 
         assert_eq!(storage.free(), free_before)
     }
@@ -212,7 +219,7 @@ mod tests {
             storage.insert(i).unwrap();
         }
 
-        storage.grow();
+        storage.auto_grow();
 
         assert!(storage.objects.capacity() >= 8 * 2);
     }
@@ -227,7 +234,7 @@ mod tests {
 
         let free_before = storage.free();
 
-        storage.grow();
+        storage.auto_grow();
 
         assert_eq!(storage.free(), free_before)
     }
@@ -243,7 +250,7 @@ mod tests {
         storage.insert("c").unwrap();
         storage.insert("d").unwrap();
 
-        storage.grow();
+        storage.auto_grow();
 
         assert!(storage.objects.capacity() >= 4 * 2);
     }
