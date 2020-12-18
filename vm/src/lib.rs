@@ -21,7 +21,6 @@ pub enum ErrorKind {
     NotCallable,
     Halted,
     TypeError,
-    KeyError,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

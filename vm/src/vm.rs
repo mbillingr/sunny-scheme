@@ -272,8 +272,8 @@ impl Vm {
         let field = self.pop_value()?;
         let table = self.pop_value()?;
         if let Some(t) = table.as_table() {
-            let val = t.get(&field).ok_or(ErrorKind::KeyError)?;
-            self.push_value(val.clone());
+            let val = t.get(&field).cloned().unwrap_or(Value::Void);
+            self.push_value(val);
             Ok(())
         } else {
             Err(ErrorKind::TypeError)
@@ -818,8 +818,8 @@ mod tests {
     }
 
     #[test]
-    fn op_table_get_pops_two_values_and_returns_key_error() {
-        let (ret, vm) = VmRunner::new().run_code(
+    fn op_table_get_pops_two_values_and_pushes_void() {
+        let (_, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
                 .op(Op::Table)
                 .op(Op::Integer(1))
@@ -827,8 +827,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(ret, Err(ErrorKind::KeyError));
-        assert!(vm.value_stack.is_empty());
+        assert_eq!(&*vm.value_stack, vec![Value::Void])
     }
 
     #[test]
