@@ -18,6 +18,8 @@ pub enum Op {
     Const(u8),
 
     Cons,
+    Car,
+    Cdr,
 
     MakeClosure { n_free: u8 },
 }

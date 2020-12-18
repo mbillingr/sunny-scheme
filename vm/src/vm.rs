@@ -137,6 +137,8 @@ impl Vm {
                     self.push_value(c);
                 }
                 Op::Cons => self.cons()?,
+                Op::Car => self.car()?,
+                Op::Cdr => self.cdr()?,
                 Op::MakeClosure { n_free } => self.make_closure(extend_arg(n_free, arg))?,
             }
             arg = 0;
@@ -219,6 +221,26 @@ impl Vm {
         let pair = self.storage.cons(car, cdr).unwrap();
         self.push_value(pair);
         Ok(())
+    }
+
+    fn car(&mut self) -> Result<()> {
+        let pair = self.pop_value()?;
+        if let Some((car, _)) = pair.as_pair() {
+            self.push_value(car.clone());
+            Ok(())
+        } else {
+            Err(ErrorKind::TypeError)
+        }
+    }
+
+    fn cdr(&mut self) -> Result<()> {
+        let pair = self.pop_value()?;
+        if let Some((_, cdr)) = pair.as_pair() {
+            self.push_value(cdr.clone());
+            Ok(())
+        } else {
+            Err(ErrorKind::TypeError)
+        }
     }
 
     fn make_closure(&mut self, n_free: usize) -> Result<()> {
@@ -644,5 +666,55 @@ mod tests {
         );
 
         assert_eq!(PRIM_CALLED.load(Ordering::SeqCst), 3);
+    }
+
+    #[test]
+    fn op_car_returns_value_error_if_no_pair_on_top() {
+        let (ret, vm) = VmRunner::new()
+            .with_value_stack(vec![Value::Nil])
+            .run_code(CodeBuilder::new().op(Op::Car));
+
+        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert!(vm.value_stack.is_empty());
+    }
+
+    #[test]
+    fn op_cdr_returns_value_error_if_no_pair_on_top() {
+        let (ret, vm) = VmRunner::new()
+            .with_value_stack(vec![Value::Nil])
+            .run_code(CodeBuilder::new().op(Op::Cdr));
+
+        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert!(vm.value_stack.is_empty());
+    }
+
+    #[test]
+    fn op_car_returns_first_element_of_pair() {
+        let (ret, vm) = VmRunner::new()
+            .with_value_stack(vec![])
+            .run_code(CodeBuilder::new()
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::Cons)
+                .op(Op::Car)
+                .op(Op::Halt));
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(1)])
+    }
+
+    #[test]
+    fn op_cdr_returns_second_element_of_pair() {
+        let (ret, vm) = VmRunner::new()
+            .with_value_stack(vec![])
+            .run_code(CodeBuilder::new()
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::Cons)
+                .op(Op::Cdr)
+                .op(Op::Halt));
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(2)])
     }
 }
