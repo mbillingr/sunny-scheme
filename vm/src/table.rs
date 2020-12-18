@@ -32,3 +32,9 @@ impl DerefMut for Table {
         &mut self.0
     }
 }
+
+impl PartialEq<HashMap<Value, Value>> for Table {
+    fn eq(&self, rhs: &HashMap<Value, Value>) -> bool {
+        &self.0 == rhs
+    }
+}

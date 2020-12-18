@@ -21,6 +21,8 @@ pub enum Op {
     Car,
     Cdr,
 
+    Table,
+
     MakeClosure { n_free: u8 },
 }
 

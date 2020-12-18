@@ -3,6 +3,7 @@ use crate::mem::{Ref, Traceable, Tracer};
 use crate::storage::ValueStorage;
 use crate::table::Table;
 use crate::Result;
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 pub type Symbol = Box<str>;
@@ -64,6 +65,7 @@ impl Value {
     impl_accessor!(is_int, as_int, Value::Int, i64);
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, Value::Pair, ref (Value, Value));
+    impl_accessor!(is_table, as_table, Value::Table, ref Table);
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
 
     pub fn get_tag(&self) -> u8 {
@@ -155,11 +157,15 @@ impl PartialEq for Value {
     }
 }
 
-impl PartialEq<[Value; 2]> for Value {
-    fn eq(&self, rhs: &[Value; 2]) -> bool {
-        self.as_pair()
-            .map(|lhs| lhs.0 == rhs[0] && lhs.1 == rhs[1])
-            .unwrap_or(false)
+impl PartialEq<(Value, Value)> for Value {
+    fn eq(&self, rhs: &(Value, Value)) -> bool {
+        self.as_pair().map(|lhs| lhs == rhs).unwrap_or(false)
+    }
+}
+
+impl PartialEq<HashMap<Value, Value>> for Value {
+    fn eq(&self, rhs: &HashMap<Value, Value>) -> bool {
+        self.as_table().map(|lhs| lhs == rhs).unwrap_or(false)
     }
 }
 

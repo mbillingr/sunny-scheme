@@ -139,6 +139,7 @@ impl Vm {
                 Op::Cons => self.cons()?,
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
+                Op::Table => self.table()?,
                 Op::MakeClosure { n_free } => self.make_closure(extend_arg(n_free, arg))?,
             }
             arg = 0;
@@ -243,6 +244,15 @@ impl Vm {
         }
     }
 
+    fn table(&mut self) -> Result<()> {
+        if self.storage.free() < 1 {
+            return Err(ErrorKind::AllocationError);
+        }
+        let table = self.storage.new_table().unwrap();
+        self.push_value(table);
+        Ok(())
+    }
+
     fn make_closure(&mut self, n_free: usize) -> Result<()> {
         if self.storage.free() < 2 {
             return Err(ErrorKind::AllocationError);
@@ -279,6 +289,7 @@ fn extend_arg(a: u8, arg: usize) -> usize {
 mod tests {
     use super::*;
     use crate::bytecode::CodeBuilder;
+    use maplit::hashmap;
 
     struct VmRunner {
         storage_capacity: usize,
@@ -420,7 +431,7 @@ mod tests {
             .with_value_stack(vec![Value::Int(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
-        assert_eq!(vm.value_stack.last().unwrap(), &[Value::Int(0), Value::Nil]);
+        assert_eq!(vm.value_stack.last().unwrap(), &(Value::Int(0), Value::Nil));
     }
 
     #[test]
@@ -690,31 +701,38 @@ mod tests {
 
     #[test]
     fn op_car_returns_first_element_of_pair() {
-        let (ret, vm) = VmRunner::new()
-            .with_value_stack(vec![])
-            .run_code(CodeBuilder::new()
+        let (_, vm) = VmRunner::new().with_value_stack(vec![]).run_code(
+            CodeBuilder::new()
                 .op(Op::Integer(1))
                 .op(Op::Integer(2))
                 .op(Op::Cons)
                 .op(Op::Car)
-                .op(Op::Halt));
+                .op(Op::Halt),
+        );
 
-        assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(&*vm.value_stack, vec![Value::Int(1)])
     }
 
     #[test]
     fn op_cdr_returns_second_element_of_pair() {
-        let (ret, vm) = VmRunner::new()
-            .with_value_stack(vec![])
-            .run_code(CodeBuilder::new()
+        let (_, vm) = VmRunner::new().with_value_stack(vec![]).run_code(
+            CodeBuilder::new()
                 .op(Op::Integer(1))
                 .op(Op::Integer(2))
                 .op(Op::Cons)
                 .op(Op::Cdr)
-                .op(Op::Halt));
+                .op(Op::Halt),
+        );
 
-        assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(&*vm.value_stack, vec![Value::Int(2)])
+    }
+
+    #[test]
+    fn op_table_creates_an_empty_table() {
+        let (_, vm) = VmRunner::new()
+            .with_value_stack(vec![])
+            .run_code(CodeBuilder::new().op(Op::Table).op(Op::Halt));
+
+        assert_eq!(vm.value_stack.last().unwrap(), &hashmap! {});
     }
 }

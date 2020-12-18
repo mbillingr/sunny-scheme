@@ -1,5 +1,6 @@
 use crate::closure::Closure;
 use crate::mem::{Ref, Storage, Traceable, Tracer};
+use crate::table::Table;
 use crate::value::Symbol;
 use crate::Value;
 
@@ -43,13 +44,17 @@ impl ValueStorage {
     ) -> Result<Value, (Value, Value)> {
         let pair = (car.into(), cdr.into());
         let obj = self.insert(pair)?;
-
         Ok(Value::Pair(obj))
+    }
+
+    pub fn new_table(&mut self) -> Result<Value, ()> {
+        let table = Table::new();
+        let obj = self.insert(table).map_err(|_| ())?;
+        Ok(Value::Table(obj))
     }
 
     pub fn store_closure(&mut self, cls: Closure) -> Result<Value, Closure> {
         let obj = self.insert(cls)?;
-
         Ok(Value::Closure(obj))
     }
 
