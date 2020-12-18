@@ -17,6 +17,7 @@ pub enum Op {
 
     Integer(u8),
     Const(u8),
+    GetArg(u8),
 
     Cons,
     Car,

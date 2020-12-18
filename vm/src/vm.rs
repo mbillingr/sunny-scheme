@@ -137,6 +137,10 @@ impl Vm {
                     let c = self.fetch_constant(extend_arg(a, arg));
                     self.push_value(c);
                 }
+                Op::GetArg(a) => {
+                    let x = self.fetch_arg(extend_arg(a, arg));
+                    self.push_value(x);
+                }
                 Op::Cons => self.cons()?,
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
@@ -155,6 +159,10 @@ impl Vm {
 
     fn fetch_constant(&mut self, index: usize) -> Value {
         self.current_frame.code.get_constant(index).clone()
+    }
+
+    fn fetch_arg(&mut self, index: usize) -> Value {
+        self.current_frame.args[index].clone()
     }
 
     fn push_value(&mut self, val: Value) {
@@ -587,6 +595,36 @@ mod tests {
         assert_eq!(
             &*vm.current_frame.args,
             vec![Value::Int(12), Value::Int(11), Value::Int(10)]
+        )
+    }
+
+    #[test]
+    fn op_getarg_references_args() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                // args for call
+                .op(Op::Integer(10))
+                .op(Op::Integer(11))
+                .op(Op::Integer(12))
+                .make_closure("callee", 0)
+                .op(Op::Call { n_args: 3 })
+                .op(Op::Halt)
+                .label("callee")
+                .op(Op::GetArg(0))
+                .op(Op::GetArg(2))
+                .op(Op::GetArg(2))
+                .op(Op::GetArg(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(
+            &*vm.value_stack,
+            vec![
+                Value::Int(12),
+                Value::Int(10),
+                Value::Int(10),
+                Value::Int(11)
+            ]
         )
     }
 
