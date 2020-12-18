@@ -136,6 +136,7 @@ impl Vm {
                 Op::Const(a) => self.push_const(extend_arg(a, arg))?,
                 Op::GetArg(a) => self.push_arg(extend_arg(a, arg))?,
                 Op::GetFree(a) => self.push_free(extend_arg(a, arg))?,
+                Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
                 Op::Cons => self.cons()?,
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
@@ -185,6 +186,12 @@ impl Vm {
 
     fn push_free(&mut self, idx: usize) -> Result<()> {
         let x = self.current_frame.free_vars[idx].clone();
+        self.push_value(x);
+        Ok(())
+    }
+
+    fn push_from_stack(&mut self, idx: usize) -> Result<()> {
+        let x = self.value_stack[idx].clone();
         self.push_value(x);
         Ok(())
     }
@@ -962,5 +969,21 @@ mod tests {
         );
 
         assert_eq!(&*vm.value_stack, vec![Value::Int(2)])
+    }
+
+    #[test]
+    fn op_getstack_references_stack_from_bottom() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Integer(1))
+                .op(Op::Integer(2))
+                .op(Op::Integer(3))
+                .op(Op::GetStack(0))
+                .op(Op::GetStack(2))
+                .op(Op::GetStack(4))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(&*vm.value_stack, vec![Value::Int(1), Value::Int(2), Value::Int(3), Value::Int(1), Value::Int(3), Value::Int(3)])
     }
 }

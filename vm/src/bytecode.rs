@@ -19,6 +19,7 @@ pub enum Op {
     Const(u8),
     GetArg(u8),
     GetFree(u8),
+    GetStack(u8),
 
     Cons,
     Car,
