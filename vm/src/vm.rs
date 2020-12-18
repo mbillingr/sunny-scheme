@@ -122,6 +122,7 @@ impl Vm {
                 Op::Halt => return Err(ErrorKind::Halted),
                 Op::Jump { forward } => self.jump(extend_arg(forward, arg)),
                 Op::JumpIfTrue { forward } => self.jump_if_true(extend_arg(forward, arg))?,
+                Op::JumpIfVoid { forward } => self.jump_if_void(extend_arg(forward, arg))?,
                 Op::Return => {
                     if let Some(frame) = self.call_stack.pop() {
                         self.current_frame = frame;
@@ -179,6 +180,16 @@ impl Vm {
         let condition = self.pop_value()?;
         if condition.is_like_true() {
             self.jump(forward);
+        }
+        Ok(())
+    }
+
+    fn jump_if_void(&mut self, forward: usize) -> Result<()> {
+        let condition = self.pop_value()?;
+        if condition.is_void() {
+            self.jump(forward);
+        } else {
+            self.push_value(condition)
         }
         Ok(())
     }
@@ -631,7 +642,7 @@ mod tests {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
                 .constant(Value::False)
-                .branch_to("then")
+                .branch_if("then")
                 .label("else")
                 .op(Op::Integer(0))
                 .op(Op::Halt)
@@ -649,11 +660,45 @@ mod tests {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
                 .constant(Value::True)
-                .branch_to("then")
+                .branch_if("then")
                 .label("else")
                 .op(Op::Integer(0))
                 .op(Op::Halt)
                 .label("then")
+                .op(Op::Integer(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(1)])
+    }
+
+    #[test]
+    fn op_jump_void_falls_through_and_leaves_condition_on_stack() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .constant(Value::Int(2))
+                .branch_void("is void")
+                .op(Op::Integer(0))
+                .op(Op::Halt)
+                .label("is void")
+                .op(Op::Integer(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(&*vm.value_stack, vec![Value::Int(2), Value::Int(0)])
+    }
+
+    #[test]
+    fn op_jump_void_take_true_branch() {
+        let (ret, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .constant(Value::Void)
+                .branch_void("is void")
+                .op(Op::Integer(0))
+                .op(Op::Halt)
+                .label("is void")
                 .op(Op::Integer(1))
                 .op(Op::Halt),
         );
