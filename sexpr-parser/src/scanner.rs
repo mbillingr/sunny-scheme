@@ -1,4 +1,4 @@
-use crate::Int;
+use crate::{Context, Int};
 use crate::{Error, Result};
 pub use std::iter::Peekable;
 
@@ -7,6 +7,7 @@ pub enum Token<'a> {
     Eof(usize),
     Int(usize, Int),
     Symbol(usize, &'a str),
+    String(usize, &'a str),
 }
 
 impl<'a> Token<'a> {
@@ -20,6 +21,10 @@ impl<'a> Token<'a> {
 
     pub fn symbol(ofs: usize, s: &'a str) -> Self {
         Token::Symbol(ofs, s)
+    }
+
+    pub fn string(ofs: usize, s: &'a str) -> Self {
+        Token::String(ofs, s)
     }
 }
 
@@ -39,6 +44,7 @@ impl<'a> Scanner<'a> {
     pub fn next_token(&mut self) -> Result<Token<'a>> {
         let token = match self.peek() {
             None => Token::eof(self.current_pos),
+            Some(b'"') => self.scan_string()?,
             Some(_) => self.scan_word()?,
         };
         self.skip_whitespace();
@@ -52,12 +58,29 @@ impl<'a> Scanner<'a> {
             self.advance();
         }
 
-        let text = std::str::from_utf8(&self.input[start..self.current_pos]).map_err(|_| Error::Utf8Error)?;
+        let text = std::str::from_utf8(&self.input[start..self.current_pos])
+            .map_err(|_| Context::offset(start, Error::Utf8Error))?;
 
-        text
-            .parse()
+        text.parse()
             .map(|i| Token::int(start, i))
             .or_else(|_| Ok(Token::symbol(start, text)))
+    }
+
+    pub fn scan_string(&mut self) -> Result<Token<'a>> {
+        let start = self.current_pos;
+        self.expect("\"")?;
+
+        while !self.peek_string_delimiter() {
+            self.advance();
+        }
+
+        self.expect("\"")
+            .map_err(|_| Context::offset(start, Error::MissingDelimiter))?;
+
+        let text = std::str::from_utf8(&self.input[start + 1..self.current_pos - 1])
+            .map_err(|_| Context::offset(start + 1, Error::Utf8Error))?;
+
+        Ok(Token::string(start, text))
     }
 
     fn skip_whitespace(&mut self) {
@@ -75,6 +98,25 @@ impl<'a> Scanner<'a> {
             None | Some(b'(') | Some(b')') => true,
             Some(ch) => ch.is_ascii_whitespace(),
         }
+    }
+
+    fn peek_string_delimiter(&mut self) -> bool {
+        match self.peek() {
+            None | Some(b'"') => true,
+            _ => false,
+        }
+    }
+
+    fn expect(&mut self, literal: &str) -> Result<()> {
+        if !self.input[self.current_pos..].starts_with(literal.as_bytes()) {
+            return Err(Context::offset(
+                self.current_pos,
+                Error::Expected(literal.to_owned()),
+            ));
+        }
+
+        self.current_pos += literal.len();
+        Ok(())
     }
 
     fn advance(&mut self) -> u8 {
@@ -108,5 +150,20 @@ mod tests {
     fn scan_symbol() {
         let mut scanner = Scanner::new("foo-bar");
         assert_eq!(scanner.next_token(), Ok(Token::symbol(0, "foo-bar")));
+    }
+
+    #[test]
+    fn scan_string() {
+        let mut scanner = Scanner::new("\"foo-bar\"");
+        assert_eq!(scanner.next_token(), Ok(Token::string(0, "foo-bar")));
+    }
+
+    #[test]
+    fn scan_undelimited_string() {
+        let mut scanner = Scanner::new("\"foo-bar");
+        assert_eq!(
+            scanner.next_token(),
+            Err(Context::offset(0, Error::MissingDelimiter))
+        );
     }
 }

@@ -6,6 +6,7 @@ use std::rc::Rc;
 pub enum Sexpr {
     Integer(Int),
     Symbol(Box<str>),
+    String(Box<str>),
     Pair((Rc<Context<Sexpr>>, Rc<Context<Sexpr>>)),
 }
 
@@ -16,6 +17,10 @@ impl Sexpr {
 
     pub fn symbol(name: impl Into<Box<str>>) -> Self {
         Sexpr::Symbol(name.into())
+    }
+
+    pub fn string(name: impl Into<Box<str>>) -> Self {
+        Sexpr::String(name.into())
     }
 }
 

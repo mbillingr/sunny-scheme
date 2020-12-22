@@ -14,6 +14,7 @@ pub fn parse(mut scanner: Scanner) -> Result<Context<Sexpr>> {
         Token::Eof(pos) => Err(Context::offset(pos, Error::UnexpectedEof)),
         Token::Int(pos, i) => Ok(Context::offset(pos, Sexpr::int(i))),
         Token::Symbol(pos, s) => Ok(Context::offset(pos, Sexpr::symbol(s))),
+        Token::String(pos, s) => Ok(Context::offset(pos, Sexpr::string(s))),
     }
 }
 

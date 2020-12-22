@@ -14,6 +14,8 @@ pub enum Error {
     UnexpectedEof,
     InvalidNumber,
     Utf8Error,
+    MissingDelimiter,
+    Expected(String),
 }
 
 #[cfg(test)]
@@ -30,5 +32,11 @@ mod acceptance_tests {
     fn can_parse_symbol() {
         let sexpr = parse_str("foo");
         assert_eq!(sexpr.unwrap(), Sexpr::symbol("foo"));
+    }
+
+    #[test]
+    fn can_parse_string() {
+        let sexpr = parse_str("\"foo\"");
+        assert_eq!(sexpr.unwrap(), Sexpr::string("foo"));
     }
 }
