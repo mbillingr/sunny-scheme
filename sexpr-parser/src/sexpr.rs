@@ -1,4 +1,4 @@
-use crate::Int;
+use crate::{CxR, Int};
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -90,12 +90,14 @@ impl<T> Context<T> {
     }
 }
 
-impl Context<Sexpr> {
-    pub fn car(&self) -> Option<&Self> {
+impl CxR for Context<Sexpr> {
+    type Result = Self;
+
+    fn car(&self) -> Option<&Self> {
         self.get_value().car()
     }
 
-    pub fn cdr(&self) -> Option<&Self> {
+    fn cdr(&self) -> Option<&Self> {
         self.get_value().cdr()
     }
 }
