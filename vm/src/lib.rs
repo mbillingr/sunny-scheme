@@ -1,4 +1,5 @@
 pub mod bytecode;
+pub mod bytecode_loader;
 mod closure;
 mod storage;
 mod table;
