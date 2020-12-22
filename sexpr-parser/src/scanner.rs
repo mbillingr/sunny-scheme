@@ -8,6 +8,8 @@ pub enum Token<'a> {
     Int(usize, Int),
     Symbol(usize, &'a str),
     String(usize, &'a str),
+    LParen(usize),
+    RParen(usize),
 }
 
 impl<'a> Token<'a> {
@@ -25,6 +27,14 @@ impl<'a> Token<'a> {
 
     pub fn string(ofs: usize, s: &'a str) -> Self {
         Token::String(ofs, s)
+    }
+
+    pub fn lparen(ofs: usize) -> Self {
+        Token::LParen(ofs)
+    }
+
+    pub fn rparen(ofs: usize) -> Self {
+        Token::RParen(ofs)
     }
 }
 
@@ -44,11 +54,19 @@ impl<'a> Scanner<'a> {
     pub fn next_token(&mut self) -> Result<Token<'a>> {
         let token = match self.peek() {
             None => Token::eof(self.current_pos),
+            Some(b'(') => self.scan_char(Token::lparen),
+            Some(b')') => self.scan_char(Token::rparen),
             Some(b'"') => self.scan_string()?,
             Some(_) => self.scan_word()?,
         };
         self.skip_whitespace();
         Ok(token)
+    }
+
+    pub fn scan_char(&mut self, token_maker: fn(usize) -> Token<'a>) -> Token<'a> {
+        let token = token_maker(self.current_pos);
+        self.advance();
+        token
     }
 
     pub fn scan_word(&mut self) -> Result<Token<'a>> {
@@ -165,5 +183,12 @@ mod tests {
             scanner.next_token(),
             Err(Context::offset(0, Error::MissingDelimiter))
         );
+    }
+
+    #[test]
+    fn scan_empty_list() {
+        let mut scanner = Scanner::new("()");
+        assert_eq!(scanner.next_token(), Ok(Token::lparen(0)));
+        assert_eq!(scanner.next_token(), Ok(Token::rparen(1)));
     }
 }

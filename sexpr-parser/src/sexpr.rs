@@ -4,13 +4,17 @@ use std::rc::Rc;
 
 #[derive(Debug, PartialEq)]
 pub enum Sexpr {
+    Nil,
     Integer(Int),
     Symbol(Box<str>),
     String(Box<str>),
-    Pair((Rc<Context<Sexpr>>, Rc<Context<Sexpr>>)),
+    Pair(Rc<(Context<Sexpr>, Context<Sexpr>)>),
 }
 
 impl Sexpr {
+    pub fn nil() -> Self {
+        Sexpr::Nil
+    }
     pub fn int(i: Int) -> Self {
         Sexpr::Integer(i)
     }
@@ -21,6 +25,29 @@ impl Sexpr {
 
     pub fn string(name: impl Into<Box<str>>) -> Self {
         Sexpr::String(name.into())
+    }
+
+    pub fn cons(car: impl Into<Context<Sexpr>>, cdr: impl Into<Context<Sexpr>>) -> Self {
+        Sexpr::Pair(Rc::new((car.into(), cdr.into())))
+    }
+
+    pub fn list(items: impl DoubleEndedIterator<Item = Context<Sexpr>>) -> Self {
+        let l = items.rfold(Self::nil(), |acc, x| Self::cons(x, acc));
+        l
+    }
+
+    pub fn car(&self) -> Option<&Context<Self>> {
+        match self {
+            Sexpr::Pair(p) => Some(&p.0),
+            _ => None,
+        }
+    }
+
+    pub fn cdr(&self) -> Option<&Context<Self>> {
+        match self {
+            Sexpr::Pair(p) => Some(&p.1),
+            _ => None,
+        }
     }
 }
 
@@ -60,6 +87,16 @@ impl<T> Context<T> {
 
     pub fn offset(ofs: usize, inner: impl Into<Context<T>>) -> Self {
         Context::Offset(ofs, Box::new(inner.into()))
+    }
+}
+
+impl Context<Sexpr> {
+    pub fn car(&self) -> Option<&Self> {
+        self.get_value().car()
+    }
+
+    pub fn cdr(&self) -> Option<&Self> {
+        self.get_value().cdr()
     }
 }
 
