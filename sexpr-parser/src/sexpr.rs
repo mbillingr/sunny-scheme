@@ -5,12 +5,16 @@ use std::rc::Rc;
 #[derive(Debug, PartialEq)]
 pub enum Sexpr {
     Integer(Int),
+    Symbol(Box<str>),
     Pair((Rc<Context<Sexpr>>, Rc<Context<Sexpr>>)),
 }
 
 impl Sexpr {
     pub fn int(i: Int) -> Self {
         Sexpr::Integer(i)
+    }
+    pub fn symbol(name: impl Into<Box<str>>) -> Self {
+        Sexpr::Symbol(name.into())
     }
 }
 

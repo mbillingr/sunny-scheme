@@ -13,6 +13,7 @@ pub fn parse<T: Iterator<Item = u8>>(mut scanner: Scanner<T>) -> Result<Context<
     match token {
         Token::Eof(pos) => Err(Context::offset(pos, Error::UnexpectedEof)),
         Token::Int(pos, i) => Ok(Context::offset(pos, Sexpr::int(i))),
+        Token::Symbol(pos, s) => Ok(Context::offset(pos, Sexpr::symbol(s))),
     }
 }
 

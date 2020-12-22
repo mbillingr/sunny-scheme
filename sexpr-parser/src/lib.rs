@@ -13,6 +13,7 @@ pub type Result<T> = std::result::Result<T, Context<Error>>;
 pub enum Error {
     UnexpectedEof,
     InvalidNumber,
+    Utf8Error,
 }
 
 #[cfg(test)]
@@ -23,5 +24,11 @@ mod acceptance_tests {
     fn can_parse_integer() {
         let sexpr = parse_str("0");
         assert_eq!(sexpr.unwrap(), Sexpr::int(0));
+    }
+
+    #[test]
+    fn can_parse_symbol() {
+        let sexpr = parse_str("foo");
+        assert_eq!(sexpr.unwrap(), Sexpr::symbol("foo"));
     }
 }

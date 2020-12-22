@@ -1,4 +1,4 @@
-use crate::{Context, Int};
+use crate::Int;
 use crate::{Error, Result};
 pub use std::iter::Peekable;
 use std::marker::PhantomData;
@@ -7,14 +7,20 @@ use std::marker::PhantomData;
 pub enum Token {
     Eof(usize),
     Int(usize, Int),
+    Symbol(usize, Box<str>),
 }
 
 impl Token {
     pub fn eof(ofs: usize) -> Self {
         Token::Eof(ofs)
     }
+
     pub fn int(ofs: usize, i: Int) -> Self {
         Token::Int(ofs, i)
+    }
+
+    pub fn symbol(ofs: usize, s: impl Into<Box<str>>) -> Self {
+        Token::Symbol(ofs, s.into())
     }
 }
 
@@ -36,14 +42,13 @@ impl<T: Iterator<Item = u8>> Scanner<'_, T> {
     pub fn next_token(&mut self) -> Result<Token> {
         let token = match self.input.peek() {
             None => Token::eof(self.current_pos),
-            Some(ch) if ch.is_ascii_digit() => self.scan_number()?,
-            _ => unimplemented!(),
+            Some(_) => self.scan_word()?,
         };
         self.skip_whitespace();
         Ok(token)
     }
 
-    pub fn scan_number(&mut self) -> Result<Token> {
+    pub fn scan_word(&mut self) -> Result<Token> {
         let start = self.current_pos;
 
         let mut text = vec![];
@@ -51,11 +56,12 @@ impl<T: Iterator<Item = u8>> Scanner<'_, T> {
             text.push(self.advance());
         }
 
-        String::from_utf8(text)
-            .ok()
-            .and_then(|text| text.parse().ok())
+        let text_utf8 = String::from_utf8(text).map_err(|_| Error::Utf8Error)?;
+
+        text_utf8
+            .parse()
             .map(|i| Token::int(start, i))
-            .ok_or(Context::offset(self.current_pos, Error::InvalidNumber))
+            .or_else(|_| Ok(Token::symbol(start, text_utf8)))
     }
 
     fn skip_whitespace(&mut self) {
@@ -98,14 +104,14 @@ mod tests {
     }
 
     #[test]
-    fn scan_single_digit() {
-        let mut scanner = Scanner::from_str("1");
-        assert_eq!(scanner.next_token(), Ok(Token::int(0, 1)));
-    }
-
-    #[test]
     fn scan_multiple_digits() {
         let mut scanner = Scanner::from_str("123");
         assert_eq!(scanner.next_token(), Ok(Token::int(0, 123)));
+    }
+
+    #[test]
+    fn scan_symbol() {
+        let mut scanner = Scanner::from_str("foo-bar");
+        assert_eq!(scanner.next_token(), Ok(Token::symbol(0, "foo-bar")));
     }
 }
