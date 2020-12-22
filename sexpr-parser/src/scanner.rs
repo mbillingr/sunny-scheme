@@ -1,16 +1,15 @@
 use crate::Int;
 use crate::{Error, Result};
 pub use std::iter::Peekable;
-use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]
-pub enum Token {
+pub enum Token<'a> {
     Eof(usize),
     Int(usize, Int),
-    Symbol(usize, Box<str>),
+    Symbol(usize, &'a str),
 }
 
-impl Token {
+impl<'a> Token<'a> {
     pub fn eof(ofs: usize) -> Self {
         Token::Eof(ofs)
     }
@@ -19,28 +18,26 @@ impl Token {
         Token::Int(ofs, i)
     }
 
-    pub fn symbol(ofs: usize, s: impl Into<Box<str>>) -> Self {
-        Token::Symbol(ofs, s.into())
+    pub fn symbol(ofs: usize, s: &'a str) -> Self {
+        Token::Symbol(ofs, s)
     }
 }
 
-pub struct Scanner<'a, T: Iterator<Item = u8>> {
-    _p: std::marker::PhantomData<&'a ()>,
-    input: Peekable<T>,
+pub struct Scanner<'a> {
+    input: &'a [u8],
     current_pos: usize,
 }
 
-impl<T: Iterator<Item = u8>> Scanner<'_, T> {
-    pub fn new(input: T) -> Self {
+impl<'a> Scanner<'a> {
+    pub fn new(input: &'a str) -> Self {
         Scanner {
-            _p: PhantomData,
-            input: input.peekable(),
+            input: input.as_bytes(),
             current_pos: 0,
         }
     }
 
-    pub fn next_token(&mut self) -> Result<Token> {
-        let token = match self.input.peek() {
+    pub fn next_token(&mut self) -> Result<Token<'a>> {
+        let token = match self.peek() {
             None => Token::eof(self.current_pos),
             Some(_) => self.scan_word()?,
         };
@@ -48,24 +45,23 @@ impl<T: Iterator<Item = u8>> Scanner<'_, T> {
         Ok(token)
     }
 
-    pub fn scan_word(&mut self) -> Result<Token> {
+    pub fn scan_word(&mut self) -> Result<Token<'a>> {
         let start = self.current_pos;
 
-        let mut text = vec![];
         while !self.peek_delimiter() {
-            text.push(self.advance());
+            self.advance();
         }
 
-        let text_utf8 = String::from_utf8(text).map_err(|_| Error::Utf8Error)?;
+        let text = std::str::from_utf8(&self.input[start..self.current_pos]).map_err(|_| Error::Utf8Error)?;
 
-        text_utf8
+        text
             .parse()
             .map(|i| Token::int(start, i))
-            .or_else(|_| Ok(Token::symbol(start, text_utf8)))
+            .or_else(|_| Ok(Token::symbol(start, text)))
     }
 
     fn skip_whitespace(&mut self) {
-        while let Some(ch) = self.input.peek() {
+        while let Some(ch) = self.peek() {
             if ch.is_ascii_whitespace() {
                 self.advance();
             } else {
@@ -75,21 +71,20 @@ impl<T: Iterator<Item = u8>> Scanner<'_, T> {
     }
 
     fn peek_delimiter(&mut self) -> bool {
-        match self.input.peek() {
+        match self.peek() {
             None | Some(b'(') | Some(b')') => true,
             Some(ch) => ch.is_ascii_whitespace(),
         }
     }
 
     fn advance(&mut self) -> u8 {
+        let ch = self.input[self.current_pos];
         self.current_pos += 1;
-        self.input.next().unwrap()
+        ch
     }
-}
 
-impl<'a> Scanner<'a, std::str::Bytes<'a>> {
-    pub fn from_str(s: &'a str) -> Self {
-        Scanner::new(s.bytes())
+    fn peek(&self) -> Option<u8> {
+        self.input.get(self.current_pos).copied()
     }
 }
 
@@ -99,19 +94,19 @@ mod tests {
 
     #[test]
     fn scan_empty_input_returns_eof() {
-        let mut scanner = Scanner::from_str("");
+        let mut scanner = Scanner::new("");
         assert_eq!(scanner.next_token(), Ok(Token::eof(0)));
     }
 
     #[test]
     fn scan_multiple_digits() {
-        let mut scanner = Scanner::from_str("123");
+        let mut scanner = Scanner::new("123");
         assert_eq!(scanner.next_token(), Ok(Token::int(0, 123)));
     }
 
     #[test]
     fn scan_symbol() {
-        let mut scanner = Scanner::from_str("foo-bar");
+        let mut scanner = Scanner::new("foo-bar");
         assert_eq!(scanner.next_token(), Ok(Token::symbol(0, "foo-bar")));
     }
 }

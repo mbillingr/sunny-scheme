@@ -13,6 +13,7 @@ impl Sexpr {
     pub fn int(i: Int) -> Self {
         Sexpr::Integer(i)
     }
+
     pub fn symbol(name: impl Into<Box<str>>) -> Self {
         Sexpr::Symbol(name.into())
     }

@@ -3,11 +3,11 @@ use crate::{parser, Context, Sexpr};
 use crate::{Error, Result};
 
 pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
-    let scanner = Scanner::from_str(s);
+    let scanner = Scanner::new(s);
     parser::parse(scanner).map(|x| Context::string(s, x))
 }
 
-pub fn parse<T: Iterator<Item = u8>>(mut scanner: Scanner<T>) -> Result<Context<Sexpr>> {
+pub fn parse(mut scanner: Scanner) -> Result<Context<Sexpr>> {
     let token = scanner.next_token()?;
 
     match token {
