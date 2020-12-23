@@ -7,6 +7,15 @@ pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
     parser::parse(&mut scanner).map(|x| Context::string(s, x))
 }
 
+pub fn parse_str_sequence(s: &str) -> Result<Vec<Context<Sexpr>>> {
+    let mut scanner = Scanner::new(s);
+    let mut sequence = vec![];
+    while scanner.peek().is_some() {
+        sequence.push(parser::parse(&mut scanner).map(|x| Context::string(s, x))?)
+    }
+    Ok(sequence)
+}
+
 pub fn parse(scanner: &mut Scanner) -> Result<Context<Sexpr>> {
     let token = scanner.next_token()?;
     parse_token(token, scanner)

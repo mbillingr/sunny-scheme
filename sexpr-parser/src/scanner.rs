@@ -145,7 +145,7 @@ impl<'a> Scanner<'a> {
         ch
     }
 
-    fn peek(&self) -> Option<u8> {
+    pub fn peek(&self) -> Option<u8> {
         self.input.get(self.current_pos).copied()
     }
 }

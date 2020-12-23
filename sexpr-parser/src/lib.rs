@@ -2,7 +2,7 @@ mod parser;
 mod scanner;
 mod sexpr;
 
-pub use parser::parse_str;
+pub use parser::{parse_str, parse_str_sequence};
 pub use sexpr::{Context, Sexpr};
 
 type Int = i64;
@@ -140,6 +140,7 @@ pub trait CxR {
 
 #[cfg(test)]
 mod acceptance_tests {
+    use crate::parser::parse_str_sequence;
     use crate::*;
 
     #[test]
@@ -169,5 +170,13 @@ mod acceptance_tests {
         assert_eq!(sexpr.cddadr().unwrap(), &Sexpr::nil());
         assert_eq!(sexpr.caddr().unwrap(), &Sexpr::int(4));
         assert_eq!(sexpr.cdddr().unwrap(), &Sexpr::nil());
+    }
+
+    #[test]
+    fn can_parse_sequence() {
+        let sequence = parse_str_sequence("1 \"foo\" 2").unwrap();
+        assert_eq!(sequence[0], Sexpr::int(1));
+        assert_eq!(sequence[1], Sexpr::string("foo"));
+        assert_eq!(sequence[2], Sexpr::int(2));
     }
 }
