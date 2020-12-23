@@ -45,10 +45,12 @@ pub struct Scanner<'a> {
 
 impl<'a> Scanner<'a> {
     pub fn new(input: &'a str) -> Self {
-        Scanner {
+        let mut scanner = Scanner {
             input: input.as_bytes(),
             current_pos: 0,
-        }
+        };
+        scanner.skip_whitespace();
+        scanner
     }
 
     pub fn next_token(&mut self) -> Result<Token<'a>> {
@@ -156,6 +158,12 @@ mod tests {
     fn scan_empty_input_returns_eof() {
         let mut scanner = Scanner::new("");
         assert_eq!(scanner.next_token(), Ok(Token::eof(0)));
+    }
+
+    #[test]
+    fn scan_only_whitespace_returns_eof() {
+        let mut scanner = Scanner::new("   ");
+        assert_eq!(scanner.next_token(), Ok(Token::eof(3)));
     }
 
     #[test]

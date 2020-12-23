@@ -51,6 +51,18 @@ impl Sexpr {
     }
 }
 
+impl std::fmt::Display for Sexpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Sexpr::Nil => write!(f, "()"),
+            Sexpr::Integer(i) => write!(f, "{}", i),
+            Sexpr::Symbol(s) => write!(f, "{}", s),
+            Sexpr::String(s) => write!(f, "{:?}", s),
+            Sexpr::Pair(p) => write!(f, "({} . {})", p.0, p.1),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Context<T> {
     None(T),
@@ -117,5 +129,12 @@ impl From<Context<Sexpr>> for Sexpr {
 impl PartialEq<Sexpr> for Context<Sexpr> {
     fn eq(&self, other: &Sexpr) -> bool {
         self.get_value() == other
+    }
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for Context<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        //self.get_value().fmt(f)
+        write!(f, "{}", self.get_value())
     }
 }

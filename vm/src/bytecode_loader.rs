@@ -1,5 +1,6 @@
 use crate::bytecode::CodeSegment;
 use crate::storage::ValueStorage;
+use sunny_sexpr_parser::parse_str;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -12,7 +13,9 @@ pub struct Error {
 #[derive(Debug)]
 enum ErrorKind {}
 
-pub fn load_str(_src: &str, _storage: &mut ValueStorage) -> Result<CodeSegment> {
+pub fn load_str(src: &str, _storage: &mut ValueStorage) -> Result<CodeSegment> {
+    let sexpr = parse_str(src).unwrap();
+    println!("s: {}", sexpr);
     unimplemented!()
 }
 
