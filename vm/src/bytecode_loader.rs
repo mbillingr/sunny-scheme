@@ -15,8 +15,12 @@ enum ErrorKind {}
 
 pub fn load_str(src: &str, _storage: &mut ValueStorage) -> Result<CodeSegment> {
     let seq = parse_str_sequence(src).unwrap();
-    for sexpr in seq {
+    for sexpr in &seq {
         println!("s: {}", sexpr);
+    }
+
+    for x in seq[0].get_value().iter() {
+        println!("{:?}", x);
     }
     unimplemented!()
 }

@@ -1,5 +1,6 @@
 use crate::{CxR, Int};
 use std::fmt::Debug;
+use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Debug, PartialEq)]
@@ -36,18 +37,17 @@ impl Sexpr {
         l
     }
 
-    pub fn car(&self) -> Option<&Context<Self>> {
-        match self {
-            Sexpr::Pair(p) => Some(&p.0),
-            _ => None,
-        }
-    }
-
-    pub fn cdr(&self) -> Option<&Context<Self>> {
-        match self {
-            Sexpr::Pair(p) => Some(&p.1),
-            _ => None,
-        }
+    pub fn iter(&self) -> impl Iterator<Item = &Self> {
+        let mut cursor = self;
+        (0..)
+            .map(move |_| match cursor {
+                Sexpr::Pair(pair) => {
+                    cursor = pair.1.get_value();
+                    pair.0.get_value()
+                }
+                _ => std::mem::replace(&mut cursor, &Sexpr::Nil),
+            })
+            .take_while(|x| x != &&Sexpr::Nil)
     }
 }
 
@@ -59,6 +59,24 @@ impl std::fmt::Display for Sexpr {
             Sexpr::Symbol(s) => write!(f, "{}", s),
             Sexpr::String(s) => write!(f, "{:?}", s),
             Sexpr::Pair(p) => write!(f, "({} . {})", p.0, p.1),
+        }
+    }
+}
+
+impl CxR for Sexpr {
+    type Result = Context<Self>;
+
+    fn car(&self) -> Option<&Context<Self>> {
+        match self {
+            Sexpr::Pair(p) => Some(&p.0),
+            _ => None,
+        }
+    }
+
+    fn cdr(&self) -> Option<&Context<Self>> {
+        match self {
+            Sexpr::Pair(p) => Some(&p.1),
+            _ => None,
         }
     }
 }
@@ -99,6 +117,28 @@ impl<T> Context<T> {
 
     pub fn offset(ofs: usize, inner: impl Into<Context<T>>) -> Self {
         Context::Offset(ofs, Box::new(inner.into()))
+    }
+}
+
+impl Context<Sexpr> {
+    pub fn iter(&self) -> impl Iterator<Item = &Context<Sexpr>> {
+        let mut cursor = self;
+        (0..)
+            .map(move |_| match cursor.get_value() {
+                Sexpr::Pair(pair) => {
+                    cursor = &pair.1;
+                    &pair.0
+                }
+                _ => std::mem::replace(&mut cursor, &Context::None(Sexpr::Nil)),
+            })
+            .take_while(|x| x != &&Sexpr::Nil)
+    }
+}
+
+impl<T> Deref for Context<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        self.get_value()
     }
 }
 
