@@ -183,13 +183,13 @@ impl From<&[u8]> for Regex {
 }
 
 pub struct PostOrder<'a> {
-    queue: Vec<TraversalNode<&'a Regex>>
+    queue: Vec<TraversalNode<&'a Regex>>,
 }
 
 impl<'a> PostOrder<'a> {
     fn new(root: &'a Regex) -> Self {
         PostOrder {
-            queue: vec![TraversalNode::Fresh(root)]
+            queue: vec![TraversalNode::Fresh(root)],
         }
     }
 }
@@ -210,7 +210,7 @@ impl<'a> Iterator for PostOrder<'a> {
                         Regex::Alternation(a, b) | Regex::Concatenation(a, b) => {
                             self.queue.push(Fresh(b));
                             self.queue.push(Fresh(a));
-                        },
+                        }
                     }
                 }
             }
@@ -389,8 +389,6 @@ mod tests {
         let b_or_c = Regex::new("b|c");
         let b_or_c_star = Regex::new("(b|c)*");
 
-        assert_eq!(postorder, vec![
-            &a, &b, &c, &b_or_c, &b_or_c_star, &re
-        ]);
+        assert_eq!(postorder, vec![&a, &b, &c, &b_or_c, &b_or_c_star, &re]);
     }
 }

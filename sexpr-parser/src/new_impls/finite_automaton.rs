@@ -1,6 +1,6 @@
+use crate::new_impls::simple_regex::Regex;
 use std::collections::{HashMap, HashSet};
 use NondeterministicTransition::*;
-use crate::new_impls::simple_regex::Regex;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct StateId(usize);
@@ -32,7 +32,10 @@ impl<S, T> FiniteAutomaton<S, T> {
 
     pub fn add_transition(&mut self, s1: StateId, s2: StateId, t: T) {
         self.edges.entry(s1).or_insert(Vec::new()).push(s2);
-        self.transitions.entry((s1, s2)).or_insert(Vec::new()).push(t);
+        self.transitions
+            .entry((s1, s2))
+            .or_insert(Vec::new())
+            .push(t);
     }
 
     pub fn set_accepting_state(&mut self, sid: StateId) {
@@ -47,24 +50,37 @@ pub enum NondeterministicTransition<T> {
 }
 
 impl FiniteAutomaton<(), NondeterministicTransition<u8>> {
-    fn from_regex(re: &Regex) -> Self {
-        let mut fa = FiniteAutomaton::new();
-
+    pub fn from_regex(re: &Regex) -> Self {
         match re {
             Regex::Empty => {
+                let mut fa = FiniteAutomaton::new();
                 let s = fa.add_state(());
                 fa.set_accepting_state(s);
+                fa
             }
             Regex::Character(ch) => {
+                let mut fa = FiniteAutomaton::new();
                 let s0 = fa.add_state(());
                 let s1 = fa.add_state(());
                 fa.set_accepting_state(s1);
                 fa.add_transition(s0, s1, Character(*ch));
+                fa
             }
-            _ => unimplemented!()
+            Regex::Concatenation(a, b) => {
+                let nfa1 = Self::from_regex(a);
+                let nfa2 = Self::from_regex(b);
+                nfa1.concatenate(nfa2)
+            }
+            Regex::Alternation(a, b) => {
+                let nfa1 = Self::from_regex(a);
+                let nfa2 = Self::from_regex(b);
+                nfa1.alternate(nfa2)
+            }
+            Regex::Closure(a) => {
+                let nfa = Self::from_regex(a);
+                nfa.repeat()
+            }
         }
-
-        fa
     }
 
     fn concatenate(mut self, other: Self) -> Self {
@@ -147,24 +163,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn nfa_from_empty_regex() {
-        let nfa = Nfa::from_regex(&Regex::new(""));
-        assert_eq!(nfa.states, vec![()]);
-        assert!(nfa.accepting_states.contains(&StateId(0)));
-        assert!(nfa.edges.is_empty());
-        assert!(nfa.transitions.is_empty());
-    }
-
-    #[test]
-    fn nfa_from_single_char_regex() {
-        let nfa = Nfa::from_regex(&Regex::new("x"));
-        assert_eq!(nfa.states, vec![(), ()]);
-        assert!(nfa.accepting_states.contains(&StateId(1)));
-        assert_eq!(nfa.edges[&StateId(0)], vec![StateId(1)]);
-        assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Character(b'x')]);
-    }
-
-    #[test]
     fn concatenate_nfas() {
         let nfa1 = Nfa::from_regex(&Regex::new("x"));
         let nfa2 = Nfa::from_regex(&Regex::new("y"));
@@ -181,9 +179,15 @@ mod tests {
         assert_eq!(nfa.edges[&StateId(2)], vec![StateId(3)]);
         assert_eq!(nfa.edges.len(), 3);
 
-        assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Character(b'x')]);
+        assert_eq!(
+            nfa.transitions[&(StateId(0), StateId(1))],
+            vec![Character(b'x')]
+        );
         assert_eq!(nfa.transitions[&(StateId(1), StateId(2))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(2), StateId(3))], vec![Character(b'y')]);
+        assert_eq!(
+            nfa.transitions[&(StateId(2), StateId(3))],
+            vec![Character(b'y')]
+        );
         assert_eq!(nfa.transitions.len(), 3);
     }
 
@@ -208,8 +212,14 @@ mod tests {
 
         assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Epsilon]);
         assert_eq!(nfa.transitions[&(StateId(0), StateId(3))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(1), StateId(2))], vec![Character(b'x')]);
-        assert_eq!(nfa.transitions[&(StateId(3), StateId(4))], vec![Character(b'y')]);
+        assert_eq!(
+            nfa.transitions[&(StateId(1), StateId(2))],
+            vec![Character(b'x')]
+        );
+        assert_eq!(
+            nfa.transitions[&(StateId(3), StateId(4))],
+            vec![Character(b'y')]
+        );
         assert_eq!(nfa.transitions[&(StateId(2), StateId(5))], vec![Epsilon]);
         assert_eq!(nfa.transitions[&(StateId(4), StateId(5))], vec![Epsilon]);
         assert_eq!(nfa.transitions.len(), 6);
@@ -233,9 +243,95 @@ mod tests {
 
         assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Epsilon]);
         assert_eq!(nfa.transitions[&(StateId(0), StateId(3))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(1), StateId(2))], vec![Character(b'x')]);
+        assert_eq!(
+            nfa.transitions[&(StateId(1), StateId(2))],
+            vec![Character(b'x')]
+        );
         assert_eq!(nfa.transitions[&(StateId(2), StateId(3))], vec![Epsilon]);
         assert_eq!(nfa.transitions[&(StateId(2), StateId(1))], vec![Epsilon]);
         assert_eq!(nfa.transitions.len(), 5);
+    }
+
+    #[test]
+    fn nfa_from_empty_regex() {
+        let nfa = Nfa::from_regex(&Regex::new(""));
+        assert_eq!(nfa.states, vec![()]);
+        assert!(nfa.accepting_states.contains(&StateId(0)));
+        assert!(nfa.edges.is_empty());
+        assert!(nfa.transitions.is_empty());
+    }
+
+    #[test]
+    fn nfa_from_single_char_regex() {
+        let nfa = Nfa::from_regex(&Regex::new("x"));
+        assert_eq!(nfa.states, vec![(), ()]);
+        assert!(nfa.accepting_states.contains(&StateId(1)));
+        assert_eq!(nfa.edges[&StateId(0)], vec![StateId(1)]);
+        assert_eq!(
+            nfa.transitions[&(StateId(0), StateId(1))],
+            vec![Character(b'x')]
+        );
+    }
+
+    #[test]
+    fn nfa_from_concatenated_regex() {
+        let nfa = Nfa::from_regex(&Regex::new("xyz"));
+        assert_eq!(nfa.states, vec![(), (), (), (), (), ()]);
+        assert!(nfa.accepting_states.contains(&StateId(5)));
+        assert_eq!(
+            nfa.transitions[&(StateId(0), StateId(1))],
+            vec![Character(b'x')]
+        );
+        assert_eq!(nfa.transitions[&(StateId(1), StateId(2))], vec![Epsilon]);
+        assert_eq!(
+            nfa.transitions[&(StateId(2), StateId(3))],
+            vec![Character(b'y')]
+        );
+        assert_eq!(nfa.transitions[&(StateId(3), StateId(4))], vec![Epsilon]);
+        assert_eq!(
+            nfa.transitions[&(StateId(4), StateId(5))],
+            vec![Character(b'z')]
+        );
+    }
+
+    #[test]
+    fn nfa_from_alternating_regex() {
+        let nfa = Nfa::from_regex(&Regex::new("(x|y)|z"));
+        assert_eq!(nfa.states, vec![(); 10]);
+        assert!(nfa.accepting_states.contains(&StateId(9)));
+        assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Epsilon]);
+        assert_eq!(nfa.transitions[&(StateId(1), StateId(2))], vec![Epsilon]);
+        assert_eq!(nfa.transitions[&(StateId(1), StateId(4))], vec![Epsilon]);
+        assert_eq!(
+            nfa.transitions[&(StateId(2), StateId(3))],
+            vec![Character(b'x')]
+        );
+        assert_eq!(
+            nfa.transitions[&(StateId(4), StateId(5))],
+            vec![Character(b'y')]
+        );
+        assert_eq!(nfa.transitions[&(StateId(3), StateId(6))], vec![Epsilon]);
+        assert_eq!(nfa.transitions[&(StateId(6), StateId(9))], vec![Epsilon]);
+        assert_eq!(nfa.transitions[&(StateId(0), StateId(7))], vec![Epsilon]);
+        assert_eq!(
+            nfa.transitions[&(StateId(7), StateId(8))],
+            vec![Character(b'z')]
+        );
+        assert_eq!(nfa.transitions[&(StateId(8), StateId(9))], vec![Epsilon]);
+    }
+
+    #[test]
+    fn nfa_from_repeating_regex() {
+        let nfa = Nfa::from_regex(&Regex::new("x*"));
+        assert_eq!(nfa.states, vec![(), (), (), ()]);
+        assert!(nfa.accepting_states.contains(&StateId(3)));
+        assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Epsilon]);
+        assert_eq!(nfa.transitions[&(StateId(0), StateId(3))], vec![Epsilon]);
+        assert_eq!(
+            nfa.transitions[&(StateId(1), StateId(2))],
+            vec![Character(b'x')]
+        );
+        assert_eq!(nfa.transitions[&(StateId(2), StateId(1))], vec![Epsilon]);
+        assert_eq!(nfa.transitions[&(StateId(2), StateId(3))], vec![Epsilon]);
     }
 }

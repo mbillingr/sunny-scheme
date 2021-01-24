@@ -1,4 +1,4 @@
-mod new_impls;
+pub mod new_impls;
 mod parser;
 mod scanner;
 mod sexpr;

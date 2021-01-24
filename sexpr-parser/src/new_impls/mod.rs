@@ -1,2 +1,2 @@
-mod simple_regex;
-mod finite_automaton;
+pub mod finite_automaton;
+pub mod simple_regex;
