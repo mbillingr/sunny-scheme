@@ -1,8 +1,10 @@
 use super::super::simple_regex::Regex;
-use super::StateId;
 use maplit::hashset;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct StateId(pub(super) usize);
 
 pub type Nfa = NondeterministicFiniteAutomaton<(), u8>;
 
