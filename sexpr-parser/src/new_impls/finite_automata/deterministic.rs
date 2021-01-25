@@ -124,7 +124,7 @@ mod tests {
         let s0 = nfa.add_state(());
         let s1 = nfa.add_state(());
         nfa.add_transition(s0, s1, b'a');
-        nfa.add_accepting_state(s1);
+        nfa.set_accepting_state(s1);
 
         let dfa = Dfa::from_nfa(nfa);
 
@@ -142,7 +142,7 @@ mod tests {
         let s3 = nfa.add_state(());
         let s4 = nfa.add_state(());
         let s5 = nfa.add_state(());
-        nfa.add_accepting_state(s5);
+        nfa.set_accepting_state(s5);
         nfa.add_epsilon_transition(s0, s1);
         nfa.add_epsilon_transition(s0, s3);
         nfa.add_transition(s1, s2, b'a');
@@ -177,7 +177,7 @@ mod tests {
         let n7 = nfa.add_state(());
         let n8 = nfa.add_state(());
         let n9 = nfa.add_state(());
-        nfa.add_accepting_state(n9);
+        nfa.set_accepting_state(n9);
         nfa.add_transition(n0, n1, b'a');
         nfa.add_epsilon_transition(n1, n2);
         nfa.add_epsilon_transition(n2, n3);

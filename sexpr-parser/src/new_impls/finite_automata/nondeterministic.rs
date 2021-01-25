@@ -10,7 +10,8 @@ pub type Nfa = NondeterministicFiniteAutomaton<(), u8>;
 
 pub struct NondeterministicFiniteAutomaton<S, T> {
     pub(super) states: Vec<S>,
-    pub(super) accepting_states: HashSet<StateId>,
+    pub(super) starting_state: StateId,
+    pub(super) accepting_state: StateId,
     pub(super) transitions: HashMap<StateId, (HashMap<T, StateId>, HashSet<StateId>)>,
 }
 
@@ -18,14 +19,14 @@ impl<S, T: Eq + Hash> NondeterministicFiniteAutomaton<S, T> {
     pub fn new() -> Self {
         NondeterministicFiniteAutomaton {
             states: vec![],
-            accepting_states: HashSet::new(),
+            starting_state: StateId(0),
+            accepting_state: StateId(0),
             transitions: HashMap::new(),
         }
     }
 
     pub fn starting_state(&self) -> StateId {
-        // for now, assume state 0 is always the starting state
-        StateId(0)
+        self.starting_state
     }
 
     pub fn add_state(&mut self, s: S) -> StateId {
@@ -50,12 +51,8 @@ impl<S, T: Eq + Hash> NondeterministicFiniteAutomaton<S, T> {
             .insert(s2);
     }
 
-    pub fn add_accepting_state(&mut self, sid: StateId) {
-        self.accepting_states.insert(sid);
-    }
-
-    pub fn clear_accepting_states(&mut self) {
-        self.accepting_states.clear();
+    pub fn set_accepting_state(&mut self, sid: StateId) {
+        self.accepting_state = sid;
     }
 
     pub fn get_transition(&self, s: StateId, t: &T) -> Option<StateId> {
@@ -110,14 +107,14 @@ impl Nfa {
             Regex::Empty => {
                 let mut fa = Self::new();
                 let s = fa.add_state(());
-                fa.add_accepting_state(s);
+                fa.set_accepting_state(s);
                 fa
             }
             Regex::Character(ch) => {
                 let mut fa = Self::new();
                 let s0 = fa.add_state(());
                 let s1 = fa.add_state(());
-                fa.add_accepting_state(s1);
+                fa.set_accepting_state(s1);
                 fa.add_transition(s0, s1, *ch);
                 fa
             }
@@ -143,8 +140,7 @@ impl Nfa {
 
         let old_accepting_state = self.accepting_state();
 
-        self.clear_accepting_states();
-        self.add_accepting_state(other_exit);
+        self.set_accepting_state(other_exit);
 
         self.add_epsilon_transition(old_accepting_state, other_entry);
 
@@ -160,7 +156,7 @@ impl Nfa {
         let (entry2, exit2) = new.merge(other);
 
         let exit = new.add_state(());
-        new.add_accepting_state(exit);
+        new.set_accepting_state(exit);
 
         new.add_epsilon_transition(exit1, exit);
         new.add_epsilon_transition(exit2, exit);
@@ -179,7 +175,7 @@ impl Nfa {
         let (old_entry, old_exit) = new.merge(self);
 
         let exit = new.add_state(());
-        new.add_accepting_state(exit);
+        new.set_accepting_state(exit);
 
         new.add_epsilon_transition(entry, old_entry);
         new.add_epsilon_transition(old_exit, exit);
@@ -213,7 +209,7 @@ impl Nfa {
     }
 
     pub fn accepting_state(&self) -> StateId {
-        self.accepting_states.iter().next().copied().unwrap()
+        self.accepting_state
     }
 
     pub fn epsilon_closure(&self, mut states: HashSet<StateId>) -> HashSet<StateId> {
@@ -276,8 +272,7 @@ mod tests {
 
         assert_eq!(nfa.states, vec![(), (), (), ()]);
 
-        assert!(nfa.accepting_states.contains(&StateId(3)));
-        assert_eq!(nfa.accepting_states.len(), 1);
+        assert_eq!(nfa.accepting_state, StateId(3));
 
         assert_transitions!(
             nfa, {
@@ -302,8 +297,7 @@ mod tests {
 
         assert_eq!(nfa.states, vec![(), (), (), (), (), ()]);
 
-        assert!(nfa.accepting_states.contains(&StateId(5)));
-        assert_eq!(nfa.accepting_states.len(), 1);
+        assert_eq!(nfa.accepting_state, StateId(5));
 
         assert_transitions!(
             nfa, {
@@ -325,8 +319,7 @@ mod tests {
 
         assert_eq!(nfa.states, vec![(), (), (), ()]);
 
-        assert!(nfa.accepting_states.contains(&StateId(3)));
-        assert_eq!(nfa.accepting_states.len(), 1);
+        assert_eq!(nfa.accepting_state, StateId(3));
 
         assert_transitions!(
             nfa, {
@@ -343,7 +336,7 @@ mod tests {
     fn nfa_from_empty_regex() {
         let nfa = Nfa::from_regex(&Regex::new(""));
         assert_eq!(nfa.states, vec![()]);
-        assert!(nfa.accepting_states.contains(&StateId(0)));
+        assert_eq!(nfa.accepting_state, StateId(0));
         assert_transitions!(nfa, {});
     }
 
@@ -351,7 +344,7 @@ mod tests {
     fn nfa_from_single_char_regex() {
         let nfa = Nfa::from_regex(&Regex::new("x"));
         assert_eq!(nfa.states, vec![(), ()]);
-        assert!(nfa.accepting_states.contains(&StateId(1)));
+        assert_eq!(nfa.accepting_state, StateId(1));
         assert_transitions!(
             nfa, {
                 (0, x) => 1;
@@ -363,7 +356,7 @@ mod tests {
     fn nfa_from_concatenated_regex() {
         let nfa = Nfa::from_regex(&Regex::new("xyz"));
         assert_eq!(nfa.states, vec![(), (), (), (), (), ()]);
-        assert!(nfa.accepting_states.contains(&StateId(5)));
+        assert_eq!(nfa.accepting_state, StateId(5));
         assert_transitions!(
             nfa, {
                 (0, x) => 1;
@@ -379,7 +372,7 @@ mod tests {
     fn nfa_from_alternating_regex() {
         let nfa = Nfa::from_regex(&Regex::new("(x|y)|z"));
         assert_eq!(nfa.states, vec![(); 10]);
-        assert!(nfa.accepting_states.contains(&StateId(9)));
+        assert_eq!(nfa.accepting_state, StateId(9));
         assert_transitions!(
             nfa, {
                 (0, ) => 1;
@@ -395,33 +388,13 @@ mod tests {
                 (8, ) => 9;
             }
         );
-
-        /*assert_eq!(nfa.transitions[&(StateId(0), StateId(1))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(1), StateId(2))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(1), StateId(4))], vec![Epsilon]);
-        assert_eq!(
-            nfa.transitions[&(StateId(2), StateId(3))],
-            vec![Character(b'x')]
-        );
-        assert_eq!(
-            nfa.transitions[&(StateId(4), StateId(5))],
-            vec![Character(b'y')]
-        );
-        assert_eq!(nfa.transitions[&(StateId(3), StateId(6))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(6), StateId(9))], vec![Epsilon]);
-        assert_eq!(nfa.transitions[&(StateId(0), StateId(7))], vec![Epsilon]);
-        assert_eq!(
-            nfa.transitions[&(StateId(7), StateId(8))],
-            vec![Character(b'z')]
-        );
-        assert_eq!(nfa.transitions[&(StateId(8), StateId(9))], vec![Epsilon]);*/
     }
 
     #[test]
     fn nfa_from_repeating_regex() {
         let nfa = Nfa::from_regex(&Regex::new("x*"));
         assert_eq!(nfa.states, vec![(), (), (), ()]);
-        assert!(nfa.accepting_states.contains(&StateId(3)));
+        assert_eq!(nfa.accepting_state, StateId(3));
 
         assert_transitions!(
             nfa, {
