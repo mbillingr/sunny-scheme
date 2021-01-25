@@ -210,7 +210,7 @@ impl Nfa {
         (id_entry, id_exit)
     }
 
-    fn accepting_state(&self) -> StateId {
+    pub fn accepting_state(&self) -> StateId {
         self.accepting_states.iter().next().copied().unwrap()
     }
 
