@@ -74,18 +74,13 @@ impl Dfa {
         let mut subsets = vec![q0];
         let mut subset_transitions = HashMap::new();
         let mut worklist = vec![0];
-        while !worklist.is_empty() {
-            let q = worklist.pop().unwrap();
-            let all_transitions_from_q = nfa.delta(subsets[q].iter().copied());
-            let chars_leaving_q: HashSet<u8> =
-                all_transitions_from_q.iter().map(|(_, _, t)| **t).collect();
+        while let Some(q) = worklist.pop() {
+            let chars_leaving_q: HashSet<u8> = nfa
+                .delta(subsets[q].iter().copied())
+                .map(|(_, t)| *t)
+                .collect();
             for c in chars_leaving_q {
-                let dq = all_transitions_from_q
-                    .iter()
-                    .filter(|(_, _, t)| **t == c)
-                    .map(|(_, s2, _)| *s2)
-                    .collect();
-                let t = nfa.epsilon_closure(dq);
+                let t = nfa.delta_epsilon_closure(&c, &subsets[q]);
                 if let Some(i) = subsets.iter().position(|qs| qs == &t) {
                     subset_transitions.insert((q, c), i);
                 } else {

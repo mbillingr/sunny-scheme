@@ -94,10 +94,35 @@ impl<S, T: Eq + Hash> NondeterministicFiniteAutomaton<S, T> {
             .copied()
     }
 
-    pub fn delta(&self, states: impl Iterator<Item = StateId>) -> Vec<(StateId, StateId, &T)> {
-        states
-            .flat_map(|s0| self.transitions_from(s0).map(move |(s1, t)| (s0, s1, t)))
-            .collect()
+    pub fn delta(
+        &self,
+        states: impl Iterator<Item = StateId>,
+    ) -> impl Iterator<Item = (StateId, &T)> {
+        states.flat_map(move |s0| self.transitions_from(s0).map(move |(s1, t)| (s1, t)))
+    }
+
+    pub fn epsilon_closure(&self, mut states: HashSet<StateId>) -> HashSet<StateId> {
+        let mut result = hashset! {};
+
+        while let Some(s) = set_pop(&mut states) {
+            if result.contains(&s) {
+                continue;
+            }
+            result.insert(s);
+
+            for s_next in self.epsilon_transitions_from(s) {
+                states.insert(s_next);
+            }
+        }
+
+        result
+    }
+
+    pub fn delta_epsilon_closure<'a>(&self, t: &T, subset: impl IntoIterator<Item=&'a StateId>) -> HashSet<StateId> {
+        let dq = subset.into_iter()
+            .flat_map(move |&s| self.get_transition(s, t))
+            .collect();
+        self.epsilon_closure(dq)
     }
 }
 
@@ -210,23 +235,6 @@ impl Nfa {
 
     pub fn accepting_state(&self) -> StateId {
         self.accepting_state
-    }
-
-    pub fn epsilon_closure(&self, mut states: HashSet<StateId>) -> HashSet<StateId> {
-        let mut result = hashset! {};
-
-        while let Some(s) = set_pop(&mut states) {
-            if result.contains(&s) {
-                continue;
-            }
-            result.insert(s);
-
-            for s_next in self.epsilon_transitions_from(s) {
-                states.insert(s_next);
-            }
-        }
-
-        result
     }
 }
 
