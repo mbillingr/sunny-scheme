@@ -1,2 +1,2 @@
-pub mod deterministic;
+#[macro_use]
 pub mod nondeterministic;
