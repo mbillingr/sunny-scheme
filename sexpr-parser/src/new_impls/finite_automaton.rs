@@ -383,7 +383,7 @@ macro_rules! finite_automaton {
         let mut nfa = Fa::new();
         nfa.set_starting_state(StateId($start));
         nfa.set_accepting_state(StateId($end));
-        nfa!(nfa, $($transitions)*);
+        finite_automaton!(nfa, $($transitions)*);
         nfa.create_states();
         nfa
     }};
@@ -392,16 +392,16 @@ macro_rules! finite_automaton {
 
     ($nfa:expr, ($from:expr, ) => $to:expr; $($rest:tt)*) => {{
         $nfa.add_epsilon_transition(StateId($from), StateId($to));
-        nfa!($nfa, $($rest)*);
+        finite_automaton!($nfa, $($rest)*);
     }};
 
     ($nfa:expr, ($from:expr, $on:ident) => $to:expr; $($rest:tt)*) => {
-        nfa!($nfa, ($from, stringify!($on).as_bytes()[0]) => $to; $($rest)*)
+        finite_automaton!($nfa, ($from, stringify!($on).as_bytes()[0]) => $to; $($rest)*)
     };
 
     ($nfa:expr, ($from:expr, $on:expr) => $to:expr; $($rest:tt)*) => {{
         $nfa.add_transition(StateId($from), StateId($to), $on);
-        nfa!($nfa, $($rest)*);
+        finite_automaton!($nfa, $($rest)*);
     }};
 }
 
@@ -661,11 +661,11 @@ mod tests {
 
     #[test]
     fn trivial_nfa_to_dfa() {
-        let mut nfa = Fa::new();
-        let s0 = nfa.add_state(());
-        let s1 = nfa.add_state(());
-        nfa.add_transition(s0, s1, b'a');
-        nfa.set_accepting_state(s1);
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            (0, a) => 1;
+        };
 
         let dfa = Fa::dfa_from_nfa(nfa);
 
@@ -679,20 +679,16 @@ mod tests {
 
     #[test]
     fn dfa_can_have_multiple_accepting_states() {
-        let mut nfa = Fa::new();
-        let s0 = nfa.add_state(());
-        let s1 = nfa.add_state(());
-        let s2 = nfa.add_state(());
-        let s3 = nfa.add_state(());
-        let s4 = nfa.add_state(());
-        let s5 = nfa.add_state(());
-        nfa.set_accepting_state(s5);
-        nfa.add_epsilon_transition(s0, s1);
-        nfa.add_epsilon_transition(s0, s3);
-        nfa.add_transition(s1, s2, b'a');
-        nfa.add_transition(s3, s4, b'b');
-        nfa.add_epsilon_transition(s2, s5);
-        nfa.add_epsilon_transition(s4, s5);
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 5;
+            (0, ) => 1;
+            (0, ) => 3;
+            (1, a) => 2;
+            (3, b) => 4;
+            (2, ) => 5;
+            (4, ) => 5;
+        };
 
         let dfa = Fa::dfa_from_nfa(nfa);
 
@@ -710,30 +706,22 @@ mod tests {
     #[test]
     fn dfa_from_nfa_complex_example() {
         // EaC book, figure 2.7
-        let mut nfa = Fa::new();
-        let n0 = nfa.add_state(());
-        let n1 = nfa.add_state(());
-        let n2 = nfa.add_state(());
-        let n3 = nfa.add_state(());
-        let n4 = nfa.add_state(());
-        let n5 = nfa.add_state(());
-        let n6 = nfa.add_state(());
-        let n7 = nfa.add_state(());
-        let n8 = nfa.add_state(());
-        let n9 = nfa.add_state(());
-        nfa.set_accepting_state(n9);
-        nfa.add_transition(n0, n1, b'a');
-        nfa.add_epsilon_transition(n1, n2);
-        nfa.add_epsilon_transition(n2, n3);
-        nfa.add_epsilon_transition(n2, n9);
-        nfa.add_epsilon_transition(n3, n4);
-        nfa.add_epsilon_transition(n3, n6);
-        nfa.add_transition(n4, n5, b'b');
-        nfa.add_epsilon_transition(n5, n8);
-        nfa.add_transition(n6, n7, b'c');
-        nfa.add_epsilon_transition(n7, n8);
-        nfa.add_epsilon_transition(n8, n9);
-        nfa.add_epsilon_transition(n8, n3);
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 9;
+            (0, a) => 1;
+            (1, ) => 2;
+            (2, ) => 3;
+            (2, ) => 9;
+            (3, ) => 4;
+            (3, ) => 6;
+            (4, b) => 5;
+            (5, ) => 8;
+            (6, c) => 7;
+            (7, ) => 8;
+            (8, ) => 9;
+            (8, ) => 3;
+        };
 
         let dfa = Fa::dfa_from_nfa(nfa);
 
