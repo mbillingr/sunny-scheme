@@ -378,7 +378,7 @@ fn chars_leaving_subset(nfa: &Fa, subset_dfa: &SubsetDfa, q: StateId) -> HashSet
 }
 
 #[macro_export]
-macro_rules! nfa {
+macro_rules! finite_automaton {
     (start: $start:expr; accept: $end:expr; $($transitions:tt)*) => {{
         let mut nfa = Fa::new();
         nfa.set_starting_state(StateId($start));
@@ -435,12 +435,12 @@ mod tests {
 
     #[test]
     fn concatenate_nfas() {
-        let nfa1 = nfa! {start: 0; accept: 1; (0, x) => 1;};
-        let nfa2 = nfa! {start: 0; accept: 1; (0, y) => 1;};
+        let nfa1 = finite_automaton! {start: 0; accept: 1; (0, x) => 1;};
+        let nfa2 = finite_automaton! {start: 0; accept: 1; (0, y) => 1;};
 
         let nfa = nfa1.concatenate(nfa2);
 
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 3;
             (0, x) => 1;
@@ -457,7 +457,7 @@ mod tests {
 
         let nfa = nfa1.alternate(nfa2);
 
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 5;
             (0, ) => 1;
@@ -476,7 +476,7 @@ mod tests {
 
         let nfa = nfa.repeat();
 
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 3;
             (0, ) => 1;
@@ -491,7 +491,7 @@ mod tests {
     #[test]
     fn nfa_from_empty_regex() {
         let nfa = Fa::nfa_from_regex(&Regex::new(""));
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 0;
         };
@@ -501,7 +501,7 @@ mod tests {
     #[test]
     fn nfa_from_single_char_regex() {
         let nfa = Fa::nfa_from_regex(&Regex::new("x"));
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 1;
             (0, x) => 1;
@@ -512,7 +512,7 @@ mod tests {
     #[test]
     fn nfa_from_concatenated_regex() {
         let nfa = Fa::nfa_from_regex(&Regex::new("xyz"));
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 5;
             (0, x) => 1;
@@ -527,7 +527,7 @@ mod tests {
     #[test]
     fn nfa_from_alternating_regex() {
         let nfa = Fa::nfa_from_regex(&Regex::new("(x|y)|z"));
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 9;
             (0, ) => 1;
@@ -548,7 +548,7 @@ mod tests {
     #[test]
     fn nfa_from_repeating_regex() {
         let nfa = Fa::nfa_from_regex(&Regex::new("x*"));
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 3;
             (0, ) => 1;
@@ -614,7 +614,7 @@ mod tests {
 
     #[test]
     fn reversing_a_single_element_nfa_produces_same_nfa() {
-        let nfa = nfa! {
+        let nfa = finite_automaton! {
             start: 0;
             accept: 0;
         };
@@ -625,7 +625,7 @@ mod tests {
 
     #[test]
     fn reversing_an_epsilon_transition() {
-        let nfa = nfa! {
+        let nfa = finite_automaton! {
             start: 0;
             accept: 1;
             (0, ) => 1;
@@ -633,7 +633,7 @@ mod tests {
 
         let rnfa = nfa.reverse();
 
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 1;
             accept: 0;
             (1, ) => 0;
@@ -643,7 +643,7 @@ mod tests {
 
     #[test]
     fn reversing_a_normal_transition() {
-        let nfa = nfa! {
+        let nfa = finite_automaton! {
             start: 0;
             accept: 1;
             (0, x) => 1;
@@ -651,7 +651,7 @@ mod tests {
 
         let rnfa = nfa.reverse();
 
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 1;
             accept: 0;
             (1, x) => 0;
@@ -669,7 +669,7 @@ mod tests {
 
         let dfa = Fa::dfa_from_nfa(nfa);
 
-        let expected = nfa! {
+        let expected = finite_automaton! {
             start: 0;
             accept: 1;
             (0, a) => 1;
