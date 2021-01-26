@@ -1,4 +1,4 @@
-use super::nondeterministic::Nfa;
+use super::nondeterministic::{Nfa, StateId as NfaId};
 use maplit::hashset;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
@@ -58,6 +58,10 @@ impl<S, T: Eq + Hash> FiniteAutomaton<S, T> {
         self.transitions.get(&s).and_then(|trs| trs.get(t)).copied()
     }
 
+    pub fn get_state_content(&self, s: StateId) -> &S {
+        &self.states[s.0]
+    }
+
     pub fn transitions_from(&self, s: StateId) -> impl Iterator<Item = (StateId, &T)> {
         self.transitions
             .get(&s)
@@ -67,46 +71,65 @@ impl<S, T: Eq + Hash> FiniteAutomaton<S, T> {
     }
 }
 
+impl<S: PartialEq, T: Eq + Hash> FiniteAutomaton<S, T> {
+    pub fn find_state_by_content(&self, value: &S) -> Option<StateId> {
+        self.states.iter().position(|q| q == value).map(StateId)
+    }
+}
+
 impl Dfa {
     pub fn from_nfa(nfa: Nfa) -> Self {
-        let n0 = nfa.starting_state();
-        let q0 = nfa.epsilon_closure(hashset![n0]);
-        let mut subsets = vec![q0];
-        let mut subset_transitions = HashMap::new();
-        let mut worklist = vec![0];
-        while let Some(q) = worklist.pop() {
-            let chars_leaving_q: HashSet<u8> = nfa
-                .delta(subsets[q].iter().copied())
-                .map(|(_, t)| *t)
-                .collect();
-            for c in chars_leaving_q {
-                let t = nfa.delta_epsilon_closure(&c, &subsets[q]);
-                if let Some(i) = subsets.iter().position(|qs| qs == &t) {
-                    subset_transitions.insert((q, c), i);
-                } else {
-                    subset_transitions.insert((q, c), subsets.len());
-                    worklist.push(subsets.len());
-                    subsets.push(t);
-                }
-            }
-        }
+        let subset_dfa = subset_algorithm(&nfa);
+        Dfa::from_subsets(subset_dfa, nfa.accepting_state())
+    }
 
+    fn from_subsets(subset_dfa: SubsetDfa, accepting_state: NfaId) -> Self {
         let mut dfa = Dfa::new();
-        for q in subsets {
+        for q in subset_dfa.states {
             let s = dfa.add_state(());
             for n in q {
-                if n == nfa.accepting_state() {
+                if n == accepting_state {
                     dfa.add_accepting_state(s);
                 }
             }
         }
-
-        for ((s1, ch), s2) in subset_transitions {
-            dfa.add_transition(StateId(s1), StateId(s2), ch)
-        }
+        dfa.transitions = subset_dfa.transitions;
+        dfa.starting_state = subset_dfa.starting_state;
 
         dfa
     }
+}
+
+type SubsetDfa = FiniteAutomaton<HashSet<NfaId>, u8>;
+
+fn subset_algorithm(nfa: &Nfa) -> SubsetDfa {
+    let n0 = nfa.starting_state();
+    let q0 = nfa.epsilon_closure(hashset![n0]);
+
+    let mut sublist_dfa = FiniteAutomaton::new();
+    let t0 = sublist_dfa.add_state(q0);
+    sublist_dfa.set_starting_state(t0);
+
+    let mut worklist = vec![t0];
+    while let Some(q) = worklist.pop() {
+        for c in chars_leaving_subset(&nfa, &sublist_dfa, q) {
+            let t = nfa.delta_epsilon_closure(&c, sublist_dfa.get_state_content(q));
+            if let Some(i) = sublist_dfa.find_state_by_content(&t) {
+                sublist_dfa.add_transition(q, i, c);
+            } else {
+                let d_next = sublist_dfa.add_state(t);
+                sublist_dfa.add_transition(q, d_next, c);
+                worklist.push(d_next);
+            }
+        }
+    }
+    sublist_dfa
+}
+
+fn chars_leaving_subset(nfa: &Nfa, subset_dfa: &SubsetDfa, q: StateId) -> HashSet<u8> {
+    nfa.delta(subset_dfa.get_state_content(q))
+        .map(|(_, t)| *t)
+        .collect()
 }
 
 #[cfg(test)]
