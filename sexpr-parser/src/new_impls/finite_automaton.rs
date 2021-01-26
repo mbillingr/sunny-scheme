@@ -188,6 +188,40 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
         }
         reversed
     }
+
+    pub fn reachable(mut self) -> Self {
+        let mut queue = vec![self.starting_state()];
+
+        let mut out = Self::new();
+
+        let mut seen = HashSet::new();
+        while let Some(old_state) = queue.pop() {
+            if seen.contains(&old_state) {
+                continue;
+            }
+            seen.insert(old_state);
+
+            let content = std::mem::replace(&mut self.states[old_state.0], S::default());
+            let state = out.add_state(content);
+
+            if self.is_accepting_state(old_state) {
+                out.add_accepting_state(state);
+            }
+
+            for (non_eps, eps) in self.transitions.remove(&state) {
+                for (t, next) in non_eps {
+                    queue.push(next);
+                    out.add_transition(state, next, t);
+                }
+                for next in eps {
+                    queue.push(next);
+                    out.add_epsilon_transition(state, next);
+                }
+            }
+        }
+
+        out
+    }
 }
 
 impl<S: PartialEq, T: Eq + Hash> FiniteAutomaton<S, T> {
@@ -778,6 +812,38 @@ mod tests {
             (3, ) => 2;
             (1, x) => 0;
             (2, y) => 0;
+        };
+        assert_eq!(rnfa, expected);
+    }
+
+    #[test]
+    fn reachable_keeps_states_connected_to_start() {
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 2;
+            (0, ) => 1;
+            (1, x) => 2;
+        };
+
+        let rnfa = nfa.clone().reachable();
+
+        assert_eq!(rnfa, nfa);
+    }
+
+    #[test]
+    fn reachable_removes_states_not_connected_to_start() {
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 0;
+            (1, x) => 2;
+            (2, ) => 1;
+        };
+
+        let rnfa = nfa.reachable();
+
+        let expected = finite_automaton! {
+            start: 0;
+            accept: 0;
         };
         assert_eq!(rnfa, expected);
     }
