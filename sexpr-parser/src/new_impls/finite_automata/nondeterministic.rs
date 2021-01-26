@@ -8,7 +8,8 @@ pub struct StateId(pub(super) usize);
 
 pub type Nfa = NondeterministicFiniteAutomaton<(), u8>;
 
-pub struct NondeterministicFiniteAutomaton<S, T> {
+#[derive(Debug, Clone, PartialEq)]
+pub struct NondeterministicFiniteAutomaton<S, T: Eq + Hash> {
     pub(super) states: Vec<S>,
     pub(super) starting_state: StateId,
     pub(super) accepting_state: StateId,
@@ -51,8 +52,16 @@ impl<S, T: Eq + Hash> NondeterministicFiniteAutomaton<S, T> {
             .insert(s2);
     }
 
+    pub fn set_starting_state(&mut self, sid: StateId) {
+        self.starting_state = sid;
+    }
+
     pub fn set_accepting_state(&mut self, sid: StateId) {
         self.accepting_state = sid;
+    }
+
+    pub fn accepting_state(&self) -> StateId {
+        self.accepting_state
     }
 
     pub fn get_transition(&self, s: StateId, t: &T) -> Option<StateId> {
@@ -131,6 +140,23 @@ impl<S, T: Eq + Hash> NondeterministicFiniteAutomaton<S, T> {
             .flat_map(move |&s| self.get_transition(s, t))
             .collect();
         self.epsilon_closure(dq)
+    }
+
+    pub fn reverse(mut self) -> Self {
+        let mut reversed = Self::new();
+        reversed.set_starting_state(self.accepting_state());
+        reversed.set_accepting_state(self.starting_state());
+        reversed.states = self.states;
+        let old_transitions = std::mem::replace(&mut self.transitions, HashMap::new());
+        for (s0, (non_eps, eps)) in old_transitions {
+            for s1 in eps {
+                reversed.add_epsilon_transition(s1, s0);
+            }
+            for (t, s1) in non_eps {
+                reversed.add_transition(s1, s0, t);
+            }
+        }
+        reversed
     }
 }
 
@@ -241,14 +267,48 @@ impl Nfa {
         (id_entry, id_exit)
     }
 
-    pub fn accepting_state(&self) -> StateId {
-        self.accepting_state
+    pub fn create_states(&mut self) {
+        let max_id = self.transitions.iter()
+            .flat_map(|(s0, (non_eps, eps))|
+                std::iter::once(s0.0).chain(non_eps.values().map(|s|s.0)).chain(eps.iter().map(|s|s.0)))
+            .max().unwrap_or(0)
+            .max(self.starting_state().0)
+            .max(self.accepting_state().0);
+        self.states.resize(max_id + 1, ());
     }
 }
 
 fn set_pop<T: Clone + Eq + std::hash::Hash>(set: &mut HashSet<T>) -> Option<T> {
     let item = set.iter().next()?.clone();
     set.take(&item)
+}
+
+#[macro_export]
+macro_rules! nfa {
+    (start: $start:expr; accept: $end:expr; $($transitions:tt)*) => {{
+        let mut nfa = Nfa::new();
+        nfa.set_starting_state(StateId($start));
+        nfa.set_accepting_state(StateId($end));
+        nfa!(nfa, $($transitions)*);
+        nfa.create_states();
+        nfa
+    }};
+
+    ($nfa:expr, ) => {};
+
+    ($nfa:expr, ($from:expr, ) => $to:expr; $($rest:tt)*) => {{
+        $nfa.add_epsilon_transition(StateId($from), StateId($to));
+        nfa!($nfa, $($rest)*);
+    }};
+
+    ($nfa:expr, ($from:expr, $on:ident) => $to:expr; $($rest:tt)*) => {
+        nfa!($nfa, ($from, stringify!($on).as_bytes()[0]) => $to; $($rest)*)
+    };
+
+    ($nfa:expr, ($from:expr, $on:expr) => $to:expr; $($rest:tt)*) => {{
+        $nfa.add_transition(StateId($from), StateId($to), $on);
+        nfa!($nfa, $($rest)*);
+    }};
 }
 
 #[cfg(test)]
@@ -281,27 +341,19 @@ mod tests {
 
     #[test]
     fn concatenate_nfas() {
-        let nfa1 = Nfa::from_regex(&Regex::new("x"));
-        let nfa2 = Nfa::from_regex(&Regex::new("y"));
+        let nfa1 = nfa!{start: 0; accept: 1; (0, x) => 1;};
+        let nfa2 = nfa!{start: 0; accept: 1; (0, y) => 1;};
 
         let nfa = nfa1.concatenate(nfa2);
 
-        assert_eq!(nfa.states, vec![(), (), (), ()]);
-
-        assert_eq!(nfa.accepting_state, StateId(3));
-
-        assert_transitions!(
-            nfa, {
-                (0, b'x') => 1;
-                (1, ) => 2;
-                (2, y) => 3;
-            }
-        );
-
-        assert_eq!(nfa.transitions[&StateId(0)].0[&b'x'], StateId(1));
-        assert_eq!(nfa.transitions[&StateId(1)].1, hashset! {StateId(2)});
-        assert_eq!(nfa.transitions[&StateId(2)].0[&b'y'], StateId(3));
-        assert_eq!(nfa.transitions.len(), 3);
+        let expected = nfa!{
+            start: 0;
+            accept: 3;
+            (0, x) => 1;
+            (1, ) => 2;
+            (2, y) => 3;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
@@ -311,20 +363,17 @@ mod tests {
 
         let nfa = nfa1.alternate(nfa2);
 
-        assert_eq!(nfa.states, vec![(), (), (), (), (), ()]);
-
-        assert_eq!(nfa.accepting_state, StateId(5));
-
-        assert_transitions!(
-            nfa, {
-                (0, ) => 1;
-                (0, ) => 3;
-                (1, x) => 2;
-                (3, y) => 4;
-                (2, ) => 5;
-                (4, ) => 5;
-            }
-        );
+        let expected = nfa!{
+            start: 0;
+            accept: 5;
+            (0, ) => 1;
+            (0, ) => 3;
+            (1, x) => 2;
+            (2, ) => 5;
+            (3, y) => 4;
+            (4, ) => 5;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
@@ -333,94 +382,88 @@ mod tests {
 
         let nfa = nfa.repeat();
 
-        assert_eq!(nfa.states, vec![(), (), (), ()]);
-
-        assert_eq!(nfa.accepting_state, StateId(3));
-
-        assert_transitions!(
-            nfa, {
-                (0, ) => 1;
-                (0, ) => 3;
-                (1, x) => 2;
-                (2, ) => 3;
-                (2, ) => 1;
-            }
-        );
+        let expected = nfa!{
+            start: 0;
+            accept: 3;
+            (0, ) => 1;
+            (0, ) => 3;
+            (1, x) => 2;
+            (2, ) => 3;
+            (2, ) => 1;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
     fn nfa_from_empty_regex() {
         let nfa = Nfa::from_regex(&Regex::new(""));
-        assert_eq!(nfa.states, vec![()]);
-        assert_eq!(nfa.accepting_state, StateId(0));
-        assert_transitions!(nfa, {});
+        let expected = nfa!{
+            start: 0;
+            accept: 0;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
     fn nfa_from_single_char_regex() {
         let nfa = Nfa::from_regex(&Regex::new("x"));
-        assert_eq!(nfa.states, vec![(), ()]);
-        assert_eq!(nfa.accepting_state, StateId(1));
-        assert_transitions!(
-            nfa, {
-                (0, x) => 1;
-            }
-        );
+        let expected = nfa!{
+            start: 0;
+            accept: 1;
+            (0, x) => 1;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
     fn nfa_from_concatenated_regex() {
         let nfa = Nfa::from_regex(&Regex::new("xyz"));
-        assert_eq!(nfa.states, vec![(), (), (), (), (), ()]);
-        assert_eq!(nfa.accepting_state, StateId(5));
-        assert_transitions!(
-            nfa, {
-                (0, x) => 1;
-                (1, ) => 2;
-                (2, y) => 3;
-                (3, ) => 4;
-                (4, z) => 5;
-            }
-        );
+        let expected = nfa!{
+            start: 0;
+            accept: 5;
+            (0, x) => 1;
+            (1, ) => 2;
+            (2, y) => 3;
+            (3, ) => 4;
+            (4, z) => 5;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
     fn nfa_from_alternating_regex() {
         let nfa = Nfa::from_regex(&Regex::new("(x|y)|z"));
-        assert_eq!(nfa.states, vec![(); 10]);
-        assert_eq!(nfa.accepting_state, StateId(9));
-        assert_transitions!(
-            nfa, {
-                (0, ) => 1;
-                (0, ) => 7;
-                (1, ) => 2;
-                (1, ) => 4;
-                (2, x) => 3;
-                (3, ) => 6;
-                (4, y) => 5;
-                (5, ) => 6;
-                (6, ) => 9;
-                (7, z) => 8;
-                (8, ) => 9;
-            }
-        );
+        let expected = nfa!{
+            start: 0;
+            accept: 9;
+            (0, ) => 1;
+            (0, ) => 7;
+            (1, ) => 2;
+            (1, ) => 4;
+            (2, x) => 3;
+            (3, ) => 6;
+            (4, y) => 5;
+            (5, ) => 6;
+            (6, ) => 9;
+            (7, z) => 8;
+            (8, ) => 9;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
     fn nfa_from_repeating_regex() {
         let nfa = Nfa::from_regex(&Regex::new("x*"));
-        assert_eq!(nfa.states, vec![(), (), (), ()]);
-        assert_eq!(nfa.accepting_state, StateId(3));
-
-        assert_transitions!(
-            nfa, {
-                (0, ) => 1;
-                (0, ) => 3;
-                (1, x) => 2;
-                (2, ) => 1;
-                (2, ) => 3;
-            }
-        );
+        let expected = nfa!{
+            start: 0;
+            accept: 3;
+            (0, ) => 1;
+            (0, ) => 3;
+            (1, x) => 2;
+            (2, ) => 1;
+            (2, ) => 3;
+        };
+        assert_eq!(nfa, expected);
     }
 
     #[test]
@@ -463,5 +506,62 @@ mod tests {
             nfa.epsilon_closure(hashset! {s0}),
             hashset! {s0, s1, s2, s3}
         );
+    }
+
+    #[test]
+    fn reversing_an_empty_nfa_produces_empty_nfa() {
+        let nfa = Nfa::new();
+
+        let rnfa = nfa.reverse();
+
+        assert_eq!(rnfa.states.len(), 0);
+        assert_transitions!(rnfa, { });
+    }
+
+    #[test]
+    fn reversing_a_single_element_nfa_produces_same_nfa() {
+        let nfa = nfa! {
+            start: 0;
+            accept: 0;
+        };
+
+        let rnfa = nfa.clone().reverse();
+        assert_eq!(rnfa, nfa);
+    }
+
+    #[test]
+    fn reversing_an_epsilon_transition() {
+        let nfa = nfa! {
+            start: 0;
+            accept: 1;
+            (0, ) => 1;
+        };
+
+        let rnfa = nfa.reverse();
+
+        let expected = nfa!{
+            start: 1;
+            accept: 0;
+            (1, ) => 0;
+        };
+        assert_eq!(rnfa, expected);
+    }
+
+    #[test]
+    fn reversing_a_normal_transition() {
+        let nfa = nfa! {
+            start: 0;
+            accept: 1;
+            (0, x) => 1;
+        };
+
+        let rnfa = nfa.reverse();
+
+        let expected = nfa!{
+            start: 1;
+            accept: 0;
+            (1, x) => 0;
+        };
+        assert_eq!(rnfa, expected);
     }
 }
