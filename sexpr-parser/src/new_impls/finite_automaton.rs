@@ -1,4 +1,4 @@
-use super::super::simple_regex::Regex;
+use super::simple_regex::Regex;
 use maplit::hashset;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
@@ -100,7 +100,7 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
             .count()
     }
 
-    pub fn transitions_from(&self, s: StateId) -> impl Iterator<Item = (StateId, &T)> {
+    fn transitions_from(&self, s: StateId) -> impl Iterator<Item = (StateId, &T)> {
         self.transitions
             .get(&s)
             .into_iter()
@@ -109,7 +109,7 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
             .map(|(t, s_next)| (*s_next, t))
     }
 
-    pub fn epsilon_transitions_from(&self, s: StateId) -> impl Iterator<Item = StateId> + '_ {
+    fn epsilon_transitions_from(&self, s: StateId) -> impl Iterator<Item = StateId> + '_ {
         self.transitions
             .get(&s)
             .into_iter()
@@ -118,7 +118,7 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
             .copied()
     }
 
-    pub fn delta<'a>(
+    fn delta<'a>(
         &self,
         states: impl IntoIterator<Item = &'a StateId>,
     ) -> impl Iterator<Item = (StateId, &T)> {
@@ -128,7 +128,7 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
             .flat_map(move |s0| self.transitions_from(s0).map(move |(s1, t)| (s1, t)))
     }
 
-    pub fn epsilon_closure(&self, mut states: HashSet<StateId>) -> HashSet<StateId> {
+    fn epsilon_closure(&self, mut states: HashSet<StateId>) -> HashSet<StateId> {
         let mut result = hashset! {};
 
         while let Some(s) = set_pop(&mut states) {
@@ -145,7 +145,7 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
         result
     }
 
-    pub fn delta_epsilon_closure<'a>(
+    fn delta_epsilon_closure<'a>(
         &self,
         t: &T,
         subset: impl IntoIterator<Item = &'a StateId>,
@@ -194,7 +194,7 @@ impl<S: PartialEq, T: Eq + Hash> FiniteAutomaton<S, T> {
 }
 
 impl Fa {
-    pub fn from_regex(re: &Regex) -> Self {
+    pub fn nfa_from_regex(re: &Regex) -> Self {
         match re {
             Regex::Empty => {
                 let mut fa = Self::new();
@@ -211,28 +211,28 @@ impl Fa {
                 fa
             }
             Regex::Concatenation(a, b) => {
-                let nfa1 = Self::from_regex(a);
-                let nfa2 = Self::from_regex(b);
+                let nfa1 = Self::nfa_from_regex(a);
+                let nfa2 = Self::nfa_from_regex(b);
                 nfa1.concatenate(nfa2)
             }
             Regex::Alternation(a, b) => {
-                let nfa1 = Self::from_regex(a);
-                let nfa2 = Self::from_regex(b);
+                let nfa1 = Self::nfa_from_regex(a);
+                let nfa2 = Self::nfa_from_regex(b);
                 nfa1.alternate(nfa2)
             }
             Regex::Closure(a) => {
-                let nfa = Self::from_regex(a);
+                let nfa = Self::nfa_from_regex(a);
                 nfa.repeat()
             }
         }
     }
 
-    pub fn from_nfa(nfa: Fa) -> Self {
+    pub fn dfa_from_nfa(nfa: Fa) -> Self {
         let subset_dfa = subset_algorithm(&nfa);
-        Fa::from_subsets(subset_dfa, &nfa)
+        Fa::dfa_from_subset(subset_dfa, &nfa)
     }
 
-    fn from_subsets(subset_dfa: SubsetDfa, nfa: &Fa) -> Self {
+    fn dfa_from_subset(subset_dfa: SubsetDfa, nfa: &Fa) -> Self {
         let mut dfa = Fa::new();
         for q in subset_dfa.states {
             let s = dfa.add_state(());
@@ -452,8 +452,8 @@ mod tests {
 
     #[test]
     fn alternate_nfas() {
-        let nfa1 = Fa::from_regex(&Regex::new("x"));
-        let nfa2 = Fa::from_regex(&Regex::new("y"));
+        let nfa1 = Fa::nfa_from_regex(&Regex::new("x"));
+        let nfa2 = Fa::nfa_from_regex(&Regex::new("y"));
 
         let nfa = nfa1.alternate(nfa2);
 
@@ -472,7 +472,7 @@ mod tests {
 
     #[test]
     fn repeat_nfa() {
-        let nfa = Fa::from_regex(&Regex::new("x"));
+        let nfa = Fa::nfa_from_regex(&Regex::new("x"));
 
         let nfa = nfa.repeat();
 
@@ -490,7 +490,7 @@ mod tests {
 
     #[test]
     fn nfa_from_empty_regex() {
-        let nfa = Fa::from_regex(&Regex::new(""));
+        let nfa = Fa::nfa_from_regex(&Regex::new(""));
         let expected = nfa! {
             start: 0;
             accept: 0;
@@ -500,7 +500,7 @@ mod tests {
 
     #[test]
     fn nfa_from_single_char_regex() {
-        let nfa = Fa::from_regex(&Regex::new("x"));
+        let nfa = Fa::nfa_from_regex(&Regex::new("x"));
         let expected = nfa! {
             start: 0;
             accept: 1;
@@ -511,7 +511,7 @@ mod tests {
 
     #[test]
     fn nfa_from_concatenated_regex() {
-        let nfa = Fa::from_regex(&Regex::new("xyz"));
+        let nfa = Fa::nfa_from_regex(&Regex::new("xyz"));
         let expected = nfa! {
             start: 0;
             accept: 5;
@@ -526,7 +526,7 @@ mod tests {
 
     #[test]
     fn nfa_from_alternating_regex() {
-        let nfa = Fa::from_regex(&Regex::new("(x|y)|z"));
+        let nfa = Fa::nfa_from_regex(&Regex::new("(x|y)|z"));
         let expected = nfa! {
             start: 0;
             accept: 9;
@@ -547,7 +547,7 @@ mod tests {
 
     #[test]
     fn nfa_from_repeating_regex() {
-        let nfa = Fa::from_regex(&Regex::new("x*"));
+        let nfa = Fa::nfa_from_regex(&Regex::new("x*"));
         let expected = nfa! {
             start: 0;
             accept: 3;
@@ -667,7 +667,7 @@ mod tests {
         nfa.add_transition(s0, s1, b'a');
         nfa.set_accepting_state(s1);
 
-        let dfa = Fa::from_nfa(nfa);
+        let dfa = Fa::dfa_from_nfa(nfa);
 
         let expected = nfa! {
             start: 0;
@@ -694,7 +694,7 @@ mod tests {
         nfa.add_epsilon_transition(s2, s5);
         nfa.add_epsilon_transition(s4, s5);
 
-        let dfa = Fa::from_nfa(nfa);
+        let dfa = Fa::dfa_from_nfa(nfa);
 
         assert_eq!(dfa.states.len(), 3);
         assert!(dfa.accepting_states.contains(&StateId(1)));
@@ -735,7 +735,7 @@ mod tests {
         nfa.add_epsilon_transition(n8, n9);
         nfa.add_epsilon_transition(n8, n3);
 
-        let dfa = Fa::from_nfa(nfa);
+        let dfa = Fa::dfa_from_nfa(nfa);
 
         assert_eq!(dfa.states.len(), 4);
         assert!(dfa.accepting_states.contains(&StateId(1)));
