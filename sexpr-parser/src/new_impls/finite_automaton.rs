@@ -171,6 +171,9 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
                 reversed.states = self.states;
                 let start = reversed.add_state(S::default());
                 reversed.set_starting_state(start);
+                for s in self.accepting_states {
+                    reversed.add_epsilon_transition(start, s);
+                }
             }
         }
 
@@ -379,16 +382,21 @@ fn chars_leaving_subset(nfa: &Fa, subset_dfa: &SubsetDfa, q: StateId) -> HashSet
 
 #[macro_export]
 macro_rules! finite_automaton {
-    (start: $start:expr; accept: $end:expr; $($transitions:tt)*) => {{
+    (start: $start:expr; accept: $end:expr; $($rest:tt)*) => {{
         let mut nfa = Fa::new();
         nfa.set_starting_state(StateId($start));
         nfa.set_accepting_state(StateId($end));
-        finite_automaton!(nfa, $($transitions)*);
+        finite_automaton!(nfa, $($rest)*);
         nfa.create_states();
         nfa
     }};
 
     ($nfa:expr, ) => {};
+
+    ($nfa:expr, accept: $end:expr; $($rest:tt)*) => {{
+        $nfa.add_accepting_state(StateId($end));
+        finite_automaton!($nfa, $($rest)*);
+    }};
 
     ($nfa:expr, ($from:expr, ) => $to:expr; $($rest:tt)*) => {{
         $nfa.add_epsilon_transition(StateId($from), StateId($to));
@@ -603,63 +611,6 @@ mod tests {
     }
 
     #[test]
-    fn reversing_an_empty_nfa_produces_empty_nfa() {
-        let nfa = Fa::new();
-
-        let rnfa = nfa.reverse();
-
-        assert_eq!(rnfa.states.len(), 0);
-        assert_transitions!(rnfa, {});
-    }
-
-    #[test]
-    fn reversing_a_single_element_nfa_produces_same_nfa() {
-        let nfa = finite_automaton! {
-            start: 0;
-            accept: 0;
-        };
-
-        let rnfa = nfa.clone().reverse();
-        assert_eq!(rnfa, nfa);
-    }
-
-    #[test]
-    fn reversing_an_epsilon_transition() {
-        let nfa = finite_automaton! {
-            start: 0;
-            accept: 1;
-            (0, ) => 1;
-        };
-
-        let rnfa = nfa.reverse();
-
-        let expected = finite_automaton! {
-            start: 1;
-            accept: 0;
-            (1, ) => 0;
-        };
-        assert_eq!(rnfa, expected);
-    }
-
-    #[test]
-    fn reversing_a_normal_transition() {
-        let nfa = finite_automaton! {
-            start: 0;
-            accept: 1;
-            (0, x) => 1;
-        };
-
-        let rnfa = nfa.reverse();
-
-        let expected = finite_automaton! {
-            start: 1;
-            accept: 0;
-            (1, x) => 0;
-        };
-        assert_eq!(rnfa, expected);
-    }
-
-    #[test]
     fn trivial_nfa_to_dfa() {
         let nfa = finite_automaton! {
             start: 0;
@@ -749,5 +700,85 @@ mod tests {
             }
             _ => panic!("unexpected transition"),
         }
+    }
+
+    #[test]
+    fn reversing_an_empty_nfa_produces_empty_nfa() {
+        let nfa = Fa::new();
+
+        let rnfa = nfa.reverse();
+
+        assert_eq!(rnfa.states.len(), 0);
+        assert_transitions!(rnfa, {});
+    }
+
+    #[test]
+    fn reversing_a_single_element_nfa_produces_same_nfa() {
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 0;
+        };
+
+        let rnfa = nfa.clone().reverse();
+        assert_eq!(rnfa, nfa);
+    }
+
+    #[test]
+    fn reversing_an_epsilon_transition() {
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            (0, ) => 1;
+        };
+
+        let rnfa = nfa.reverse();
+
+        let expected = finite_automaton! {
+            start: 1;
+            accept: 0;
+            (1, ) => 0;
+        };
+        assert_eq!(rnfa, expected);
+    }
+
+    #[test]
+    fn reversing_a_normal_transition() {
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            (0, x) => 1;
+        };
+
+        let rnfa = nfa.reverse();
+
+        let expected = finite_automaton! {
+            start: 1;
+            accept: 0;
+            (1, x) => 0;
+        };
+        assert_eq!(rnfa, expected);
+    }
+
+    #[test]
+    fn reversing_multiple_accept_states() {
+        let nfa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            accept: 2;
+            (0, x) => 1;
+            (0, y) => 2;
+        };
+
+        let rnfa = nfa.reverse();
+
+        let expected = finite_automaton! {
+            start: 3;
+            accept: 0;
+            (3, ) => 1;
+            (3, ) => 2;
+            (1, x) => 0;
+            (2, y) => 0;
+        };
+        assert_eq!(rnfa, expected);
     }
 }
