@@ -15,7 +15,7 @@ pub struct FiniteAutomaton<S, T: Eq + Ord> {
     pub(super) transitions: BTreeMap<StateId, (BTreeSet<(StateId, T)>, BTreeSet<StateId>)>,
 }
 
-impl<S: Default, T: Eq + Ord> FiniteAutomaton<S, T> {
+impl<S: Default, T: Clone + Eq + Ord> FiniteAutomaton<S, T> {
     pub fn new() -> Self {
         FiniteAutomaton {
             states: vec![],
@@ -275,6 +275,104 @@ impl<S: Default, T: Eq + Ord> FiniteAutomaton<S, T> {
         }
         reachable
     }
+
+    fn merge(&mut self, other: Self) -> (StateId, StateId) {
+        let id_offset = self.states.len();
+
+        let id_exit = StateId(other.get_single_accepting_state().unwrap().0 + id_offset);
+
+        self.states.extend(other.states);
+
+        for (s1, trs) in other.transitions {
+            let s1 = StateId(s1.0 + id_offset);
+            for (s2, t) in trs.0 {
+                let s2 = StateId(s2.0 + id_offset);
+                self.add_transition(s1, s2, t);
+            }
+            for s2 in trs.1 {
+                let s2 = StateId(s2.0 + id_offset);
+                self.add_epsilon_transition(s1, s2);
+            }
+        }
+
+        let id_entry = StateId(id_offset);
+        (id_entry, id_exit)
+    }
+
+    pub fn attach(&mut self, other: Self) {
+        let (id_entry, _) = self.merge(other);
+        self.add_epsilon_transition(self.starting_state(), id_entry);
+    }
+
+    pub fn map_accepted_token<U: Clone>(self, token: U) -> FiniteAutomaton<Option<U>, T> {
+        let states = (0..self.states.len())
+            .map(StateId)
+            .map(|s| {
+                if self.is_accepting_state(s) {
+                    Some(token.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        FiniteAutomaton {
+            states,
+            starting_state: self.starting_state,
+            accepting_states: self.accepting_states,
+            transitions: self.transitions,
+        }
+    }
+
+    pub fn dfa_from_nfa(self) -> Self {
+        let subset_dfa = self.subset_algorithm();
+        Self::dfa_from_subset(subset_dfa, &self)
+    }
+
+    fn dfa_from_subset(subset_dfa: SubsetDfa<T>, nfa: &Self) -> Self {
+        let mut dfa = Self::new();
+        for q in subset_dfa.states {
+            let s = dfa.add_state(S::default());
+            for n in q {
+                if nfa.is_accepting_state(n) {
+                    dfa.add_accepting_state(s);
+                }
+            }
+        }
+        dfa.transitions = subset_dfa.transitions;
+        dfa.starting_state = subset_dfa.starting_state;
+
+        dfa
+    }
+
+    fn subset_algorithm(&self) -> SubsetDfa<T> {
+        let n0 = self.starting_state();
+        let q0 = self.epsilon_closure(btreeset![n0]);
+
+        let mut sublist_dfa = FiniteAutomaton::new();
+        let t0 = sublist_dfa.add_state(q0);
+        sublist_dfa.set_starting_state(t0);
+
+        let mut worklist = vec![t0];
+        while let Some(q) = worklist.pop() {
+            for c in self.chars_leaving_subset(&sublist_dfa, q) {
+                let t = self.delta_epsilon_closure(c, sublist_dfa.get_state_content(q));
+                if let Some(i) = sublist_dfa.find_state_by_content(&t) {
+                    sublist_dfa.add_transition(q, i, c.clone());
+                } else {
+                    let d_next = sublist_dfa.add_state(t);
+                    sublist_dfa.add_transition(q, d_next, c.clone());
+                    worklist.push(d_next);
+                }
+            }
+        }
+        sublist_dfa
+    }
+
+    fn chars_leaving_subset(&self, subset_dfa: &SubsetDfa<T>, q: StateId) -> BTreeSet<&T> {
+        self.delta(subset_dfa.get_state_content(q))
+            .map(|(_, t)| t)
+            .collect()
+    }
 }
 
 impl<S: PartialEq, T: Eq + Ord> FiniteAutomaton<S, T> {
@@ -324,27 +422,6 @@ impl Fa {
             .reverse()
             .dfa_from_nfa()
             .reachable()
-    }
-
-    pub fn dfa_from_nfa(self) -> Self {
-        let subset_dfa = subset_algorithm(&self);
-        Fa::dfa_from_subset(subset_dfa, &self)
-    }
-
-    fn dfa_from_subset(subset_dfa: SubsetDfa, nfa: &Fa) -> Self {
-        let mut dfa = Fa::new();
-        for q in subset_dfa.states {
-            let s = dfa.add_state(());
-            for n in q {
-                if nfa.is_accepting_state(n) {
-                    dfa.add_accepting_state(s);
-                }
-            }
-        }
-        dfa.transitions = subset_dfa.transitions;
-        dfa.starting_state = subset_dfa.starting_state;
-
-        dfa
     }
 
     fn concatenate(mut self, other: Self) -> Self {
@@ -397,29 +474,6 @@ impl Fa {
         new
     }
 
-    fn merge(&mut self, other: Self) -> (StateId, StateId) {
-        let id_offset = self.states.len();
-
-        let id_exit = StateId(other.get_single_accepting_state().unwrap().0 + id_offset);
-
-        self.states.extend(other.states);
-
-        for (s1, trs) in other.transitions {
-            let s1 = StateId(s1.0 + id_offset);
-            for (s2, t) in trs.0 {
-                let s2 = StateId(s2.0 + id_offset);
-                self.add_transition(s1, s2, t);
-            }
-            for s2 in trs.1 {
-                let s2 = StateId(s2.0 + id_offset);
-                self.add_epsilon_transition(s1, s2);
-            }
-        }
-
-        let id_entry = StateId(id_offset);
-        (id_entry, id_exit)
-    }
-
     pub fn create_states(&mut self) {
         let max_id = self
             .transitions
@@ -444,37 +498,7 @@ fn set_pop<T: Clone + Eq + Ord>(set: &mut BTreeSet<T>) -> Option<T> {
     set.take(&item)
 }
 
-type SubsetDfa = FiniteAutomaton<BTreeSet<StateId>, u8>;
-
-fn subset_algorithm(nfa: &Fa) -> SubsetDfa {
-    let n0 = nfa.starting_state();
-    let q0 = nfa.epsilon_closure(btreeset![n0]);
-
-    let mut sublist_dfa = FiniteAutomaton::new();
-    let t0 = sublist_dfa.add_state(q0);
-    sublist_dfa.set_starting_state(t0);
-
-    let mut worklist = vec![t0];
-    while let Some(q) = worklist.pop() {
-        for c in chars_leaving_subset(&nfa, &sublist_dfa, q) {
-            let t = nfa.delta_epsilon_closure(&c, sublist_dfa.get_state_content(q));
-            if let Some(i) = sublist_dfa.find_state_by_content(&t) {
-                sublist_dfa.add_transition(q, i, c);
-            } else {
-                let d_next = sublist_dfa.add_state(t);
-                sublist_dfa.add_transition(q, d_next, c);
-                worklist.push(d_next);
-            }
-        }
-    }
-    sublist_dfa
-}
-
-fn chars_leaving_subset(nfa: &Fa, subset_dfa: &SubsetDfa, q: StateId) -> BTreeSet<u8> {
-    nfa.delta(subset_dfa.get_state_content(q))
-        .map(|(_, t)| *t)
-        .collect()
-}
+type SubsetDfa<T> = FiniteAutomaton<BTreeSet<StateId>, T>;
 
 #[macro_export]
 macro_rules! finite_automaton {
