@@ -1,26 +1,29 @@
 use crate::scanner::{Scanner, Token};
 use crate::{parser, Context, Sexpr};
 use crate::{Error, Result};
+use logos::Logos;
 
 pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
-    let mut scanner = Scanner::new(s);
+    let mut scanner = Token::lexer(s);
     parser::parse(&mut scanner).map(|x| Context::string(s, x))
 }
 
 pub fn parse_str_sequence(s: &str) -> Result<Vec<Context<Sexpr>>> {
-    let mut scanner = Scanner::new(s);
+    /*let mut scanner = Token::lexer(s);
     let mut sequence = vec![];
     while scanner.peek().is_some() {
         sequence.push(parser::parse(&mut scanner).map(|x| Context::string(s, x))?)
     }
-    Ok(sequence)
+    Ok(sequence)*/
+    unimplemented!()
 }
 
 pub fn parse(scanner: &mut Scanner) -> Result<Context<Sexpr>> {
-    let token = scanner.next_token()?;
-    parse_token(token, scanner)
+    /*let token = scanner.next_token()?;
+    parse_token(token, scanner)*/
+    unimplemented!()
 }
-
+/*
 fn parse_token(token: Token, scanner: &mut Scanner) -> Result<Context<Sexpr>> {
     match token {
         Token::Eof(pos) => Err(Context::offset(pos, Error::UnexpectedEof)),
@@ -79,3 +82,4 @@ mod tests {
         );
     }
 }
+*/
