@@ -1,7 +1,6 @@
 use super::simple_regex::Regex;
-use maplit::hashset;
-use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
+use maplit::btreeset;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct StateId(pub(super) usize);
@@ -9,20 +8,20 @@ pub struct StateId(pub(super) usize);
 pub type Fa = FiniteAutomaton<(), u8>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct FiniteAutomaton<S, T: Eq + Hash> {
+pub struct FiniteAutomaton<S, T: Eq + Ord> {
     pub(super) states: Vec<S>,
     pub(super) starting_state: StateId,
-    pub(super) accepting_states: HashSet<StateId>,
-    pub(super) transitions: HashMap<StateId, (HashMap<T, StateId>, HashSet<StateId>)>,
+    pub(super) accepting_states: BTreeSet<StateId>,
+    pub(super) transitions: BTreeMap<StateId, (BTreeSet<(StateId, T)>, BTreeSet<StateId>)>,
 }
 
-impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
+impl<S: Default, T: Eq + Ord> FiniteAutomaton<S, T> {
     pub fn new() -> Self {
         FiniteAutomaton {
             states: vec![],
             starting_state: StateId(0),
-            accepting_states: HashSet::new(),
-            transitions: HashMap::new(),
+            accepting_states: BTreeSet::new(),
+            transitions: BTreeMap::new(),
         }
     }
 
@@ -39,15 +38,15 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
     pub fn add_transition(&mut self, s1: StateId, s2: StateId, t: T) {
         self.transitions
             .entry(s1)
-            .or_insert((HashMap::new(), HashSet::new()))
+            .or_insert((BTreeSet::new(), BTreeSet::new()))
             .0
-            .insert(t, s2);
+            .insert((s2, t));
     }
 
     pub fn add_epsilon_transition(&mut self, s1: StateId, s2: StateId) {
         self.transitions
             .entry(s1)
-            .or_insert((HashMap::new(), HashSet::new()))
+            .or_insert((BTreeSet::new(), BTreeSet::new()))
             .1
             .insert(s2);
     }
@@ -61,7 +60,7 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
     }
 
     pub fn set_accepting_state(&mut self, sid: StateId) {
-        self.accepting_states = hashset![sid]
+        self.accepting_states = btreeset![sid]
     }
 
     pub fn add_accepting_state(&mut self, sid: StateId) {
@@ -79,41 +78,58 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
         self.accepting_states.iter().next().copied()
     }
 
-    pub fn get_transition(&self, s: StateId, t: &T) -> Option<StateId> {
+    pub fn get_single_transition(&self, s: StateId, t: &T) -> Option<StateId> {
+        let mut trs = self.transitions_from_on(s, t);
+        let first = trs.next();
+        let second = trs.next();
+        if second.is_some() {
+            None
+        } else {
+            first
+        }
+    }
+
+    pub fn transitions_from_on<'a>(
+        &'a self,
+        s: StateId,
+        t: &'a T,
+    ) -> impl Iterator<Item = StateId> + 'a {
         self.transitions
             .get(&s)
-            .and_then(|(non_eps, _)| non_eps.get(t))
-            .copied()
+            .map(|(non_eps, _)| non_eps)
+            .into_iter()
+            .flatten()
+            .filter(move |(_, tr)| tr == t)
+            .map(|&(s1, _)| s1)
+    }
+
+    pub fn transitions_from(&self, s: StateId) -> impl Iterator<Item = (StateId, &T)> {
+        self.transitions
+            .get(&s)
+            .map(|(non_eps, _)| non_eps)
+            .into_iter()
+            .flat_map(|trs| trs.iter().map(|(s1, t)| (*s1, t)))
+    }
+
+    pub fn all_transitions(&self) -> impl Iterator<Item = (StateId, StateId, &T)> {
+        self.transitions
+            .iter()
+            .flat_map(|(s0, (trs, _))| trs.iter().map(move |(s1, t)| (*s0, *s1, t)))
     }
 
     pub fn count_transitions(&self) -> usize {
-        self.transitions
-            .iter()
-            .flat_map(|(_, (non_eps, _))| non_eps)
-            .count()
+        self.transitions.len()
     }
 
     pub fn count_epsilon_transitions(&self) -> usize {
-        self.transitions
-            .iter()
-            .flat_map(|(_, (_, eps))| eps)
-            .count()
-    }
-
-    fn transitions_from(&self, s: StateId) -> impl Iterator<Item = (StateId, &T)> {
-        self.transitions
-            .get(&s)
-            .into_iter()
-            .map(|(non_eps, _)| non_eps)
-            .flatten()
-            .map(|(t, s_next)| (*s_next, t))
+        self.transitions.len()
     }
 
     fn epsilon_transitions_from(&self, s: StateId) -> impl Iterator<Item = StateId> + '_ {
         self.transitions
             .get(&s)
-            .into_iter()
             .map(|(_, eps)| eps)
+            .into_iter()
             .flatten()
             .copied()
     }
@@ -128,8 +144,8 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
             .flat_map(move |s0| self.transitions_from(s0).map(move |(s1, t)| (s1, t)))
     }
 
-    fn epsilon_closure(&self, mut states: HashSet<StateId>) -> HashSet<StateId> {
-        let mut result = hashset! {};
+    fn epsilon_closure(&self, mut states: BTreeSet<StateId>) -> BTreeSet<StateId> {
+        let mut result = btreeset! {};
 
         while let Some(s) = set_pop(&mut states) {
             if result.contains(&s) {
@@ -149,15 +165,15 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
         &self,
         t: &T,
         subset: impl IntoIterator<Item = &'a StateId>,
-    ) -> HashSet<StateId> {
+    ) -> BTreeSet<StateId> {
         let dq = subset
             .into_iter()
-            .flat_map(move |&s| self.get_transition(s, t))
+            .flat_map(move |&s| self.transitions_from_on(s, t))
             .collect();
         self.epsilon_closure(dq)
     }
 
-    pub fn reverse(mut self) -> Self {
+    pub fn reverse(self) -> Self {
         let mut reversed = Self::new();
         reversed.set_accepting_state(self.starting_state());
 
@@ -177,54 +193,91 @@ impl<S: Default, T: Eq + Hash> FiniteAutomaton<S, T> {
             }
         }
 
-        let old_transitions = std::mem::replace(&mut self.transitions, HashMap::new());
-        for (s0, (non_eps, eps)) in old_transitions {
+        for (s0, (non_eps, eps)) in self.transitions {
+            for (s1, t) in non_eps {
+                reversed.add_transition(s1, s0, t);
+            }
             for s1 in eps {
                 reversed.add_epsilon_transition(s1, s0);
             }
-            for (t, s1) in non_eps {
-                reversed.add_transition(s1, s0, t);
-            }
         }
+
         reversed
     }
 
     pub fn reachable(mut self) -> Self {
-        let mut queue = vec![self.starting_state()];
+        let reachable = self.find_reachable_states();
 
         let mut out = Self::new();
 
-        let mut seen = HashSet::new();
-        while let Some(old_state) = queue.pop() {
-            if seen.contains(&old_state) {
+        let mut mapping = BTreeMap::new();
+        for (s, content) in std::mem::replace(&mut self.states, vec![])
+            .into_iter()
+            .enumerate()
+        {
+            let old_state = StateId(s);
+            if reachable.contains(&old_state) {
+                let new_state = out.add_state(content);
+
+                if self.is_accepting_state(old_state) {
+                    out.add_accepting_state(new_state);
+                }
+
+                mapping.insert(old_state, new_state);
+            }
+        }
+
+        out.set_starting_state(mapping[&self.starting_state]);
+
+        for (s0, (non_eps, eps)) in self.transitions {
+            if !reachable.contains(&s0) {
                 continue;
             }
-            seen.insert(old_state);
+            let s0 = mapping[&s0];
 
-            let content = std::mem::replace(&mut self.states[old_state.0], S::default());
-            let state = out.add_state(content);
-
-            if self.is_accepting_state(old_state) {
-                out.add_accepting_state(state);
+            for (s1, t) in non_eps {
+                if !reachable.contains(&s1) {
+                    continue;
+                }
+                let s1 = mapping[&s1];
+                out.add_transition(s0, s1, t);
             }
 
-            for (non_eps, eps) in self.transitions.remove(&state) {
-                for (t, next) in non_eps {
-                    queue.push(next);
-                    out.add_transition(state, next, t);
+            for s1 in eps {
+                if !reachable.contains(&s1) {
+                    continue;
                 }
-                for next in eps {
-                    queue.push(next);
-                    out.add_epsilon_transition(state, next);
-                }
+                let s1 = mapping[&s1];
+                out.add_epsilon_transition(s0, s1);
             }
         }
 
         out
     }
+
+    fn find_reachable_states(&self) -> BTreeSet<StateId> {
+        let mut queue = vec![self.starting_state()];
+
+        let mut reachable = BTreeSet::new();
+        while let Some(state) = queue.pop() {
+            if reachable.contains(&state) {
+                continue;
+            }
+            reachable.insert(state);
+
+            for (next, _) in self.transitions_from(state) {
+                queue.push(next);
+            }
+
+            for next in self.epsilon_transitions_from(state) {
+                queue.push(next);
+            }
+        }
+        reachable
+    }
 }
 
-impl<S: PartialEq, T: Eq + Hash> FiniteAutomaton<S, T> {
+impl<S: PartialEq, T: Eq + Ord> FiniteAutomaton<S, T> {
     pub fn find_state_by_content(&self, value: &S) -> Option<StateId> {
         self.states.iter().position(|q| q == value).map(StateId)
     }
@@ -264,9 +317,18 @@ impl Fa {
         }
     }
 
-    pub fn dfa_from_nfa(nfa: Fa) -> Self {
-        let subset_dfa = subset_algorithm(&nfa);
-        Fa::dfa_from_subset(subset_dfa, &nfa)
+    pub fn minimize(self) -> Self {
+        self.reverse()
+            .dfa_from_nfa()
+            .reachable()
+            .reverse()
+            .dfa_from_nfa()
+            .reachable()
+    }
+
+    pub fn dfa_from_nfa(self) -> Self {
+        let subset_dfa = subset_algorithm(&self);
+        Fa::dfa_from_subset(subset_dfa, &self)
     }
 
     fn dfa_from_subset(subset_dfa: SubsetDfa, nfa: &Fa) -> Self {
@@ -344,7 +406,7 @@ impl Fa {
 
         for (s1, trs) in other.transitions {
             let s1 = StateId(s1.0 + id_offset);
-            for (t, s2) in trs.0 {
+            for (s2, t) in trs.0 {
                 let s2 = StateId(s2.0 + id_offset);
                 self.add_transition(s1, s2, t);
             }
@@ -364,7 +426,7 @@ impl Fa {
             .iter()
             .flat_map(|(s0, (non_eps, eps))| {
                 std::iter::once(s0)
-                    .chain(non_eps.values())
+                    .chain(non_eps.iter().map(|(s1, _)| s1))
                     .chain(eps.iter())
             })
             .chain(self.accepting_states.iter())
@@ -377,16 +439,16 @@ impl Fa {
     }
 }
 
-fn set_pop<T: Clone + Eq + std::hash::Hash>(set: &mut HashSet<T>) -> Option<T> {
+fn set_pop<T: Clone + Eq + Ord>(set: &mut BTreeSet<T>) -> Option<T> {
     let item = set.iter().next()?.clone();
     set.take(&item)
 }
 
-type SubsetDfa = FiniteAutomaton<HashSet<StateId>, u8>;
+type SubsetDfa = FiniteAutomaton<BTreeSet<StateId>, u8>;
 
 fn subset_algorithm(nfa: &Fa) -> SubsetDfa {
     let n0 = nfa.starting_state();
-    let q0 = nfa.epsilon_closure(hashset![n0]);
+    let q0 = nfa.epsilon_closure(btreeset![n0]);
 
     let mut sublist_dfa = FiniteAutomaton::new();
     let t0 = sublist_dfa.add_state(q0);
@@ -408,7 +470,7 @@ fn subset_algorithm(nfa: &Fa) -> SubsetDfa {
     sublist_dfa
 }
 
-fn chars_leaving_subset(nfa: &Fa, subset_dfa: &SubsetDfa, q: StateId) -> HashSet<u8> {
+fn chars_leaving_subset(nfa: &Fa, subset_dfa: &SubsetDfa, q: StateId) -> BTreeSet<u8> {
     nfa.delta(subset_dfa.get_state_content(q))
         .map(|(_, t)| *t)
         .collect()
@@ -604,7 +666,7 @@ mod tests {
 
     #[test]
     fn epsilon_closure_of_empty_set_is_empty_set() {
-        assert_eq!(Fa::new().epsilon_closure(hashset! {}), hashset! {});
+        assert_eq!(Fa::new().epsilon_closure(btreeset! {}), btreeset! {});
     }
 
     #[test]
@@ -616,7 +678,7 @@ mod tests {
         nfa.add_state(());
         nfa.add_transition(s0, s1, b'x');
         nfa.add_epsilon_transition(s1, s2);
-        assert_eq!(nfa.epsilon_closure(hashset! {s0}), hashset! {s0});
+        assert_eq!(nfa.epsilon_closure(btreeset! {s0}), btreeset! {s0});
     }
 
     #[test]
@@ -625,7 +687,7 @@ mod tests {
         let s0 = nfa.add_state(());
         let s1 = nfa.add_state(());
         nfa.add_epsilon_transition(s0, s1);
-        assert_eq!(nfa.epsilon_closure(hashset! {s0}), hashset! { s0, s1 });
+        assert_eq!(nfa.epsilon_closure(btreeset! {s0}), btreeset! { s0, s1 });
     }
 
     #[test]
@@ -639,8 +701,8 @@ mod tests {
         nfa.add_epsilon_transition(s0, s2);
         nfa.add_epsilon_transition(s2, s3);
         assert_eq!(
-            nfa.epsilon_closure(hashset! {s0}),
-            hashset! {s0, s1, s2, s3}
+            nfa.epsilon_closure(btreeset! {s0}),
+            btreeset! {s0, s1, s2, s3}
         );
     }
 
@@ -677,15 +739,14 @@ mod tests {
 
         let dfa = Fa::dfa_from_nfa(nfa);
 
-        assert_eq!(dfa.states.len(), 3);
-        assert!(dfa.accepting_states.contains(&StateId(1)));
-        assert!(dfa.accepting_states.contains(&StateId(2)));
-        assert_eq!(dfa.accepting_states.len(), 2);
-        match dfa.transitions[&StateId(0)].0[&b'a'] {
-            StateId(1) => assert_eq!(dfa.transitions[&StateId(0)].0[&b'b'], StateId(2)),
-            StateId(2) => assert_eq!(dfa.transitions[&StateId(0)].0[&b'b'], StateId(1)),
-            _ => panic!("Unexpected transition"),
-        }
+        let expected = finite_automaton! {
+            start: 0;
+            accept: 1;
+            accept: 2;
+            (0, a) => 1;
+            (0, b) => 2;
+        };
+        assert_eq!(dfa, expected);
     }
 
     #[test]
@@ -710,30 +771,20 @@ mod tests {
 
         let dfa = Fa::dfa_from_nfa(nfa);
 
-        assert_eq!(dfa.states.len(), 4);
-        assert!(dfa.accepting_states.contains(&StateId(1)));
-        assert!(dfa.accepting_states.contains(&StateId(2)));
-        assert!(dfa.accepting_states.contains(&StateId(3)));
-        assert_eq!(dfa.accepting_states.len(), 3);
-
-        assert_eq!(dfa.transitions[&StateId(0)].0[&b'a'], StateId(1));
-        match dfa.transitions[&StateId(1)].0[&b'c'] {
-            StateId(2) => {
-                assert_eq!(dfa.transitions[&StateId(1)].0[&b'b'], StateId(3));
-                assert_eq!(dfa.transitions[&StateId(2)].0[&b'b'], StateId(3));
-                assert_eq!(dfa.transitions[&StateId(2)].0[&b'c'], StateId(2));
-                assert_eq!(dfa.transitions[&StateId(3)].0[&b'b'], StateId(3));
-                assert_eq!(dfa.transitions[&StateId(3)].0[&b'c'], StateId(2));
-            }
-            StateId(3) => {
-                assert_eq!(dfa.transitions[&StateId(1)].0[&b'b'], StateId(2));
-                assert_eq!(dfa.transitions[&StateId(2)].0[&b'b'], StateId(2));
-                assert_eq!(dfa.transitions[&StateId(2)].0[&b'c'], StateId(3));
-                assert_eq!(dfa.transitions[&StateId(3)].0[&b'b'], StateId(2));
-                assert_eq!(dfa.transitions[&StateId(3)].0[&b'c'], StateId(3));
-            }
-            _ => panic!("unexpected transition"),
-        }
+        let expected = finite_automaton! {
+            start: 0;
+            accept: 1;
+            accept: 2;
+            accept: 3;
+            (0, a) => 1;
+            (1, b) => 2;
+            (1, c) => 3;
+            (2, b) => 2;
+            (2, c) => 3;
+            (3, b) => 2;
+            (3, c) => 3;
+        };
+        assert_eq!(dfa, expected);
     }
 
     #[test]
@@ -817,6 +868,42 @@ mod tests {
     }
 
     #[test]
+    fn reversing_multiple_transitions() {
+        // EaC book, figure 2.12
+        let fa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            accept: 2;
+            accept: 3;
+            (0, a) => 1;
+            (1, b) => 2;
+            (1, c) => 3;
+            (2, b) => 2;
+            (2, c) => 3;
+            (3, b) => 2;
+            (3, c) => 3;
+        };
+
+        let rfa = fa.reverse();
+
+        let expected = finite_automaton! {
+            start: 4;
+            accept: 0;
+            (1, a) => 0;
+            (2, b) => 1;
+            (3, c) => 1;
+            (2, b) => 2;
+            (3, c) => 2;
+            (2, b) => 3;
+            (3, c) => 3;
+            (4, ) => 1;
+            (4, ) => 2;
+            (4, ) => 3;
+        };
+        assert_eq!(rfa, expected);
+    }
+
+    #[test]
     fn reachable_keeps_states_connected_to_start() {
         let nfa = finite_automaton! {
             start: 0;
@@ -846,5 +933,62 @@ mod tests {
             accept: 0;
         };
         assert_eq!(rnfa, expected);
+    }
+
+    #[test]
+    fn reachable_works_with_self_connections() {
+        let fa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            (0, a) => 1;
+            (0, b) => 2;
+            (0, c) => 2;
+            (2, a) => 1;
+            (2, b) => 2;
+            (2, c) => 2;
+        };
+
+        let rfa = fa.reachable();
+
+        let expected = finite_automaton! {
+            start: 0;
+            accept: 1;
+            (0, a) => 1;
+            (0, b) => 2;
+            (0, c) => 2;
+            (2, a) => 1;
+            (2, b) => 2;
+            (2, c) => 2;
+        };
+        assert_eq!(rfa, expected);
+    }
+
+    #[test]
+    fn dfa_minimizing() {
+        // EaC book, figure 2.12
+        let dfa = finite_automaton! {
+            start: 0;
+            accept: 1;
+            accept: 2;
+            accept: 3;
+            (0, a) => 1;
+            (1, b) => 2;
+            (1, c) => 3;
+            (2, b) => 2;
+            (2, c) => 3;
+            (3, b) => 2;
+            (3, c) => 3;
+        };
+
+        let mindfa = dfa.minimize();
+
+        let expected = finite_automaton! {
+            start: 0;
+            accept: 1;
+            (0, a) => 1;
+            (1, b) => 1;
+            (1, c) => 1;
+        };
+        assert_eq!(mindfa, expected);
     }
 }
