@@ -15,6 +15,7 @@ pub enum Error {
     InvalidNumber,
     Utf8Error,
     UnexpectedToken,
+    InvalidToken(String),
     MissingDelimiter,
     Expected(String),
 }

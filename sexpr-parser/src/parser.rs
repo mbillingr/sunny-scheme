@@ -9,36 +9,44 @@ pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
 }
 
 pub fn parse_str_sequence(s: &str) -> Result<Vec<Context<Sexpr>>> {
-    /*let mut scanner = Token::lexer(s);
+    let mut scanner = Token::lexer(s);
     let mut sequence = vec![];
-    while scanner.peek().is_some() {
-        sequence.push(parser::parse(&mut scanner).map(|x| Context::string(s, x))?)
+    loop {
+        let token = scanner.next();
+        if token.is_none() {
+            break;
+        }
+        let sexpr = parse_token(token, &mut scanner)?;
+        sequence.push(sexpr);
     }
-    Ok(sequence)*/
-    unimplemented!()
+    Ok(sequence)
 }
 
 pub fn parse(scanner: &mut Scanner) -> Result<Context<Sexpr>> {
-    /*let token = scanner.next_token()?;
-    parse_token(token, scanner)*/
-    unimplemented!()
+    let token = scanner.next();
+    parse_token(token, scanner)
 }
-/*
-fn parse_token(token: Token, scanner: &mut Scanner) -> Result<Context<Sexpr>> {
+
+fn parse_token(token: Option<Token>, scanner: &mut Scanner) -> Result<Context<Sexpr>> {
+    let pos = scanner.span().start;
     match token {
-        Token::Eof(pos) => Err(Context::offset(pos, Error::UnexpectedEof)),
-        Token::Int(pos, i) => Ok(Context::offset(pos, Sexpr::int(i))),
-        Token::Symbol(pos, s) => Ok(Context::offset(pos, Sexpr::symbol(s))),
-        Token::String(pos, s) => Ok(Context::offset(pos, Sexpr::string(s))),
-        Token::LParen(pos) => parse_list(pos, scanner),
-        Token::RParen(pos) => Err(Context::offset(pos, Error::UnexpectedToken)),
+        None => Err(Context::offset(pos, Error::UnexpectedEof)),
+        Some(Token::Int(i)) => Ok(Context::offset(pos, Sexpr::int(i))),
+        Some(Token::Symbol) => Ok(Context::offset(pos, Sexpr::symbol(scanner.slice()))),
+        Some(Token::String(s)) => Ok(Context::offset(pos, Sexpr::string(s))),
+        Some(Token::LParen) => parse_list(pos, scanner),
+        Some(Token::RParen) => Err(Context::offset(pos, Error::UnexpectedToken)),
+        Some(Token::Error) => Err(Context::offset(
+            pos,
+            Error::InvalidToken(scanner.slice().to_string()),
+        )),
     }
 }
 
 fn parse_list(start_pos: usize, scanner: &mut Scanner) -> Result<Context<Sexpr>> {
-    let token = scanner.next_token()?;
+    let token = scanner.next();
     match token {
-        Token::RParen(pos) => Ok(Context::offset(pos, Sexpr::Nil)),
+        Some(Token::RParen) => Ok(Context::offset(scanner.span().start, Sexpr::Nil)),
         _ => Ok(Context::offset(
             start_pos,
             Sexpr::cons(
@@ -82,4 +90,3 @@ mod tests {
         );
     }
 }
-*/

@@ -1,9 +1,9 @@
-use logos::{Lexer, Logos, Span};
+use logos::{Lexer, Logos};
 
-pub type Scanner<'a> = Lexer<'a, Token>;
+pub type Scanner<'a> = Lexer<'a, Token<'a>>;
 
 #[derive(Logos, Debug, PartialEq)]
-pub enum Token {
+pub enum Token<'a> {
     #[token("(")]
     LParen,
 
@@ -15,6 +15,9 @@ pub enum Token {
 
     #[regex("[a-zA-Z]+")]
     Symbol,
+
+    #[regex("\"[^\"]*\"", |lex| &lex.slice()[1..lex.slice().len()-1])]
+    String(&'a str),
 
     #[regex(r"[ \t\n\f]+", logos::skip)]
     #[error]
@@ -28,7 +31,7 @@ mod tests {
     #[test]
     fn test_lex() {
         use Token::*;
-        let mut lex = Token::lexer("foo (bar 42)");
+        let lex = Token::lexer("foo (bar 42)");
         let tokens: Vec<_> = lex.spanned().collect();
         assert_eq!(
             tokens,
