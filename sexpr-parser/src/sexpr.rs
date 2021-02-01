@@ -118,6 +118,17 @@ impl<T> Context<T> {
     pub fn offset(ofs: usize, inner: impl Into<Context<T>>) -> Self {
         Context::Offset(ofs, Box::new(inner.into()))
     }
+
+    pub fn convert<U: From<T>>(self) -> Context<U> {
+        use Context::*;
+        match self {
+            None(x) => None(x.into()),
+            File(c, x) => File(c, Box::new(x.convert())),
+            String(c, x) => String(c, Box::new(x.convert())),
+            Offset(c, x) => Offset(c, Box::new(x.convert())),
+            Cursor(c, d, x) => Cursor(c, d, Box::new(x.convert())),
+        }
+    }
 }
 
 impl Context<Sexpr> {

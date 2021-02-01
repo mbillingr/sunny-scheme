@@ -13,7 +13,7 @@ pub enum Token<'a> {
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Int(i64),
 
-    #[regex("[a-zA-Z]+")]
+    #[regex("([a-zA-Z+*/:;,.<>|#^@]|-)+")]
     Symbol,
 
     #[regex("\"[^\"]*\"", |lex| &lex.slice()[1..lex.slice().len()-1])]
