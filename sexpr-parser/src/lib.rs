@@ -1,8 +1,10 @@
-mod parser;
-mod scanner;
+#[macro_use]
+extern crate lalrpop_util;
+
+lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
+
 mod sexpr;
 
-pub use parser::{parse_str, parse_str_sequence};
 pub use sexpr::{Context, Sexpr};
 
 type Int = i64;
@@ -18,6 +20,38 @@ pub enum Error {
     InvalidToken(String),
     MissingDelimiter,
     Expected(String),
+
+    UnrecognizedToken(String, Vec<String>),
+}
+
+impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>>
+    for Context<Error>
+{
+    fn from(
+        pe: lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>,
+    ) -> Self {
+        match pe {
+            lalrpop_util::ParseError::UnrecognizedToken {
+                token: (l, t, r),
+                expected,
+            } => {
+                println!("{:?}", t);
+                Context::Cursor(
+                    l,
+                    r,
+                    Box::new(Context::None(Error::UnrecognizedToken(
+                        t.to_string(),
+                        expected,
+                    ))),
+                )
+            }
+            _ => unimplemented!("{:?}", pe),
+        }
+    }
+}
+
+pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
+    Ok(sexpr_grammar::DatumParser::new().parse(s)?)
 }
 
 pub trait CxR {
@@ -141,7 +175,6 @@ pub trait CxR {
 
 #[cfg(test)]
 mod acceptance_tests {
-    use crate::parser::parse_str_sequence;
     use crate::*;
 
     #[test]
@@ -163,6 +196,13 @@ mod acceptance_tests {
     }
 
     #[test]
+    fn can_parse_pair() {
+        let sexpr = parse_str("(1 . 2)").unwrap();
+        assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
+        assert_eq!(sexpr.cdr().unwrap(), &Sexpr::int(2));
+    }
+
+    #[test]
     fn can_parse_list() {
         let sexpr = parse_str("(1 (2 3) 4)").unwrap();
         assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
@@ -171,13 +211,5 @@ mod acceptance_tests {
         assert_eq!(sexpr.cddadr().unwrap(), &Sexpr::nil());
         assert_eq!(sexpr.caddr().unwrap(), &Sexpr::int(4));
         assert_eq!(sexpr.cdddr().unwrap(), &Sexpr::nil());
-    }
-
-    #[test]
-    fn can_parse_sequence() {
-        let sequence = parse_str_sequence("1 \"foo\" 2").unwrap();
-        assert_eq!(sequence[0], Sexpr::int(1));
-        assert_eq!(sequence[1], Sexpr::string("foo"));
-        assert_eq!(sequence[2], Sexpr::int(2));
     }
 }

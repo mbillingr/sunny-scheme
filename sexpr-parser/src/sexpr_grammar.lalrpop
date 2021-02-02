@@ -1,0 +1,34 @@
+use std::str::FromStr;
+use crate::{Context, Sexpr};
+
+grammar;
+
+pub Datum: Context<Sexpr> = {
+    <n:Num> => Context::None(Sexpr::int(n)),
+    <s:Sym> => Context::None(Sexpr::symbol(s)),
+    <s:Str> => Context::None(Sexpr::string(s)),
+    <p:Pair> => Context::None(Sexpr::cons(p.0, p.1)),
+    <l:List> => <>,
+};
+
+Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
+
+Sym: &'input str = <s:r"[a-zA-Z:-]([a-zA-Z0-9:-])*"> => s;
+
+Str: &'input str = {
+    <s:r#""[^"]*""#> => &s[1..s.len()-1],
+ };
+
+Pair: (Context<Sexpr>, Context<Sexpr>) = {
+    "(" <car:Datum> "." <cdr:Datum> ")" => (car, cdr)
+};
+
+List: Context<Sexpr> = {
+    "(" ")" => Context::None(Sexpr::nil()),
+    "(" <Sequence> ")" => <>,
+};
+
+Sequence: Context<Sexpr> = {
+    <car:Datum> <cdr:Sequence> => Context::None(Sexpr::cons(car, cdr)),
+    <car:Datum> => Context::None(Sexpr::cons(car, Sexpr::nil())),
+};
