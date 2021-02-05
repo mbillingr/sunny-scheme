@@ -3,6 +3,8 @@ use crate::mem::{Ref, Storage, Traceable, Tracer};
 use crate::table::Table;
 use crate::value::Symbol;
 use crate::Value;
+use std::fmt::Debug;
+use sunny_sexpr_parser::Sexpr;
 
 pub struct ValueStorage {
     storage: Storage,
@@ -19,6 +21,20 @@ impl ValueStorage {
         ValueStorage {
             storage: Storage::new(capacity),
         }
+    }
+
+    pub fn sexpr_to_value(&mut self, sexpr: &Sexpr<'_>) -> Result<Value, ()> {
+        Ok(match sexpr {
+            Sexpr::Nil => Value::Nil,
+            Sexpr::Integer(x) => Value::Int(*x),
+            Sexpr::Symbol(s) => self.interned_symbol(s)?,
+            Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
+            Sexpr::Pair(p) => {
+                let car = self.sexpr_to_value(p.0.get_value())?;
+                let cdr = self.sexpr_to_value(p.1.get_value())?;
+                self.cons(car, cdr).map_err(|_| ())?
+            }
+        })
     }
 
     pub fn interned_symbol(&mut self, name: &str) -> Result<Value, ()> {
@@ -45,6 +61,27 @@ impl ValueStorage {
         let pair = (car.into(), cdr.into());
         let obj = self.insert(pair)?;
         Ok(Value::Pair(obj))
+    }
+
+    pub fn list(
+        &mut self,
+        items: Vec<impl Into<Value> + Debug>,
+    ) -> Result<Value, Vec<impl Into<Value> + Debug>> {
+        if self.free() < items.len() {
+            return Err(items);
+        }
+
+        /* let mut list = Value::Nil;
+        for x in items.into_iter().rev() {
+            list = self.cons(x, list).unwrap();
+        }*/
+
+        let list = items
+            .into_iter()
+            .rev()
+            .fold(Value::Nil, |acc, x| self.cons(x, acc).unwrap());
+
+        Ok(list)
     }
 
     pub fn new_table(&mut self) -> Result<Value, ()> {

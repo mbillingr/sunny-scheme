@@ -3,6 +3,7 @@ use crate::Value;
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 
+#[derive(Debug)]
 pub struct Table(HashMap<Value, Value>);
 
 impl Table {

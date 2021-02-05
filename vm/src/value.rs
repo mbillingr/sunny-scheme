@@ -131,6 +131,23 @@ impl Value {
         self.as_table()
             .map(|table| table.get(key).unwrap_or(&Value::Void))
     }
+
+    pub fn equals(&self, rhs: &Self) -> bool {
+        use Value::*;
+        match (self, rhs) {
+            (Void, Void) => true,
+            (Nil, Nil) => true,
+            (False, False) => true,
+            (True, True) => true,
+            (Int(a), Int(b)) => a == b,
+            (Symbol(a), Symbol(b)) => a == b,
+            (Pair(a), Pair(b)) => a.0.equals(&b.0) && a.1.equals(&b.1),
+            (Table(a), Table(b)) => ***a == ***b,
+            (Closure(a), Closure(b)) => **a == **b,
+            (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
+            _ => false,
+        }
+    }
 }
 
 impl Traceable for Value {
@@ -161,6 +178,23 @@ impl std::fmt::Debug for Value {
             Value::Symbol(p) => write!(f, "'{}", **p),
             Value::Pair(p) => write!(f, "{:?}", p),
             Value::Table(p) => write!(f, "{:?}", p),
+            Value::Closure(p) => write!(f, "{:?}", p),
+            Value::Primitive(p) => write!(f, "<primitive {:p}", p),
+        }
+    }
+}
+
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Value::Void => write!(f, "<void>"),
+            Value::Nil => write!(f, "<nil>"),
+            Value::False => write!(f, "#f"),
+            Value::True => write!(f, "#t"),
+            Value::Int(i) => write!(f, "{}", i),
+            Value::Symbol(p) => write!(f, "'{}", **p),
+            Value::Pair(p) => write!(f, "({} . {})", p.0, p.1),
+            Value::Table(p) => write!(f, "{:?}", **p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}", p),
         }
@@ -215,6 +249,12 @@ impl Hash for Value {
             Value::Closure(p) => p.as_ptr().hash(state),
             Value::Primitive(p) => (*p as *const u8).hash(state),
         }
+    }
+}
+
+impl From<i64> for Value {
+    fn from(i: i64) -> Self {
+        Value::Int(i)
     }
 }
 

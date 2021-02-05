@@ -1,12 +1,22 @@
-use crate::bytecode::CodeSegment;
+use crate::bytecode::{CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
-use sunny_sexpr_parser::{parse_str, Context, Error as ParseError};
+use std::collections::HashMap;
+use sunny_sexpr_parser::{
+    parse_str,
+    str_utils::{find_end_of_line, find_start_of_line, line_number},
+    Context, CxR, Error as ParseError,
+};
 
 pub type Result<T> = std::result::Result<T, Context<Error>>;
 
 #[derive(Debug)]
 pub enum Error {
     ParseError(ParseError),
+    ExpectedList,
+    ExpectedSymbol,
+    ExpectedIndex,
+    AllocationError,
+    UnknownOpcode,
 }
 
 impl From<ParseError> for Error {
@@ -15,21 +25,98 @@ impl From<ParseError> for Error {
     }
 }
 
-pub fn load_str(src: &str, _storage: &mut ValueStorage) -> Result<CodeSegment> {
+pub fn user_load(
+    src: &str,
+    storage: &mut ValueStorage,
+) -> std::result::Result<CodeSegment, String> {
+    load_str(src, storage).map_err(|e| match e {
+        Context::Extern(e) => format!("{:?}", e),
+        Context::Span {
+            begin,
+            end,
+            value: e,
+        } => {
+            let line_start = find_start_of_line(src, begin);
+
+            let line_end = find_end_of_line(src, line_start);
+
+            let line_number = line_number(src, begin);
+
+            format!(
+                "{:?} '{}'\n{:5}  {}\n       {: <s$}{:^<e$}",
+                e,
+                &src[begin..end],
+                line_number,
+                &src[line_start..line_end],
+                "",
+                "",
+                s = begin - line_start,
+                e = end - begin
+            )
+        }
+    })
+}
+
+pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
     let seq = parse_str(src).map_err(|e| e.convert())?;
+    let mut sections = HashMap::new();
     for sexpr in seq.iter() {
-        println!("s: {}", sexpr);
+        let section_name = sexpr
+            .car()
+            .ok_or_else(|| sexpr.map(Error::ExpectedList))?
+            .as_symbol()
+            .ok_or_else(|| sexpr.map(Error::ExpectedSymbol))?;
+        let section_body = sexpr.cdr().unwrap();
+        sections.insert(section_name, section_body);
     }
 
-    /*for x in seq[0].get_value().iter() {
-        println!("{:?}", x);
-    }*/
-    unimplemented!()
+    let mut cb = CodeBuilder::new();
+
+    let mut constants = vec![];
+    for value in sections["constants:"].iter() {
+        let c = storage
+            .sexpr_to_value(value)
+            .map_err(|_| Error::AllocationError)?;
+        constants.push(c.clone());
+        cb.add_constant(c);
+    }
+
+    let mut code_parts = sections["code:"].iter();
+    while let Some(statement) = code_parts.next() {
+        let stmt = statement
+            .as_symbol()
+            .ok_or_else(|| statement.map(Error::ExpectedSymbol))?;
+        match stmt {
+            "nop" => cb = cb.op(Op::Nop),
+            "jump" => {
+                let label = code_parts
+                    .next()
+                    .ok_or_else(|| statement.map_after(Error::ExpectedSymbol))?;
+                let label = label
+                    .as_symbol()
+                    .ok_or_else(|| label.map(Error::ExpectedSymbol))?;
+                cb = cb.jump_to(label);
+            }
+            "const" => {
+                let i = code_parts
+                    .next()
+                    .ok_or_else(|| statement.map_after(Error::ExpectedIndex))?;
+                let i = i.as_usize().ok_or_else(|| i.map(Error::ExpectedIndex))?;
+                cb = cb.constant(constants[i].clone())
+            }
+            "return" => cb = cb.op(Op::Return),
+            _ if stmt.ends_with(':') => cb = cb.label(stmt.strip_suffix(':').unwrap()),
+            _ => return Err(statement.map(Error::UnknownOpcode)),
+        }
+    }
+
+    cb.build().map_err(|_| unreachable!())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Value;
 
     #[test]
     fn bytecode_loader() {
@@ -40,11 +127,32 @@ mod tests {
 (code:
     nop nop nop
     const 2
+    jump the-end
+    const 1
 the-end:
     return))
         ";
         let mut storage = ValueStorage::new(1024);
-        let _code = load_str(source, &mut storage).unwrap();
-        unimplemented!()
+        let code = match user_load(source, &mut storage) {
+            Ok(code) => code,
+            Err(e) => panic!("{}", e),
+        };
+
+        assert_eq!(
+            code.code_slice(),
+            &[
+                Op::Nop,
+                Op::Nop,
+                Op::Nop,
+                Op::Const(2),
+                Op::Jump { forward: 1 },
+                Op::Const(1),
+                Op::Return
+            ]
+        );
+
+        assert!(code.constant_slice()[0].equals(&Value::Int(42)));
+        assert!(code.constant_slice()[1].equals(&storage.interned_symbol("foo").unwrap()));
+        assert!(code.constant_slice()[2].equals(&storage.list(vec![1, 2, 3]).unwrap()));
     }
 }

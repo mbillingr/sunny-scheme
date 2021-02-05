@@ -278,7 +278,7 @@ impl CodeBuilder {
         self
     }
 
-    fn add_constant(&mut self, value: Value) -> usize {
+    pub fn add_constant(&mut self, value: Value) -> usize {
         if let Some(idx) = self.constants.iter().position(|c| c == &value) {
             return idx;
         }

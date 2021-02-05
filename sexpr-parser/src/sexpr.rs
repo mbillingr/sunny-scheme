@@ -4,15 +4,15 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Debug, PartialEq)]
-pub enum Sexpr {
+pub enum Sexpr<'src> {
     Nil,
     Integer(Int),
-    Symbol(Box<str>),
-    String(Box<str>),
-    Pair(Rc<(Context<Sexpr>, Context<Sexpr>)>),
+    Symbol(&'src str),
+    String(&'src str),
+    Pair(Rc<(Context<Sexpr<'src>>, Context<Sexpr<'src>>)>),
 }
 
-impl Sexpr {
+impl<'src> Sexpr<'src> {
     pub fn nil() -> Self {
         Sexpr::Nil
     }
@@ -20,24 +20,55 @@ impl Sexpr {
         Sexpr::Integer(i)
     }
 
-    pub fn symbol(name: impl Into<Box<str>>) -> Self {
-        Sexpr::Symbol(name.into())
+    pub fn symbol(name: &'src str) -> Self {
+        Sexpr::Symbol(name)
     }
 
-    pub fn string(name: impl Into<Box<str>>) -> Self {
-        Sexpr::String(name.into())
+    pub fn string(name: &'src str) -> Self {
+        Sexpr::String(name)
     }
 
-    pub fn cons(car: impl Into<Context<Sexpr>>, cdr: impl Into<Context<Sexpr>>) -> Self {
+    pub fn cons(
+        car: impl Into<Context<Sexpr<'src>>>,
+        cdr: impl Into<Context<Sexpr<'src>>>,
+    ) -> Self {
         Sexpr::Pair(Rc::new((car.into(), cdr.into())))
     }
 
-    pub fn list(items: impl DoubleEndedIterator<Item = Context<Sexpr>>) -> Self {
+    pub fn list(items: impl DoubleEndedIterator<Item = Context<Sexpr<'src>>>) -> Self {
         let l = items.rfold(Self::nil(), |acc, x| Self::cons(x, acc));
         l
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Self> {
+    pub fn is_pair(&self) -> bool {
+        match self {
+            Sexpr::Pair(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn as_int(&self) -> Option<Int> {
+        match self {
+            Sexpr::Integer(x) => Some(*x),
+            _ => None,
+        }
+    }
+
+    pub fn as_usize(&self) -> Option<usize> {
+        match self {
+            Sexpr::Integer(x) if *x > 0 => Some(*x as usize),
+            _ => None,
+        }
+    }
+
+    pub fn as_symbol(&self) -> Option<&str> {
+        match self {
+            Sexpr::Symbol(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Sexpr<'_>> {
         let mut cursor = self;
         (0..)
             .map(move |_| match cursor {
@@ -51,19 +82,30 @@ impl Sexpr {
     }
 }
 
-impl std::fmt::Display for Sexpr {
+impl std::fmt::Display for Sexpr<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Sexpr::Nil => write!(f, "()"),
             Sexpr::Integer(i) => write!(f, "{}", i),
             Sexpr::Symbol(s) => write!(f, "{}", s),
             Sexpr::String(s) => write!(f, "{:?}", s),
-            Sexpr::Pair(p) => write!(f, "({} . {})", p.0, p.1),
+            Sexpr::Pair(p) => {
+                if !f.alternate() {
+                    write!(f, "({:#})", self)
+                } else {
+                    write!(f, "{}", p.0)?;
+                    match p.1.get_value() {
+                        Sexpr::Nil => Ok(()),
+                        Sexpr::Pair(_) => write!(f, " {:#}", p.1),
+                        _ => write!(f, " . {}", p.1),
+                    }
+                }
+            }
         }
     }
 }
 
-impl CxR for Sexpr {
+impl CxR for Sexpr<'_> {
     type Result = Context<Self>;
 
     fn car(&self) -> Option<&Context<Self>> {
@@ -83,55 +125,64 @@ impl CxR for Sexpr {
 
 #[derive(Debug, PartialEq)]
 pub enum Context<T> {
-    None(T),
-    File(String, Box<Context<T>>),
-    String(String, Box<Context<T>>),
-    Offset(usize, Box<Context<T>>),
-    Cursor(usize, usize, Box<Context<T>>),
+    Extern(T),
+    Span { begin: usize, end: usize, value: T },
 }
 
 impl<T> Context<T> {
+    pub fn new(begin: usize, end: usize, value: T) -> Self {
+        Context::Span { begin, end, value }
+    }
+
     pub fn get_value(&self) -> &T {
         match self {
-            Context::None(x) => x,
-            Context::File(_, c)
-            | Context::String(_, c)
-            | Context::Offset(_, c)
-            | Context::Cursor(_, _, c) => c.get_value(),
+            Context::Extern(value) => value,
+            Context::Span { value, .. } => value,
         }
     }
 
     pub fn into_value(self) -> T {
         match self {
-            Context::None(x) => x,
-            Context::File(_, c)
-            | Context::String(_, c)
-            | Context::Offset(_, c)
-            | Context::Cursor(_, _, c) => c.into_value(),
+            Context::Extern(value) => value,
+            Context::Span { value, .. } => value,
         }
     }
 
-    pub fn string(s: impl ToString, inner: impl Into<Context<T>>) -> Self {
-        Context::String(s.to_string(), Box::new(inner.into()))
-    }
-
-    pub fn offset(ofs: usize, inner: impl Into<Context<T>>) -> Self {
-        Context::Offset(ofs, Box::new(inner.into()))
-    }
-
     pub fn convert<U: From<T>>(self) -> Context<U> {
-        use Context::*;
         match self {
-            None(x) => None(x.into()),
-            File(c, x) => File(c, Box::new(x.convert())),
-            String(c, x) => String(c, Box::new(x.convert())),
-            Offset(c, x) => Offset(c, Box::new(x.convert())),
-            Cursor(c, d, x) => Cursor(c, d, Box::new(x.convert())),
+            Context::Extern(value) => Context::Extern(value.into()),
+            Context::Span { begin, end, value } => Context::Span {
+                begin,
+                end,
+                value: value.into(),
+            },
+        }
+    }
+
+    pub fn map<U>(&self, new_value: U) -> Context<U> {
+        match self {
+            Context::Extern(_) => Context::Extern(new_value),
+            Context::Span { begin, end, .. } => Context::Span {
+                begin: *begin,
+                end: *end,
+                value: new_value,
+            },
+        }
+    }
+
+    pub fn map_after<U>(&self, new_value: U) -> Context<U> {
+        match self {
+            Context::Extern(_) => Context::Extern(new_value),
+            Context::Span { end, .. } => Context::Span {
+                begin: *end,
+                end: *end,
+                value: new_value,
+            },
         }
     }
 }
 
-impl Context<Sexpr> {
+impl Context<Sexpr<'_>> {
     pub fn iter(&self) -> impl Iterator<Item = &Context<Sexpr>> {
         let mut cursor = self;
         (0..)
@@ -140,7 +191,7 @@ impl Context<Sexpr> {
                     cursor = &pair.1;
                     &pair.0
                 }
-                _ => std::mem::replace(&mut cursor, &Context::None(Sexpr::Nil)),
+                _ => std::mem::replace(&mut cursor, &Context::Extern(Sexpr::Nil)),
             })
             .take_while(|x| x != &&Sexpr::Nil)
     }
@@ -153,7 +204,7 @@ impl<T> Deref for Context<T> {
     }
 }
 
-impl CxR for Context<Sexpr> {
+impl CxR for Context<Sexpr<'_>> {
     type Result = Self;
 
     fn car(&self) -> Option<&Self> {
@@ -167,17 +218,17 @@ impl CxR for Context<Sexpr> {
 
 impl<T> From<T> for Context<T> {
     fn from(x: T) -> Context<T> {
-        Context::None(x)
+        Context::Extern(x)
     }
 }
 
-impl From<Context<Sexpr>> for Sexpr {
+impl<'src> From<Context<Sexpr<'src>>> for Sexpr<'src> {
     fn from(c: Context<Sexpr>) -> Sexpr {
         c.into_value()
     }
 }
 
-impl PartialEq<Sexpr> for Context<Sexpr> {
+impl PartialEq<Sexpr<'_>> for Context<Sexpr<'_>> {
     fn eq(&self, other: &Sexpr) -> bool {
         self.get_value() == other
     }
@@ -185,7 +236,6 @@ impl PartialEq<Sexpr> for Context<Sexpr> {
 
 impl<T: std::fmt::Display> std::fmt::Display for Context<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        //self.get_value().fmt(f)
-        write!(f, "{}", self.get_value())
+        self.get_value().fmt(f)
     }
 }

@@ -4,6 +4,7 @@ extern crate lalrpop_util;
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
 mod sexpr;
+pub mod str_utils;
 
 pub use sexpr::{Context, Sexpr};
 
@@ -36,14 +37,7 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
                 expected,
             } => {
                 println!("{:?}", t);
-                Context::Cursor(
-                    l,
-                    r,
-                    Box::new(Context::None(Error::UnrecognizedToken(
-                        t.to_string(),
-                        expected,
-                    ))),
-                )
+                Context::new(l, r, Error::UnrecognizedToken(t.to_string(), expected))
             }
             _ => unimplemented!("{:?}", pe),
         }

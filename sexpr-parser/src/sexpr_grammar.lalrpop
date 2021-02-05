@@ -3,11 +3,15 @@ use crate::{Context, Sexpr};
 
 grammar;
 
-pub Datum: Context<Sexpr> = {
-    <n:Num> => Context::None(Sexpr::int(n)),
-    <s:Sym> => Context::None(Sexpr::symbol(s)),
-    <s:Str> => Context::None(Sexpr::string(s)),
-    <p:Pair> => Context::None(Sexpr::cons(p.0, p.1)),
+pub Datum: Context<Sexpr<'input>> = {
+    <l:@L> <x:RawSexpr> <r:@R> => Context::new(l, r, x),
+};
+
+pub RawSexpr: Sexpr<'input> = {
+    <n:Num> => Sexpr::int(n),
+    <s:Sym> => Sexpr::symbol(s),
+    <s:Str> => Sexpr::string(s),
+    <p:Pair> => Sexpr::cons(p.0, p.1),
     <l:List> => <>,
 };
 
@@ -19,16 +23,16 @@ Str: &'input str = {
     <s:r#""[^"]*""#> => &s[1..s.len()-1],
  };
 
-Pair: (Context<Sexpr>, Context<Sexpr>) = {
+Pair: (Context<Sexpr<'input>>, Context<Sexpr<'input>>) = {
     "(" <car:Datum> "." <cdr:Datum> ")" => (car, cdr)
 };
 
-List: Context<Sexpr> = {
-    "(" ")" => Context::None(Sexpr::nil()),
+List: Sexpr<'input> = {
+    "(" ")" => Sexpr::nil(),
     "(" <Sequence> ")" => <>,
 };
 
-Sequence: Context<Sexpr> = {
-    <car:Datum> <cdr:Sequence> => Context::None(Sexpr::cons(car, cdr)),
-    <car:Datum> => Context::None(Sexpr::cons(car, Sexpr::nil())),
+Sequence: Sexpr<'input> = {
+    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, Context::new(l, r, cdr)),
+    <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
 };
