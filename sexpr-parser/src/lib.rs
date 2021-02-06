@@ -14,15 +14,35 @@ pub type Result<T> = std::result::Result<T, Context<Error>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    UnexpectedEof,
-    InvalidNumber,
-    Utf8Error,
-    UnexpectedToken,
-    InvalidToken(String),
-    MissingDelimiter,
-    Expected(String),
+    InvalidToken,
+    UnexpectedEof {
+        expected: Vec<String>,
+    },
+    UnrecognizedToken {
+        token: String,
+        expected: Vec<String>,
+    },
+    ExtraToken,
+}
 
-    UnrecognizedToken(String, Vec<String>),
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::InvalidToken => write!(f, "Invalid token."),
+            Error::UnexpectedEof { expected } => write!(
+                f,
+                "Unexpected end of file. Expected one of {}",
+                expected.join(", ")
+            ),
+            Error::UnrecognizedToken { token, expected } => write!(
+                f,
+                "Unrecognized token `{}`. Expected one of {}",
+                token,
+                expected.join(", ")
+            ),
+            Error::ExtraToken => write!(f, "Extra token."),
+        }
+    }
 }
 
 impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>>
@@ -32,14 +52,26 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
         pe: lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>,
     ) -> Self {
         match pe {
+            lalrpop_util::ParseError::InvalidToken { location } => {
+                Context::position(location, Error::InvalidToken)
+            }
+            lalrpop_util::ParseError::UnrecognizedEOF { location, expected } => {
+                Context::position(location, Error::UnexpectedEof { expected })
+            }
             lalrpop_util::ParseError::UnrecognizedToken {
                 token: (l, t, r),
                 expected,
-            } => {
-                println!("{:?}", t);
-                Context::new(l, r, Error::UnrecognizedToken(t.to_string(), expected))
+            } => Context::span(
+                l..r,
+                Error::UnrecognizedToken {
+                    token: t.to_string(),
+                    expected,
+                },
+            ),
+            lalrpop_util::ParseError::ExtraToken { token: (l, _, r) } => {
+                Context::span(l..r, Error::ExtraToken)
             }
-            _ => unimplemented!("{:?}", pe),
+            lalrpop_util::ParseError::User { .. } => unimplemented!(),
         }
     }
 }

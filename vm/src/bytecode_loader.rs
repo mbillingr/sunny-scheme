@@ -1,11 +1,7 @@
 use crate::bytecode::{CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
 use std::collections::HashMap;
-use sunny_sexpr_parser::{
-    parse_str,
-    str_utils::{find_end_of_line, find_start_of_line, line_number},
-    Context, CxR, Error as ParseError,
-};
+use sunny_sexpr_parser::{parse_str, Context, CxR, Error as ParseError};
 
 pub type Result<T> = std::result::Result<T, Context<Error>>;
 
@@ -19,6 +15,19 @@ pub enum Error {
     UnknownOpcode,
 }
 
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::ParseError(pe) => pe.fmt(f),
+            Error::ExpectedList => write!(f, "Expected list"),
+            Error::ExpectedSymbol => write!(f, "Expected symbol"),
+            Error::ExpectedIndex => write!(f, "Expected index"),
+            Error::AllocationError => write!(f, "Allocation Error"),
+            Error::UnknownOpcode => write!(f, "Unknown Opcode"),
+        }
+    }
+}
+
 impl From<ParseError> for Error {
     fn from(pe: ParseError) -> Self {
         Error::ParseError(pe)
@@ -29,32 +38,9 @@ pub fn user_load(
     src: &str,
     storage: &mut ValueStorage,
 ) -> std::result::Result<CodeSegment, String> {
-    load_str(src, storage).map_err(|e| match e {
-        Context::Extern(e) => format!("{:?}", e),
-        Context::Span {
-            begin,
-            end,
-            value: e,
-        } => {
-            let line_start = find_start_of_line(src, begin);
-
-            let line_end = find_end_of_line(src, line_start);
-
-            let line_number = line_number(src, begin);
-
-            format!(
-                "{:?} '{}'\n{:5}  {}\n       {: <s$}{:^<e$}",
-                e,
-                &src[begin..end],
-                line_number,
-                &src[line_start..line_end],
-                "",
-                "",
-                s = begin - line_start,
-                e = end - begin
-            )
-        }
-    })
+    load_str(src, storage)
+        .map_err(|e| e.in_string(src))
+        .map_err(|e| e.pretty_fmt())
 }
 
 pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {

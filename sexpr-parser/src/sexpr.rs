@@ -1,7 +1,10 @@
+use crate::str_utils::{find_end_of_line, find_start_of_line, line_number};
 use crate::{CxR, Int};
 use std::fmt::Debug;
-use std::ops::Deref;
+use std::ops::{Deref, Range};
+use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq)]
 pub enum Sexpr<'src> {
@@ -126,58 +129,125 @@ impl CxR for Sexpr<'_> {
 #[derive(Debug, PartialEq)]
 pub enum Context<T> {
     Extern(T),
-    Span { begin: usize, end: usize, value: T },
+    Position(usize, T),
+    Span(Range<usize>, T),
+    String(Arc<String>, Box<Context<T>>),
+    File(Arc<PathBuf>, Box<Context<T>>),
 }
 
 impl<T> Context<T> {
-    pub fn new(begin: usize, end: usize, value: T) -> Self {
-        Context::Span { begin, end, value }
+    pub fn span(range: Range<usize>, value: T) -> Self {
+        Context::Span(range, value)
+    }
+
+    pub fn position(pos: usize, value: T) -> Self {
+        Context::Position(pos, value)
+    }
+
+    pub fn in_string(self, s: impl ToString) -> Self {
+        Self::String(Arc::new(s.to_string()), Box::new(self))
     }
 
     pub fn get_value(&self) -> &T {
         match self {
             Context::Extern(value) => value,
-            Context::Span { value, .. } => value,
+            Context::Position(_, value) | Context::Span(_, value) => value,
+            Context::String(_, b) | Context::File(_, b) => b.get_value(),
         }
     }
 
     pub fn into_value(self) -> T {
         match self {
             Context::Extern(value) => value,
-            Context::Span { value, .. } => value,
+            Context::Position(_, value) | Context::Span(_, value) => value,
+            Context::String(_, b) | Context::File(_, b) => b.into_value(),
         }
     }
 
     pub fn convert<U: From<T>>(self) -> Context<U> {
         match self {
             Context::Extern(value) => Context::Extern(value.into()),
-            Context::Span { begin, end, value } => Context::Span {
-                begin,
-                end,
-                value: value.into(),
-            },
+            Context::Position(p, value) => Context::Position(p, value.into()),
+            Context::Span(range, value) => Context::Span(range, value.into()),
+            Context::String(s, b) => Context::String(s, Box::new((*b).convert())),
+            Context::File(f, b) => Context::File(f, Box::new((*b).convert())),
         }
     }
 
     pub fn map<U>(&self, new_value: U) -> Context<U> {
         match self {
             Context::Extern(_) => Context::Extern(new_value),
-            Context::Span { begin, end, .. } => Context::Span {
-                begin: *begin,
-                end: *end,
-                value: new_value,
-            },
+            Context::Position(p, _) => Context::Position(*p, new_value),
+            Context::Span(range, _) => Context::Span(range.clone(), new_value),
+            Context::String(s, b) => Context::String(s.clone(), Box::new((*b).map(new_value))),
+            Context::File(f, b) => Context::File(f.clone(), Box::new((*b).map(new_value))),
         }
     }
 
     pub fn map_after<U>(&self, new_value: U) -> Context<U> {
         match self {
             Context::Extern(_) => Context::Extern(new_value),
-            Context::Span { end, .. } => Context::Span {
-                begin: *end,
-                end: *end,
-                value: new_value,
-            },
+            Context::Position(p, _) => Context::Position(*p, new_value),
+            Context::Span(range, _) => Context::Span(range.clone(), new_value),
+            Context::String(s, b) => {
+                Context::String(s.clone(), Box::new((*b).map_after(new_value)))
+            }
+            Context::File(f, b) => Context::File(f.clone(), Box::new((*b).map_after(new_value))),
+        }
+    }
+}
+
+impl<T: std::fmt::Display> Context<T> {
+    pub fn pretty_fmt(&self) -> String {
+        match self {
+            Context::Extern(value) | Context::Position(_, value) | Context::Span(_, value) => {
+                format!("{}", value)
+            }
+            Context::String(s, inner) => inner.pretty_fmt_in_source(s),
+            Context::File(f, inner) => {
+                format!("{}\n{:?}", inner.pretty_fmt(), f)
+            }
+        }
+    }
+
+    fn pretty_fmt_in_source(&self, src: &str) -> String {
+        match self {
+            Context::Extern(value) => format!("{}", value),
+            Context::Position(pos, value) => {
+                let pos = *pos;
+                let line_start = find_start_of_line(src, pos);
+                let line_end = find_end_of_line(src, pos);
+                let line_number = line_number(src, pos);
+
+                format!(
+                    "{} `{}`\n{:5}  {}\n       {: <s$}^",
+                    value,
+                    &src[pos..pos + 1],
+                    line_number,
+                    &src[line_start..line_end],
+                    "",
+                    s = pos - line_start,
+                )
+            }
+            Context::Span(range, value) => {
+                let line_start = find_start_of_line(src, range.start);
+                let line_end = find_end_of_line(src, line_start);
+                let line_number = line_number(src, range.start);
+
+                format!(
+                    "{} '{}'\n{:5}  {}\n       {: <s$}{:^<e$}",
+                    value,
+                    &src[range.clone()],
+                    line_number,
+                    &src[line_start..line_end],
+                    "",
+                    "",
+                    s = range.start - line_start,
+                    e = range.len()
+                )
+            }
+            Context::String(s, inner) => inner.pretty_fmt_in_source(s),
+            Context::File(_, _) => self.pretty_fmt(),
         }
     }
 }
