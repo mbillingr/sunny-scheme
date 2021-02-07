@@ -1,13 +1,13 @@
 use crate::bytecode::{CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
-use std::collections::HashMap;
-use sunny_sexpr_parser::{parse_str, Context, CxR, Error as ParseError};
+use sunny_sexpr_parser::{parse_str, Context, CxR, Error as ParseError, Sexpr};
 
 pub type Result<T> = std::result::Result<T, Context<Error>>;
 
 #[derive(Debug)]
 pub enum Error {
     ParseError(ParseError),
+    UnknownSection,
     ExpectedList,
     ExpectedSymbol,
     ExpectedIndex,
@@ -19,6 +19,7 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Error::ParseError(pe) => pe.fmt(f),
+            Error::UnknownSection => write!(f, "Unknown Section"),
             Error::ExpectedList => write!(f, "Expected list"),
             Error::ExpectedSymbol => write!(f, "Expected symbol"),
             Error::ExpectedIndex => write!(f, "Expected index"),
@@ -45,58 +46,80 @@ pub fn user_load(
 
 pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
     let seq = parse_str(src).map_err(|e| e.convert())?;
-    let mut sections = HashMap::new();
+
+    let mut cb = CodeBuilder::new();
     for sexpr in seq.iter() {
         let section_name = sexpr
             .car()
-            .ok_or_else(|| sexpr.map(Error::ExpectedList))?
+            .ok_or_else(|| error_at(sexpr, Error::ExpectedList))?
             .as_symbol()
-            .ok_or_else(|| sexpr.map(Error::ExpectedSymbol))?;
+            .ok_or_else(|| error_at(sexpr, Error::ExpectedSymbol))?;
         let section_body = sexpr.cdr().unwrap();
-        sections.insert(section_name, section_body);
+
+        match section_name {
+            "constants:" => cb = build_constant_section(cb, section_body, storage)?,
+            "code:" => cb = build_code_section(cb, section_body)?,
+            _ => return Err(error_at(sexpr.car().unwrap(), Error::UnknownSection)),
+        }
     }
 
-    let mut cb = CodeBuilder::new();
+    cb.build().map_err(|_| unreachable!())
+}
 
-    let mut constants = vec![];
-    for value in sections["constants:"].iter() {
+fn build_constant_section(
+    mut cb: CodeBuilder,
+    constants_section: &Context<Sexpr>,
+    storage: &mut ValueStorage,
+) -> Result<CodeBuilder> {
+    for value in constants_section.iter() {
         let c = storage
             .sexpr_to_value(value)
             .map_err(|_| Error::AllocationError)?;
-        constants.push(c.clone());
         cb.add_constant(c);
     }
+    Ok(cb)
+}
 
-    let mut code_parts = sections["code:"].iter();
+fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<CodeBuilder> {
+    let mut code_parts = code.iter();
     while let Some(statement) = code_parts.next() {
         let stmt = statement
             .as_symbol()
-            .ok_or_else(|| statement.map(Error::ExpectedSymbol))?;
+            .ok_or_else(|| error_at(statement, Error::ExpectedSymbol))?;
         match stmt {
             "nop" => cb = cb.op(Op::Nop),
             "jump" => {
                 let label = code_parts
                     .next()
-                    .ok_or_else(|| statement.map_after(Error::ExpectedSymbol))?;
+                    .ok_or_else(|| error_after(statement, Error::ExpectedSymbol))?;
                 let label = label
                     .as_symbol()
-                    .ok_or_else(|| label.map(Error::ExpectedSymbol))?;
+                    .ok_or_else(|| error_at(label, Error::ExpectedSymbol))?;
                 cb = cb.jump_to(label);
             }
             "const" => {
                 let i = code_parts
                     .next()
-                    .ok_or_else(|| statement.map_after(Error::ExpectedIndex))?;
-                let i = i.as_usize().ok_or_else(|| i.map(Error::ExpectedIndex))?;
-                cb = cb.constant(constants[i].clone())
+                    .ok_or_else(|| error_after(statement, Error::ExpectedIndex))?;
+                let i = i
+                    .as_usize()
+                    .ok_or_else(|| error_at(i, Error::ExpectedIndex))?;
+                cb = cb.with(Op::Const, i)
             }
             "return" => cb = cb.op(Op::Return),
             _ if stmt.ends_with(':') => cb = cb.label(stmt.strip_suffix(':').unwrap()),
-            _ => return Err(statement.map(Error::UnknownOpcode)),
+            _ => return Err(error_at(statement, Error::UnknownOpcode)),
         }
     }
+    Ok(cb)
+}
 
-    cb.build().map_err(|_| unreachable!())
+fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+    sexpr.map(error.into())
+}
+
+fn error_after<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+    sexpr.map_after(error.into())
 }
 
 #[cfg(test)]

@@ -148,6 +148,10 @@ impl<T> Context<T> {
         Self::String(Arc::new(s.to_string()), Box::new(self))
     }
 
+    pub fn in_file(self, path: impl Into<PathBuf>) -> Self {
+        Self::File(Arc::new(path.into()), Box::new(self))
+    }
+
     pub fn get_value(&self) -> &T {
         match self {
             Context::Extern(value) => value,
