@@ -36,6 +36,56 @@ impl Traceable for Op {
     fn trace(&self, _: &mut Tracer) {}
 }
 
+impl std::fmt::Display for Op {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Op::Nop => write!(f, "{}", repr::NOP),
+            Op::ExtArg(x) => write!(f, "{} {}", repr::EXTARG, x),
+            Op::Halt => write!(f, "{}", repr::HALT),
+            Op::Jump { forward } => write!(f, "{} {}", repr::JUMP, forward),
+            Op::JumpIfTrue { forward } => write!(f, "{} {}", repr::JUMPIFTRUE, forward),
+            Op::JumpIfVoid { forward } => write!(f, "{} {}", repr::JUMPIFVOID, forward),
+            Op::Return => write!(f, "{}", repr::RETURN),
+            Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
+            Op::Integer(x) => write!(f, "{} {}", repr::INTEGER, x),
+            Op::Const(x) => write!(f, "{} {}", repr::CONST, x),
+            Op::GetArg(x) => write!(f, "{} {}", repr::GETARG, x),
+            Op::GetFree(x) => write!(f, "{} {}", repr::GETFREE, x),
+            Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
+            Op::Cons => write!(f, "{}", repr::CONS),
+            Op::Car => write!(f, "{}", repr::CAR),
+            Op::Cdr => write!(f, "{}", repr::CDR),
+            Op::Table => write!(f, "{}", repr::TABLE),
+            Op::TableSet => write!(f, "{}", repr::TABLESET),
+            Op::TableGet => write!(f, "{}", repr::TABLEGET),
+            Op::MakeClosure { n_free } => write!(f, "{} {}", repr::MAKECLOSURE, n_free),
+        }
+    }
+}
+
+pub mod repr {
+    pub const NOP: &'static str = "NOP";
+    pub const EXTARG: &'static str = "EXTARG";
+    pub const HALT: &'static str = "HALT";
+    pub const JUMP: &'static str = "JUMP";
+    pub const JUMPIFTRUE: &'static str = "JUMPIFTRUE";
+    pub const JUMPIFVOID: &'static str = "JUMPIFVOID";
+    pub const RETURN: &'static str = "RETURN";
+    pub const CALL: &'static str = "CALL";
+    pub const INTEGER: &'static str = "INTEGER";
+    pub const CONST: &'static str = "CONST";
+    pub const GETARG: &'static str = "GETARG";
+    pub const GETFREE: &'static str = "GETFREE";
+    pub const GETSTACK: &'static str = "GETSTACK";
+    pub const CONS: &'static str = "CONS";
+    pub const CAR: &'static str = "CAR";
+    pub const CDR: &'static str = "CDR";
+    pub const TABLE: &'static str = "TABLE";
+    pub const TABLESET: &'static str = "TABLESET";
+    pub const TABLEGET: &'static str = "TABLEGET";
+    pub const MAKECLOSURE: &'static str = "MAKECLOSURE";
+}
+
 #[derive(Debug, Clone)]
 pub struct CodeSegment {
     code: Box<[Op]>,

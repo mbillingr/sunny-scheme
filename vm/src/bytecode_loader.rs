@@ -1,4 +1,4 @@
-use crate::bytecode::{CodeBuilder, CodeSegment, Op};
+use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
 use sunny_sexpr_parser::{parse_str, Context, CxR, Error as ParseError, Sexpr};
 
@@ -86,32 +86,52 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
         let stmt = statement
             .as_symbol()
             .ok_or_else(|| error_at(statement, Error::ExpectedSymbol))?;
-        match stmt {
-            "nop" => cb = cb.op(Op::Nop),
-            "jump" => {
-                let label = code_parts
-                    .next()
-                    .ok_or_else(|| error_after(statement, Error::ExpectedSymbol))?;
-                let label = label
-                    .as_symbol()
-                    .ok_or_else(|| error_at(label, Error::ExpectedSymbol))?;
+        match stmt.to_uppercase().as_str() {
+            repr::NOP => cb = cb.op(Op::Nop),
+            repr::JUMP => {
+                let label = read_symbol(&mut code_parts, statement)?;
                 cb = cb.jump_to(label);
             }
-            "const" => {
-                let i = code_parts
-                    .next()
-                    .ok_or_else(|| error_after(statement, Error::ExpectedIndex))?;
-                let i = i
-                    .as_usize()
-                    .ok_or_else(|| error_at(i, Error::ExpectedIndex))?;
+            repr::CONST => {
+                let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::Const, i)
             }
-            "return" => cb = cb.op(Op::Return),
-            _ if stmt.ends_with(':') => cb = cb.label(stmt.strip_suffix(':').unwrap()),
+            repr::RETURN => cb = cb.op(Op::Return),
+            _ if is_label(stmt) => cb = cb.label(label_name(stmt).unwrap()),
             _ => return Err(error_at(statement, Error::UnknownOpcode)),
         }
     }
     Ok(cb)
+}
+
+fn is_label(stmt: &str) -> bool {
+    stmt.ends_with(':')
+}
+
+fn label_name(stmt: &str) -> Option<&str> {
+    stmt.strip_suffix(':')
+}
+
+fn read_index<'a, 'b: 'a, T>(
+    sexpr_iter: &mut impl Iterator<Item = &'a Context<Sexpr<'b>>>,
+    previous: &Context<T>,
+) -> Result<usize> {
+    let i = sexpr_iter
+        .next()
+        .ok_or_else(|| error_after(previous, Error::ExpectedIndex))?;
+    i.as_usize()
+        .ok_or_else(|| error_at(i, Error::ExpectedIndex))
+}
+
+fn read_symbol<'a, 'b: 'a, T>(
+    sexpr_iter: &mut impl Iterator<Item = &'a Context<Sexpr<'b>>>,
+    previous: &Context<T>,
+) -> Result<&'a str> {
+    let i = sexpr_iter
+        .next()
+        .ok_or_else(|| error_after(previous, Error::ExpectedSymbol))?;
+    i.as_symbol()
+        .ok_or_else(|| error_at(i, Error::ExpectedSymbol))
 }
 
 fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
