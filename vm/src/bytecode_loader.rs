@@ -13,6 +13,7 @@ pub enum Error {
     ExpectedIndex,
     AllocationError,
     UnknownOpcode,
+    ExpectedU8,
 }
 
 impl std::fmt::Display for Error {
@@ -25,6 +26,7 @@ impl std::fmt::Display for Error {
             Error::ExpectedIndex => write!(f, "Expected index"),
             Error::AllocationError => write!(f, "Allocation Error"),
             Error::UnknownOpcode => write!(f, "Unknown Opcode"),
+            Error::ExpectedU8 => write!(f, "Expected integer in range 0..255"),
         }
     }
 }
@@ -88,15 +90,58 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
             .ok_or_else(|| error_at(statement, Error::ExpectedSymbol))?;
         match stmt.to_uppercase().as_str() {
             repr::NOP => cb = cb.op(Op::Nop),
+            repr::EXTARG => {
+                let i = read_u8(&mut code_parts, statement)?;
+                cb = cb.op(Op::ExtArg(i))
+            }
+            repr::HALT => cb = cb.op(Op::Halt),
             repr::JUMP => {
                 let label = read_symbol(&mut code_parts, statement)?;
                 cb = cb.jump_to(label);
+            }
+            repr::JUMPIFTRUE => {
+                let label = read_symbol(&mut code_parts, statement)?;
+                cb = cb.branch_if(label);
+            }
+            repr::JUMPIFVOID => {
+                let label = read_symbol(&mut code_parts, statement)?;
+                cb = cb.branch_void(label);
+            }
+            repr::RETURN => cb = cb.op(Op::Return),
+            repr::CALL => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(|n_args|Op::Call{n_args}, i)
+            }
+            repr::INTEGER => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(Op::Integer, i)
             }
             repr::CONST => {
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::Const, i)
             }
-            repr::RETURN => cb = cb.op(Op::Return),
+            repr::GETARG => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(Op::GetArg, i)
+            }
+            repr::GETFREE => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(Op::GetFree, i)
+            }
+            repr::GETSTACK => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(Op::GetStack, i)
+            }
+            repr::CONS => cb = cb.op(Op::Cons),
+            repr::CAR => cb = cb.op(Op::Car),
+            repr::CDR => cb = cb.op(Op::Cdr),
+            repr::TABLE => cb = cb.op(Op::Table),
+            repr::TABLEGET => cb = cb.op(Op::TableGet),
+            repr::TABLESET => cb = cb.op(Op::TableSet),
+            repr::MAKECLOSURE => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(|n_free|Op::MakeClosure{ n_free }, i)
+            }
             _ if is_label(stmt) => cb = cb.label(label_name(stmt).unwrap()),
             _ => return Err(error_at(statement, Error::UnknownOpcode)),
         }
@@ -121,6 +166,22 @@ fn read_index<'a, 'b: 'a, T>(
         .ok_or_else(|| error_after(previous, Error::ExpectedIndex))?;
     i.as_usize()
         .ok_or_else(|| error_at(i, Error::ExpectedIndex))
+}
+
+fn read_u8<'a, 'b: 'a, T>(
+    sexpr_iter: &mut impl Iterator<Item = &'a Context<Sexpr<'b>>>,
+    previous: &Context<T>,
+) -> Result<u8> {
+    let i = sexpr_iter
+        .next()
+        .ok_or_else(|| error_after(previous, Error::ExpectedIndex))?;
+    let value = i.as_usize()
+        .ok_or_else(|| error_at(i, Error::ExpectedIndex))?;
+    if value > u8::MAX as usize {
+        return Err(error_at(i, Error::ExpectedU8))
+    } else {
+        Ok(value as u8)
+    }
 }
 
 fn read_symbol<'a, 'b: 'a, T>(
