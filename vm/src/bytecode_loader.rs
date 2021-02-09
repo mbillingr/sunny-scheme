@@ -110,7 +110,7 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
             repr::RETURN => cb = cb.op(Op::Return),
             repr::CALL => {
                 let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(|n_args|Op::Call{n_args}, i)
+                cb = cb.with(|n_args| Op::Call { n_args }, i)
             }
             repr::INTEGER => {
                 let i = read_index(&mut code_parts, statement)?;
@@ -140,7 +140,7 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
             repr::TABLESET => cb = cb.op(Op::TableSet),
             repr::MAKECLOSURE => {
                 let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(|n_free|Op::MakeClosure{ n_free }, i)
+                cb = cb.with(|n_free| Op::MakeClosure { n_free }, i)
             }
             _ if is_label(stmt) => cb = cb.label(label_name(stmt).unwrap()),
             _ => return Err(error_at(statement, Error::UnknownOpcode)),
@@ -175,10 +175,11 @@ fn read_u8<'a, 'b: 'a, T>(
     let i = sexpr_iter
         .next()
         .ok_or_else(|| error_after(previous, Error::ExpectedIndex))?;
-    let value = i.as_usize()
+    let value = i
+        .as_usize()
         .ok_or_else(|| error_at(i, Error::ExpectedIndex))?;
     if value > u8::MAX as usize {
-        return Err(error_at(i, Error::ExpectedU8))
+        return Err(error_at(i, Error::ExpectedU8));
     } else {
         Ok(value as u8)
     }

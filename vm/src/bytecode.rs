@@ -21,6 +21,10 @@ pub enum Op {
     GetFree(u8),
     GetStack(u8),
 
+    Eq,
+    Inc,
+    Dec,
+
     Cons,
     Car,
     Cdr,
@@ -52,6 +56,9 @@ impl std::fmt::Display for Op {
             Op::GetArg(x) => write!(f, "{} {}", repr::GETARG, x),
             Op::GetFree(x) => write!(f, "{} {}", repr::GETFREE, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
+            Op::Eq => write!(f, "{}", repr::EQ),
+            Op::Inc => write!(f, "{}", repr::INC),
+            Op::Dec => write!(f, "{}", repr::DEC),
             Op::Cons => write!(f, "{}", repr::CONS),
             Op::Car => write!(f, "{}", repr::CAR),
             Op::Cdr => write!(f, "{}", repr::CDR),
@@ -77,6 +84,9 @@ pub mod repr {
     pub const GETARG: &'static str = "GETARG";
     pub const GETFREE: &'static str = "GETFREE";
     pub const GETSTACK: &'static str = "GETSTACK";
+    pub const EQ: &'static str = "EQ";
+    pub const INC: &'static str = "INC";
+    pub const DEC: &'static str = "DEC";
     pub const CONS: &'static str = "CONS";
     pub const CAR: &'static str = "CAR";
     pub const CDR: &'static str = "CDR";

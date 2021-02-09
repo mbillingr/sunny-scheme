@@ -78,6 +78,13 @@ impl Value {
     impl_accessor!(is_table, as_table, as_mut_table, Value::Table, ref Table);
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
 
+    pub fn bool(b: bool) -> Self {
+        match b {
+            true => Self::True,
+            false => Self::False,
+        }
+    }
+
     pub fn get_tag(&self) -> u8 {
         match self {
             Value::Void => 0,

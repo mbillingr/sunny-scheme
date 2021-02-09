@@ -9,6 +9,7 @@ pub mod vm;
 use sunny_memory::gc as mem;
 
 use crate::bytecode::CodePointer;
+pub use storage::ValueStorage;
 pub use value::Value;
 pub use vm::Vm;
 

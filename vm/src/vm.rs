@@ -123,6 +123,9 @@ impl Vm {
                 Op::GetArg(a) => self.push_arg(extend_arg(a, arg))?,
                 Op::GetFree(a) => self.push_free(extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
+                Op::Eq => self.eq()?,
+                Op::Inc => self.inc()?,
+                Op::Dec => self.dec()?,
                 Op::Cons => self.cons()?,
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
@@ -148,6 +151,10 @@ impl Vm {
         //println!("popping");
         self.value_stack.pop().ok_or(ErrorKind::StackUnderflow)
         //self.value_stack.pop().ok_or_else(||panic!())
+    }
+
+    fn pop_int(&mut self) -> Result<i64> {
+        self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)
     }
 
     fn pop_values(&mut self, n: usize) -> Result<Box<[Value]>> {
@@ -229,6 +236,23 @@ impl Vm {
         let old_frame = std::mem::replace(&mut self.current_frame, frame);
         self.call_stack.push(old_frame);
         Ok(())
+    }
+
+    fn eq(&mut self) -> Result<()> {
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
+        self.push_value(Value::bool(a.eq(&b)));
+        Ok(())
+    }
+
+    fn inc(&mut self) -> Result<()> {
+        let x = self.pop_int()?;
+        self.push_value(Value::Int(x + 1));
+        Ok(())
+    }
+
+    fn dec(&mut self) -> Result<()> {
+        unimplemented!()
     }
 
     fn cons(&mut self) -> Result<()> {

@@ -4,4 +4,6 @@ members = [
     "memory",
     "sexpr-parser",
     "vm",
+
+    "sunny"
 ]
