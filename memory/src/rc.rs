@@ -1,5 +1,5 @@
 use std::any::Any;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::rc::{Rc, Weak};
 
 pub struct Ref<T: ?Sized>(Rc<T>);
@@ -20,6 +20,16 @@ impl<T: ?Sized> Deref for Ref<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &*self.0
+    }
+}
+
+impl<T: ?Sized> DerefMut for Ref<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        unsafe {
+            let ptr = &*self.0 as *const T;
+            let mutptr = ptr as *mut T;
+            &mut *mutptr
+        }
     }
 }
 
@@ -89,6 +99,10 @@ impl Storage {
     }
 
     pub fn grow(&mut self) {}
+
+    pub fn auto_grow(&mut self) {}
+
+    pub fn ensure(&mut self, _: usize) {}
 
     pub unsafe fn collect_garbage<T>(&mut self, _root: T) {}
 

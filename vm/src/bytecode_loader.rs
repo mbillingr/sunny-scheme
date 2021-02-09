@@ -94,6 +94,10 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
                 let i = read_u8(&mut code_parts, statement)?;
                 cb = cb.op(Op::ExtArg(i))
             }
+            repr::INSPECT => {
+                let i = read_u8(&mut code_parts, statement)?;
+                cb = cb.op(Op::Inspect(i))
+            }
             repr::HALT => cb = cb.op(Op::Halt),
             repr::JUMP => {
                 let label = read_symbol(&mut code_parts, statement)?;
@@ -104,6 +108,18 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
                 cb = cb.branch_if(label);
             }
             repr::JUMPIFVOID => {
+                let label = read_symbol(&mut code_parts, statement)?;
+                cb = cb.branch_void(label);
+            }
+            repr::RJUMP => {
+                let label = read_symbol(&mut code_parts, statement)?;
+                cb = cb.jump_to(label);
+            }
+            repr::RJUMPIFTRUE => {
+                let label = read_symbol(&mut code_parts, statement)?;
+                cb = cb.branch_if(label);
+            }
+            repr::RJUMPIFVOID => {
                 let label = read_symbol(&mut code_parts, statement)?;
                 cb = cb.branch_void(label);
             }
@@ -132,6 +148,10 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::GetStack, i)
             }
+            repr::DUP => cb = cb.op(Op::Dup),
+            repr::EQ => cb = cb.op(Op::Eq),
+            repr::INC => cb = cb.op(Op::Inc),
+            repr::DEC => cb = cb.op(Op::Dec),
             repr::CONS => cb = cb.op(Op::Cons),
             repr::CAR => cb = cb.op(Op::Car),
             repr::CDR => cb = cb.op(Op::Cdr),

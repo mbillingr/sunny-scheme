@@ -8,10 +8,15 @@ pub enum Op {
     Nop,
     ExtArg(u8),
 
+    Inspect(u8), // for debugging purposes
+
     Halt,
     Jump { forward: u8 },
     JumpIfTrue { forward: u8 },
     JumpIfVoid { forward: u8 },
+    RJump { backward: u8 },
+    RJumpIfTrue { backward: u8 },
+    RJumpIfVoid { backward: u8 },
     Return,
     Call { n_args: u8 },
 
@@ -20,6 +25,8 @@ pub enum Op {
     GetArg(u8),
     GetFree(u8),
     GetStack(u8),
+
+    Dup,
 
     Eq,
     Inc,
@@ -45,10 +52,14 @@ impl std::fmt::Display for Op {
         match self {
             Op::Nop => write!(f, "{}", repr::NOP),
             Op::ExtArg(x) => write!(f, "{} {}", repr::EXTARG, x),
+            Op::Inspect(x) => write!(f, "{} {}", repr::INSPECT, x),
             Op::Halt => write!(f, "{}", repr::HALT),
             Op::Jump { forward } => write!(f, "{} {}", repr::JUMP, forward),
             Op::JumpIfTrue { forward } => write!(f, "{} {}", repr::JUMPIFTRUE, forward),
             Op::JumpIfVoid { forward } => write!(f, "{} {}", repr::JUMPIFVOID, forward),
+            Op::RJump { backward } => write!(f, "{} {}", repr::RJUMP, backward),
+            Op::RJumpIfTrue { backward } => write!(f, "{} {}", repr::RJUMPIFTRUE, backward),
+            Op::RJumpIfVoid { backward } => write!(f, "{} {}", repr::RJUMPIFVOID, backward),
             Op::Return => write!(f, "{}", repr::RETURN),
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
             Op::Integer(x) => write!(f, "{} {}", repr::INTEGER, x),
@@ -56,6 +67,7 @@ impl std::fmt::Display for Op {
             Op::GetArg(x) => write!(f, "{} {}", repr::GETARG, x),
             Op::GetFree(x) => write!(f, "{} {}", repr::GETFREE, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
+            Op::Dup => write!(f, "{}", repr::DUP),
             Op::Eq => write!(f, "{}", repr::EQ),
             Op::Inc => write!(f, "{}", repr::INC),
             Op::Dec => write!(f, "{}", repr::DEC),
@@ -73,10 +85,14 @@ impl std::fmt::Display for Op {
 pub mod repr {
     pub const NOP: &'static str = "NOP";
     pub const EXTARG: &'static str = "EXTARG";
+    pub const INSPECT: &'static str = "INSPECT";
     pub const HALT: &'static str = "HALT";
     pub const JUMP: &'static str = "JUMP";
     pub const JUMPIFTRUE: &'static str = "JUMPIFTRUE";
     pub const JUMPIFVOID: &'static str = "JUMPIFVOID";
+    pub const RJUMP: &'static str = "RJUMP";
+    pub const RJUMPIFTRUE: &'static str = "RJUMPIFTRUE";
+    pub const RJUMPIFVOID: &'static str = "RJUMPIFVOID";
     pub const RETURN: &'static str = "RETURN";
     pub const CALL: &'static str = "CALL";
     pub const INTEGER: &'static str = "INTEGER";
@@ -84,6 +100,7 @@ pub mod repr {
     pub const GETARG: &'static str = "GETARG";
     pub const GETFREE: &'static str = "GETFREE";
     pub const GETSTACK: &'static str = "GETSTACK";
+    pub const DUP: &'static str = "DUP";
     pub const EQ: &'static str = "EQ";
     pub const INC: &'static str = "INC";
     pub const DEC: &'static str = "DEC";
@@ -171,8 +188,12 @@ impl CodePointer {
         op
     }
 
-    pub fn step_forward(&mut self, amount: usize) {
+    pub fn jump_forward(&mut self, amount: usize) {
         self.position += amount;
+    }
+
+    pub fn jump_backward(&mut self, amount: usize) {
+        self.position = self.position.checked_sub(amount).unwrap()
     }
 
     pub fn step_back(&mut self) {
@@ -243,12 +264,18 @@ impl CodeBuilder {
         self.code.push(BuildOp::LabelRef(
             label.to_string(),
             Box::new(move |label_idx| {
-                let offset = label_idx - position_reference;
-                if offset > u8::max_value() as usize {
+                let offset = label_idx as isize - position_reference as isize;
+                if offset.abs() > u8::max_value() as isize {
                     panic!("label placeholders more than 255 away are not yet possible")
                 }
-                Op::Jump {
-                    forward: offset as u8,
+                if offset >= 0 {
+                    Op::Jump {
+                        forward: offset as u8,
+                    }
+                } else {
+                    Op::RJump {
+                        backward: -offset as u8,
+                    }
                 }
             }),
         ));
@@ -261,12 +288,18 @@ impl CodeBuilder {
         self.code.push(BuildOp::LabelRef(
             label.to_string(),
             Box::new(move |label_idx| {
-                let offset = label_idx - position_reference;
-                if offset > u8::max_value() as usize {
+                let offset = label_idx as isize - position_reference as isize;
+                if offset.abs() > u8::max_value() as isize {
                     panic!("label placeholders more than 255 away are not yet possible")
                 }
-                Op::JumpIfTrue {
-                    forward: offset as u8,
+                if offset >= 0 {
+                    Op::JumpIfTrue {
+                        forward: offset as u8,
+                    }
+                } else {
+                    Op::RJumpIfTrue {
+                        backward: -offset as u8,
+                    }
                 }
             }),
         ));
@@ -279,12 +312,18 @@ impl CodeBuilder {
         self.code.push(BuildOp::LabelRef(
             label.to_string(),
             Box::new(move |label_idx| {
-                let offset = label_idx - position_reference;
-                if offset > u8::max_value() as usize {
+                let offset = label_idx as isize - position_reference as isize;
+                if offset.abs() > u8::max_value() as isize {
                     panic!("label placeholders more than 255 away are not yet possible")
                 }
-                Op::JumpIfVoid {
-                    forward: offset as u8,
+                if offset >= 0 {
+                    Op::JumpIfVoid {
+                        forward: offset as u8,
+                    }
+                } else {
+                    Op::RJumpIfVoid {
+                        backward: -offset as u8,
+                    }
                 }
             }),
         ));

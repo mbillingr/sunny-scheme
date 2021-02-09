@@ -1,10 +1,14 @@
 ((constants:
-    42 foo (1 2 3))
+    500000000 foo (1 2 3))
 
 (code:
-    nop nop nop
-    const 2
-    jump the-end
-    const 1
+    const 0
+loop:
+    dup
+    integer 0
+    eq
+    jumpiftrue the-end
+    dec
+    jump loop
 the-end:
     return))

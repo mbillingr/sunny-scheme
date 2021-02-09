@@ -59,7 +59,7 @@ impl<'src> Sexpr<'src> {
 
     pub fn as_usize(&self) -> Option<usize> {
         match self {
-            Sexpr::Integer(x) if *x > 0 => Some(*x as usize),
+            Sexpr::Integer(x) if *x >= 0 => Some(*x as usize),
             _ => None,
         }
     }

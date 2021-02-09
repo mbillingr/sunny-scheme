@@ -105,10 +105,18 @@ impl Vm {
                     arg = extend_arg(a, arg);
                     continue;
                 }
+                Op::Inspect(i) => println!(
+                    "{:?}",
+                    self.value_stack
+                        .get(self.value_stack.len() - 1 - i as usize)
+                ),
                 Op::Halt => return Err(ErrorKind::Halted),
                 Op::Jump { forward } => self.jump(extend_arg(forward, arg)),
                 Op::JumpIfTrue { forward } => self.jump_if_true(extend_arg(forward, arg))?,
                 Op::JumpIfVoid { forward } => self.jump_if_void(extend_arg(forward, arg))?,
+                Op::RJump { backward } => self.rjump(extend_arg(backward, arg)),
+                Op::RJumpIfTrue { backward } => self.rjump_if_true(extend_arg(backward, arg))?,
+                Op::RJumpIfVoid { backward } => self.rjump_if_void(extend_arg(backward, arg))?,
                 Op::Return => {
                     if let Some(frame) = self.call_stack.pop() {
                         self.current_frame = frame;
@@ -123,6 +131,7 @@ impl Vm {
                 Op::GetArg(a) => self.push_arg(extend_arg(a, arg))?,
                 Op::GetFree(a) => self.push_free(extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
+                Op::Dup => self.dup()?,
                 Op::Eq => self.eq()?,
                 Op::Inc => self.inc()?,
                 Op::Dec => self.dec()?,
@@ -189,26 +198,48 @@ impl Vm {
         Ok(())
     }
 
-    fn jump_if_true(&mut self, forward: usize) -> Result<()> {
+    fn jump(&mut self, amount: usize) {
+        self.current_frame.code.jump_forward(amount)
+    }
+
+    fn jump_if_true(&mut self, amount: usize) -> Result<()> {
         let condition = self.pop_value()?;
         if condition.is_like_true() {
-            self.jump(forward);
+            self.jump(amount);
         }
         Ok(())
     }
 
-    fn jump_if_void(&mut self, forward: usize) -> Result<()> {
+    fn jump_if_void(&mut self, amount: usize) -> Result<()> {
         let condition = self.pop_value()?;
         if condition.is_void() {
-            self.jump(forward);
+            self.jump(amount);
         } else {
             self.push_value(condition)
         }
         Ok(())
     }
 
-    fn jump(&mut self, forward: usize) {
-        self.current_frame.code.step_forward(forward)
+    fn rjump(&mut self, amount: usize) {
+        self.current_frame.code.jump_backward(amount)
+    }
+
+    fn rjump_if_true(&mut self, amount: usize) -> Result<()> {
+        let condition = self.pop_value()?;
+        if condition.is_like_true() {
+            self.rjump(amount);
+        }
+        Ok(())
+    }
+
+    fn rjump_if_void(&mut self, amount: usize) -> Result<()> {
+        let condition = self.pop_value()?;
+        if condition.is_void() {
+            self.rjump(amount);
+        } else {
+            self.push_value(condition)
+        }
+        Ok(())
     }
 
     fn call(&mut self, n_args: usize) -> Result<()> {
@@ -238,6 +269,13 @@ impl Vm {
         Ok(())
     }
 
+    fn dup(&mut self) -> Result<()> {
+        let x = self.pop_value()?;
+        self.push_value(x.clone());
+        self.push_value(x);
+        Ok(())
+    }
+
     fn eq(&mut self) -> Result<()> {
         let a = self.pop_value()?;
         let b = self.pop_value()?;
@@ -252,7 +290,9 @@ impl Vm {
     }
 
     fn dec(&mut self) -> Result<()> {
-        unimplemented!()
+        let x = self.pop_int()?;
+        self.push_value(Value::Int(x - 1));
+        Ok(())
     }
 
     fn cons(&mut self) -> Result<()> {
