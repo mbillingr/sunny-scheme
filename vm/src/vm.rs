@@ -132,6 +132,8 @@ impl Vm {
                 Op::GetFree(a) => self.push_free(extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
                 Op::Dup => self.dup()?,
+                Op::Drop => self.drop()?,
+                Op::Swap => self.swap()?,
                 Op::Eq => self.eq()?,
                 Op::Inc => self.inc()?,
                 Op::Dec => self.dec()?,
@@ -273,6 +275,19 @@ impl Vm {
         let x = self.pop_value()?;
         self.push_value(x.clone());
         self.push_value(x);
+        Ok(())
+    }
+
+    fn drop(&mut self) -> Result<()> {
+        self.pop_value()?;
+        Ok(())
+    }
+
+    fn swap(&mut self) -> Result<()> {
+        let a = self.pop_value()?;
+        let b = self.pop_value()?;
+        self.push_value(a);
+        self.push_value(b);
         Ok(())
     }
 

@@ -149,6 +149,8 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
                 cb = cb.with(Op::GetStack, i)
             }
             repr::DUP => cb = cb.op(Op::Dup),
+            repr::DROP => cb = cb.op(Op::Drop),
+            repr::SWAP => cb = cb.op(Op::Swap),
             repr::EQ => cb = cb.op(Op::Eq),
             repr::INC => cb = cb.op(Op::Inc),
             repr::DEC => cb = cb.op(Op::Dec),

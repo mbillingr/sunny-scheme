@@ -27,6 +27,8 @@ pub enum Op {
     GetStack(u8),
 
     Dup,
+    Drop,
+    Swap,
 
     Eq,
     Inc,
@@ -68,6 +70,8 @@ impl std::fmt::Display for Op {
             Op::GetFree(x) => write!(f, "{} {}", repr::GETFREE, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
             Op::Dup => write!(f, "{}", repr::DUP),
+            Op::Drop => write!(f, "{}", repr::DROP),
+            Op::Swap => write!(f, "{}", repr::SWAP),
             Op::Eq => write!(f, "{}", repr::EQ),
             Op::Inc => write!(f, "{}", repr::INC),
             Op::Dec => write!(f, "{}", repr::DEC),
@@ -101,6 +105,8 @@ pub mod repr {
     pub const GETFREE: &'static str = "GETFREE";
     pub const GETSTACK: &'static str = "GETSTACK";
     pub const DUP: &'static str = "DUP";
+    pub const DROP: &'static str = "DROP";
+    pub const SWAP: &'static str = "SWAP";
     pub const EQ: &'static str = "EQ";
     pub const INC: &'static str = "INC";
     pub const DEC: &'static str = "DEC";
