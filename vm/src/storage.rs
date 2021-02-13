@@ -100,6 +100,7 @@ impl ValueStorage {
     }
 
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
+        println!("<inserting>");
         self.storage.insert(obj)
     }
 

@@ -136,13 +136,9 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::Const, i)
             }
-            repr::GETARG => {
+            repr::GETLOCAL => {
                 let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(Op::GetArg, i)
-            }
-            repr::GETFREE => {
-                let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(Op::GetFree, i)
+                cb = cb.with(Op::GetLocal, i)
             }
             repr::GETSTACK => {
                 let i = read_index(&mut code_parts, statement)?;
@@ -160,10 +156,7 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
             repr::TABLE => cb = cb.op(Op::Table),
             repr::TABLEGET => cb = cb.op(Op::TableGet),
             repr::TABLESET => cb = cb.op(Op::TableSet),
-            repr::MAKECLOSURE => {
-                let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(|n_free| Op::MakeClosure { n_free }, i)
-            }
+            repr::MAKECLOSURE => cb = cb.op(Op::MakeClosure),
             _ if is_label(stmt) => cb = cb.label(label_name(stmt).unwrap()),
             _ => return Err(error_at(statement, Error::UnknownOpcode)),
         }

@@ -22,8 +22,7 @@ pub enum Op {
 
     Integer(u8),
     Const(u8),
-    GetArg(u8),
-    GetFree(u8),
+    GetLocal(u8),
     GetStack(u8),
 
     Dup,
@@ -42,7 +41,7 @@ pub enum Op {
     TableSet,
     TableGet,
 
-    MakeClosure { n_free: u8 },
+    MakeClosure,
 }
 
 impl Traceable for Op {
@@ -66,8 +65,7 @@ impl std::fmt::Display for Op {
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
             Op::Integer(x) => write!(f, "{} {}", repr::INTEGER, x),
             Op::Const(x) => write!(f, "{} {}", repr::CONST, x),
-            Op::GetArg(x) => write!(f, "{} {}", repr::GETARG, x),
-            Op::GetFree(x) => write!(f, "{} {}", repr::GETFREE, x),
+            Op::GetLocal(x) => write!(f, "{} {}", repr::GETLOCAL, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
             Op::Dup => write!(f, "{}", repr::DUP),
             Op::Drop => write!(f, "{}", repr::DROP),
@@ -81,7 +79,7 @@ impl std::fmt::Display for Op {
             Op::Table => write!(f, "{}", repr::TABLE),
             Op::TableSet => write!(f, "{}", repr::TABLESET),
             Op::TableGet => write!(f, "{}", repr::TABLEGET),
-            Op::MakeClosure { n_free } => write!(f, "{} {}", repr::MAKECLOSURE, n_free),
+            Op::MakeClosure => write!(f, "{}", repr::MAKECLOSURE),
         }
     }
 }
@@ -101,8 +99,7 @@ pub mod repr {
     pub const CALL: &'static str = "CALL";
     pub const INTEGER: &'static str = "INTEGER";
     pub const CONST: &'static str = "CONST";
-    pub const GETARG: &'static str = "GETARG";
-    pub const GETFREE: &'static str = "GETFREE";
+    pub const GETLOCAL: &'static str = "GETLOCAL";
     pub const GETSTACK: &'static str = "GETSTACK";
     pub const DUP: &'static str = "DUP";
     pub const DROP: &'static str = "DROP";
@@ -337,10 +334,10 @@ impl CodeBuilder {
         self
     }
 
-    pub fn make_closure(mut self, label: impl ToString, n_free: usize) -> Self {
+    pub fn make_closure(mut self, label: impl ToString) -> Self {
         let placeholder_pos = self.code.len();
         self = self.op(Op::Nop); // placeholder
-        self = self.with(|n_free| Op::MakeClosure { n_free }, n_free);
+        self = self.op(Op::MakeClosure);
         let position_reference = self.code.len();
 
         self.code[placeholder_pos] = BuildOp::LabelRef(
@@ -542,7 +539,7 @@ mod tests {
     #[test]
     fn build_labelled_closure() {
         let segment = CodeBuilder::new()
-            .make_closure("func", 0)
+            .make_closure("func")
             .op(Op::Halt)
             .label("func")
             .op(Op::Halt)
@@ -550,12 +547,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             segment.code_slice(),
-            &[
-                Op::Integer(1),
-                Op::MakeClosure { n_free: 0 },
-                Op::Halt,
-                Op::Halt
-            ]
+            &[Op::Integer(1), Op::MakeClosure, Op::Halt, Op::Halt]
         );
     }
 

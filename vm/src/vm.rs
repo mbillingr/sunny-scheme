@@ -1,3 +1,4 @@
+use crate::activation::Activation;
 use crate::bytecode::{CodeBuilder, CodePointer};
 use crate::{
     bytecode::Op,
@@ -7,27 +8,11 @@ use crate::{
     Error, ErrorKind, Result, RuntimeResult, Value,
 };
 
-#[derive(Debug, Clone)] // todo: should be Copy, but Ref is not Copy yet
-struct CallStackFrame {
-    free_vars: Ref<Box<[Value]>>,
-    args: Box<[Value]>,
-    code: CodePointer,
-}
-
-impl Traceable for CallStackFrame {
-    fn trace(&self, gc: &mut Tracer) {
-        self.free_vars.trace(gc);
-        self.args.trace(gc);
-        self.code.trace(gc);
-    }
-}
-
 pub struct Vm {
     storage: ValueStorage,
     value_stack: Vec<Value>,
-    call_stack: Vec<CallStackFrame>,
 
-    current_frame: CallStackFrame,
+    current_activation: Ref<Activation>,
 
     // constants
     empty_value_array: Ref<Box<[Value]>>,
@@ -36,63 +21,61 @@ pub struct Vm {
 impl Traceable for Vm {
     fn trace(&self, gc: &mut Tracer) {
         self.value_stack.trace(gc);
-        self.call_stack.trace(gc);
-        self.current_frame.trace(gc);
+        self.current_activation.trace(gc);
         self.empty_value_array.trace(gc);
     }
 }
 
 impl Vm {
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
-        storage.ensure(2);
+        storage.ensure(3);
         let empty_value_array = storage.insert(vec![].into_boxed_slice()).unwrap();
 
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
 
-        let closure = Closure {
+        let root_activation = Activation {
+            caller: None,
+            parent: None,
             code: code_ptr,
-            free_vars: empty_value_array.clone(),
+            locals: vec![],
         };
+        let root_activation = storage.insert(root_activation).unwrap();
 
         Ok(Vm {
             storage,
             value_stack: vec![],
-            call_stack: vec![],
-            current_frame: CallStackFrame {
-                free_vars: closure.free_vars.clone(),
-                args: vec![].into_boxed_slice(),
-                code: closure.code.clone(),
-            },
+            current_activation: root_activation,
             empty_value_array,
         })
     }
 
     pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Value> {
-        let closure = Closure {
-            code,
-            free_vars: self.empty_value_array.clone(),
-        };
+        let closure = Closure { code, parent: None };
         self.eval_closure(&closure)
     }
 
     pub fn eval_closure(&mut self, closure: &Closure) -> RuntimeResult<Value> {
-        self.load_closure(closure);
+        self.load_closure(closure).unwrap();
         self.run().map_err(|e| self.add_error_context(e))
     }
 
-    fn load_closure(&mut self, closure: &Closure) {
-        self.current_frame = CallStackFrame {
-            free_vars: closure.free_vars.clone(),
-            args: vec![].into_boxed_slice(),
+    fn load_closure(&mut self, closure: &Closure) -> Result<()> {
+        self.ensure_storage_space(1)?;
+        let activation = Activation {
+            caller: None,
+            parent: closure.parent.clone(),
             code: closure.code.clone(),
+            locals: vec![],
         };
+        self.current_activation = self.storage.insert(activation).unwrap();
+        Ok(())
     }
 
     fn add_error_context(&mut self, kind: ErrorKind) -> Error {
         Error {
             kind,
-            location: self.current_frame.code.offset(-1),
+            location: self.current_activation.code.offset(-1),
         }
     }
 
@@ -118,8 +101,8 @@ impl Vm {
                 Op::RJumpIfTrue { backward } => self.rjump_if_true(extend_arg(backward, arg))?,
                 Op::RJumpIfVoid { backward } => self.rjump_if_void(extend_arg(backward, arg))?,
                 Op::Return => {
-                    if let Some(frame) = self.call_stack.pop() {
-                        self.current_frame = frame;
+                    if let Some(act) = self.current_activation.caller.take() {
+                        self.current_activation = act;
                     } else {
                         let ret_val = self.pop_value()?;
                         return Ok(ret_val);
@@ -128,8 +111,7 @@ impl Vm {
                 Op::Call { n_args } => self.call(extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(extend_arg(a, arg))?,
-                Op::GetArg(a) => self.push_arg(extend_arg(a, arg))?,
-                Op::GetFree(a) => self.push_free(extend_arg(a, arg))?,
+                Op::GetLocal(a) => self.push_local(extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
                 Op::Dup => self.dup()?,
                 Op::Drop => self.drop()?,
@@ -143,14 +125,16 @@ impl Vm {
                 Op::Table => self.table()?,
                 Op::TableSet => self.table_set()?,
                 Op::TableGet => self.table_get()?,
-                Op::MakeClosure { n_free } => self.make_closure(extend_arg(n_free, arg))?,
+                Op::MakeClosure => self.make_closure()?,
             }
             arg = 0;
         }
     }
 
     fn fetch_op(&mut self) -> Op {
-        self.current_frame.code.fetch()
+        let op = self.current_activation.code.fetch();
+        //println!("{:?}", op);
+        op
     }
 
     fn push_value(&mut self, val: Value) {
@@ -168,28 +152,22 @@ impl Vm {
         self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)
     }
 
-    fn pop_values(&mut self, n: usize) -> Result<Box<[Value]>> {
+    fn pop_values(&mut self, n: usize) -> Result<Vec<Value>> {
         let mut values = Vec::with_capacity(n);
         for _ in 0..n {
             values.push(self.pop_value()?);
         }
-        Ok(values.into_boxed_slice())
+        Ok(values)
     }
 
     fn push_const(&mut self, idx: usize) -> Result<()> {
-        let x = self.current_frame.code.get_constant(idx).clone();
+        let x = self.current_activation.code.get_constant(idx).clone();
         self.push_value(x);
         Ok(())
     }
 
-    fn push_arg(&mut self, idx: usize) -> Result<()> {
-        let x = self.current_frame.args[idx].clone();
-        self.push_value(x);
-        Ok(())
-    }
-
-    fn push_free(&mut self, idx: usize) -> Result<()> {
-        let x = self.current_frame.free_vars[idx].clone();
+    fn push_local(&mut self, idx: usize) -> Result<()> {
+        let x = self.current_activation.locals[idx].clone();
         self.push_value(x);
         Ok(())
     }
@@ -201,7 +179,7 @@ impl Vm {
     }
 
     fn jump(&mut self, amount: usize) {
-        self.current_frame.code.jump_forward(amount)
+        self.current_activation.code.jump_forward(amount)
     }
 
     fn jump_if_true(&mut self, amount: usize) -> Result<()> {
@@ -223,7 +201,7 @@ impl Vm {
     }
 
     fn rjump(&mut self, amount: usize) {
-        self.current_frame.code.jump_backward(amount)
+        self.current_activation.code.jump_backward(amount)
     }
 
     fn rjump_if_true(&mut self, amount: usize) -> Result<()> {
@@ -260,14 +238,15 @@ impl Vm {
     }
 
     fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
+        self.ensure_storage_space(1)?;
         let args = self.pop_values(n_args)?;
-        let frame = CallStackFrame {
+        let act = Activation {
+            caller: Some(self.current_activation.clone()),
+            parent: cls.parent.clone(),
             code: cls.code.clone(),
-            free_vars: cls.free_vars.clone(),
-            args,
+            locals: args,
         };
-        let old_frame = std::mem::replace(&mut self.current_frame, frame);
-        self.call_stack.push(old_frame);
+        self.current_activation = self.storage.insert(act).unwrap();
         Ok(())
     }
 
@@ -358,16 +337,16 @@ impl Vm {
             .map(|x| self.push_value(x.clone()))
     }
 
-    fn make_closure(&mut self, n_free: usize) -> Result<()> {
+    fn make_closure(&mut self) -> Result<()> {
         self.ensure_storage_space(2)?;
 
         let code_offset = self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)? as isize;
-        let code = self.current_frame.code.offset(code_offset);
+        let code = self.current_activation.code.offset(code_offset);
 
-        let free_vars = self.pop_values(n_free)?;
-        let free_vars = self.storage.insert(free_vars).unwrap();
-
-        let closure = Closure { code, free_vars };
+        let closure = Closure {
+            code,
+            parent: Some(self.current_activation.clone()),
+        };
         let closure = self.storage.insert(closure).unwrap();
 
         self.push_value(Value::Closure(closure));
@@ -436,7 +415,7 @@ mod tests {
         }
 
         fn prepare_vm(self, cb: CodeBuilder) -> Vm {
-            let additional_capacity = 2 + 2; // required by the vm's default closure and by the closure being run
+            let additional_capacity = 3 + 2; // required by the vm's default closure and by the closure being run
             let mut storage = ValueStorage::new(self.storage_capacity + additional_capacity);
 
             let code_segment = cb.build().unwrap();
@@ -444,7 +423,7 @@ mod tests {
 
             let closure = Closure {
                 code: code_ptr,
-                free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+                parent: None,
             };
 
             let mut vm = Vm::new(storage).unwrap();
@@ -453,7 +432,8 @@ mod tests {
                 vm.value_stack = value_stack;
             }
 
-            vm.load_closure(&closure);
+            vm.load_closure(&closure).unwrap();
+
             vm
         }
     }
@@ -470,14 +450,12 @@ mod tests {
     fn op_nop_does_nothing() {
         let (_, vm) = VmRunner::new().run_code(CodeBuilder::new().op(Op::Nop).op(Op::Halt));
 
-        assert!(vm.call_stack.is_empty());
         assert!(vm.value_stack.is_empty());
     }
 
     #[test]
     fn no_instructions_executed_after_op_halt() {
         let (_, vm) = VmRunner::new().run_code(CodeBuilder::new().op(Op::Halt).op(Op::Integer(0)));
-        assert!(vm.call_stack.is_empty());
         assert!(vm.value_stack.is_empty());
     }
 
@@ -550,21 +528,16 @@ mod tests {
     }
 
     #[test]
-    fn op_make_closure_pops_n_free_vars_and_pushes_closure() {
+    fn op_make_closure_pushes_closure() {
         let (_, mut vm) = VmRunner::new()
-            .with_value_stack(vec![Value::Int(2), Value::Int(1), Value::Int(0)])
-            .run_code(
-                CodeBuilder::new()
-                    .op(Op::MakeClosure { n_free: 2 })
-                    .op(Op::Halt),
-            );
+            .with_value_stack(vec![Value::Int(0)])
+            .run_code(CodeBuilder::new().op(Op::MakeClosure).op(Op::Halt));
 
         let closure = vm.value_stack.pop().unwrap();
         let closure = closure.as_closure().unwrap();
 
         assert!(vm.value_stack.is_empty());
 
-        assert_eq!(&**closure.free_vars, vec![Value::Int(1), Value::Int(2)]);
         assert_eq!(closure.code.clone().fetch(), Op::Halt);
     }
 
@@ -572,19 +545,14 @@ mod tests {
     fn op_make_closure_succeeds_even_when_storage_is_full() {
         let (_, mut vm) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::Int(2), Value::Int(1), Value::Int(0)])
-            .run_code(
-                CodeBuilder::new()
-                    .op(Op::MakeClosure { n_free: 2 })
-                    .op(Op::Halt),
-            );
+            .with_value_stack(vec![Value::Int(0)])
+            .run_code(CodeBuilder::new().op(Op::MakeClosure).op(Op::Halt));
 
         let closure = vm.value_stack.pop().unwrap();
         let closure = closure.as_closure().unwrap();
 
         assert!(vm.value_stack.is_empty());
 
-        assert_eq!(&**closure.free_vars, vec![Value::Int(1), Value::Int(2)]);
         assert_eq!(closure.code.clone().fetch(), Op::Halt);
     }
 
@@ -615,12 +583,12 @@ mod tests {
 
         let main = Closure {
             code: CodePointer::new(code_segment.clone()).at(0),
-            free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+            parent: None,
         };
 
         let callee = Closure {
             code: CodePointer::new(code_segment.clone()).at(2),
-            free_vars: storage.insert(vec![].into_boxed_slice()).unwrap(),
+            parent: None,
         };
 
         let value_stack = vec![storage.store_closure(callee).unwrap()];
@@ -629,11 +597,10 @@ mod tests {
 
         vm.value_stack = value_stack;
 
-        vm.load_closure(&main);
+        vm.load_closure(&main).unwrap();
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(vm.call_stack.len(), 1);
         assert_eq!(vm.value_stack, vec![Value::Int(1)]);
     }
 
@@ -647,7 +614,7 @@ mod tests {
                 .op(Op::Integer(12))
                 // callee code offset
                 .op(Op::Integer(2))
-                .op(Op::MakeClosure { n_free: 0 })
+                .op(Op::MakeClosure)
                 .op(Op::Call { n_args: 3 })
                 .op(Op::Halt)
                 // callee
@@ -656,7 +623,7 @@ mod tests {
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(
-            &*vm.current_frame.args,
+            &*vm.current_activation.locals,
             vec![Value::Int(12), Value::Int(11), Value::Int(10)]
         )
     }
@@ -669,14 +636,14 @@ mod tests {
                 .op(Op::Integer(10))
                 .op(Op::Integer(11))
                 .op(Op::Integer(12))
-                .make_closure("callee", 0)
+                .make_closure("callee")
                 .op(Op::Call { n_args: 3 })
                 .op(Op::Halt)
                 .label("callee")
-                .op(Op::GetArg(0))
-                .op(Op::GetArg(2))
-                .op(Op::GetArg(2))
-                .op(Op::GetArg(1))
+                .op(Op::GetLocal(0))
+                .op(Op::GetLocal(2))
+                .op(Op::GetLocal(2))
+                .op(Op::GetLocal(1))
                 .op(Op::Halt),
         );
 
@@ -691,7 +658,7 @@ mod tests {
         )
     }
 
-    #[test]
+    /*#[test]
     fn op_getfree_references_closure_vars() {
         let (_, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
@@ -719,14 +686,14 @@ mod tests {
                 Value::Int(11)
             ]
         )
-    }
+    }*/
 
     #[test]
     fn op_return_continues_at_call_site() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
                 // callee code offset
-                .make_closure("callee", 0)
+                .make_closure("callee")
                 .op(Op::Call { n_args: 0 })
                 .op(Op::Integer(34))
                 .op(Op::Halt)

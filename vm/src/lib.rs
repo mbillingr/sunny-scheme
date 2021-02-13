@@ -1,3 +1,4 @@
+mod activation;
 pub mod bytecode;
 pub mod bytecode_loader;
 mod closure;
