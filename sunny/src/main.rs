@@ -1,21 +1,33 @@
-use std::env;
+use rustyline::{error::ReadlineError, Editor};
 use std::fs::File;
 use std::io::Read;
-use sunny_vm::bytecode::CodePointer;
+use structopt::StructOpt;
+use sunny_vm::bytecode::{CodeBuilder, CodePointer, Op};
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{ValueStorage, Vm};
 
+#[derive(StructOpt)]
+enum Cli {
+    Bytecode {
+        #[structopt(parse(from_os_str))]
+        file: std::path::PathBuf,
+    },
+
+    Repl,
+}
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args = Cli::from_args();
 
-    if args.len() != 2 {
-        eprintln!("Usage:\n> sunny <bytecode-file>");
-        return;
+    match args {
+        Cli::Bytecode { file } => run_bytecode(&file),
+        Cli::Repl => run_repl(),
     }
+}
 
-    let filename = &args[1];
+fn run_bytecode(path: &std::path::Path) {
     let mut source = String::new();
-    File::open(filename)
+    File::open(path)
         .unwrap()
         .read_to_string(&mut source)
         .unwrap();
@@ -33,4 +45,37 @@ fn main() {
     let mut vm = Vm::new(storage).unwrap();
     let result = vm.eval(cp).unwrap();
     println!("Result: {}", result);
+}
+
+fn run_repl() {
+    let mut rl = Editor::<()>::new();
+
+    let storage = ValueStorage::new(5);
+    let mut vm = Vm::new(storage).unwrap();
+
+    loop {
+        match rl.readline(">> ") {
+            Ok(line) => {
+                // todo: this is just a silly placeholder.
+                //       we need to translate the input instead.
+                let code = CodeBuilder::new()
+                    .op(Op::Integer(42))
+                    .op(Op::Return)
+                    .build()
+                    .unwrap();
+                match vm.eval_raw(code) {
+                    Ok(r) => println!("{}", r),
+                    Err(e) => println!("Error: {:?}", e),
+                }
+            }
+            Err(ReadlineError::Eof) => {
+                println!("CTRL-D");
+                break;
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
+        }
+    }
 }

@@ -1,5 +1,5 @@
 use crate::activation::Activation;
-use crate::bytecode::{CodeBuilder, CodePointer};
+use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
 use crate::{
     bytecode::Op,
     closure::Closure,
@@ -48,6 +48,13 @@ impl Vm {
             current_activation: root_activation,
             empty_value_array,
         })
+    }
+
+    pub fn eval_raw(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
+        self.ensure_storage_space(2).unwrap();
+        let code = self.storage.insert(code).unwrap();
+        let cp = CodePointer::new(code);
+        self.eval(cp)
     }
 
     pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Value> {
