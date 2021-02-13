@@ -35,9 +35,7 @@ impl<T: ?Sized> Deref for Ref<T> {
 
 impl<T: ?Sized> DerefMut for Ref<T> {
     fn deref_mut(&mut self) -> &mut T {
-        // This is safe if `Storage::collect_garbage` was never called.
-        // It is still safe if the object was accessible through the root when collecting garbage.
-        // Thus, we can say dereferencing this pointer is safe, but collecting garbage is unsafe.
+        // This is actually really unsafe because it allows mutating shared references.
         unsafe { &mut *self.ptr }
     }
 }

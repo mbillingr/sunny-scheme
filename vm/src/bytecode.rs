@@ -20,9 +20,14 @@ pub enum Op {
     Return,
     Call { n_args: u8 },
 
+    Peek(u8),
+    PushLocal,
+    DropLocal,
+    GetLocal(u8),
+    GetDeep(u8),
+
     Integer(u8),
     Const(u8),
-    GetLocal(u8),
     GetStack(u8),
 
     Dup,
@@ -63,9 +68,13 @@ impl std::fmt::Display for Op {
             Op::RJumpIfVoid { backward } => write!(f, "{} {}", repr::RJUMPIFVOID, backward),
             Op::Return => write!(f, "{}", repr::RETURN),
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
+            Op::Peek(x) => write!(f, "{} {}", repr::PEEK, x),
+            Op::PushLocal => write!(f, "{}", repr::PUSHLOCAL),
+            Op::DropLocal => write!(f, "{}", repr::DROPLOCAL),
+            Op::GetLocal(x) => write!(f, "{} {}", repr::GETLOCAL, x),
+            Op::GetDeep(x) => write!(f, "{} {}", repr::GETDEEP, x),
             Op::Integer(x) => write!(f, "{} {}", repr::INTEGER, x),
             Op::Const(x) => write!(f, "{} {}", repr::CONST, x),
-            Op::GetLocal(x) => write!(f, "{} {}", repr::GETLOCAL, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
             Op::Dup => write!(f, "{}", repr::DUP),
             Op::Drop => write!(f, "{}", repr::DROP),
@@ -97,9 +106,13 @@ pub mod repr {
     pub const RJUMPIFVOID: &'static str = "RJUMPIFVOID";
     pub const RETURN: &'static str = "RETURN";
     pub const CALL: &'static str = "CALL";
+    pub const PEEK: &'static str = "PEEK";
+    pub const PUSHLOCAL: &'static str = "PUSHLOCAL";
+    pub const DROPLOCAL: &'static str = "DROPLOCAL";
+    pub const GETLOCAL: &'static str = "GETLOCAL";
+    pub const GETDEEP: &'static str = "GETDEEP";
     pub const INTEGER: &'static str = "INTEGER";
     pub const CONST: &'static str = "CONST";
-    pub const GETLOCAL: &'static str = "GETLOCAL";
     pub const GETSTACK: &'static str = "GETSTACK";
     pub const DUP: &'static str = "DUP";
     pub const DROP: &'static str = "DROP";

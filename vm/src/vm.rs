@@ -108,10 +108,17 @@ impl Vm {
                         return Ok(ret_val);
                     }
                 }
+                Op::Peek(i) => self.peek_closure(extend_arg(i, arg))?,
+                Op::PushLocal => self.push_local()?,
+                Op::DropLocal => self.drop_local()?,
+                Op::GetLocal(a) => self.get_local(0, extend_arg(a, arg))?,
+                Op::GetDeep(a) => {
+                    let depth = self.pop_int()?;
+                    self.get_local(depth as usize, extend_arg(a, arg))?
+                }
                 Op::Call { n_args } => self.call(extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(extend_arg(a, arg))?,
-                Op::GetLocal(a) => self.push_local(extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
                 Op::Dup => self.dup()?,
                 Op::Drop => self.drop()?,
@@ -166,16 +173,42 @@ impl Vm {
         Ok(())
     }
 
-    fn push_local(&mut self, idx: usize) -> Result<()> {
-        let x = self.current_activation.locals[idx].clone();
-        self.push_value(x);
-        Ok(())
-    }
-
     fn push_from_stack(&mut self, idx: usize) -> Result<()> {
         let x = self.value_stack[idx].clone();
         self.push_value(x);
         Ok(())
+    }
+
+    fn push_local(&mut self) -> Result<()> {
+        let x = self.pop_value()?;
+        self.current_activation.locals.push(x);
+        Ok(())
+    }
+
+    fn drop_local(&mut self) -> Result<()> {
+        self.current_activation.locals.pop().unwrap();
+        Ok(())
+    }
+
+    fn get_local(&mut self, depth: usize, idx: usize) -> Result<()> {
+        let mut act = &self.current_activation;
+        for _ in 0..depth {
+            act = self.current_activation.parent.as_ref().unwrap();
+        }
+        let x = act.locals[idx].clone();
+        self.push_value(x);
+        Ok(())
+    }
+
+    fn peek_closure(&mut self, idx: usize) -> Result<()> {
+        match self.pop_value()? {
+            Value::Closure(cls) => {
+                let x = cls.parent.as_ref().unwrap().locals[idx].clone();
+                self.push_value(x);
+                Ok(())
+            }
+            _ => Err(ErrorKind::TypeError),
+        }
     }
 
     fn jump(&mut self, amount: usize) {
@@ -658,35 +691,42 @@ mod tests {
         )
     }
 
-    /*#[test]
-    fn op_getfree_references_closure_vars() {
+    #[test]
+    fn op_reference_closure_vars() {
         let (_, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
                 // free vars
                 .op(Op::Integer(10))
+                .op(Op::PushLocal)
                 .op(Op::Integer(11))
+                .op(Op::PushLocal)
                 .op(Op::Integer(12))
-                .make_closure("callee", 3)
+                .op(Op::PushLocal)
+                .make_closure("callee")
                 .op(Op::Call { n_args: 0 })
                 .op(Op::Halt)
                 .label("callee")
-                .op(Op::GetFree(0))
-                .op(Op::GetFree(2))
-                .op(Op::GetFree(2))
-                .op(Op::GetFree(1))
+                .op(Op::Integer(1))
+                .op(Op::GetDeep(0))
+                .op(Op::Integer(1))
+                .op(Op::GetDeep(2))
+                .op(Op::Integer(1))
+                .op(Op::GetDeep(2))
+                .op(Op::Integer(1))
+                .op(Op::GetDeep(1))
                 .op(Op::Halt),
         );
 
         assert_eq!(
             &*vm.value_stack,
             vec![
+                Value::Int(10),
                 Value::Int(12),
-                Value::Int(10),
-                Value::Int(10),
+                Value::Int(12),
                 Value::Int(11)
             ]
         )
-    }*/
+    }
 
     #[test]
     fn op_return_continues_at_call_site() {
@@ -989,5 +1029,83 @@ mod tests {
                 Value::Int(3)
             ]
         )
+    }
+
+    #[test]
+    fn can_reference_locals() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Integer(1))
+                .op(Op::PushLocal)
+                .op(Op::Integer(2))
+                .op(Op::PushLocal)
+                .op(Op::GetLocal(0))
+                .op(Op::GetLocal(1))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(&*vm.value_stack, vec![Value::Int(1), Value::Int(2)])
+    }
+
+    #[test]
+    fn dropped_locals_can_be_reused() {
+        let (_, vm) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .op(Op::Integer(1))
+                .op(Op::PushLocal)
+                .op(Op::GetLocal(0))
+                .op(Op::Integer(2))
+                .op(Op::DropLocal)
+                .op(Op::PushLocal)
+                .op(Op::GetLocal(0))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(&*vm.value_stack, vec![Value::Int(1), Value::Int(2)])
+    }
+
+    #[test]
+    fn op_peek_into_closure() {
+        let mut storage = ValueStorage::new(1024);
+
+        let code = CodeBuilder::new()
+            // main
+            .op(Op::Peek(1))
+            .op(Op::Halt)
+            // closure
+            .op(Op::Halt)
+            .build()
+            .unwrap();
+        let code_segment = storage.insert(code).unwrap();
+
+        let main = Closure {
+            code: CodePointer::new(code_segment.clone()).at(0),
+            parent: None,
+        };
+
+        let act = Activation {
+            caller: None,
+            parent: None,
+            code: CodePointer::new(code_segment.clone()).at(999),
+            locals: vec![Value::Int(1), Value::Int(2)],
+        };
+        let act = storage.insert(act).unwrap();
+
+        let callee = Closure {
+            code: CodePointer::new(code_segment.clone()).at(2),
+            parent: Some(act),
+        };
+
+        let value_stack = vec![storage.store_closure(callee).unwrap()];
+
+        let mut vm = Vm::new(storage).unwrap();
+
+        vm.value_stack = value_stack;
+
+        vm.load_closure(&main).unwrap();
+        let ret = vm.run();
+
+        assert_eq!(ret, Err(ErrorKind::Halted));
+        assert_eq!(vm.value_stack, vec![Value::Int(2)]);
     }
 }
