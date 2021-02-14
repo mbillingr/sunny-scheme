@@ -1,3 +1,6 @@
+mod backend;
+mod frontend;
+
 use log::LevelFilter;
 use rustyline::{error::ReadlineError, Editor};
 use simple_logger::SimpleLogger;

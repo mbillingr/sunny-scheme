@@ -142,8 +142,11 @@ impl Traceable for CodeSegment {
 }
 
 impl CodeSegment {
-    pub fn new(code: Box<[Op]>, constants: Box<[Value]>) -> Self {
-        CodeSegment { code, constants }
+    pub fn new(code: impl Into<Box<[Op]>>, constants: impl Into<Box<[Value]>>) -> Self {
+        CodeSegment {
+            code: code.into(),
+            constants: constants.into(),
+        }
     }
 
     pub fn get_constant(&self, index: usize) -> &Value {
@@ -160,6 +163,52 @@ impl CodeSegment {
 
     pub fn constant_slice(&self) -> &[Value] {
         &*self.constants
+    }
+
+    pub fn chain(segments: &[Self]) -> Self {
+        let mut code = vec![];
+        let mut constants = vec![];
+
+        for segment in segments {
+            let constant_offset = constants.len();
+
+            constants.extend(segment.constants.iter().cloned());
+
+            for op in segment.code.iter() {
+                match op {
+                    Op::Const(idx) => {
+                        while let Some(Op::ExtArg(_)) = code.last() {
+                            code.pop();
+                        }
+
+                        let mut new_index = *idx as usize + constant_offset;
+
+                        if new_index <= u8::max_value() as usize {
+                            code.push(Op::Const(new_index as u8));
+                            continue;
+                        }
+
+                        let mut reverse_args = vec![];
+
+                        while new_index > 0 {
+                            reverse_args.push((new_index & 0xff) as u8);
+                            new_index = new_index >> 8;
+                        }
+
+                        while reverse_args.len() > 1 {
+                            let ext = reverse_args.pop().unwrap();
+                            code.push(Op::ExtArg(ext as u8));
+                        }
+
+                        let idx = reverse_args.pop().unwrap();
+                        code.push(Op::Const(idx as u8));
+                    }
+                    _ => code.push(*op),
+                }
+            }
+        }
+
+        CodeSegment::new(code, constants)
     }
 }
 
@@ -420,6 +469,59 @@ impl std::fmt::Debug for BuildOp {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chaining_code_segments_appends_their_bytecodes() {
+        let first = CodeSegment::new(vec![Op::Integer(1)], vec![]);
+        let second = CodeSegment::new(vec![Op::Integer(2)], vec![]);
+        let both = CodeSegment::chain(&[first, second]);
+        assert_eq!(both.code_slice(), &[Op::Integer(1), Op::Integer(2)]);
+    }
+
+    #[test]
+    fn chaining_code_segments_relocates_constant_references() {
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(2)]);
+        let both = CodeSegment::chain(&[first, second]);
+        assert_eq!(both.code_slice(), &[Op::Const(0), Op::Const(1)]);
+    }
+
+    #[test]
+    fn chaining_code_segments_appends_different_constants() {
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(2)]);
+        let both = CodeSegment::chain(&[first, second]);
+        assert_eq!(both.constant_slice(), &[Value::Int(1), Value::Int(2)]);
+    }
+
+    #[test]
+    fn chaining_code_segments_merges_equal_constants() {
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
+        let both = CodeSegment::chain(&[first, second]);
+        assert_eq!(both.code_slice(), &[Op::Const(0), Op::Const(0)]);
+        assert_eq!(both.constant_slice(), &[Value::Int(1)]);
+    }
+
+    #[test]
+    fn chaining_code_segments_correctly_inserts_extargs_for_constants() {
+        unimplemented!()
+    }
+
+    #[test]
+    fn chaining_code_segments_correctly_removes_extargs_for_constants() {
+        unimplemented!()
+    }
+
+    #[test]
+    fn chaining_code_segments_adjusts_jumps_when_the_number_of_ops_changes() {
+        // todo: maybe it makes more sense to implement all this with a graph
+        //       of basic blocks. Possible implementations:
+        //       - wrap Ops so they can encode jumps to labels
+        //       - if every basic block ends with a jump, the type of jump and labels could be
+        //         encoded in the block...
+        unimplemented!()
+    }
 
     #[test]
     fn build_empty_closure() {

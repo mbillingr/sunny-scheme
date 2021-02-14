@@ -64,6 +64,10 @@ impl<'src> Sexpr<'src> {
         }
     }
 
+    pub fn is_symbol(&self) -> bool {
+        self.as_symbol().is_some()
+    }
+
     pub fn as_symbol(&self) -> Option<&str> {
         match self {
             Sexpr::Symbol(s) => Some(s),
