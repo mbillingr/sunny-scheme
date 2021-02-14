@@ -1,5 +1,5 @@
 use crate::gc::{GcMarker, Ref, Traceable, Tracer};
-use log::{debug, warn};
+use log::{debug, trace, warn};
 use std::any::Any;
 use std::collections::HashSet;
 
@@ -93,6 +93,11 @@ impl Storage {
 
     /// Double storage capacity until at least n slots are free
     pub fn ensure(&mut self, n: usize) {
+        if self.free() >= n {
+            return;
+        }
+
+        debug!("Need space for {} additional objects", n);
         let required_capacity = n + self.used();
 
         let mut target_cap = self.objects.capacity().max(1);
@@ -100,8 +105,13 @@ impl Storage {
             target_cap *= 2;
         }
 
+        let old_capacity = self.objects.capacity();
         self.objects.reserve(target_cap - self.used());
-        debug!("Growing storage to {}", self.objects.capacity());
+        debug!(
+            "Growing storage from {} to {}",
+            old_capacity,
+            self.objects.capacity()
+        );
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
@@ -127,6 +137,7 @@ impl Storage {
                 i += 1;
             } else {
                 let mut obj = self.objects.swap_remove(i);
+                trace!("Collecting {:p}", obj);
                 self.interned.remove(&(&mut *obj as *mut _ as *mut _));
             }
         }

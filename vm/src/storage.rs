@@ -37,6 +37,20 @@ impl ValueStorage {
         })
     }
 
+    pub fn count_allocations(&mut self, sexpr: &Sexpr<'_>) -> usize {
+        match sexpr {
+            Sexpr::Nil => 0,
+            Sexpr::Integer(_) => 0,
+            Sexpr::Symbol(_) => 1,
+            Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
+            Sexpr::Pair(p) => {
+                let n_car = self.count_allocations(p.0.get_value());
+                let n_cdr = self.count_allocations(p.1.get_value());
+                1 + n_car + n_cdr
+            }
+        }
+    }
+
     pub fn interned_symbol(&mut self, name: &str) -> Result<Value, ()> {
         let symbol = if let Some(s) = self.storage.find_interned(|s: &Symbol| &**s == name) {
             s
@@ -101,6 +115,10 @@ impl ValueStorage {
 
     pub fn insert<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
         self.storage.insert(obj)
+    }
+
+    pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Result<Ref<T>, Box<T>> {
+        self.storage.insert_box(obj)
     }
 
     /// Make sure the storage is at most half full

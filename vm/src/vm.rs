@@ -7,6 +7,7 @@ use crate::{
     storage::ValueStorage,
     Error, ErrorKind, Result, RuntimeResult, Value,
 };
+use sunny_sexpr_parser::Sexpr;
 
 pub struct Vm {
     storage: ValueStorage,
@@ -16,6 +17,8 @@ pub struct Vm {
 
     // constants
     empty_value_array: Ref<Box<[Value]>>,
+
+    gc_preserve: Vec<&'static dyn Traceable>,
 }
 
 impl Traceable for Vm {
@@ -23,6 +26,7 @@ impl Traceable for Vm {
         self.value_stack.trace(gc);
         self.current_activation.trace(gc);
         self.empty_value_array.trace(gc);
+        self.gc_preserve.trace(gc);
     }
 }
 
@@ -47,11 +51,25 @@ impl Vm {
             value_stack: vec![],
             current_activation: root_activation,
             empty_value_array,
+            gc_preserve: vec![],
         })
     }
 
+    pub fn build_value(&mut self, sexpr: &Sexpr) -> Result<Value> {
+        let storage_required = self.storage.count_allocations(sexpr);
+        self.ensure_storage_space(storage_required)?;
+        Ok(self.storage.sexpr_to_value(sexpr).unwrap())
+    }
+
     pub fn eval_raw(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
+        unsafe {
+            // We pretend code has static lifetime. This is not the case, so
+            // the reference must be popped while it is still alive.
+            let code = &*(&code as *const _);
+            self.gc_preserve.push(code);
+        }
         self.ensure_storage_space(2).unwrap();
+        self.gc_preserve.pop().unwrap();
         let code = self.storage.insert(code).unwrap();
         let cp = CodePointer::new(code);
         self.eval(cp)

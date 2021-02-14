@@ -94,3 +94,9 @@ impl<T: Traceable> Traceable for &[T] {
         }
     }
 }
+
+impl<T: Traceable + ?Sized> Traceable for Box<T> {
+    fn trace(&self, gc: &mut Tracer) {
+        (**self).trace(gc)
+    }
+}
