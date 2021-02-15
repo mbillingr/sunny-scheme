@@ -110,7 +110,7 @@ impl Vm {
             match self.fetch_op() {
                 Op::Nop => {}
                 Op::ExtArg(a) => {
-                    arg = extend_arg(a, arg);
+                    arg = Op::extend_arg(a, arg);
                     continue;
                 }
                 Op::Inspect(i) => println!(
@@ -119,12 +119,16 @@ impl Vm {
                         .get(self.value_stack.len() - 1 - i as usize)
                 ),
                 Op::Halt => return Err(ErrorKind::Halted),
-                Op::Jump { forward } => self.jump(extend_arg(forward, arg)),
-                Op::JumpIfTrue { forward } => self.jump_if_true(extend_arg(forward, arg))?,
-                Op::JumpIfVoid { forward } => self.jump_if_void(extend_arg(forward, arg))?,
-                Op::RJump { backward } => self.rjump(extend_arg(backward, arg)),
-                Op::RJumpIfTrue { backward } => self.rjump_if_true(extend_arg(backward, arg))?,
-                Op::RJumpIfVoid { backward } => self.rjump_if_void(extend_arg(backward, arg))?,
+                Op::Jump { forward } => self.jump(Op::extend_arg(forward, arg)),
+                Op::JumpIfTrue { forward } => self.jump_if_true(Op::extend_arg(forward, arg))?,
+                Op::JumpIfVoid { forward } => self.jump_if_void(Op::extend_arg(forward, arg))?,
+                Op::RJump { backward } => self.rjump(Op::extend_arg(backward, arg)),
+                Op::RJumpIfTrue { backward } => {
+                    self.rjump_if_true(Op::extend_arg(backward, arg))?
+                }
+                Op::RJumpIfVoid { backward } => {
+                    self.rjump_if_void(Op::extend_arg(backward, arg))?
+                }
                 Op::Return => {
                     if let Some(act) = self.current_activation.caller.take() {
                         self.current_activation = act;
@@ -133,18 +137,18 @@ impl Vm {
                         return Ok(ret_val);
                     }
                 }
-                Op::Peek(i) => self.peek_closure(extend_arg(i, arg))?,
+                Op::Peek(i) => self.peek_closure(Op::extend_arg(i, arg))?,
                 Op::PushLocal => self.push_local()?,
                 Op::DropLocal => self.drop_local()?,
-                Op::GetLocal(a) => self.get_local(0, extend_arg(a, arg))?,
+                Op::GetLocal(a) => self.get_local(0, Op::extend_arg(a, arg))?,
                 Op::GetDeep(a) => {
                     let depth = self.pop_int()?;
-                    self.get_local(depth as usize, extend_arg(a, arg))?
+                    self.get_local(depth as usize, Op::extend_arg(a, arg))?
                 }
-                Op::Call { n_args } => self.call(extend_arg(n_args, arg))?,
-                Op::Integer(a) => self.push_value(Value::Int(extend_arg(a, arg) as i64)),
-                Op::Const(a) => self.push_const(extend_arg(a, arg))?,
-                Op::GetStack(a) => self.push_from_stack(extend_arg(a, arg))?,
+                Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
+                Op::Integer(a) => self.push_value(Value::Int(Op::extend_arg(a, arg) as i64)),
+                Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
+                Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg))?,
                 Op::Dup => self.dup()?,
                 Op::Drop => self.drop()?,
                 Op::Swap => self.swap()?,
@@ -426,11 +430,6 @@ impl Vm {
             self.storage.finish_garbage_collection(gc);
         }
     }
-}
-
-#[inline(always)]
-fn extend_arg(a: u8, arg: usize) -> usize {
-    a as usize + (arg << 8)
 }
 
 #[cfg(test)]

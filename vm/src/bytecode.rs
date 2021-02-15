@@ -49,6 +49,13 @@ pub enum Op {
     MakeClosure,
 }
 
+impl Op {
+    #[inline(always)]
+    pub fn extend_arg(a: u8, arg: usize) -> usize {
+        a as usize + (arg << 8)
+    }
+}
+
 impl Traceable for Op {
     fn trace(&self, _: &mut Tracer) {}
 }
