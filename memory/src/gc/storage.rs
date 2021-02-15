@@ -88,7 +88,7 @@ impl Storage {
 
     /// Make sure the storage is at most half full
     pub fn auto_grow(&mut self) {
-        self.ensure(self.objects.len());
+        self.ensure(self.objects.len().max(1));
     }
 
     /// Double storage capacity until at least n slots are free
