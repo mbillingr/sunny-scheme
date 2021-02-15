@@ -59,8 +59,27 @@ impl BasicBlock {
 
     pub fn build_segment(&self) -> CodeSegment {
         let mut constant_map = HashMap::new();
-
         let mut code = vec![];
+        let mut block_offsets = HashMap::new();
+
+        self.build_code(&mut code, &mut constant_map, &mut block_offsets);
+
+        let mut constants = vec![Value::Void; constant_map.len()];
+        for (val, idx) in constant_map {
+            constants[idx] = val;
+        }
+
+        CodeSegment::new(code, constants)
+    }
+
+    fn build_code(
+        &self,
+        code: &mut Vec<Op>,
+        constant_map: &mut HashMap<Value, usize>,
+        block_offsets: &mut HashMap<*const Self, usize>,
+    ) {
+        block_offsets.insert(self, code.len());
+
         for &op in &self.code {
             match op {
                 Op::Const(c) => {
@@ -83,14 +102,80 @@ impl BasicBlock {
                 _ => code.push(op),
             }
         }
-        code.push(Op::Halt);
 
-        let mut constants = vec![Value::Void; constant_map.len()];
-        for (val, idx) in constant_map {
-            constants[idx] = val;
+        match &*self.exit.borrow() {
+            Exit::Halt => code.push(Op::Halt),
+            Exit::Return => code.push(Op::Return),
+            Exit::Jump(target) => {
+                if let Some(&offset) = block_offsets.get(&(&**target as *const _)) {
+                    BasicBlock::build_jump(code, offset)
+                } else {
+                    target.build_code(code, constant_map, block_offsets);
+                }
+            }
+            Exit::BranchTrue(true_target, false_target) => {
+                BasicBlock::build_branch(
+                    code,
+                    constant_map,
+                    block_offsets,
+                    true_target,
+                    false_target,
+                    |forward| Op::JumpIfTrue { forward },
+                );
+            }
+            Exit::BranchVoid(true_target, false_target) => {
+                BasicBlock::build_branch(
+                    code,
+                    constant_map,
+                    block_offsets,
+                    true_target,
+                    false_target,
+                    |forward| Op::JumpIfVoid { forward },
+                );
+            }
+            _ => unimplemented!(),
+        }
+    }
+
+    fn build_jump(code: &mut Vec<Op>, offset: usize) {
+        if offset >= code.len() {
+            code.extend(Op::extended(
+                |forward| Op::Jump { forward },
+                offset - code.len(),
+            ));
+        } else {
+            code.extend(Op::extended(
+                |backward| Op::RJump { backward },
+                code.len() - offset,
+            ));
+        }
+    }
+
+    fn build_branch(
+        code: &mut Vec<Op>,
+        constant_map: &mut HashMap<Value, usize>,
+        block_offsets: &mut HashMap<*const Self, usize>,
+        true_target: &Rc<BasicBlock>,
+        false_target: &Rc<BasicBlock>,
+        op_maker: impl FnOnce(u8) -> Op,
+    ) {
+        if let Some(&offset) = block_offsets.get(&(&**false_target as *const _)) {
+            code.push(op_maker(1));
+            Self::build_jump(code, offset);
+        } else {
+            let mut false_code = vec![];
+            false_target.build_code(&mut false_code, constant_map, &mut block_offsets.clone());
+
+            code.extend(Op::extended(op_maker, false_code.len()));
+
+            false_target.build_code(code, constant_map, block_offsets);
         }
 
-        CodeSegment::new(code, constants)
+        if let Some(&offset) = block_offsets.get(&(&**true_target as *const _)) {
+            Self::build_jump(code, offset);
+        } else {
+            true_target.build_code(code, constant_map, block_offsets);
+        }
     }
 
     fn build_constants(&self, constants: &mut HashMap<Value, usize>) {
@@ -206,26 +291,109 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_appends_jump_target() {
-        unimplemented!()
+        let block1 = BasicBlock::new(vec![Op::Integer(1)], vec![]);
+        let block2 = BasicBlock::new(vec![Op::Integer(2)], vec![]);
+        block1.jump_to(block2);
+
+        let segment = block1.build_segment();
+
+        assert_eq!(
+            segment.code_slice(),
+            &[Op::Integer(1), Op::Integer(2), Op::Halt]
+        );
+    }
+
+    #[test]
+    fn convert_to_code_segment_shares_constants_between_blocks() {
+        let block1 = BasicBlock::new(vec![Op::Const(0)], vec![Value::Int(42)]);
+        let block2 = BasicBlock::new(vec![Op::Const(1)], vec![Value::Nil, Value::Int(42)]);
+        block1.jump_to(block2);
+
+        let segment = block1.build_segment();
+
+        assert_eq!(
+            segment.code_slice(),
+            &[Op::Const(0), Op::Const(0), Op::Halt]
+        );
+        assert_eq!(segment.constant_slice(), &[Value::Int(42)]);
     }
 
     #[test]
     fn convert_to_code_segment_produces_branches() {
-        unimplemented!()
+        let block1 = BasicBlock::new(vec![], vec![]);
+        let block2 = BasicBlock::new(vec![], vec![]);
+        let block3 = BasicBlock::new(vec![], vec![]);
+        block2.return_from();
+        block1.branch_true(block2, block3);
+
+        let segment = block1.build_segment();
+        assert_eq!(
+            segment.code_slice(),
+            &[Op::JumpIfTrue { forward: 1 }, Op::Halt, Op::Return]
+        );
     }
 
     #[test]
-    fn convert_to_code_segment_inserts_a_multijump_target_only_once() {
-        unimplemented!()
+    fn convert_to_code_segment_inserts_blocks_only_once() {
+        let block1 = Rc::new(BasicBlock::new(vec![Op::Integer(1)], vec![]));
+        let block2 = Rc::new(BasicBlock::new(vec![Op::Integer(2)], vec![]));
+        block1.jump_to(block2.clone());
+        block2.jump_to(block1.clone());
+
+        let segment = block1.build_segment();
+
+        assert_eq!(
+            segment.code_slice(),
+            &[Op::Integer(1), Op::Integer(2), Op::RJump { backward: 2 }]
+        );
+    }
+
+    #[test]
+    fn convert_to_code_segment_inserts_branches_only_once() {
+        let block1 = Rc::new(BasicBlock::new(vec![Op::Nop], vec![]));
+        let block2 = Rc::new(BasicBlock::new(vec![Op::Nop], vec![]));
+        block1.branch_true(block2.clone(), block2);
+
+        let segment = block1.build_segment();
+
+        assert_eq!(
+            segment.code_slice(),
+            &[
+                Op::Nop,
+                Op::JumpIfTrue { forward: 2 },
+                Op::Nop,
+                Op::Halt,
+                Op::RJump { backward: 2 }
+            ]
+        );
     }
 
     #[test]
     fn convert_to_code_segment_correctly_inserts_extargs_for_constants() {
-        unimplemented!()
+        let mut ops = vec![];
+        let mut consts = vec![];
+        for i in 0..=255 {
+            ops.push(Op::Const(i));
+            consts.push(Value::Int(i as i64));
+        }
+        let block1 = BasicBlock::new(ops, consts);
+        let block2 = BasicBlock::new(vec![Op::Const(0)], vec![Value::Nil]);
+        block1.jump_to(block2);
+
+        let segment = block1.build_segment();
+
+        assert_eq!(
+            &segment.code_slice()[255..],
+            &[Op::Const(255), Op::ExtArg(1), Op::Const(0), Op::Halt]
+        );
     }
 
     #[test]
     fn convert_to_code_segment_correctly_removes_extargs_for_constants() {
-        unimplemented!()
+        let block = BasicBlock::new(vec![Op::ExtArg(0), Op::Const(0)], vec![Value::Int(1)]);
+
+        let segment = block.build_segment();
+
+        assert_eq!(segment.code_slice(), &[Op::Const(0), Op::Halt]);
     }
 }

@@ -212,7 +212,7 @@ impl CodeSegment {
                             code.pop();
                         }
 
-                        let mut new_index = *idx as usize + constant_offset;
+                        let new_index = *idx as usize + constant_offset;
 
                         code.extend(Op::extended(Op::Const, new_index));
                     }
