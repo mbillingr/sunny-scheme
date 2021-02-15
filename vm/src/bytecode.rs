@@ -54,6 +54,30 @@ impl Op {
     pub fn extend_arg(a: u8, arg: usize) -> usize {
         a as usize + (arg << 8)
     }
+
+    pub fn extended(op_maker: impl FnOnce(u8) -> Op, mut arg: usize) -> Vec<Self> {
+        if arg <= u8::max_value() as usize {
+            return vec![op_maker(arg as u8)];
+        }
+
+        let mut reverse_args = vec![];
+        let mut ops = vec![];
+
+        while arg > 0 {
+            reverse_args.push((arg & 0xff) as u8);
+            arg >>= 8;
+        }
+
+        while reverse_args.len() > 1 {
+            let ext = reverse_args.pop().unwrap();
+            ops.push(Op::ExtArg(ext as u8));
+        }
+
+        let idx = reverse_args.pop().unwrap();
+        ops.push(op_maker(idx as u8));
+
+        ops
+    }
 }
 
 impl Traceable for Op {
@@ -190,25 +214,7 @@ impl CodeSegment {
 
                         let mut new_index = *idx as usize + constant_offset;
 
-                        if new_index <= u8::max_value() as usize {
-                            code.push(Op::Const(new_index as u8));
-                            continue;
-                        }
-
-                        let mut reverse_args = vec![];
-
-                        while new_index > 0 {
-                            reverse_args.push((new_index & 0xff) as u8);
-                            new_index = new_index >> 8;
-                        }
-
-                        while reverse_args.len() > 1 {
-                            let ext = reverse_args.pop().unwrap();
-                            code.push(Op::ExtArg(ext as u8));
-                        }
-
-                        let idx = reverse_args.pop().unwrap();
-                        code.push(Op::Const(idx as u8));
+                        code.extend(Op::extended(Op::Const, new_index));
                     }
                     _ => code.push(*op),
                 }

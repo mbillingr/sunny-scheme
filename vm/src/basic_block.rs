@@ -59,16 +59,36 @@ impl BasicBlock {
 
     pub fn build_segment(&self) -> CodeSegment {
         let mut constant_map = HashMap::new();
-        self.build_constants(&mut constant_map);
+
+        let mut code = vec![];
+        for &op in &self.code {
+            match op {
+                Op::Const(c) => {
+                    let mut const_idx = c as usize;
+                    let mut multiplier = 256;
+                    while let Some(Op::ExtArg(x)) = code.last() {
+                        const_idx += multiplier * *x as usize;
+                        multiplier <<= 8;
+                        code.pop();
+                    }
+
+                    let value = self.constants[const_idx].clone();
+
+                    let n = constant_map.len();
+                    let new_idx = *constant_map.entry(value).or_insert(n);
+
+                    let ops = Op::extended(Op::Const, new_idx);
+                    code.extend(ops);
+                }
+                _ => code.push(op),
+            }
+        }
+        code.push(Op::Halt);
 
         let mut constants = vec![Value::Void; constant_map.len()];
         for (val, idx) in constant_map {
             constants[idx] = val;
         }
-
-        let mut code = vec![];
-        code.extend(&self.code);
-        code.push(Op::Halt);
 
         CodeSegment::new(code, constants)
     }
