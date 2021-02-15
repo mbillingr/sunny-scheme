@@ -58,144 +58,122 @@ impl BasicBlock {
     }
 
     pub fn build_segment(&self) -> CodeSegment {
-        let mut constant_map = HashMap::new();
-        let mut code = vec![];
-        let mut block_offsets = HashMap::new();
+        let mut builder = CodeBuilder::new();
+        builder.build_code(self);
 
-        self.build_code(&mut code, &mut constant_map, &mut block_offsets);
-
-        let mut constants = vec![Value::Void; constant_map.len()];
-        for (val, idx) in constant_map {
+        let mut constants = vec![Value::Void; builder.constant_map.len()];
+        for (val, idx) in builder.constant_map {
             constants[idx] = val;
         }
 
-        CodeSegment::new(code, constants)
+        CodeSegment::new(builder.code, constants)
+    }
+}
+
+struct CodeBuilder {
+    code: Vec<Op>,
+    constant_map: HashMap<Value, usize>,
+    block_offsets: HashMap<*const BasicBlock, usize>,
+}
+
+impl CodeBuilder {
+    fn new() -> Self {
+        CodeBuilder {
+            code: vec![],
+            constant_map: HashMap::new(),
+            block_offsets: HashMap::new(),
+        }
     }
 
-    fn build_code(
-        &self,
-        code: &mut Vec<Op>,
-        constant_map: &mut HashMap<Value, usize>,
-        block_offsets: &mut HashMap<*const Self, usize>,
-    ) {
-        block_offsets.insert(self, code.len());
+    fn build_code(&mut self, block: &BasicBlock) {
+        self.block_offsets.insert(block, self.code.len());
 
-        for &op in &self.code {
+        for &op in &block.code {
             match op {
                 Op::Const(c) => {
                     let mut const_idx = c as usize;
                     let mut multiplier = 256;
-                    while let Some(Op::ExtArg(x)) = code.last() {
+                    while let Some(Op::ExtArg(x)) = self.code.last() {
                         const_idx += multiplier * *x as usize;
                         multiplier <<= 8;
-                        code.pop();
+                        self.code.pop();
                     }
 
-                    let value = self.constants[const_idx].clone();
+                    let value = block.constants[const_idx].clone();
 
-                    let n = constant_map.len();
-                    let new_idx = *constant_map.entry(value).or_insert(n);
+                    let n = self.constant_map.len();
+                    let new_idx = *self.constant_map.entry(value).or_insert(n);
 
                     let ops = Op::extended(Op::Const, new_idx);
-                    code.extend(ops);
+                    self.code.extend(ops);
                 }
-                _ => code.push(op),
+                _ => self.code.push(op),
             }
         }
 
-        match &*self.exit.borrow() {
-            Exit::Halt => code.push(Op::Halt),
-            Exit::Return => code.push(Op::Return),
+        match &*block.exit.borrow() {
+            Exit::Halt => self.code.push(Op::Halt),
+            Exit::Return => self.code.push(Op::Return),
             Exit::Jump(target) => {
-                if let Some(&offset) = block_offsets.get(&(&**target as *const _)) {
-                    BasicBlock::build_jump(code, offset)
+                if let Some(&offset) = self.block_offsets.get(&(&**target as *const _)) {
+                    self.build_jump(offset)
                 } else {
-                    target.build_code(code, constant_map, block_offsets);
+                    self.build_code(target);
                 }
             }
             Exit::BranchTrue(true_target, false_target) => {
-                BasicBlock::build_branch(
-                    code,
-                    constant_map,
-                    block_offsets,
-                    true_target,
-                    false_target,
-                    |forward| Op::JumpIfTrue { forward },
-                );
+                self.build_branch(true_target, false_target, |forward| Op::JumpIfTrue {
+                    forward,
+                });
             }
             Exit::BranchVoid(true_target, false_target) => {
-                BasicBlock::build_branch(
-                    code,
-                    constant_map,
-                    block_offsets,
-                    true_target,
-                    false_target,
-                    |forward| Op::JumpIfVoid { forward },
-                );
+                self.build_branch(true_target, false_target, |forward| Op::JumpIfVoid {
+                    forward,
+                });
             }
             _ => unimplemented!(),
         }
     }
 
-    fn build_jump(code: &mut Vec<Op>, offset: usize) {
-        if offset >= code.len() {
-            code.extend(Op::extended(
+    fn build_jump(&mut self, offset: usize) {
+        if offset >= self.code.len() {
+            self.code.extend(Op::extended(
                 |forward| Op::Jump { forward },
-                offset - code.len(),
+                offset - self.code.len(),
             ));
         } else {
-            code.extend(Op::extended(
+            self.code.extend(Op::extended(
                 |backward| Op::RJump { backward },
-                code.len() - offset,
+                self.code.len() - offset,
             ));
         }
     }
 
     fn build_branch(
-        code: &mut Vec<Op>,
-        constant_map: &mut HashMap<Value, usize>,
-        block_offsets: &mut HashMap<*const Self, usize>,
+        &mut self,
         true_target: &Rc<BasicBlock>,
         false_target: &Rc<BasicBlock>,
         op_maker: impl FnOnce(u8) -> Op,
     ) {
-        if let Some(&offset) = block_offsets.get(&(&**false_target as *const _)) {
-            code.push(op_maker(1));
-            Self::build_jump(code, offset);
+        if let Some(&offset) = self.block_offsets.get(&(&**false_target as *const _)) {
+            self.code.push(op_maker(1));
+            self.build_jump(offset);
         } else {
-            let mut false_code = vec![];
-            false_target.build_code(&mut false_code, constant_map, &mut block_offsets.clone());
+            let mut false_build = Self::new();
+            false_build.constant_map = self.constant_map.clone();
+            false_build.block_offsets = self.block_offsets.clone();
+            false_build.build_code(false_target);
 
-            code.extend(Op::extended(op_maker, false_code.len()));
+            self.code
+                .extend(Op::extended(op_maker, false_build.code.len()));
 
-            false_target.build_code(code, constant_map, block_offsets);
+            self.build_code(false_target);
         }
 
-        if let Some(&offset) = block_offsets.get(&(&**true_target as *const _)) {
-            Self::build_jump(code, offset);
+        if let Some(&offset) = self.block_offsets.get(&(&**true_target as *const _)) {
+            self.build_jump(offset);
         } else {
-            true_target.build_code(code, constant_map, block_offsets);
-        }
-    }
-
-    fn build_constants(&self, constants: &mut HashMap<Value, usize>) {
-        let mut const_idx = 0;
-        for &op in &self.code {
-            match op {
-                Op::ExtArg(x) => const_idx = Op::extend_arg(x, const_idx),
-                Op::Const(x) => {
-                    const_idx = Op::extend_arg(x, const_idx);
-                    let value = &self.constants[const_idx];
-
-                    if !constants.contains_key(value) {
-                        let idx = constants.len();
-                        constants.insert(value.clone(), idx);
-                    }
-
-                    const_idx = 0;
-                }
-                _ => const_idx = 0,
-            }
+            self.build_code(true_target);
         }
     }
 }

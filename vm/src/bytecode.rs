@@ -508,35 +508,6 @@ mod tests {
     }
 
     #[test]
-    fn chaining_code_segments_merges_equal_constants() {
-        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
-        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
-        let both = CodeSegment::chain(&[first, second]);
-        assert_eq!(both.code_slice(), &[Op::Const(0), Op::Const(0)]);
-        assert_eq!(both.constant_slice(), &[Value::Int(1)]);
-    }
-
-    #[test]
-    fn chaining_code_segments_correctly_inserts_extargs_for_constants() {
-        unimplemented!()
-    }
-
-    #[test]
-    fn chaining_code_segments_correctly_removes_extargs_for_constants() {
-        unimplemented!()
-    }
-
-    #[test]
-    fn chaining_code_segments_adjusts_jumps_when_the_number_of_ops_changes() {
-        // todo: maybe it makes more sense to implement all this with a graph
-        //       of basic blocks. Possible implementations:
-        //       - wrap Ops so they can encode jumps to labels
-        //       - if every basic block ends with a jump, the type of jump and labels could be
-        //         encoded in the block...
-        unimplemented!()
-    }
-
-    #[test]
     fn build_empty_closure() {
         let segment = CodeBuilder::new().build().unwrap();
         assert_eq!(segment.code_slice(), &[]);
