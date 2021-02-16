@@ -196,7 +196,7 @@ impl<T> Context<T> {
         match self {
             Context::Extern(_) => Context::Extern(new_value),
             Context::Position(p, _) => Context::Position(*p, new_value),
-            Context::Span(range, _) => Context::Span(range.clone(), new_value),
+            Context::Span(range, _) => Context::Position(range.end, new_value),
             Context::String(s, b) => {
                 Context::String(s.clone(), Box::new((*b).map_after(new_value)))
             }

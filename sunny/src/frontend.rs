@@ -1,11 +1,22 @@
 use crate::backend::Backend;
+use crate::frontend::Error::MissingArgument;
 use sunny_sexpr_parser::{Context, CxR, Sexpr};
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Context<Error>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    UnknownSpecialForm(Context<String>),
+    UnknownSpecialForm(String),
+    MissingArgument,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Error::UnknownSpecialForm(s) => write!(f, "Unknown special form {}.", s),
+            Error::MissingArgument => write!(f, "Missing argument."),
+        }
+    }
 }
 
 pub struct Frontend {}
@@ -27,21 +38,37 @@ impl Frontend {
             if let Some(s) = first.as_symbol() {
                 match s {
                     "cons" => {
-                        let first = self.meaning(sexpr.cadr().unwrap(), backend)?;
-                        let second = self.meaning(sexpr.caddr().unwrap(), backend)?;
-                        Ok(backend.cons(first, second))
+                        let arg1 = sexpr
+                            .cadr()
+                            .ok_or_else(|| error_after(first, MissingArgument))?;
+                        let arg2 = sexpr
+                            .caddr()
+                            .ok_or_else(|| error_after(arg1, MissingArgument))?;
+                        let car = self.meaning(arg1, backend)?;
+                        let cdr = self.meaning(arg2, backend)?;
+                        Ok(backend.cons(car, cdr))
                     }
                     "quote" => {
-                        let arg = sexpr.cadr().unwrap();
+                        let arg = sexpr
+                            .cadr()
+                            .ok_or_else(|| error_after(first, MissingArgument))?;
                         Ok(backend.constant(arg.get_value()))
                     }
-                    _ => Err(Error::UnknownSpecialForm(first.map(s.to_string()))),
+                    _ => Err(error_at(sexpr, Error::UnknownSpecialForm(s.to_string()))),
                 }
             } else {
                 unimplemented!()
             }
         }
     }
+}
+
+fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+    sexpr.map(error.into())
+}
+
+fn error_after<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+    sexpr.map_after(error.into())
 }
 
 fn is_atom(sexpr: &Context<Sexpr>) -> bool {
@@ -105,12 +132,8 @@ mod tests {
 
     #[test]
     fn meaning_of_quote() {
-        let sexpr = Sexpr::list(
-            vec![
-                Sexpr::symbol("quote").into(),
-                Sexpr::symbol("x").into(),
-            ]
-                .into_iter());
+        let sexpr =
+            Sexpr::list(vec![Sexpr::symbol("quote").into(), Sexpr::symbol("x").into()].into_iter());
         let b = &mut AstBuilder;
         let m = Frontend::new().meaning(&sexpr.into(), b);
         assert_eq!(m, Ok(Ast::Const("x".to_string())));

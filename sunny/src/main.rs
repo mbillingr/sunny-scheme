@@ -96,11 +96,13 @@ fn run_repl() {
 }
 
 fn eval(src: &str, frontend: &mut Frontend, vm: &mut Vm) -> Result<Value, ReplError> {
-    let sexpr = parse_str(src)?;
+    let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
     let mut backend = ByteCodeBackend::new(vm.borrow_storage());
 
-    let call_graph = frontend.meaning(&sexpr, &mut backend)?;
+    let call_graph = frontend
+        .meaning(&sexpr, &mut backend)
+        .map_err(|e| e.in_string(src))?;
     call_graph.return_from();
 
     let code = call_graph.build_segment();
@@ -113,7 +115,7 @@ fn eval(src: &str, frontend: &mut Frontend, vm: &mut Vm) -> Result<Value, ReplEr
 #[derive(Debug)]
 enum ReplError {
     ParseError(Context<ParseError>),
-    FrontendError(FrontendError),
+    FrontendError(Context<FrontendError>),
     VmError(VmError),
     VmErrorKind(VmErrorKind),
 }
@@ -124,8 +126,8 @@ impl From<Context<ParseError>> for ReplError {
     }
 }
 
-impl From<FrontendError> for ReplError {
-    fn from(fe: FrontendError) -> Self {
+impl From<Context<FrontendError>> for ReplError {
+    fn from(fe: Context<FrontendError>) -> Self {
         Self::FrontendError(fe)
     }
 }
@@ -142,6 +144,16 @@ impl From<VmErrorKind> for ReplError {
     }
 }
 
+impl std::fmt::Display for ReplError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ReplError::ParseError(e) => write!(f, "{}", e.pretty_fmt()),
+            ReplError::FrontendError(e) => write!(f, "{}", e.pretty_fmt()),
+            e => write!(f, "{}", e),
+        }
+    }
+}
+
 fn report_error(err: ReplError) {
-    println!("Error: {:?}", err)
+    println!("Error: {}", err)
 }
