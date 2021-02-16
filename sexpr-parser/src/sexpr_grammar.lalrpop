@@ -13,6 +13,7 @@ pub RawSexpr: Sexpr<'input> = {
     <s:Str> => Sexpr::string(s),
     <p:Pair> => Sexpr::cons(p.0, p.1),
     <l:List> => <>,
+    <q:Quotation> => <>,
 };
 
 Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
@@ -35,4 +36,8 @@ List: Sexpr<'input> = {
 Sequence: Sexpr<'input> = {
     <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, Context::span(l..r, cdr)),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
+};
+
+Quotation: Sexpr<'input> = {
+    <l:@L> "'" <r:@R> <x:Datum> => Sexpr::list(vec![Context::span(l..r, Sexpr::symbol("quote")), x].into_iter())
 };

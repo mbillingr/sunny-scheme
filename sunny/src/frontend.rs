@@ -31,6 +31,10 @@ impl Frontend {
                         let second = self.meaning(sexpr.caddr().unwrap(), backend)?;
                         Ok(backend.cons(first, second))
                     }
+                    "quote" => {
+                        let arg = sexpr.cadr().unwrap();
+                        Ok(backend.constant(arg.get_value()))
+                    }
                     _ => Err(Error::UnknownSpecialForm(first.map(s.to_string()))),
                 }
             } else {
@@ -97,5 +101,18 @@ mod tests {
                 Box::new(Ast::Const("2".to_string()))
             ))
         );
+    }
+
+    #[test]
+    fn meaning_of_quote() {
+        let sexpr = Sexpr::list(
+            vec![
+                Sexpr::symbol("quote").into(),
+                Sexpr::symbol("x").into(),
+            ]
+                .into_iter());
+        let b = &mut AstBuilder;
+        let m = Frontend::new().meaning(&sexpr.into(), b);
+        assert_eq!(m, Ok(Ast::Const("x".to_string())));
     }
 }

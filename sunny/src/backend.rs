@@ -24,7 +24,8 @@ impl Backend for ByteCodeBackend<'_> {
     type Output = BlockChain;
 
     fn constant(&mut self, c: &Sexpr) -> Self::Output {
-        self.storage.ensure(1);
+        let allocs = self.storage.count_allocations(c);
+        self.storage.ensure(allocs);
         let value = self.storage.sexpr_to_value(c).unwrap();
         let block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
         BlockChain::singleton(block)
