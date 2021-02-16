@@ -11,6 +11,7 @@ pub mod vm;
 use sunny_memory::gc as mem;
 
 use crate::bytecode::CodePointer;
+pub use basic_block::{BasicBlock, BlockChain};
 pub use storage::ValueStorage;
 pub use value::Value;
 pub use vm::Vm;

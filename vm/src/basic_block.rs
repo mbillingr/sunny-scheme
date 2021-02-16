@@ -4,29 +4,67 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
+/// A chain of blocks with a single entry and exit point.
+/// Control flow may branch in a chain, but all branches
+/// must eventually lead to the same last block.
+pub struct BlockChain {
+    first: Rc<BasicBlock>,
+    last: Rc<BasicBlock>,
+}
+
+impl BlockChain {
+    pub fn singleton(block: impl Into<Rc<BasicBlock>>) -> Self {
+        let block = block.into();
+        BlockChain {
+            first: block.clone(),
+            last: block,
+        }
+    }
+
+    pub fn append_op(&self, op: Op) {
+        self.last.append_op(op);
+    }
+
+    pub fn append(self, other: Self) -> Self {
+        self.last.jump_to(other.first);
+        BlockChain {
+            first: self.first,
+            last: other.last,
+        }
+    }
+
+    pub fn build_segment(&self) -> CodeSegment {
+        self.first.build_segment()
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct BasicBlock {
-    code: Vec<Op>,
-    constants: Vec<Value>,
+    code: RefCell<Vec<Op>>,
+    constants: RefCell<Vec<Value>>,
     exit: RefCell<Exit>,
 }
 
 impl BasicBlock {
     pub fn new(code: Vec<Op>, constants: Vec<Value>) -> Self {
         BasicBlock {
-            code,
-            constants,
+            code: RefCell::new(code),
+            constants: RefCell::new(constants),
             exit: Default::default(),
         }
     }
 
     pub fn is_valid(&self) -> bool {
-        self.code.iter().all(|op| match op {
+        self.code.borrow().iter().all(|op| match op {
             Op::Jump { .. } | Op::JumpIfTrue { .. } | Op::JumpIfVoid { .. } => false,
             Op::RJump { .. } | Op::RJumpIfTrue { .. } | Op::RJumpIfVoid { .. } => false,
             Op::Halt | Op::Return => false,
             _ => true,
         })
+    }
+
+    pub fn append_op(&self, op: Op) {
+        self.code.borrow_mut().push(op);
     }
 
     pub fn return_from(&self) {
@@ -88,7 +126,7 @@ impl CodeBuilder {
     fn build_code(&mut self, block: &BasicBlock) {
         self.block_offsets.insert(block, self.code.len());
 
-        for &op in &block.code {
+        for &op in &*block.code.borrow() {
             match op {
                 Op::Const(c) => {
                     let mut const_idx = c as usize;
@@ -99,7 +137,7 @@ impl CodeBuilder {
                         self.code.pop();
                     }
 
-                    let value = block.constants[const_idx].clone();
+                    let value = block.constants.borrow()[const_idx].clone();
 
                     let n = self.constant_map.len();
                     let new_idx = *self.constant_map.entry(value).or_insert(n);
@@ -217,15 +255,15 @@ mod tests {
 
     #[test]
     fn connect_blocks_with_jump() {
-        let mut block1 = BasicBlock::default();
+        let block1 = BasicBlock::default();
         let block2 = BasicBlock::default();
         block1.jump_to(block2); // should compile
     }
 
     #[test]
     fn jump_to_block_from_different_parents() {
-        let mut block1 = BasicBlock::default();
-        let mut block2 = BasicBlock::default();
+        let block1 = BasicBlock::default();
+        let block2 = BasicBlock::default();
         let common_target = BasicBlock::default();
 
         let common_target = Rc::new(common_target);
@@ -235,7 +273,7 @@ mod tests {
 
     #[test]
     fn construct_loop() {
-        let mut block1 = Rc::new(BasicBlock::default());
+        let block1 = Rc::new(BasicBlock::default());
         block1.jump_to(block1.clone()); // should compile
     }
 

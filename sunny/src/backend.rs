@@ -1,6 +1,6 @@
 use sunny_sexpr_parser::Sexpr;
 use sunny_vm::bytecode::Op;
-use sunny_vm::{Value, ValueStorage};
+use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 
 pub trait Backend {
     type Output;
@@ -12,34 +12,27 @@ pub trait Backend {
 
 struct ByteCodeBackend<'s> {
     storage: &'s mut ValueStorage,
-    constants: Vec<Value>,
 }
 
 impl<'s> ByteCodeBackend<'s> {
     pub fn new(storage: &'s mut ValueStorage) -> Self {
-        ByteCodeBackend {
-            storage,
-            constants: vec![],
-        }
+        ByteCodeBackend { storage }
     }
 }
 
 impl Backend for ByteCodeBackend<'_> {
-    type Output = Vec<Op>; // todo: use code segments or basic blocks here...
+    type Output = BlockChain;
 
     fn constant(&mut self, c: &Sexpr) -> Self::Output {
         self.storage.ensure(1);
         let value = self.storage.sexpr_to_value(c).unwrap();
-        let idx = self.constants.len();
-        self.constants.push(value);
-        vec![Op::Const(idx as u8)]
+        let block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
+        BlockChain::singleton(block)
     }
 
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
-        let mut code = first;
-        code.extend(second);
-        code.push(Op::Cons);
-        code
+        second.append_op(Op::Cons);
+        first.append(second)
     }
 }
 
@@ -51,32 +44,56 @@ mod tests {
     fn build_bytecode_constant() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
+
         let code = bcb.constant(&Sexpr::nil());
-        assert_eq!(code, vec![Op::Const(0)])
+
+        let cs = code.build_segment();
+        assert_eq!(cs.code_slice(), &[Op::Const(0), Op::Halt]);
+        assert_eq!(cs.constant_slice(), &[Value::Nil]);
     }
 
     #[test]
     fn build_bytecode_cons() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let a = bcb.constant(&Sexpr::nil());
-        let b = bcb.constant(&Sexpr::nil());
+        let a = bcb.constant(&Sexpr::int(1));
+        let b = bcb.constant(&Sexpr::int(2));
+
         let c = bcb.cons(a, b);
-        assert_eq!(c, vec![Op::Const(0), Op::Const(1), Op::Cons])
+
+        let cs = c.build_segment();
+        assert_eq!(
+            cs.code_slice(),
+            &[Op::Const(0), Op::Const(1), Op::Cons, Op::Halt]
+        );
+        assert_eq!(cs.constant_slice(), &[Value::Int(1), Value::Int(2)]);
     }
 
     #[test]
     fn build_bytecode_multiple_cons() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let a = bcb.constant(&Sexpr::nil());
-        let b = bcb.constant(&Sexpr::nil());
-        let c = bcb.constant(&Sexpr::nil());
+        let a = bcb.constant(&Sexpr::int(1));
+        let b = bcb.constant(&Sexpr::int(2));
+        let c = bcb.constant(&Sexpr::int(3));
         let d = bcb.cons(b, a);
         let e = bcb.cons(c, d);
+
+        let cs = e.build_segment();
         assert_eq!(
-            e,
-            vec![Op::Const(2), Op::Const(1), Op::Const(0), Op::Cons, Op::Cons]
-        )
+            cs.code_slice(),
+            &[
+                Op::Const(0),
+                Op::Const(1),
+                Op::Const(2),
+                Op::Cons,
+                Op::Cons,
+                Op::Halt
+            ]
+        );
+        assert_eq!(
+            cs.constant_slice(),
+            &[Value::Int(3), Value::Int(2), Value::Int(1)]
+        );
     }
 }
