@@ -10,7 +10,7 @@ pub trait Backend {
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output;
 }
 
-struct ByteCodeBackend<'s> {
+pub struct ByteCodeBackend<'s> {
     storage: &'s mut ValueStorage,
 }
 

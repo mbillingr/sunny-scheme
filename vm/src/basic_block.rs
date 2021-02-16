@@ -36,6 +36,10 @@ impl BlockChain {
     pub fn build_segment(&self) -> CodeSegment {
         self.first.build_segment()
     }
+
+    pub fn return_from(&self) {
+        self.last.return_from()
+    }
 }
 
 #[derive(Debug, Default)]

@@ -55,6 +55,10 @@ impl Vm {
         })
     }
 
+    pub fn borrow_storage(&mut self) -> &mut ValueStorage {
+        &mut self.storage
+    }
+
     pub fn build_value(&mut self, sexpr: &Sexpr) -> Result<Value> {
         let storage_required = self.storage.count_allocations(sexpr);
         self.ensure_storage_space(storage_required)?;

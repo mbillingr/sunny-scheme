@@ -1,6 +1,8 @@
 mod backend;
 mod frontend;
 
+use crate::backend::ByteCodeBackend;
+use crate::frontend::{Error as FrontendError, Frontend};
 use log::LevelFilter;
 use rustyline::{error::ReadlineError, Editor};
 use simple_logger::SimpleLogger;
@@ -8,7 +10,7 @@ use std::fs::File;
 use std::io::Read;
 use structopt::StructOpt;
 use sunny_sexpr_parser::{parse_str, Context, Error as ParseError};
-use sunny_vm::bytecode::{CodeBuilder, CodePointer, Op};
+use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{Error as VmError, ErrorKind as VmErrorKind, Value, ValueStorage, Vm};
 
@@ -64,6 +66,8 @@ fn run_repl() {
     let storage = ValueStorage::new(5);
     let mut vm = Vm::new(storage).unwrap();
 
+    let mut frontend = Frontend::new();
+
     loop {
         match rl.readline(">> ") {
             Ok(line) => {
@@ -74,7 +78,7 @@ fn run_repl() {
                     continue;
                 }
 
-                match eval(line, &mut vm) {
+                match eval(line, &mut frontend, &mut vm) {
                     Ok(result) => println!("{}", result),
                     Err(e) => report_error(e),
                 }
@@ -91,18 +95,16 @@ fn run_repl() {
     }
 }
 
-fn eval(src: &str, vm: &mut Vm) -> Result<Value, ReplError> {
+fn eval(src: &str, frontend: &mut Frontend, vm: &mut Vm) -> Result<Value, ReplError> {
     let sexpr = parse_str(src)?;
 
-    let expr = vm.build_value(sexpr.get_value())?;
+    let mut backend = ByteCodeBackend::new(vm.borrow_storage());
 
-    // todo: this is just a silly placeholder.
-    //       we need to translate the input instead.
-    let code = CodeBuilder::new()
-        .constant(expr)
-        .op(Op::Return)
-        .build()
-        .unwrap();
+    let call_graph = frontend.meaning(&sexpr, &mut backend)?;
+    call_graph.return_from();
+
+    let code = call_graph.build_segment();
+    println!("{:#?}", code);
 
     let result = vm.eval_raw(code)?;
     Ok(result)
@@ -111,6 +113,7 @@ fn eval(src: &str, vm: &mut Vm) -> Result<Value, ReplError> {
 #[derive(Debug)]
 enum ReplError {
     ParseError(Context<ParseError>),
+    FrontendError(FrontendError),
     VmError(VmError),
     VmErrorKind(VmErrorKind),
 }
@@ -118,6 +121,12 @@ enum ReplError {
 impl From<Context<ParseError>> for ReplError {
     fn from(cpe: Context<ParseError>) -> Self {
         Self::ParseError(cpe)
+    }
+}
+
+impl From<FrontendError> for ReplError {
+    fn from(fe: FrontendError) -> Self {
+        Self::FrontendError(fe)
     }
 }
 
