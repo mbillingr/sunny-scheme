@@ -8,6 +8,13 @@ pub trait Backend {
     fn constant(&mut self, c: &Sexpr) -> Self::Output;
 
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output;
+
+    fn ifexpr(
+        &mut self,
+        condition: Self::Output,
+        consequent: Self::Output,
+        alternative: Self::Output,
+    ) -> Self::Output;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -34,6 +41,16 @@ impl Backend for ByteCodeBackend<'_> {
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
         second.append_op(Op::Cons);
         first.append(second)
+    }
+
+    fn ifexpr(
+        &mut self,
+        condition: Self::Output,
+        consequent: Self::Output,
+        alternative: Self::Output,
+    ) -> Self::Output {
+        let exit = BlockChain::empty();
+        condition.branch_bool(consequent.append(exit.clone()), alternative.append(exit))
     }
 }
 
@@ -95,6 +112,34 @@ mod tests {
         assert_eq!(
             cs.constant_slice(),
             &[Value::Int(3), Value::Int(2), Value::Int(1)]
+        );
+    }
+
+    #[test]
+    fn build_bytecode_if() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let a = bcb.constant(&Sexpr::int(1));
+        let b = bcb.constant(&Sexpr::int(2));
+        let c = bcb.constant(&Sexpr::int(3));
+
+        let cs = bcb.ifexpr(a, b, c).build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::Const(0),
+                Op::JumpIfTrue { forward: 2 },
+                Op::Const(2),
+                Op::Jump { forward: 2 },
+                Op::Const(1),
+                Op::Jump { forward: 0 },
+                Op::Halt
+            ]
+        );
+        assert_eq!(
+            cs.constant_slice(),
+            &[Value::Int(1), Value::Int(2), Value::Int(3)]
         );
     }
 }

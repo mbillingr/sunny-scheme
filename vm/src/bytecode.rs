@@ -271,7 +271,7 @@ impl CodePointer {
     }
 
     pub fn jump_backward(&mut self, amount: usize) {
-        self.position = self.position.checked_sub(amount).unwrap()
+        self.position = self.position.checked_sub(amount + 1).unwrap()
     }
 
     pub fn step_back(&mut self) {

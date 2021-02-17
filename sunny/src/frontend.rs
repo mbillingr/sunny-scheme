@@ -54,6 +54,21 @@ impl Frontend {
                             .ok_or_else(|| error_after(first, MissingArgument))?;
                         Ok(backend.constant(arg.get_value()))
                     }
+                    "if" => {
+                        let arg1 = sexpr
+                            .cadr()
+                            .ok_or_else(|| error_after(first, MissingArgument))?;
+                        let arg2 = sexpr
+                            .caddr()
+                            .ok_or_else(|| error_after(arg1, MissingArgument))?;
+                        let arg3 = sexpr
+                            .cadddr()
+                            .ok_or_else(|| error_after(arg2, MissingArgument))?;
+                        let condition = self.meaning(arg1, backend)?;
+                        let consequent = self.meaning(arg2, backend)?;
+                        let alternative = self.meaning(arg3, backend)?;
+                        Ok(backend.ifexpr(condition, consequent, alternative))
+                    }
                     _ => Err(error_at(sexpr, Error::UnknownSpecialForm(s.to_string()))),
                 }
             } else {
@@ -83,6 +98,7 @@ mod tests {
     enum Ast {
         Const(String),
         Cons(Box<Ast>, Box<Ast>),
+        If(Box<Ast>, Box<Ast>, Box<Ast>),
     }
 
     struct AstBuilder;
@@ -97,12 +113,26 @@ mod tests {
         fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
             Ast::Cons(Box::new(first), Box::new(second))
         }
+
+        fn ifexpr(
+            &mut self,
+            condition: Self::Output,
+            consequent: Self::Output,
+            alternative: Self::Output,
+        ) -> Self::Output {
+            Ast::If(
+                Box::new(condition),
+                Box::new(consequent),
+                Box::new(alternative),
+            )
+        }
     }
 
     macro_rules! ast {
         (($($parts:tt)*)) => {ast![$($parts)*]};
         (const $x:expr) => {Ast::Const(format!("{}", $x))};
         (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
+        (if $a:tt $b:tt $c:tt) => {Ast::If(Box::new(ast![$a]), Box::new(ast![$b]), Box::new(ast![$c]))};
     }
 
     macro_rules! sexpr {
@@ -139,5 +169,13 @@ mod tests {
     #[test]
     fn meaning_of_quote() {
         assert_eq!(meaning_of![(quote x)], Ok(ast!(const "x")));
+    }
+
+    #[test]
+    fn meaning_of_if() {
+        assert_eq!(
+            meaning_of![(if x y z)],
+            Ok(ast!(if (const "x") (const "y") (const "z")))
+        );
     }
 }

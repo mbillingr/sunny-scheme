@@ -1,12 +1,13 @@
 use crate::bytecode::{CodeSegment, Op};
 use crate::Value;
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::rc::{Rc, Weak};
 
 /// A chain of blocks with a single entry and exit point.
 /// Control flow may branch in a chain, but all branches
 /// must eventually lead to the same last block.
+#[derive(Debug, Clone)]
 pub struct BlockChain {
     first: Rc<BasicBlock>,
     last: Rc<BasicBlock>,
@@ -15,6 +16,14 @@ pub struct BlockChain {
 impl BlockChain {
     pub fn singleton(block: impl Into<Rc<BasicBlock>>) -> Self {
         let block = block.into();
+        BlockChain {
+            first: block.clone(),
+            last: block,
+        }
+    }
+
+    pub fn empty() -> Self {
+        let block = Rc::new(BasicBlock::new(vec![], vec![]));
         BlockChain {
             first: block.clone(),
             last: block,
@@ -30,6 +39,15 @@ impl BlockChain {
         BlockChain {
             first: self.first,
             last: other.last,
+        }
+    }
+
+    pub fn branch_bool(self, true_branch: Self, false_branch: Self) -> Self {
+        assert!(Rc::ptr_eq(&true_branch.last, &false_branch.last));
+        self.last.branch_true(true_branch.first, false_branch.first);
+        BlockChain {
+            first: self.first,
+            last: true_branch.last,
         }
     }
 
@@ -209,7 +227,11 @@ impl CodeBuilder {
             self.code
                 .extend(Op::extended(op_maker, false_build.code.len()));
 
+            let expected_len = self.code.len() + false_build.code.len();
+
             self.build_code(false_target);
+
+            assert_eq!(self.code.len(), expected_len);
         }
 
         if let Some(&offset) = self.block_offsets.get(&(&**true_target as *const _)) {
@@ -217,6 +239,38 @@ impl CodeBuilder {
         } else {
             self.build_code(true_target);
         }
+    }
+
+    fn visit_all_blocks(
+        &self,
+        start: &Rc<BasicBlock>,
+        mut visitor: impl FnMut(&Rc<BasicBlock>) -> bool,
+    ) -> Option<Rc<BasicBlock>> {
+        let mut queue = VecDeque::from(vec![start.clone()]);
+        let mut visited = HashSet::new();
+
+        while let Some(block) = queue.pop_front() {
+            let unvisited = visited.insert(Rc::as_ptr(&block));
+            if !unvisited {
+                continue;
+            }
+
+            if visitor(&block) {
+                return Some(block);
+            }
+
+            match &*block.exit.borrow() {
+                Exit::Halt | Exit::Return => {}
+                Exit::Jump(next) => queue.push_back(next.clone()),
+                Exit::BranchTrue(a, b) | Exit::BranchVoid(a, b) => {
+                    queue.push_back(a.clone());
+                    queue.push_back(b.clone());
+                }
+                Exit::Loop(_) => unimplemented!(),
+            }
+        }
+
+        None
     }
 }
 
