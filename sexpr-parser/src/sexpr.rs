@@ -130,6 +130,12 @@ impl CxR for Sexpr<'_> {
     }
 }
 
+impl From<i64> for Sexpr<'_> {
+    fn from(i: i64) -> Self {
+        Sexpr::int(i)
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Context<T> {
     Extern(T),

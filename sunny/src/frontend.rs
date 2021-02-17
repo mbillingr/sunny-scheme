@@ -99,43 +99,45 @@ mod tests {
         }
     }
 
+    macro_rules! ast {
+        (($($parts:tt)*)) => {ast![$($parts)*]};
+        (const $x:expr) => {Ast::Const(format!("{}", $x))};
+        (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
+    }
+
+    macro_rules! sexpr {
+        ($t:ty:()) => { <$t>::nil() };
+
+        ($t:ty:($x:tt $($rest:tt)*)) => {
+            <$t>::cons(
+                sexpr![$t:$x],
+                sexpr![$t:($($rest)*)],
+            )
+        };
+        ($t:ty:$x:ident) => { <$t>::symbol(stringify!($x)) };
+
+        ($t:ty:$x:expr) => { <$t>::from($x) };
+    }
+
+    macro_rules! meaning_of {
+        ($expr:tt) => {{
+            let sexpr = sexpr![Sexpr: $expr];
+            Frontend::new().meaning(&sexpr.into(), &mut AstBuilder)
+        }};
+    }
+
     #[test]
     fn meaning_of_constant() {
-        let b = &mut AstBuilder;
-        let m = Frontend::new().meaning(&Sexpr::int(1).into(), b);
-        assert_eq!(m, Ok(Ast::Const("1".to_string())));
+        assert_eq!(meaning_of![1], Ok(ast!(const 1)));
     }
 
     #[test]
     fn meaning_of_cons() {
-        let b = &mut AstBuilder;
-        let m = Frontend::new().meaning(
-            &Sexpr::list(
-                vec![
-                    Sexpr::Symbol("cons").into(),
-                    Sexpr::int(1).into(),
-                    Sexpr::int(2).into(),
-                ]
-                .into_iter(),
-            )
-            .into(),
-            b,
-        );
-        assert_eq!(
-            m,
-            Ok(Ast::Cons(
-                Box::new(Ast::Const("1".to_string())),
-                Box::new(Ast::Const("2".to_string()))
-            ))
-        );
+        assert_eq!(meaning_of![(cons 1 2)], Ok(ast!(cons (const 1) (const 2))));
     }
 
     #[test]
     fn meaning_of_quote() {
-        let sexpr =
-            Sexpr::list(vec![Sexpr::symbol("quote").into(), Sexpr::symbol("x").into()].into_iter());
-        let b = &mut AstBuilder;
-        let m = Frontend::new().meaning(&sexpr.into(), b);
-        assert_eq!(m, Ok(Ast::Const("x".to_string())));
+        assert_eq!(meaning_of![(quote x)], Ok(ast!(const "x")));
     }
 }
