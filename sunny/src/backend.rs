@@ -200,7 +200,7 @@ mod tests {
 
         assert_eq!(
             cs.code_slice(),
-            &[Op::Const(0), Op::Integer(0), Op::Fetch(0), Op::Halt]
+            &[Op::Const(0), Op::Integer(0), Op::Store(0), Op::Halt]
         );
     }
 }
