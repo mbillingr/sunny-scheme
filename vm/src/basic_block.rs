@@ -1,7 +1,7 @@
 use crate::bytecode::{CodeSegment, Op};
 use crate::Value;
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 
 /// A chain of blocks with a single entry and exit point.
@@ -42,12 +42,14 @@ impl BlockChain {
         }
     }
 
-    pub fn branch_bool(self, true_branch: Self, false_branch: Self) -> Self {
-        assert!(Rc::ptr_eq(&true_branch.last, &false_branch.last));
-        self.last.branch_true(true_branch.first, false_branch.first);
+    pub fn branch_bool(self, true_branch: Self, false_branch: Self, finally: Self) -> Self {
+        true_branch.last.end_branch();
+        false_branch.last.end_branch();
+        self.last
+            .branch_true(true_branch.first, false_branch.first, finally.first);
         BlockChain {
             first: self.first,
-            last: true_branch.last,
+            last: finally.last,
         }
     }
 
@@ -93,6 +95,10 @@ impl BasicBlock {
         *self.exit.borrow_mut() = Exit::Return
     }
 
+    pub fn end_branch(&self) {
+        *self.exit.borrow_mut() = Exit::EndBranch
+    }
+
     pub fn jump_to(&self, target: impl Into<Rc<BasicBlock>>) {
         *self.exit.borrow_mut() = Exit::Jump(target.into())
     }
@@ -101,16 +107,20 @@ impl BasicBlock {
         &self,
         true_target: impl Into<Rc<BasicBlock>>,
         false_target: impl Into<Rc<BasicBlock>>,
+        final_target: impl Into<Rc<BasicBlock>>,
     ) {
-        *self.exit.borrow_mut() = Exit::BranchTrue(true_target.into(), false_target.into())
+        *self.exit.borrow_mut() =
+            Exit::BranchTrue(true_target.into(), false_target.into(), final_target.into())
     }
 
     pub fn branch_void(
         &self,
         void_target: impl Into<Rc<BasicBlock>>,
         else_target: impl Into<Rc<BasicBlock>>,
+        final_target: impl Into<Rc<BasicBlock>>,
     ) {
-        *self.exit.borrow_mut() = Exit::BranchVoid(void_target.into(), else_target.into())
+        *self.exit.borrow_mut() =
+            Exit::BranchVoid(void_target.into(), else_target.into(), final_target.into())
     }
 
     pub fn loop_to(&self, target: impl Into<Weak<BasicBlock>>) {
@@ -174,37 +184,42 @@ impl CodeBuilder {
         match &*block.exit.borrow() {
             Exit::Halt => self.code.push(Op::Halt),
             Exit::Return => self.code.push(Op::Return),
+            Exit::EndBranch => {}
             Exit::Jump(target) => {
                 if let Some(&offset) = self.block_offsets.get(&(&**target as *const _)) {
-                    self.build_jump(offset)
+                    self.build_jump_to(offset)
                 } else {
                     self.build_code(target);
                 }
             }
-            Exit::BranchTrue(true_target, false_target) => {
-                self.build_branch(true_target, false_target, |forward| Op::JumpIfTrue {
-                    forward,
+            Exit::BranchTrue(true_target, false_target, final_target) => {
+                self.build_branch(true_target, false_target, final_target, |forward| {
+                    Op::JumpIfTrue { forward }
                 });
             }
-            Exit::BranchVoid(true_target, false_target) => {
-                self.build_branch(true_target, false_target, |forward| Op::JumpIfVoid {
-                    forward,
+            Exit::BranchVoid(true_target, false_target, final_target) => {
+                self.build_branch(true_target, false_target, final_target, |forward| {
+                    Op::JumpIfVoid { forward }
                 });
             }
             _ => unimplemented!(),
         }
     }
 
-    fn build_jump(&mut self, offset: usize) {
-        if offset >= self.code.len() {
+    fn build_jump_to(&mut self, target: usize) {
+        self.build_jump_by(target as isize - self.code.len() as isize)
+    }
+
+    fn build_jump_by(&mut self, offset: isize) {
+        if offset >= 0 {
             self.code.extend(Op::extended(
                 |forward| Op::Jump { forward },
-                offset - self.code.len(),
+                offset as usize,
             ));
         } else {
             self.code.extend(Op::extended(
                 |backward| Op::RJump { backward },
-                self.code.len() - offset,
+                (-offset) as usize,
             ));
         }
     }
@@ -213,16 +228,23 @@ impl CodeBuilder {
         &mut self,
         true_target: &Rc<BasicBlock>,
         false_target: &Rc<BasicBlock>,
+        final_target: &Rc<BasicBlock>,
         op_maker: impl FnOnce(u8) -> Op,
     ) {
         if let Some(&offset) = self.block_offsets.get(&(&**false_target as *const _)) {
             self.code.push(op_maker(1));
-            self.build_jump(offset);
+            self.build_jump_to(offset);
         } else {
+            let mut true_build = Self::new();
+            true_build.constant_map = self.constant_map.clone();
+            true_build.block_offsets = self.block_offsets.clone();
+            true_build.build_code(true_target);
+
             let mut false_build = Self::new();
             false_build.constant_map = self.constant_map.clone();
             false_build.block_offsets = self.block_offsets.clone();
             false_build.build_code(false_target);
+            false_build.build_jump_by(true_build.code.len() as isize);
 
             self.code
                 .extend(Op::extended(op_maker, false_build.code.len()));
@@ -230,47 +252,18 @@ impl CodeBuilder {
             let expected_len = self.code.len() + false_build.code.len();
 
             self.build_code(false_target);
+            self.build_jump_by(true_build.code.len() as isize);
 
             assert_eq!(self.code.len(), expected_len);
         }
 
         if let Some(&offset) = self.block_offsets.get(&(&**true_target as *const _)) {
-            self.build_jump(offset);
+            self.build_jump_to(offset);
         } else {
             self.build_code(true_target);
         }
-    }
 
-    fn visit_all_blocks(
-        &self,
-        start: &Rc<BasicBlock>,
-        mut visitor: impl FnMut(&Rc<BasicBlock>) -> bool,
-    ) -> Option<Rc<BasicBlock>> {
-        let mut queue = VecDeque::from(vec![start.clone()]);
-        let mut visited = HashSet::new();
-
-        while let Some(block) = queue.pop_front() {
-            let unvisited = visited.insert(Rc::as_ptr(&block));
-            if !unvisited {
-                continue;
-            }
-
-            if visitor(&block) {
-                return Some(block);
-            }
-
-            match &*block.exit.borrow() {
-                Exit::Halt | Exit::Return => {}
-                Exit::Jump(next) => queue.push_back(next.clone()),
-                Exit::BranchTrue(a, b) | Exit::BranchVoid(a, b) => {
-                    queue.push_back(a.clone());
-                    queue.push_back(b.clone());
-                }
-                Exit::Loop(_) => unimplemented!(),
-            }
-        }
-
-        None
+        self.build_code(final_target);
     }
 }
 
@@ -278,9 +271,10 @@ impl CodeBuilder {
 enum Exit {
     Halt,
     Return,
+    EndBranch,
     Jump(Rc<BasicBlock>),
-    BranchTrue(Rc<BasicBlock>, Rc<BasicBlock>),
-    BranchVoid(Rc<BasicBlock>, Rc<BasicBlock>),
+    BranchTrue(Rc<BasicBlock>, Rc<BasicBlock>, Rc<BasicBlock>),
+    BranchVoid(Rc<BasicBlock>, Rc<BasicBlock>, Rc<BasicBlock>),
     Loop(Weak<BasicBlock>),
 }
 
@@ -394,16 +388,73 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_produces_branches() {
-        let block1 = BasicBlock::new(vec![], vec![]);
-        let block2 = BasicBlock::new(vec![], vec![]);
-        let block3 = BasicBlock::new(vec![], vec![]);
-        block2.return_from();
-        block1.branch_true(block2, block3);
+        let block1 = BasicBlock::new(vec![Op::Integer(1)], vec![]);
+        let block2 = BasicBlock::new(vec![Op::Integer(2)], vec![]);
+        let block3 = BasicBlock::new(vec![Op::Integer(3)], vec![]);
+        let block4 = BasicBlock::new(vec![Op::Integer(4)], vec![]);
+        block2.end_branch();
+        block3.end_branch();
+        block1.branch_true(block2, block3, block4);
 
         let segment = block1.build_segment();
         assert_eq!(
             segment.code_slice(),
-            &[Op::JumpIfTrue { forward: 1 }, Op::Halt, Op::Return]
+            &[
+                Op::Integer(1),
+                Op::JumpIfTrue { forward: 2 },
+                Op::Integer(3),
+                Op::Jump { forward: 1 },
+                Op::Integer(2),
+                Op::Integer(4),
+                Op::Halt
+            ]
+        );
+    }
+
+    #[test]
+    fn convert_to_code_segment_produces_nested_branches() {
+        const TRUE_TRUE: u8 = 11;
+        const TRUE_FALSE: u8 = 12;
+        const FALSE_TRUE: u8 = 21;
+        const FALSE_FALSE: u8 = 22;
+
+        let start = BasicBlock::new(vec![], vec![]);
+        let outer_true = BasicBlock::new(vec![], vec![]);
+        let true_true = BasicBlock::new(vec![Op::Integer(TRUE_TRUE)], vec![]);
+        let true_false = BasicBlock::new(vec![Op::Integer(TRUE_FALSE)], vec![]);
+        let true_end = BasicBlock::new(vec![], vec![]);
+        let outer_false = BasicBlock::new(vec![], vec![]);
+        let false_true = BasicBlock::new(vec![Op::Integer(FALSE_TRUE)], vec![]);
+        let false_false = BasicBlock::new(vec![Op::Integer(FALSE_FALSE)], vec![]);
+        let false_end = BasicBlock::new(vec![], vec![]);
+        let outer_end = BasicBlock::new(vec![], vec![]);
+
+        true_true.end_branch();
+        true_false.end_branch();
+        true_end.end_branch();
+        false_true.end_branch();
+        false_false.end_branch();
+        false_end.end_branch();
+        outer_true.branch_true(true_true, true_false, true_end);
+        outer_false.branch_true(false_true, false_false, false_end);
+        start.branch_true(outer_true, outer_false, outer_end);
+
+        let segment = start.build_segment();
+        assert_eq!(
+            segment.code_slice(),
+            &[
+                Op::JumpIfTrue { forward: 5 },
+                Op::JumpIfTrue { forward: 2 },
+                Op::Integer(FALSE_FALSE),
+                Op::Jump { forward: 1 },
+                Op::Integer(FALSE_TRUE),
+                Op::Jump { forward: 4 },
+                Op::JumpIfTrue { forward: 2 },
+                Op::Integer(TRUE_FALSE),
+                Op::Jump { forward: 1 },
+                Op::Integer(TRUE_TRUE),
+                Op::Halt
+            ]
         );
     }
 
@@ -424,20 +475,24 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_inserts_branches_only_once() {
-        let block1 = Rc::new(BasicBlock::new(vec![Op::Nop], vec![]));
-        let block2 = Rc::new(BasicBlock::new(vec![Op::Nop], vec![]));
-        block1.branch_true(block2.clone(), block2);
+        let block1 = Rc::new(BasicBlock::new(vec![Op::Integer(1)], vec![]));
+        let block2 = Rc::new(BasicBlock::new(vec![Op::Integer(2)], vec![]));
+        let block3 = Rc::new(BasicBlock::new(vec![Op::Integer(3)], vec![]));
+        block2.end_branch();
+        block1.branch_true(block2.clone(), block2, block3);
 
         let segment = block1.build_segment();
 
         assert_eq!(
             segment.code_slice(),
             &[
-                Op::Nop,
+                Op::Integer(1),
                 Op::JumpIfTrue { forward: 2 },
-                Op::Nop,
-                Op::Halt,
-                Op::RJump { backward: 2 }
+                Op::Integer(2),
+                Op::Jump { forward: 1 },
+                Op::RJump { backward: 2 },
+                Op::Integer(3),
+                Op::Halt
             ]
         );
     }

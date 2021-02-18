@@ -50,7 +50,7 @@ impl Backend for ByteCodeBackend<'_> {
         alternative: Self::Output,
     ) -> Self::Output {
         let exit = BlockChain::empty();
-        condition.branch_bool(consequent.append(exit.clone()), alternative.append(exit))
+        condition.branch_bool(consequent, alternative, exit)
     }
 }
 
@@ -130,16 +130,15 @@ mod tests {
             &[
                 Op::Const(0),
                 Op::JumpIfTrue { forward: 2 },
-                Op::Const(2),
-                Op::Jump { forward: 2 },
                 Op::Const(1),
-                Op::Jump { forward: 0 },
+                Op::Jump { forward: 1 },
+                Op::Const(2),
                 Op::Halt
             ]
         );
         assert_eq!(
             cs.constant_slice(),
-            &[Value::Int(1), Value::Int(2), Value::Int(3)]
+            &[Value::Int(1), Value::Int(3), Value::Int(2)]
         );
     }
 }
