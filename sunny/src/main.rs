@@ -63,10 +63,7 @@ fn run_bytecode(path: &std::path::Path) {
 fn run_repl() {
     let mut rl = Editor::<()>::new();
 
-    let storage = ValueStorage::new(5);
-    let mut vm = Vm::new(storage).unwrap();
-
-    let mut frontend = Frontend::new();
+    let mut repl = Repl::new();
 
     loop {
         match rl.readline(">> ") {
@@ -78,7 +75,7 @@ fn run_repl() {
                     continue;
                 }
 
-                match eval(line, &mut frontend, &mut vm) {
+                match repl.eval(line) {
                     Ok(result) => println!("{}", result),
                     Err(e) => report_error(e),
                 }
@@ -95,21 +92,40 @@ fn run_repl() {
     }
 }
 
-fn eval(src: &str, frontend: &mut Frontend, vm: &mut Vm) -> Result<Value, ReplError> {
-    let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
+struct Repl {
+    frontend: Frontend,
+    vm: Vm,
+}
 
-    let mut backend = ByteCodeBackend::new(vm.borrow_storage());
+impl Repl {
+    fn new() -> Self {
+        let storage = ValueStorage::new(5);
+        let vm = Vm::new(storage).unwrap();
+        let frontend = Frontend::new();
+        Repl { frontend, vm }
+    }
 
-    let call_graph = frontend
-        .meaning(&sexpr, &mut backend)
-        .map_err(|e| e.in_string(src))?;
-    call_graph.return_from();
+    fn eval(&mut self, src: &str) -> Result<Value, ReplError> {
+        let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
-    let code = call_graph.build_segment();
-    println!("{:#?}", code);
+        let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
 
-    let result = vm.eval_raw(code)?;
-    Ok(result)
+        let expression = self
+            .frontend
+            .meaning(&sexpr, &mut backend)
+            .map_err(|e| e.in_string(src))?;
+
+        let prelude = backend.generate_prelude();
+
+        let codegraph = prelude.chain(expression);
+        codegraph.return_from();
+
+        let code = codegraph.build_segment();
+        println!("{:#?}", code);
+
+        let result = self.vm.eval_repl(code)?;
+        Ok(result)
+    }
 }
 
 #[derive(Debug)]

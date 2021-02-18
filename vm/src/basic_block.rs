@@ -34,12 +34,14 @@ impl BlockChain {
         self.last.append_op(op);
     }
 
-    pub fn append(self, other: Self) -> Self {
+    pub fn chain(mut self, other: Self) -> Self {
+        self.append(other);
+        self
+    }
+
+    pub fn append(&mut self, other: Self) {
         self.last.jump_to(other.first);
-        BlockChain {
-            first: self.first,
-            last: other.last,
-        }
+        self.last = other.last;
     }
 
     pub fn branch_bool(self, true_branch: Self, false_branch: Self, finally: Self) -> Self {

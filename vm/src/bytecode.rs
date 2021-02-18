@@ -23,8 +23,9 @@ pub enum Op {
     Peek(u8),
     PushLocal,
     DropLocal,
-    GetLocal(u8),
-    GetDeep(u8),
+    FetchLocal(u8),
+    Fetch(u8),
+    Store(u8),
 
     Integer(u8),
     Const(u8),
@@ -102,8 +103,9 @@ impl std::fmt::Display for Op {
             Op::Peek(x) => write!(f, "{} {}", repr::PEEK, x),
             Op::PushLocal => write!(f, "{}", repr::PUSHLOCAL),
             Op::DropLocal => write!(f, "{}", repr::DROPLOCAL),
-            Op::GetLocal(x) => write!(f, "{} {}", repr::GETLOCAL, x),
-            Op::GetDeep(x) => write!(f, "{} {}", repr::GETDEEP, x),
+            Op::FetchLocal(x) => write!(f, "{} {}", repr::FETCHLOCAL, x),
+            Op::Fetch(x) => write!(f, "{} {}", repr::FETCH, x),
+            Op::Store(x) => write!(f, "{} {}", repr::STORE, x),
             Op::Integer(x) => write!(f, "{} {}", repr::INTEGER, x),
             Op::Const(x) => write!(f, "{} {}", repr::CONST, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
@@ -140,8 +142,9 @@ pub mod repr {
     pub const PEEK: &'static str = "PEEK";
     pub const PUSHLOCAL: &'static str = "PUSHLOCAL";
     pub const DROPLOCAL: &'static str = "DROPLOCAL";
-    pub const GETLOCAL: &'static str = "GETLOCAL";
-    pub const GETDEEP: &'static str = "GETDEEP";
+    pub const FETCHLOCAL: &'static str = "FETCHLOCAL";
+    pub const FETCH: &'static str = "FETCH";
+    pub const STORE: &'static str = "STORE";
     pub const INTEGER: &'static str = "INTEGER";
     pub const CONST: &'static str = "CONST";
     pub const GETSTACK: &'static str = "GETSTACK";

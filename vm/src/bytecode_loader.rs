@@ -136,9 +136,13 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::Const, i)
             }
-            repr::GETLOCAL => {
+            repr::FETCHLOCAL => {
                 let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(Op::GetLocal, i)
+                cb = cb.with(Op::FetchLocal, i)
+            }
+            repr::FETCH => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(Op::Fetch, i)
             }
             repr::GETSTACK => {
                 let i = read_index(&mut code_parts, statement)?;

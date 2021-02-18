@@ -65,7 +65,7 @@ impl Vm {
         Ok(self.storage.sexpr_to_value(sexpr).unwrap())
     }
 
-    pub fn eval_raw(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
+    pub fn eval_repl(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
         unsafe {
             // We pretend code has static lifetime. This is not the case, so
             // the reference must be popped while it is still alive.
@@ -75,8 +75,8 @@ impl Vm {
         self.ensure_storage_space(2).unwrap();
         self.gc_preserve.pop().unwrap();
         let code = self.storage.insert(code).unwrap();
-        let cp = CodePointer::new(code);
-        self.eval(cp)
+        self.current_activation.code = CodePointer::new(code);
+        self.run().map_err(|e| self.add_error_context(e))
     }
 
     pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Value> {
@@ -144,10 +144,15 @@ impl Vm {
                 Op::Peek(i) => self.peek_closure(Op::extend_arg(i, arg))?,
                 Op::PushLocal => self.push_local()?,
                 Op::DropLocal => self.drop_local()?,
-                Op::GetLocal(a) => self.get_local(0, Op::extend_arg(a, arg))?,
-                Op::GetDeep(a) => {
+                Op::FetchLocal(a) => self.get_local(0, Op::extend_arg(a, arg))?,
+                Op::Fetch(a) => {
                     let depth = self.pop_int()?;
                     self.get_local(depth as usize, Op::extend_arg(a, arg))?
+                }
+                Op::Store(a) => {
+                    let value = self.pop_value()?;
+                    let depth = self.pop_int()?;
+                    self.set_local(depth as usize, Op::extend_arg(a, arg), value)?
                 }
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(Op::extend_arg(a, arg) as i64)),
@@ -230,6 +235,16 @@ impl Vm {
         }
         let x = act.locals[idx].clone();
         self.push_value(x);
+        Ok(())
+    }
+
+    fn set_local(&mut self, depth: usize, idx: usize, value: Value) -> Result<()> {
+        let mut act = &self.current_activation;
+        for _ in 0..depth {
+            act = self.current_activation.parent.as_ref().unwrap();
+        }
+        unimplemented!("how should we mutably store values?");
+        //act.locals[idx] = value;
         Ok(())
     }
 
@@ -701,10 +716,10 @@ mod tests {
                 .op(Op::Call { n_args: 3 })
                 .op(Op::Halt)
                 .label("callee")
-                .op(Op::GetLocal(0))
-                .op(Op::GetLocal(2))
-                .op(Op::GetLocal(2))
-                .op(Op::GetLocal(1))
+                .op(Op::FetchLocal(0))
+                .op(Op::FetchLocal(2))
+                .op(Op::FetchLocal(2))
+                .op(Op::FetchLocal(1))
                 .op(Op::Halt),
         );
 
@@ -735,13 +750,13 @@ mod tests {
                 .op(Op::Halt)
                 .label("callee")
                 .op(Op::Integer(1))
-                .op(Op::GetDeep(0))
+                .op(Op::Fetch(0))
                 .op(Op::Integer(1))
-                .op(Op::GetDeep(2))
+                .op(Op::Fetch(2))
                 .op(Op::Integer(1))
-                .op(Op::GetDeep(2))
+                .op(Op::Fetch(2))
                 .op(Op::Integer(1))
-                .op(Op::GetDeep(1))
+                .op(Op::Fetch(1))
                 .op(Op::Halt),
         );
 
@@ -1067,8 +1082,8 @@ mod tests {
                 .op(Op::PushLocal)
                 .op(Op::Integer(2))
                 .op(Op::PushLocal)
-                .op(Op::GetLocal(0))
-                .op(Op::GetLocal(1))
+                .op(Op::FetchLocal(0))
+                .op(Op::FetchLocal(1))
                 .op(Op::Halt),
         );
 
@@ -1081,11 +1096,11 @@ mod tests {
             CodeBuilder::new()
                 .op(Op::Integer(1))
                 .op(Op::PushLocal)
-                .op(Op::GetLocal(0))
+                .op(Op::FetchLocal(0))
                 .op(Op::Integer(2))
                 .op(Op::DropLocal)
                 .op(Op::PushLocal)
-                .op(Op::GetLocal(0))
+                .op(Op::FetchLocal(0))
                 .op(Op::Halt),
         );
 

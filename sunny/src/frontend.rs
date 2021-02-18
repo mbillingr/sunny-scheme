@@ -1,5 +1,5 @@
 use crate::backend::Backend;
-use crate::frontend::Error::MissingArgument;
+use crate::frontend::Error::*;
 use sunny_sexpr_parser::{Context, CxR, Sexpr};
 
 pub type Result<T> = std::result::Result<T, Context<Error>>;
@@ -8,6 +8,7 @@ pub type Result<T> = std::result::Result<T, Context<Error>>;
 pub enum Error {
     UnknownSpecialForm(String),
     MissingArgument,
+    ExpectedSymbol,
 }
 
 impl std::fmt::Display for Error {
@@ -15,15 +16,18 @@ impl std::fmt::Display for Error {
         match self {
             Error::UnknownSpecialForm(s) => write!(f, "Unknown special form {}.", s),
             Error::MissingArgument => write!(f, "Missing argument."),
+            Error::ExpectedSymbol => write!(f, "Expected symbol."),
         }
     }
 }
 
-pub struct Frontend {}
+pub struct Frontend {
+    globals: Vec<String>,
+}
 
 impl Frontend {
     pub fn new() -> Self {
-        Frontend {}
+        Frontend { globals: vec![] }
     }
 
     pub fn meaning<B: Backend>(
@@ -32,11 +36,34 @@ impl Frontend {
         backend: &mut B,
     ) -> Result<B::Output> {
         if is_atom(sexpr) {
-            Ok(backend.constant(sexpr.get_value()))
+            if let Some(name) = sexpr.as_symbol() {
+                let (depth, idx) = self
+                    .lookup(name)
+                    .unwrap_or_else(|| self.add_global(name.to_string(), backend));
+                Ok(backend.fetch(depth, idx))
+            } else {
+                Ok(backend.constant(sexpr.get_value()))
+            }
         } else {
             let first = sexpr.car().unwrap();
             if let Some(s) = first.as_symbol() {
                 match s {
+                    "set!" => {
+                        let arg1 = sexpr
+                            .cadr()
+                            .ok_or_else(|| error_after(first, MissingArgument))?;
+                        let name = arg1
+                            .as_symbol()
+                            .ok_or_else(|| error_at(arg1, ExpectedSymbol))?;
+                        let argval = sexpr
+                            .caddr()
+                            .ok_or_else(|| error_after(arg1, MissingArgument))?;
+                        let (depth, idx) = self
+                            .lookup(name)
+                            .unwrap_or_else(|| self.add_global(name.to_string(), backend));
+                        let value = self.meaning(argval, backend)?;
+                        Ok(backend.store(depth, idx, value))
+                    }
                     "cons" => {
                         let arg1 = sexpr
                             .cadr()
@@ -76,6 +103,24 @@ impl Frontend {
             }
         }
     }
+
+    fn lookup(&self, name: &str) -> Option<(usize, usize)> {
+        self.globals
+            .iter()
+            .position(|gvar| gvar == name)
+            .map(|idx| (self.current_lexical_depth(), idx))
+    }
+
+    fn add_global<B: Backend>(&mut self, name: String, backend: &mut B) -> (usize, usize) {
+        let idx = self.globals.len();
+        self.globals.push(name);
+        backend.add_global(idx);
+        (self.current_lexical_depth(), idx)
+    }
+
+    fn current_lexical_depth(&self) -> usize {
+        0
+    }
 }
 
 fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
@@ -97,6 +142,8 @@ mod tests {
     #[derive(Debug, PartialEq)]
     enum Ast {
         Const(String),
+        Ref(usize, usize),
+        Set(usize, usize, Box<Ast>),
         Cons(Box<Ast>, Box<Ast>),
         If(Box<Ast>, Box<Ast>, Box<Ast>),
     }
@@ -106,8 +153,18 @@ mod tests {
     impl Backend for AstBuilder {
         type Output = Ast;
 
+        fn add_global(&mut self, _: usize) {}
+
         fn constant(&mut self, c: &Sexpr) -> Self::Output {
             Ast::Const(c.to_string())
+        }
+
+        fn fetch(&mut self, depth: usize, idx: usize) -> Self::Output {
+            Ast::Ref(depth, idx)
+        }
+
+        fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output {
+            Ast::Set(depth, idx, Box::new(val))
         }
 
         fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
@@ -131,6 +188,8 @@ mod tests {
     macro_rules! ast {
         (($($parts:tt)*)) => {ast![$($parts)*]};
         (const $x:expr) => {Ast::Const(format!("{}", $x))};
+        (ref $d:tt $i:tt) => {Ast::Ref($d, $i)};
+        (set $d:tt $i:tt $x:tt) => {Ast::Set($d, $i, Box::new(ast![$x]))};
         (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
         (if $a:tt $b:tt $c:tt) => {Ast::If(Box::new(ast![$a]), Box::new(ast![$b]), Box::new(ast![$c]))};
     }
@@ -144,6 +203,9 @@ mod tests {
                 sexpr![$t:($($rest)*)],
             )
         };
+
+        ($t:ty:[$x:expr]) => { <$t>::symbol($x) };
+
         ($t:ty:$x:ident) => { <$t>::symbol(stringify!($x)) };
 
         ($t:ty:$x:expr) => { <$t>::from($x) };
@@ -162,6 +224,11 @@ mod tests {
     }
 
     #[test]
+    fn meaning_of_symbol() {
+        assert_eq!(meaning_of![x], Ok(ast!(ref 0 0)));
+    }
+
+    #[test]
     fn meaning_of_cons() {
         assert_eq!(meaning_of![(cons 1 2)], Ok(ast!(cons (const 1) (const 2))));
     }
@@ -174,8 +241,13 @@ mod tests {
     #[test]
     fn meaning_of_if() {
         assert_eq!(
-            meaning_of![(if x y z)],
-            Ok(ast!(if (const "x") (const "y") (const "z")))
+            meaning_of![(if 1 2 3)],
+            Ok(ast!(if (const "1") (const "2") (const "3")))
         );
+    }
+
+    #[test]
+    fn meaning_of_set() {
+        assert_eq!(meaning_of![(["set!"] x 42)], Ok(ast!(set 0 0 (const "42"))));
     }
 }

@@ -5,7 +5,12 @@ use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 pub trait Backend {
     type Output;
 
+    fn add_global(&mut self, idx: usize);
+
     fn constant(&mut self, c: &Sexpr) -> Self::Output;
+
+    fn fetch(&mut self, depth: usize, idx: usize) -> Self::Output;
+    fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output;
 
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output;
 
@@ -19,16 +24,31 @@ pub trait Backend {
 
 pub struct ByteCodeBackend<'s> {
     storage: &'s mut ValueStorage,
+    prelude: BlockChain,
 }
 
 impl<'s> ByteCodeBackend<'s> {
     pub fn new(storage: &'s mut ValueStorage) -> Self {
-        ByteCodeBackend { storage }
+        ByteCodeBackend {
+            storage,
+            prelude: BlockChain::empty(),
+        }
+    }
+}
+
+impl ByteCodeBackend<'_> {
+    pub fn generate_prelude(&self) -> BlockChain {
+        self.prelude.clone()
     }
 }
 
 impl Backend for ByteCodeBackend<'_> {
     type Output = BlockChain;
+
+    fn add_global(&mut self, _: usize) {
+        let block = BasicBlock::new(vec![Op::Const(0), Op::PushLocal], vec![Value::Void]);
+        self.prelude.append(BlockChain::singleton(block));
+    }
 
     fn constant(&mut self, c: &Sexpr) -> Self::Output {
         let allocs = self.storage.count_allocations(c);
@@ -38,9 +58,25 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(block)
     }
 
+    fn fetch(&mut self, depth: usize, idx: usize) -> Self::Output {
+        let mut ops = vec![];
+        ops.extend(Op::extended(Op::Integer, depth));
+        ops.extend(Op::extended(Op::Fetch, idx));
+        let block = BasicBlock::new(ops, vec![]);
+        BlockChain::singleton(block)
+    }
+
+    fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output {
+        let mut ops = vec![];
+        ops.extend(Op::extended(Op::Integer, depth));
+        ops.extend(Op::extended(Op::Store, idx));
+        let block = BasicBlock::new(ops, vec![]);
+        val.chain(BlockChain::singleton(block))
+    }
+
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
         second.append_op(Op::Cons);
-        first.append(second)
+        first.chain(second)
     }
 
     fn ifexpr(
@@ -139,6 +175,32 @@ mod tests {
         assert_eq!(
             cs.constant_slice(),
             &[Value::Int(1), Value::Int(3), Value::Int(2)]
+        );
+    }
+
+    #[test]
+    fn build_bytecode_fetch() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let expr = bcb.fetch(0, 0);
+
+        let cs = expr.build_segment();
+
+        assert_eq!(cs.code_slice(), &[Op::Integer(0), Op::Fetch(0), Op::Halt]);
+    }
+
+    #[test]
+    fn build_bytecode_store() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let val = bcb.constant(&Sexpr::int(42));
+        let expr = bcb.store(0, 0, val);
+
+        let cs = expr.build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[Op::Const(0), Op::Integer(0), Op::Fetch(0), Op::Halt]
         );
     }
 }
