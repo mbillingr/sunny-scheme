@@ -1,4 +1,5 @@
 use super::{Ref, Tracer};
+use std::cell::Cell;
 
 pub trait Traceable {
     fn trace(&self, gc: &mut Tracer);
@@ -98,5 +99,13 @@ impl<T: Traceable> Traceable for &[T] {
 impl<T: Traceable + ?Sized> Traceable for Box<T> {
     fn trace(&self, gc: &mut Tracer) {
         (**self).trace(gc)
+    }
+}
+
+impl<T: Traceable + Default + ?Sized> Traceable for Cell<T> {
+    fn trace(&self, gc: &mut Tracer) {
+        let x = self.take();
+        x.trace(gc);
+        self.set(x);
     }
 }

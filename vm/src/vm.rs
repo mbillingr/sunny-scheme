@@ -7,6 +7,7 @@ use crate::{
     storage::ValueStorage,
     Error, ErrorKind, Result, RuntimeResult, Value,
 };
+use std::cell::Cell;
 use sunny_sexpr_parser::Sexpr;
 
 pub struct Vm {
@@ -150,8 +151,8 @@ impl Vm {
                     self.get_local(depth as usize, Op::extend_arg(a, arg))?
                 }
                 Op::Store(a) => {
-                    let value = self.pop_value()?;
                     let depth = self.pop_int()?;
+                    let value = self.pop_value()?;
                     self.set_local(depth as usize, Op::extend_arg(a, arg), value)?
                 }
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
@@ -219,7 +220,7 @@ impl Vm {
 
     fn push_local(&mut self) -> Result<()> {
         let x = self.pop_value()?;
-        self.current_activation.locals.push(x);
+        self.current_activation.locals.push(Cell::new(x));
         Ok(())
     }
 
@@ -233,7 +234,7 @@ impl Vm {
         for _ in 0..depth {
             act = self.current_activation.parent.as_ref().unwrap();
         }
-        let x = act.locals[idx].clone();
+        let x = cell_clone(&act.locals[idx]);
         self.push_value(x);
         Ok(())
     }
@@ -243,15 +244,15 @@ impl Vm {
         for _ in 0..depth {
             act = self.current_activation.parent.as_ref().unwrap();
         }
-        unimplemented!("how should we mutably store values?");
-        //act.locals[idx] = value;
+        act.locals[idx].set(value);
+        self.push_value(Value::Void);
         Ok(())
     }
 
     fn peek_closure(&mut self, idx: usize) -> Result<()> {
         match self.pop_value()? {
             Value::Closure(cls) => {
-                let x = cls.parent.as_ref().unwrap().locals[idx].clone();
+                let x = cell_clone(&cls.parent.as_ref().unwrap().locals[idx]);
                 self.push_value(x);
                 Ok(())
             }
@@ -321,12 +322,7 @@ impl Vm {
     fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
         self.ensure_storage_space(1)?;
         let args = self.pop_values(n_args)?;
-        let act = Activation {
-            caller: Some(self.current_activation.clone()),
-            parent: cls.parent.clone(),
-            code: cls.code.clone(),
-            locals: args,
-        };
+        let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
         self.current_activation = self.storage.insert(act).unwrap();
         Ok(())
     }
@@ -449,6 +445,12 @@ impl Vm {
             self.storage.finish_garbage_collection(gc);
         }
     }
+}
+
+fn cell_clone<T: Clone + Default>(cell: &Cell<T>) -> T {
+    let x = cell.take();
+    cell.set(x.clone());
+    x
 }
 
 #[cfg(test)]
@@ -698,10 +700,9 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(
-            &*vm.current_activation.locals,
-            vec![Value::Int(12), Value::Int(11), Value::Int(10)]
-        )
+        assert_eq!(cell_clone(&vm.current_activation.locals[0]), Value::Int(12));
+        assert_eq!(cell_clone(&vm.current_activation.locals[1]), Value::Int(11));
+        assert_eq!(cell_clone(&vm.current_activation.locals[2]), Value::Int(10));
     }
 
     #[test]
@@ -1130,7 +1131,7 @@ mod tests {
             caller: None,
             parent: None,
             code: CodePointer::new(code_segment.clone()).at(999),
-            locals: vec![Value::Int(1), Value::Int(2)],
+            locals: vec![Cell::new(Value::Int(1)), Cell::new(Value::Int(2))],
         };
         let act = storage.insert(act).unwrap();
 

@@ -24,6 +24,12 @@ pub enum Value {
     Primitive(fn(&mut Vec<Value>, &mut ValueStorage) -> Result<()>),
 }
 
+impl Default for Value {
+    fn default() -> Self {
+        Value::Void
+    }
+}
+
 macro_rules! impl_accessor {
     ($pred:ident, $variant:path) => {
         pub fn $pred(&self) -> bool {
