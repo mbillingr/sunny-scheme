@@ -204,6 +204,18 @@ mod acceptance_tests {
     use crate::*;
 
     #[test]
+    fn can_parse_true() {
+        let sexpr = parse_str("#t");
+        assert_eq!(sexpr.unwrap(), Sexpr::bool(true));
+    }
+
+    #[test]
+    fn can_parse_false() {
+        let sexpr = parse_str("#f");
+        assert_eq!(sexpr.unwrap(), Sexpr::bool(false));
+    }
+
+    #[test]
     fn can_parse_integer() {
         let sexpr = parse_str("0");
         assert_eq!(sexpr.unwrap(), Sexpr::int(0));

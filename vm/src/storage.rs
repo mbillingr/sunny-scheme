@@ -26,6 +26,8 @@ impl ValueStorage {
     pub fn sexpr_to_value(&mut self, sexpr: &Sexpr<'_>) -> Result<Value, ()> {
         Ok(match sexpr {
             Sexpr::Nil => Value::Nil,
+            Sexpr::Bool(false) => Value::False,
+            Sexpr::Bool(true) => Value::True,
             Sexpr::Integer(x) => Value::Int(*x),
             Sexpr::Symbol(s) => self.interned_symbol(s)?,
             Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
@@ -39,8 +41,7 @@ impl ValueStorage {
 
     pub fn count_allocations(&mut self, sexpr: &Sexpr<'_>) -> usize {
         match sexpr {
-            Sexpr::Nil => 0,
-            Sexpr::Integer(_) => 0,
+            Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) => 0,
             Sexpr::Symbol(_) => 1,
             Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
             Sexpr::Pair(p) => {

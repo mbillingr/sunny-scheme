@@ -8,6 +8,7 @@ pub Datum: Context<Sexpr<'input>> = {
 };
 
 pub RawSexpr: Sexpr<'input> = {
+    <b:Bool> => Sexpr::bool(b),
     <n:Num> => Sexpr::int(n),
     <s:Sym> => Sexpr::symbol(s),
     <s:Str> => Sexpr::string(s),
@@ -15,6 +16,11 @@ pub RawSexpr: Sexpr<'input> = {
     <l:List> => <>,
     <q:Quotation> => <>,
 };
+
+Bool: bool = {
+    "#t" => true,
+    "#f" => false,
+}
 
 Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
 

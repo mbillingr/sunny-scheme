@@ -9,6 +9,7 @@ use std::sync::Arc;
 #[derive(Debug, PartialEq)]
 pub enum Sexpr<'src> {
     Nil,
+    Bool(bool),
     Integer(Int),
     Symbol(&'src str),
     String(&'src str),
@@ -19,6 +20,11 @@ impl<'src> Sexpr<'src> {
     pub fn nil() -> Self {
         Sexpr::Nil
     }
+
+    pub fn bool(b: bool) -> Self {
+        Self::Bool(b)
+    }
+
     pub fn int(i: Int) -> Self {
         Sexpr::Integer(i)
     }
@@ -93,6 +99,8 @@ impl std::fmt::Display for Sexpr<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Sexpr::Nil => write!(f, "()"),
+            Sexpr::Bool(true) => write!(f, "#t"),
+            Sexpr::Bool(false) => write!(f, "#f"),
             Sexpr::Integer(i) => write!(f, "{}", i),
             Sexpr::Symbol(s) => write!(f, "{}", s),
             Sexpr::String(s) => write!(f, "{:?}", s),
