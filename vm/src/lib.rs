@@ -21,9 +21,9 @@ pub type RuntimeResult<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ErrorKind {
+    Halted,
     StackUnderflow,
     NotCallable,
-    Halted,
     TypeError,
 }
 
@@ -31,4 +31,22 @@ pub enum ErrorKind {
 pub struct Error {
     kind: ErrorKind,
     location: CodePointer,
+}
+
+impl std::fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ErrorKind::Halted => write!(f, "Halted"),
+            ErrorKind::StackUnderflow => write!(f, "Stack underflow."),
+            ErrorKind::NotCallable => write!(f, "Not callable"),
+            ErrorKind::TypeError => write!(f, "Type Error"),
+        }
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "{}", self.kind)?;
+        writeln!(f, "{}", self.location.pretty_fmt(1, 1))
+    }
 }

@@ -165,7 +165,8 @@ impl std::fmt::Display for ReplError {
         match self {
             ReplError::ParseError(e) => write!(f, "{}", e.pretty_fmt()),
             ReplError::FrontendError(e) => write!(f, "{}", e.pretty_fmt()),
-            e => write!(f, "{}", e),
+            ReplError::VmErrorKind(e) => write!(f, "{}", e),
+            ReplError::VmError(e) => write!(f, "{}", e),
         }
     }
 }

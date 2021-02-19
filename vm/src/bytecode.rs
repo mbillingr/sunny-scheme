@@ -288,6 +288,22 @@ impl CodePointer {
     pub fn constant_slice(&self) -> &[Value] {
         self.segment.constant_slice()
     }
+
+    pub fn pretty_fmt(&self, n_before: usize, n_after: usize) -> String {
+        let mut s = String::new();
+        for i in self.position.saturating_sub(n_before)..self.position {
+            s += &format!("   {} {}\n", i, self.segment.code_slice()[i]);
+        }
+        s += &format!(
+            "-> {} {} <-\n",
+            self.position,
+            self.segment.code_slice()[self.position]
+        );
+        for (i, op) in self.code_slice().iter().enumerate().skip(1).take(n_after) {
+            s += &format!("   {} {}\n", i + 1 + self.position, op);
+        }
+        s
+    }
 }
 
 #[derive(Debug)]
