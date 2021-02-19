@@ -34,6 +34,10 @@ impl BlockChain {
         self.last.append_op(op);
     }
 
+    pub fn append_ops(&self, ops: impl IntoIterator<Item = Op>) {
+        self.last.append_ops(ops);
+    }
+
     pub fn chain(mut self, other: Self) -> Self {
         self.append(other);
         self
@@ -99,6 +103,13 @@ impl BasicBlock {
 
     pub fn append_op(&self, op: Op) {
         self.code.borrow_mut().push(op);
+    }
+
+    pub fn append_ops(&self, ops: impl IntoIterator<Item = Op>) {
+        let mut code = self.code.borrow_mut();
+        for op in ops {
+            code.push(op)
+        }
     }
 
     pub fn return_from(&self) {

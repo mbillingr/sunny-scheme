@@ -117,7 +117,12 @@ impl Frontend {
                     _ => Err(error_at(sexpr, Error::UnknownSpecialForm(s.to_string()))),
                 }
             } else {
-                unimplemented!()
+                let func = self.meaning(first, backend)?;
+                let mut args = vec![];
+                for a in sexpr.cdr().unwrap().iter() {
+                    args.push(self.meaning(a, backend)?);
+                }
+                Ok(backend.invoke(func, args))
             }
         }
     }
@@ -218,6 +223,7 @@ mod tests {
         Cons(Box<Ast>, Box<Ast>),
         If(Box<Ast>, Box<Ast>, Box<Ast>),
         Lambda(usize, Box<Ast>),
+        Invoke(Box<Ast>, Vec<Ast>),
     }
 
     struct AstBuilder;
@@ -263,6 +269,10 @@ mod tests {
         fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output {
             Ast::Lambda(n_args, Box::new(body))
         }
+
+        fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output {
+            Ast::Invoke(Box::new(func), args)
+        }
     }
 
     macro_rules! ast {
@@ -273,6 +283,7 @@ mod tests {
         (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
         (if $a:tt $b:tt $c:tt) => {Ast::If(Box::new(ast![$a]), Box::new(ast![$b]), Box::new(ast![$c]))};
         (lambda $p:tt $b:tt) => {Ast::Lambda($p, Box::new(ast![$b]))};
+        (invoke $f:tt $($a:tt)*) => {Ast::Invoke(Box::new(ast![$f]), vec![$(ast![$a]),*])};
     }
 
     macro_rules! sexpr {
@@ -335,5 +346,13 @@ mod tests {
     #[test]
     fn meaning_of_trivial_lambda() {
         assert_eq!(meaning_of![(lambda () 0)], Ok(ast!(lambda 0 (const "0"))));
+    }
+
+    #[test]
+    fn meaning_of_lambda_application() {
+        assert_eq!(
+            meaning_of![((lambda () 0))],
+            Ok(ast!(invoke (lambda 0 (const "0"))))
+        );
     }
 }

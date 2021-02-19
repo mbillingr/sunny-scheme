@@ -24,6 +24,8 @@ pub trait Backend {
     fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output;
 
     fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output;
+
+    fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -102,6 +104,17 @@ impl Backend for ByteCodeBackend<'_> {
         let exit = BlockChain::empty();
         body.return_from();
         start.make_closure(body, exit)
+    }
+
+    fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output {
+        let mut blocks = BlockChain::empty();
+        let n_args = args.len();
+        for a in args {
+            blocks.append(a)
+        }
+        blocks.append(func);
+        blocks.append_ops(Op::extended(|n_args| Op::Call { n_args }, n_args));
+        blocks
     }
 }
 
@@ -260,6 +273,30 @@ mod tests {
                 Op::Const(0),
                 Op::Return,
                 Op::Return
+            ]
+        );
+    }
+
+    #[test]
+    fn build_bytecode_invoke_lambda() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let val = bcb.constant(&Sexpr::int(42));
+        let expr = bcb.lambda(0, val);
+        let invoke = bcb.invoke(expr, vec![]);
+
+        let cs = invoke.build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::Integer(1),
+                Op::MakeClosure,
+                Op::Jump { forward: 2 },
+                Op::Const(0),
+                Op::Return,
+                Op::Call { n_args: 0 },
+                Op::Halt
             ]
         );
     }
