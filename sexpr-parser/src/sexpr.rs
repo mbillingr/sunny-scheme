@@ -49,6 +49,10 @@ impl<'src> Sexpr<'src> {
         l
     }
 
+    pub fn is_null(&self) -> bool {
+        self == &Sexpr::Nil
+    }
+
     pub fn is_pair(&self) -> bool {
         match self {
             Sexpr::Pair(_) => true,
@@ -92,6 +96,14 @@ impl<'src> Sexpr<'src> {
                 _ => std::mem::replace(&mut cursor, &Sexpr::Nil),
             })
             .take_while(|x| x != &&Sexpr::Nil)
+    }
+
+    pub fn len(&self) -> usize {
+        if self.is_pair() {
+            1 + self.cdr().unwrap().len()
+        } else {
+            0
+        }
     }
 }
 

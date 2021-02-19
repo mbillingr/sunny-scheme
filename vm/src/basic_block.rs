@@ -62,6 +62,14 @@ impl BlockChain {
     pub fn return_from(&self) {
         self.last.return_from()
     }
+
+    pub fn make_closure(self, body: Self, continuation: Self) -> Self {
+        self.last.make_closure(body.first, continuation.first);
+        BlockChain {
+            first: self.first,
+            last: continuation.last,
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -140,6 +148,14 @@ impl BasicBlock {
 
         CodeSegment::new(builder.code, constants)
     }
+
+    pub fn make_closure(
+        &self,
+        body_target: impl Into<Rc<BasicBlock>>,
+        jump_target: impl Into<Rc<BasicBlock>>,
+    ) {
+        *self.exit.borrow_mut() = Exit::ClosureDefinition(body_target.into(), jump_target.into())
+    }
 }
 
 struct CodeBuilder {
@@ -204,7 +220,25 @@ impl CodeBuilder {
                     Op::JumpIfVoid { forward }
                 });
             }
-            _ => unimplemented!(),
+            Exit::ClosureDefinition(body, continuation) => {
+                let mut body_build = Self::new();
+                body_build.constant_map = self.constant_map.clone();
+                body_build.block_offsets = self.block_offsets.clone();
+                body_build.build_code(body);
+
+                self.code.push(Op::Integer(1));
+                self.code.push(Op::MakeClosure);
+                self.build_jump_by(body_build.code.len() as isize);
+
+                let expected_len = self.code.len() + body_build.code.len();
+
+                self.build_code(body);
+
+                assert_eq!(self.code.len(), expected_len);
+
+                self.build_code(continuation);
+            }
+            x => unimplemented!("{:?}", x),
         }
     }
 
@@ -278,6 +312,7 @@ enum Exit {
     BranchTrue(Rc<BasicBlock>, Rc<BasicBlock>, Rc<BasicBlock>),
     BranchVoid(Rc<BasicBlock>, Rc<BasicBlock>, Rc<BasicBlock>),
     Loop(Weak<BasicBlock>),
+    ClosureDefinition(Rc<BasicBlock>, Rc<BasicBlock>),
 }
 
 impl Default for Exit {

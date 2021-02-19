@@ -20,6 +20,10 @@ pub trait Backend {
         consequent: Self::Output,
         alternative: Self::Output,
     ) -> Self::Output;
+
+    fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output;
+
+    fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -87,6 +91,17 @@ impl Backend for ByteCodeBackend<'_> {
     ) -> Self::Output {
         let exit = BlockChain::empty();
         condition.branch_bool(consequent, alternative, exit)
+    }
+
+    fn sequence(&mut self, _first: Self::Output, _next: Self::Output) -> Self::Output {
+        unimplemented!()
+    }
+
+    fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output {
+        let start = BlockChain::empty();
+        let exit = BlockChain::empty();
+        body.return_from();
+        start.make_closure(body, exit)
     }
 }
 
@@ -201,6 +216,51 @@ mod tests {
         assert_eq!(
             cs.code_slice(),
             &[Op::Const(0), Op::Integer(0), Op::Store(0), Op::Halt]
+        );
+    }
+
+    #[test]
+    fn build_bytecode_trivial_lambda() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let val = bcb.constant(&Sexpr::int(42));
+        let expr = bcb.lambda(0, val);
+
+        let cs = expr.build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::Integer(1),
+                Op::MakeClosure,
+                Op::Jump { forward: 2 },
+                Op::Const(0),
+                Op::Return,
+                Op::Halt
+            ]
+        );
+    }
+
+    #[test]
+    fn build_bytecode_can_return_from_lambda_definition() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let val = bcb.constant(&Sexpr::int(42));
+        let expr = bcb.lambda(0, val);
+        expr.return_from();
+
+        let cs = expr.build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::Integer(1),
+                Op::MakeClosure,
+                Op::Jump { forward: 2 },
+                Op::Const(0),
+                Op::Return,
+                Op::Return
+            ]
         );
     }
 }

@@ -9,6 +9,7 @@ pub enum Error {
     UnknownSpecialForm(String),
     MissingArgument,
     ExpectedSymbol,
+    ExpectedList,
 }
 
 impl std::fmt::Display for Error {
@@ -17,17 +18,22 @@ impl std::fmt::Display for Error {
             Error::UnknownSpecialForm(s) => write!(f, "Unknown special form {}.", s),
             Error::MissingArgument => write!(f, "Missing argument."),
             Error::ExpectedSymbol => write!(f, "Expected symbol."),
+            Error::ExpectedList => write!(f, "Expected list."),
         }
     }
 }
 
 pub struct Frontend {
     globals: Vec<String>,
+    locals: Option<Env>,
 }
 
 impl Frontend {
     pub fn new() -> Self {
-        Frontend { globals: vec![] }
+        Frontend {
+            globals: vec![],
+            locals: None,
+        }
     }
 
     pub fn meaning<B: Backend>(
@@ -96,11 +102,40 @@ impl Frontend {
                         let alternative = self.meaning(arg3, backend)?;
                         Ok(backend.ifexpr(condition, consequent, alternative))
                     }
+                    "lambda" => {
+                        let arg1 = sexpr
+                            .cadr()
+                            .ok_or_else(|| error_after(first, MissingArgument))?;
+                        let body = sexpr.cddr().unwrap();
+
+                        self.push_new_scope(arg1)?;
+                        let body = self.meaning_sequence(body, backend)?;
+                        self.pop_scope();
+
+                        Ok(backend.lambda(arg1.len(), body))
+                    }
                     _ => Err(error_at(sexpr, Error::UnknownSpecialForm(s.to_string()))),
                 }
             } else {
                 unimplemented!()
             }
+        }
+    }
+
+    pub fn meaning_sequence<B: Backend>(
+        &mut self,
+        body: &Context<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        let first_expr = body.car().ok_or_else(|| error_at(body, ExpectedSymbol))?;
+        let rest_expr = body.cdr().unwrap();
+
+        if rest_expr.is_null() {
+            self.meaning(first_expr, backend)
+        } else {
+            let first = self.meaning(first_expr, backend)?;
+            let rest = self.meaning_sequence(rest_expr, backend)?;
+            Ok(backend.sequence(first, rest))
         }
     }
 
@@ -121,6 +156,18 @@ impl Frontend {
     fn current_lexical_depth(&self) -> usize {
         0
     }
+
+    fn push_new_scope(&mut self, vars: &Context<Sexpr>) -> Result<()> {
+        let mut env = Env::from_sexpr(vars)?;
+        env.parent = self.locals.take().map(Box::new);
+        self.locals = Some(env);
+        Ok(())
+    }
+
+    fn pop_scope(&mut self) {
+        let env = self.locals.take().unwrap();
+        self.locals = env.parent.map(|p| *p)
+    }
 }
 
 fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
@@ -135,6 +182,30 @@ fn is_atom(sexpr: &Context<Sexpr>) -> bool {
     !sexpr.get_value().is_pair()
 }
 
+struct Env {
+    parent: Option<Box<Env>>,
+    variables: Vec<String>,
+}
+
+impl Env {
+    fn from_sexpr(vars: &Context<Sexpr>) -> Result<Self> {
+        let mut variables = vec![];
+
+        for v in vars.iter() {
+            variables.push(
+                v.as_symbol()
+                    .ok_or_else(|| error_at(v, ExpectedSymbol))?
+                    .to_string(),
+            )
+        }
+
+        Ok(Env {
+            parent: None,
+            variables,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -146,6 +217,7 @@ mod tests {
         Set(usize, usize, Box<Ast>),
         Cons(Box<Ast>, Box<Ast>),
         If(Box<Ast>, Box<Ast>, Box<Ast>),
+        Lambda(usize, Box<Ast>),
     }
 
     struct AstBuilder;
@@ -183,6 +255,14 @@ mod tests {
                 Box::new(alternative),
             )
         }
+
+        fn sequence(&mut self, _first: Self::Output, _next: Self::Output) -> Self::Output {
+            unimplemented!()
+        }
+
+        fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output {
+            Ast::Lambda(n_args, Box::new(body))
+        }
     }
 
     macro_rules! ast {
@@ -192,6 +272,7 @@ mod tests {
         (set $d:tt $i:tt $x:tt) => {Ast::Set($d, $i, Box::new(ast![$x]))};
         (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
         (if $a:tt $b:tt $c:tt) => {Ast::If(Box::new(ast![$a]), Box::new(ast![$b]), Box::new(ast![$c]))};
+        (lambda $p:tt $b:tt) => {Ast::Lambda($p, Box::new(ast![$b]))};
     }
 
     macro_rules! sexpr {
@@ -249,5 +330,10 @@ mod tests {
     #[test]
     fn meaning_of_set() {
         assert_eq!(meaning_of![(["set!"] x 42)], Ok(ast!(set 0 0 (const "42"))));
+    }
+
+    #[test]
+    fn meaning_of_trivial_lambda() {
+        assert_eq!(meaning_of![(lambda () 0)], Ok(ast!(lambda 0 (const "0"))));
     }
 }
