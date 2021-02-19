@@ -226,6 +226,30 @@ impl CodeSegment {
 
         CodeSegment::new(code, constants)
     }
+
+    pub fn pretty_fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let mut arg = 0;
+        for (i, &op) in self.code.iter().enumerate() {
+            write!(f, "  {:>3}  {}", i, op)?;
+            match op {
+                Op::ExtArg(x) => arg = Op::extend_arg(x, arg),
+                Op::Const(x) => {
+                    arg = Op::extend_arg(x, arg);
+                    write!(f, "  ({})", self.constants[arg])?;
+                    arg = 0;
+                }
+                _ => arg = 0,
+            };
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
+impl std::fmt::Display for CodeSegment {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.pretty_fmt(f)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

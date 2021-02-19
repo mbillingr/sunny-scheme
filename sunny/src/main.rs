@@ -121,7 +121,7 @@ impl Repl {
         codegraph.return_from();
 
         let code = codegraph.build_segment();
-        println!("{:#?}", code);
+        println!("{}", code);
 
         let result = self.vm.eval_repl(code)?;
         Ok(result)
