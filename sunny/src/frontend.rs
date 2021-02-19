@@ -6,7 +6,6 @@ pub type Result<T> = std::result::Result<T, Context<Error>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    UnknownSpecialForm(String),
     MissingArgument,
     ExpectedSymbol,
     ExpectedList,
@@ -15,7 +14,6 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::UnknownSpecialForm(s) => write!(f, "Unknown special form {}.", s),
             Error::MissingArgument => write!(f, "Missing argument."),
             Error::ExpectedSymbol => write!(f, "Expected symbol."),
             Error::ExpectedList => write!(f, "Expected list."),
@@ -114,17 +112,26 @@ impl Frontend {
 
                         Ok(backend.lambda(arg1.len(), body))
                     }
-                    _ => Err(error_at(sexpr, Error::UnknownSpecialForm(s.to_string()))),
+                    _ => self.meaning_application(first, sexpr.cdr().unwrap(), backend),
                 }
             } else {
-                let func = self.meaning(first, backend)?;
-                let mut args = vec![];
-                for a in sexpr.cdr().unwrap().iter() {
-                    args.push(self.meaning(a, backend)?);
-                }
-                Ok(backend.invoke(func, args))
+                self.meaning_application(first, sexpr.cdr().unwrap(), backend)
             }
         }
+    }
+
+    pub fn meaning_application<B: Backend>(
+        &mut self,
+        func: &Context<Sexpr>,
+        arg_exprs: &Context<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        let func = self.meaning(func, backend)?;
+        let mut args = vec![];
+        for a in arg_exprs.iter() {
+            args.push(self.meaning(a, backend)?);
+        }
+        Ok(backend.invoke(func, args))
     }
 
     pub fn meaning_sequence<B: Backend>(
@@ -354,5 +361,10 @@ mod tests {
             meaning_of![((lambda () 0))],
             Ok(ast!(invoke (lambda 0 (const "0"))))
         );
+    }
+
+    #[test]
+    fn meaning_of_variable_application() {
+        assert_eq!(meaning_of![(foo)], Ok(ast!(invoke (ref 0 0))));
     }
 }
