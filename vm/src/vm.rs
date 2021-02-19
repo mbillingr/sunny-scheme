@@ -235,6 +235,9 @@ impl Vm {
             act = self.current_activation.parent.as_ref().unwrap();
         }
         let x = cell_clone(&act.locals[idx]);
+        if x.is_void() {
+            return Err(ErrorKind::UndefinedVariable);
+        }
         self.push_value(x);
         Ok(())
     }
@@ -1151,5 +1154,18 @@ mod tests {
 
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(vm.value_stack, vec![Value::Int(2)]);
+    }
+
+    #[test]
+    fn dereferencing_void_is_an_error() {
+        let (res, _) = VmRunner::new().run_code(
+            CodeBuilder::new()
+                .constant(Value::Void)
+                .op(Op::PushLocal)
+                .op(Op::FetchLocal(0))
+                .op(Op::Halt),
+        );
+
+        assert_eq!(res, Err(ErrorKind::UndefinedVariable));
     }
 }

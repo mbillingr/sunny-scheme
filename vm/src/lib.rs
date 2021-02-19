@@ -25,6 +25,7 @@ pub enum ErrorKind {
     StackUnderflow,
     NotCallable,
     TypeError,
+    UndefinedVariable,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,6 +41,7 @@ impl std::fmt::Display for ErrorKind {
             ErrorKind::StackUnderflow => write!(f, "Stack underflow."),
             ErrorKind::NotCallable => write!(f, "Not callable"),
             ErrorKind::TypeError => write!(f, "Type Error"),
+            ErrorKind::UndefinedVariable => write!(f, "Undefined Variable"),
         }
     }
 }
