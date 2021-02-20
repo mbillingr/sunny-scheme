@@ -109,7 +109,7 @@ impl Backend for ByteCodeBackend<'_> {
     fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output {
         let mut blocks = BlockChain::empty();
         let n_args = args.len();
-        for a in args {
+        for a in args.into_iter().rev() {
             blocks.append(a)
         }
         blocks.append(func);
@@ -299,5 +299,38 @@ mod tests {
                 Op::Halt
             ]
         );
+    }
+
+    #[test]
+    fn build_bytecode_invoke_pushes_args_in_reverse_order() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let func = bcb.fetch(0, 0);
+        let args = vec![
+            bcb.constant(&Sexpr::int(1)),
+            bcb.constant(&Sexpr::int(2)),
+            bcb.constant(&Sexpr::int(3)),
+        ];
+        let invoke = bcb.invoke(func, args);
+
+        let cs = invoke.build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::Const(0),
+                Op::Const(1),
+                Op::Const(2),
+                Op::Integer(0),
+                Op::Fetch(0),
+                Op::Call { n_args: 3 },
+                Op::Halt
+            ]
+        );
+
+        assert_eq!(
+            cs.constant_slice(),
+            &[Value::Int(3), Value::Int(2), Value::Int(1)]
+        )
     }
 }
