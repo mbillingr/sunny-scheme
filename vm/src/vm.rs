@@ -75,9 +75,22 @@ impl Vm {
         }
         self.ensure_storage_space(2).unwrap();
         self.gc_preserve.pop().unwrap();
+
+        let mut root_activation = self.current_activation.clone();
         let code = self.storage.insert(code).unwrap();
-        self.current_activation.code = CodePointer::new(code);
-        self.run().map_err(|e| self.add_error_context(e))
+        root_activation.code = CodePointer::new(code);
+
+        match self.run() {
+            Ok(x) => {
+                assert_eq!(self.current_activation, root_activation);
+                Ok(x)
+            }
+            Err(e) => {
+                let ce = self.add_error_context(e);
+                self.current_activation = root_activation; // restore root activation
+                Err(ce)
+            }
+        }
     }
 
     pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Value> {
