@@ -22,16 +22,12 @@ impl std::fmt::Display for Error {
 }
 
 pub struct Frontend {
-    globals: Vec<String>,
-    locals: Option<Env>,
+    env: Env,
 }
 
 impl Frontend {
     pub fn new() -> Self {
-        Frontend {
-            globals: vec![],
-            locals: None,
-        }
+        Frontend { env: Env::new() }
     }
 
     pub fn meaning<B: Backend>(
@@ -152,33 +148,24 @@ impl Frontend {
     }
 
     fn lookup(&self, name: &str) -> Option<(usize, usize)> {
-        self.globals
-            .iter()
-            .position(|gvar| gvar == name)
-            .map(|idx| (self.current_lexical_depth(), idx))
+        self.env.lookup(name)
     }
 
     fn add_global<B: Backend>(&mut self, name: String, backend: &mut B) -> (usize, usize) {
-        let idx = self.globals.len();
-        self.globals.push(name);
+        let (depth, idx) = self.env.add_global(name);
         backend.add_global(idx);
-        (self.current_lexical_depth(), idx)
-    }
-
-    fn current_lexical_depth(&self) -> usize {
-        0
+        (depth, idx)
     }
 
     fn push_new_scope(&mut self, vars: &Context<Sexpr>) -> Result<()> {
-        let mut env = Env::from_sexpr(vars)?;
-        env.parent = self.locals.take().map(Box::new);
-        self.locals = Some(env);
+        let env = std::mem::replace(&mut self.env, Env::new());
+        self.env = env.extend(vars)?;
         Ok(())
     }
 
     fn pop_scope(&mut self) {
-        let env = self.locals.take().unwrap();
-        self.locals = env.parent.map(|p| *p)
+        let parent = self.env.parent.take().unwrap();
+        self.env = *parent;
     }
 }
 
@@ -200,6 +187,13 @@ struct Env {
 }
 
 impl Env {
+    fn new() -> Self {
+        Env {
+            parent: None,
+            variables: vec![],
+        }
+    }
+
     fn from_sexpr(vars: &Context<Sexpr>) -> Result<Self> {
         let mut variables = vec![];
 
@@ -215,6 +209,36 @@ impl Env {
             parent: None,
             variables,
         })
+    }
+
+    fn extend(self, vars: &Context<Sexpr>) -> Result<Self> {
+        let mut env = Env::from_sexpr(vars)?;
+        env.parent = Some(Box::new(self));
+        Ok(env)
+    }
+
+    fn lookup(&self, name: &str) -> Option<(usize, usize)> {
+        self.variables
+            .iter()
+            .position(|v| v == name)
+            .map(|idx| (0, idx))
+            .or_else(|| {
+                self.parent
+                    .as_ref()
+                    .and_then(|p| p.lookup(name))
+                    .map(|(depth, i)| (1 + depth, i))
+            })
+    }
+
+    fn add_global(&mut self, name: String) -> (usize, usize) {
+        if let Some(p) = &mut self.parent {
+            let (depth, idx) = p.add_global(name);
+            return (1 + depth, idx);
+        }
+
+        let idx = self.variables.len();
+        self.variables.push(name);
+        (0, idx)
     }
 }
 
@@ -366,5 +390,15 @@ mod tests {
     #[test]
     fn meaning_of_variable_application() {
         assert_eq!(meaning_of![(foo)], Ok(ast!(invoke (ref 0 0))));
+    }
+
+    #[test]
+    fn meaning_of_lambda_identity() {
+        assert_eq!(meaning_of![(lambda (x) x)], Ok(ast!(lambda 1 (ref 0 0))));
+    }
+
+    #[test]
+    fn meaning_of_global_ref_in_lambda() {
+        assert_eq!(meaning_of![(lambda () x)], Ok(ast!(lambda 0 (ref 1 0))));
     }
 }
