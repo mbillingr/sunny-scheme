@@ -253,15 +253,26 @@ impl<T: std::fmt::Display> Context<T> {
                 let line_end = find_end_of_line(src, pos);
                 let line_number = line_number(src, pos);
 
-                format!(
-                    "{} `{}`\n{:5}  {}\n       {: <s$}^",
-                    value,
-                    &src[pos..pos + 1],
-                    line_number,
-                    &src[line_start..line_end],
-                    "",
-                    s = pos - line_start,
-                )
+                if pos >= src.len() {
+                    format!(
+                        "{}\n{:5}  {}\n       {: <s$}^",
+                        value,
+                        line_number,
+                        &src[line_start..line_end],
+                        "",
+                        s = pos - line_start
+                    )
+                } else {
+                    format!(
+                        "{} `{}`\n{:5}  {}\n       {: <s$}^",
+                        value,
+                        &src[pos..pos + 1],
+                        line_number,
+                        &src[line_start..line_end],
+                        "",
+                        s = pos - line_start,
+                    )
+                }
             }
             Context::Span(range, value) => {
                 let line_start = find_start_of_line(src, range.start);
