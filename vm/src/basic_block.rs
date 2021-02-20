@@ -237,8 +237,7 @@ impl CodeBuilder {
                 body_build.block_offsets = self.block_offsets.clone();
                 body_build.build_code(body);
 
-                self.code.push(Op::Integer(1));
-                self.code.push(Op::MakeClosure);
+                self.code.push(Op::MakeClosure { offset: 1 });
                 self.build_jump_by(body_build.code.len() as isize);
 
                 let expected_len = self.code.len() + body_build.code.len();

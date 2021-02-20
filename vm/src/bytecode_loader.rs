@@ -160,7 +160,10 @@ fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<Code
             repr::TABLE => cb = cb.op(Op::Table),
             repr::TABLEGET => cb = cb.op(Op::TableGet),
             repr::TABLESET => cb = cb.op(Op::TableSet),
-            repr::MAKECLOSURE => cb = cb.op(Op::MakeClosure),
+            repr::MAKECLOSURE => {
+                let i = read_index(&mut code_parts, statement)?;
+                cb = cb.with(|offset| Op::MakeClosure { offset }, i)
+            }
             _ if is_label(stmt) => cb = cb.label(label_name(stmt).unwrap()),
             _ => return Err(error_at(statement, Error::UnknownOpcode)),
         }

@@ -47,7 +47,7 @@ pub enum Op {
     TableSet,
     TableGet,
 
-    MakeClosure,
+    MakeClosure { offset: u8 },
 }
 
 impl Op {
@@ -121,7 +121,7 @@ impl std::fmt::Display for Op {
             Op::Table => write!(f, "{}", repr::TABLE),
             Op::TableSet => write!(f, "{}", repr::TABLESET),
             Op::TableGet => write!(f, "{}", repr::TABLEGET),
-            Op::MakeClosure => write!(f, "{}", repr::MAKECLOSURE),
+            Op::MakeClosure { offset } => write!(f, "{} {}", repr::MAKECLOSURE, offset),
         }
     }
 }
@@ -455,7 +455,6 @@ impl CodeBuilder {
     pub fn make_closure(mut self, label: impl ToString) -> Self {
         let placeholder_pos = self.code.len();
         self = self.op(Op::Nop); // placeholder
-        self = self.op(Op::MakeClosure);
         let position_reference = self.code.len();
 
         self.code[placeholder_pos] = BuildOp::LabelRef(
@@ -465,7 +464,9 @@ impl CodeBuilder {
                 if offset > u8::max_value() as usize {
                     panic!("label placeholders more than 255 away are not yet possible")
                 }
-                Op::Integer(offset as u8)
+                Op::MakeClosure {
+                    offset: offset as u8,
+                }
             }),
         );
 
@@ -689,7 +690,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             segment.code_slice(),
-            &[Op::Integer(1), Op::MakeClosure, Op::Halt, Op::Halt]
+            &[Op::MakeClosure { offset: 1 }, Op::Halt, Op::Halt]
         );
     }
 

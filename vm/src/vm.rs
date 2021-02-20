@@ -184,7 +184,7 @@ impl Vm {
                 Op::Table => self.table()?,
                 Op::TableSet => self.table_set()?,
                 Op::TableGet => self.table_get()?,
-                Op::MakeClosure => self.make_closure()?,
+                Op::MakeClosure { offset } => self.make_closure(Op::extend_arg(offset, arg))?,
             }
             arg = 0;
         }
@@ -430,11 +430,10 @@ impl Vm {
             .map(|x| self.push_value(x.clone()))
     }
 
-    fn make_closure(&mut self) -> Result<()> {
+    fn make_closure(&mut self, code_offset: usize) -> Result<()> {
         self.ensure_storage_space(2)?;
 
-        let code_offset = self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)? as isize;
-        let code = self.current_activation.code.offset(code_offset);
+        let code = self.current_activation.code.offset(code_offset as isize);
 
         let closure = Closure {
             code,
@@ -623,9 +622,11 @@ mod tests {
 
     #[test]
     fn op_make_closure_pushes_closure() {
-        let (_, mut vm) = VmRunner::new()
-            .with_value_stack(vec![Value::Int(0)])
-            .run_code(CodeBuilder::new().op(Op::MakeClosure).op(Op::Halt));
+        let (_, mut vm) = VmRunner::new().with_value_stack(vec![]).run_code(
+            CodeBuilder::new()
+                .op(Op::MakeClosure { offset: 0 })
+                .op(Op::Halt),
+        );
 
         let closure = vm.value_stack.pop().unwrap();
         let closure = closure.as_closure().unwrap();
@@ -639,8 +640,12 @@ mod tests {
     fn op_make_closure_succeeds_even_when_storage_is_full() {
         let (_, mut vm) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::Int(0)])
-            .run_code(CodeBuilder::new().op(Op::MakeClosure).op(Op::Halt));
+            .with_value_stack(vec![])
+            .run_code(
+                CodeBuilder::new()
+                    .op(Op::MakeClosure { offset: 0 })
+                    .op(Op::Halt),
+            );
 
         let closure = vm.value_stack.pop().unwrap();
         let closure = closure.as_closure().unwrap();
@@ -707,8 +712,7 @@ mod tests {
                 .op(Op::Integer(11))
                 .op(Op::Integer(12))
                 // callee code offset
-                .op(Op::Integer(2))
-                .op(Op::MakeClosure)
+                .op(Op::MakeClosure { offset: 2 })
                 .op(Op::Call { n_args: 3 })
                 .op(Op::Halt)
                 // callee

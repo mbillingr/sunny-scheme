@@ -244,8 +244,7 @@ mod tests {
         assert_eq!(
             cs.code_slice(),
             &[
-                Op::Integer(1),
-                Op::MakeClosure,
+                Op::MakeClosure { offset: 1 },
                 Op::Jump { forward: 2 },
                 Op::Const(0),
                 Op::Return,
@@ -267,8 +266,7 @@ mod tests {
         assert_eq!(
             cs.code_slice(),
             &[
-                Op::Integer(1),
-                Op::MakeClosure,
+                Op::MakeClosure { offset: 1 },
                 Op::Jump { forward: 2 },
                 Op::Const(0),
                 Op::Return,
@@ -290,8 +288,7 @@ mod tests {
         assert_eq!(
             cs.code_slice(),
             &[
-                Op::Integer(1),
-                Op::MakeClosure,
+                Op::MakeClosure { offset: 1 },
                 Op::Jump { forward: 2 },
                 Op::Const(0),
                 Op::Return,
