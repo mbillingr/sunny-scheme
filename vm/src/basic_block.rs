@@ -3,6 +3,7 @@ use crate::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
+use sunny_sexpr_parser::Context;
 
 /// A chain of blocks with a single entry and exit point.
 /// Control flow may branch in a chain, but all branches
@@ -80,6 +81,7 @@ impl BlockChain {
 pub struct BasicBlock {
     code: RefCell<Vec<Op>>,
     constants: RefCell<Vec<Value>>,
+    source_map: RefCell<HashMap<usize, Context<()>>>,
     exit: RefCell<Exit>,
 }
 
@@ -88,6 +90,7 @@ impl BasicBlock {
         BasicBlock {
             code: RefCell::new(code),
             constants: RefCell::new(constants),
+            source_map: RefCell::new(HashMap::new()),
             exit: Default::default(),
         }
     }
@@ -99,6 +102,10 @@ impl BasicBlock {
             Op::Halt | Op::Return => false,
             _ => true,
         })
+    }
+
+    pub fn map_source(&mut self, op_idx: usize, source: Context<()>) {
+        self.source_map.borrow_mut().insert(op_idx, source);
     }
 
     pub fn append_op(&self, op: Op) {
@@ -157,7 +164,7 @@ impl BasicBlock {
             constants[idx] = val;
         }
 
-        CodeSegment::new(builder.code, constants)
+        CodeSegment::new(builder.code, constants).with_source_map(builder.source_map)
     }
 
     pub fn make_closure(
@@ -172,6 +179,7 @@ impl BasicBlock {
 struct CodeBuilder {
     code: Vec<Op>,
     constant_map: HashMap<Value, usize>,
+    source_map: HashMap<usize, Context<()>>,
     block_offsets: HashMap<*const BasicBlock, usize>,
 }
 
@@ -180,6 +188,7 @@ impl CodeBuilder {
         CodeBuilder {
             code: vec![],
             constant_map: HashMap::new(),
+            source_map: HashMap::new(),
             block_offsets: HashMap::new(),
         }
     }
@@ -187,7 +196,7 @@ impl CodeBuilder {
     fn build_code(&mut self, block: &BasicBlock) {
         self.block_offsets.insert(block, self.code.len());
 
-        for &op in &*block.code.borrow() {
+        for (op_idx, &op) in block.code.borrow().iter().enumerate() {
             match op {
                 Op::Const(c) => {
                     let mut const_idx = c as usize;
@@ -207,6 +216,10 @@ impl CodeBuilder {
                     self.code.extend(ops);
                 }
                 _ => self.code.push(op),
+            }
+
+            if let Some(source) = block.source_map.borrow().get(&op_idx) {
+                self.source_map.insert(self.code.len() - 1, source.clone());
             }
         }
 

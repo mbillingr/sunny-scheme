@@ -156,8 +156,9 @@ impl From<i64> for Sexpr<'_> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Context<T> {
+    None,
     Extern(T),
     Position(usize, T),
     Span(Range<usize>, T),
@@ -184,6 +185,7 @@ impl<T> Context<T> {
 
     pub fn get_value(&self) -> &T {
         match self {
+            Context::None => panic!("None-Context has no value"),
             Context::Extern(value) => value,
             Context::Position(_, value) | Context::Span(_, value) => value,
             Context::String(_, b) | Context::File(_, b) => b.get_value(),
@@ -192,6 +194,7 @@ impl<T> Context<T> {
 
     pub fn into_value(self) -> T {
         match self {
+            Context::None => panic!("None-Context has no value"),
             Context::Extern(value) => value,
             Context::Position(_, value) | Context::Span(_, value) => value,
             Context::String(_, b) | Context::File(_, b) => b.into_value(),
@@ -200,6 +203,7 @@ impl<T> Context<T> {
 
     pub fn convert<U: From<T>>(self) -> Context<U> {
         match self {
+            Context::None => Context::None,
             Context::Extern(value) => Context::Extern(value.into()),
             Context::Position(p, value) => Context::Position(p, value.into()),
             Context::Span(range, value) => Context::Span(range, value.into()),
@@ -210,6 +214,7 @@ impl<T> Context<T> {
 
     pub fn map<U>(&self, new_value: U) -> Context<U> {
         match self {
+            Context::None => Context::None,
             Context::Extern(_) => Context::Extern(new_value),
             Context::Position(p, _) => Context::Position(*p, new_value),
             Context::Span(range, _) => Context::Span(range.clone(), new_value),
@@ -220,6 +225,7 @@ impl<T> Context<T> {
 
     pub fn map_after<U>(&self, new_value: U) -> Context<U> {
         match self {
+            Context::None => Context::None,
             Context::Extern(_) => Context::Extern(new_value),
             Context::Position(p, _) => Context::Position(*p, new_value),
             Context::Span(range, _) => Context::Position(range.end, new_value),
@@ -234,6 +240,7 @@ impl<T> Context<T> {
 impl<T: std::fmt::Display> Context<T> {
     pub fn pretty_fmt(&self) -> String {
         match self {
+            Context::None => String::new(),
             Context::Extern(value) | Context::Position(_, value) | Context::Span(_, value) => {
                 format!("{}", value)
             }
@@ -246,6 +253,7 @@ impl<T: std::fmt::Display> Context<T> {
 
     fn pretty_fmt_in_source(&self, src: &str) -> String {
         match self {
+            Context::None => String::new(),
             Context::Extern(value) => format!("{}", value),
             Context::Position(pos, value) => {
                 let pos = *pos;
@@ -293,6 +301,35 @@ impl<T: std::fmt::Display> Context<T> {
             }
             Context::String(s, inner) => inner.pretty_fmt_in_source(s),
             Context::File(_, _) => self.pretty_fmt(),
+        }
+    }
+}
+
+impl<T> Context<T> {
+    pub fn pretty_fmt_inline(&self) -> String {
+        match self {
+            Context::None | Context::Extern(_) | Context::Position(_, _) | Context::Span(_, _) => {
+                String::new()
+            }
+            Context::String(s, inner) => inner.pretty_fmt_inline_in_source(s),
+            Context::File(_, inner) => inner.pretty_fmt_inline(),
+        }
+    }
+
+    pub fn pretty_fmt_inline_in_source(&self, src: &str) -> String {
+        match self {
+            Context::None | Context::Extern(_) => String::new(),
+            Context::Position(pos, _) => {
+                let pos = *pos;
+                let line_start = find_start_of_line(src, pos);
+                let line_end = find_end_of_line(src, pos);
+                format!("{}", &src[line_start..line_end])
+            }
+            Context::Span(range, _) => {
+                format!("{}", &src[range.clone()])
+            }
+            Context::String(s, inner) => inner.pretty_fmt_inline_in_source(s),
+            Context::File(_, inner) => inner.pretty_fmt_inline(),
         }
     }
 }

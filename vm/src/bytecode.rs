@@ -1,6 +1,7 @@
 use crate::mem::{Ref, Traceable, Tracer};
 use crate::Value;
 use std::collections::HashMap;
+use sunny_sexpr_parser::Context;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]
@@ -167,6 +168,7 @@ pub mod repr {
 pub struct CodeSegment {
     code: Box<[Op]>,
     constants: Box<[Value]>,
+    source_map: Option<HashMap<usize, Context<()>>>,
 }
 
 impl Traceable for CodeSegment {
@@ -180,7 +182,13 @@ impl CodeSegment {
         CodeSegment {
             code: code.into(),
             constants: constants.into(),
+            source_map: None,
         }
+    }
+
+    pub fn with_source_map(mut self, source_map: HashMap<usize, Context<()>>) -> Self {
+        self.source_map = Some(source_map);
+        self
     }
 
     pub fn get_constant(&self, index: usize) -> &Value {
@@ -228,6 +236,7 @@ impl CodeSegment {
     }
 
     pub fn pretty_fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        println!("{:?}", self.source_map);
         let mut arg = 0;
         for (i, &op) in self.code.iter().enumerate() {
             write!(f, "  {:>3}  {}", i, op)?;
@@ -240,6 +249,11 @@ impl CodeSegment {
                 }
                 _ => arg = 0,
             };
+
+            if let Some(src) = self.source_map.as_ref().and_then(|sm| sm.get(&i)) {
+                write!(f, "  {}", src.pretty_fmt_inline())?;
+            }
+
             writeln!(f)?;
         }
         Ok(())

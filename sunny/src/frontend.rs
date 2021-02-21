@@ -42,7 +42,7 @@ impl Frontend {
                     .unwrap_or_else(|| self.add_global(name.to_string(), backend));
                 Ok(backend.fetch(depth, idx))
             } else {
-                Ok(backend.constant(sexpr.get_value()))
+                Ok(backend.constant(sexpr.map(()), sexpr.get_value()))
             }
         } else {
             let first = sexpr.car().unwrap();
@@ -79,7 +79,7 @@ impl Frontend {
                         let arg = sexpr
                             .cadr()
                             .ok_or_else(|| error_after(first, MissingArgument))?;
-                        Ok(backend.constant(arg.get_value()))
+                        Ok(backend.constant(arg.map(()), arg.get_value()))
                     }
                     "if" => {
                         let arg1 = sexpr
@@ -264,7 +264,7 @@ mod tests {
 
         fn add_global(&mut self, _: usize) {}
 
-        fn constant(&mut self, c: &Sexpr) -> Self::Output {
+        fn constant(&mut self, _: Context<()>, c: &Sexpr) -> Self::Output {
             Ast::Const(c.to_string())
         }
 

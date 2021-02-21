@@ -107,6 +107,10 @@ impl Repl {
 
     fn eval(&mut self, src: &str) -> Result<Value, ReplError> {
         let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
+        unimplemented!(
+            "TODO: find elegant way to add source context (string/file) to all \
+                        subexpressions. Maybe directly in the parser?"
+        );
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
 
