@@ -1,10 +1,10 @@
 use std::str::FromStr;
 use crate::{Context, Sexpr};
 
-grammar;
+grammar<'a>(context: &'a Context<()>);
 
 pub Datum: Context<Sexpr<'input>> = {
-    <l:@L> <x:RawSexpr> <r:@R> => Context::span(l..r, x),
+    <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_detail(Context::span(l..r, x)),
 };
 
 pub RawSexpr: Sexpr<'input> = {
@@ -40,10 +40,10 @@ List: Sexpr<'input> = {
 };
 
 Sequence: Sexpr<'input> = {
-    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, Context::span(l..r, cdr)),
+    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_detail(Context::span(l..r, cdr))),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
 };
 
 Quotation: Sexpr<'input> = {
-    <l:@L> "'" <r:@R> <x:Datum> => Sexpr::list(vec![Context::span(l..r, Sexpr::symbol("quote")), x].into_iter())
+    <l:@L> "'" <r:@R> <x:Datum> => Sexpr::list(vec![context.clone().with_detail(Context::span(l..r, Sexpr::symbol("quote"))), x].into_iter())
 };

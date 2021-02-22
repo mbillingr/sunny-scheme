@@ -77,7 +77,8 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
 }
 
 pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
-    Ok(sexpr_grammar::DatumParser::new().parse(s)?)
+    let context = Context::<()>::None.in_string(s);
+    Ok(sexpr_grammar::DatumParser::new().parse(&context, s)?)
 }
 
 pub trait CxR {

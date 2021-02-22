@@ -183,6 +183,14 @@ impl<T> Context<T> {
         Self::File(Arc::new(path.into()), Box::new(self))
     }
 
+    pub fn with_detail<U>(self, detail: Context<U>) -> Context<U> {
+        match self {
+            Context::String(s, _) => Context::String(s, Box::new(detail)),
+            Context::File(f, _) => Context::File(f, Box::new(detail)),
+            _ => panic!("Invalid outer context"),
+        }
+    }
+
     pub fn get_value(&self) -> &T {
         match self {
             Context::None => panic!("None-Context has no value"),
