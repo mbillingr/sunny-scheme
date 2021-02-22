@@ -9,7 +9,7 @@ pub trait Backend {
 
     fn constant(&mut self, context: Context<()>, c: &Sexpr) -> Self::Output;
 
-    fn fetch(&mut self, depth: usize, idx: usize) -> Self::Output;
+    fn fetch(&mut self, context: Context<()>, depth: usize, idx: usize) -> Self::Output;
     fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output;
 
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output;
@@ -65,11 +65,13 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(block)
     }
 
-    fn fetch(&mut self, depth: usize, idx: usize) -> Self::Output {
+    fn fetch(&mut self, context: Context<()>, depth: usize, idx: usize) -> Self::Output {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Fetch, idx));
-        let block = BasicBlock::new(ops, vec![]);
+        let mut block = BasicBlock::new(ops, vec![]);
+        block.map_source(0, context.clone());
+        block.map_source(1, context);
         BlockChain::singleton(block)
     }
 
@@ -211,7 +213,7 @@ mod tests {
     fn build_bytecode_fetch() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let expr = bcb.fetch(0, 0);
+        let expr = bcb.fetch(Context::None, 0, 0);
 
         let cs = expr.build_segment();
 
@@ -303,7 +305,7 @@ mod tests {
     fn build_bytecode_invoke_pushes_args_in_reverse_order() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let func = bcb.fetch(0, 0);
+        let func = bcb.fetch(Context::None, 0, 0);
         let args = vec![
             bcb.constant(Context::None, &Sexpr::int(1)),
             bcb.constant(Context::None, &Sexpr::int(2)),

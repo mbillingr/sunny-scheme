@@ -40,7 +40,7 @@ impl Frontend {
                 let (depth, idx) = self
                     .lookup(name)
                     .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-                Ok(backend.fetch(depth, idx))
+                Ok(backend.fetch(sexpr.map(()), depth, idx))
             } else {
                 Ok(backend.constant(sexpr.map(()), sexpr.get_value()))
             }
@@ -268,7 +268,7 @@ mod tests {
             Ast::Const(c.to_string())
         }
 
-        fn fetch(&mut self, depth: usize, idx: usize) -> Self::Output {
+        fn fetch(&mut self, _: Context<()>, depth: usize, idx: usize) -> Self::Output {
             Ast::Ref(depth, idx)
         }
 
