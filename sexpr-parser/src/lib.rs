@@ -57,7 +57,7 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
             }
             lalrpop_util::ParseError::UnrecognizedEOF { location, expected } => {
                 SourceLocation::new(Error::UnexpectedEof { expected })
-                    .with_span(location..location + 1)
+                    .with_span(location..location)
             }
             lalrpop_util::ParseError::UnrecognizedToken {
                 token: (l, t, r),
