@@ -236,7 +236,6 @@ impl CodeSegment {
     }
 
     pub fn pretty_fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        println!("{:?}", self.source_map);
         let mut arg = 0;
         for (i, &op) in self.code.iter().enumerate() {
             write!(f, "  {:>3}  {}", i, op)?;

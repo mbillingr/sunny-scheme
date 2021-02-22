@@ -11,12 +11,24 @@ pub trait Backend {
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output;
 
     fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output;
-    fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output;
+    fn store(
+        &mut self,
+        context: SourceLocation<()>,
+        depth: usize,
+        idx: usize,
+        val: Self::Output,
+    ) -> Self::Output;
 
-    fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output;
+    fn cons(
+        &mut self,
+        context: SourceLocation<()>,
+        first: Self::Output,
+        second: Self::Output,
+    ) -> Self::Output;
 
     fn ifexpr(
         &mut self,
+        context: SourceLocation<()>,
         condition: Self::Output,
         consequent: Self::Output,
         alternative: Self::Output,
@@ -24,9 +36,14 @@ pub trait Backend {
 
     fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output;
 
-    fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output;
+    fn lambda(
+        &mut self,
+        context: SourceLocation<()>,
+        n_args: usize,
+        body: Self::Output,
+    ) -> Self::Output;
 
-    fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output;
+    fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -61,7 +78,7 @@ impl Backend for ByteCodeBackend<'_> {
         let allocs = self.storage.count_allocations(c);
         self.storage.ensure(allocs);
         let value = self.storage.sexpr_to_value(c).unwrap();
-        let mut block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
+        let block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
         block.map_source(0, context);
         BlockChain::singleton(block)
     }
@@ -70,54 +87,72 @@ impl Backend for ByteCodeBackend<'_> {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Fetch, idx));
-        let mut block = BasicBlock::new(ops, vec![]);
+        let block = BasicBlock::new(ops, vec![]);
         block.map_source(0, context.clone());
         block.map_source(1, context);
         BlockChain::singleton(block)
     }
 
-    fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output {
+    fn store(
+        &mut self,
+        context: SourceLocation<()>,
+        depth: usize,
+        idx: usize,
+        val: Self::Output,
+    ) -> Self::Output {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Store, idx));
         let block = BasicBlock::new(ops, vec![]);
+        block.map_source(0, context.clone());
+        block.map_source(1, context);
         val.chain(BlockChain::singleton(block))
     }
 
-    fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
-        second.append_op(Op::Cons);
+    fn cons(
+        &mut self,
+        context: SourceLocation<()>,
+        first: Self::Output,
+        second: Self::Output,
+    ) -> Self::Output {
+        second.append_op_with_context(Op::Cons, context);
         first.chain(second)
     }
 
     fn ifexpr(
         &mut self,
+        context: SourceLocation<()>,
         condition: Self::Output,
         consequent: Self::Output,
         alternative: Self::Output,
     ) -> Self::Output {
         let exit = BlockChain::empty();
-        condition.branch_bool(consequent, alternative, exit)
+        condition.branch_bool_with_context(consequent, alternative, exit, context)
     }
 
     fn sequence(&mut self, _first: Self::Output, _next: Self::Output) -> Self::Output {
         unimplemented!()
     }
 
-    fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output {
+    fn lambda(
+        &mut self,
+        context: SourceLocation<()>,
+        n_args: usize,
+        body: Self::Output,
+    ) -> Self::Output {
         let start = BlockChain::empty();
         let exit = BlockChain::empty();
-        body.return_from();
-        start.make_closure(body, exit)
+        body.return_from_with_context(context.clone());
+        start.make_closure(context, body, exit)
     }
 
-    fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output {
+    fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output {
         let mut blocks = BlockChain::empty();
-        let n_args = args.len();
+        let n_args = args.len() - 1;
         for a in args.into_iter().rev() {
             blocks.append(a)
         }
-        blocks.append(func);
-        blocks.append_ops(Op::extended(|n_args| Op::Call { n_args }, n_args));
+        blocks.append_ops_with_context(Op::extended(|n_args| Op::Call { n_args }, n_args), context);
         blocks
     }
 }
@@ -145,7 +180,7 @@ mod tests {
         let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
         let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
 
-        let c = bcb.cons(a, b);
+        let c = bcb.cons(SourceLocation::new(()), a, b);
 
         let cs = c.build_segment();
         assert_eq!(
@@ -162,8 +197,8 @@ mod tests {
         let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
         let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
         let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
-        let d = bcb.cons(b, a);
-        let e = bcb.cons(c, d);
+        let d = bcb.cons(SourceLocation::new(()), b, a);
+        let e = bcb.cons(SourceLocation::new(()), c, d);
 
         let cs = e.build_segment();
         assert_eq!(
@@ -191,7 +226,7 @@ mod tests {
         let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
         let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
 
-        let cs = bcb.ifexpr(a, b, c).build_segment();
+        let cs = bcb.ifexpr(SourceLocation::new(()), a, b, c).build_segment();
 
         assert_eq!(
             cs.code_slice(),
@@ -226,7 +261,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.store(0, 0, val);
+        let expr = bcb.store(SourceLocation::new(()), 0, 0, val);
 
         let cs = expr.build_segment();
 
@@ -241,7 +276,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.lambda(0, val);
+        let expr = bcb.lambda(SourceLocation::new(()), 0, val);
 
         let cs = expr.build_segment();
 
@@ -262,7 +297,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.lambda(0, val);
+        let expr = bcb.lambda(SourceLocation::new(()), 0, val);
         expr.return_from();
 
         let cs = expr.build_segment();
@@ -284,8 +319,8 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.lambda(0, val);
-        let invoke = bcb.invoke(expr, vec![]);
+        let expr = bcb.lambda(SourceLocation::new(()), 0, val);
+        let invoke = bcb.invoke(SourceLocation::new(()), vec![expr]);
 
         let cs = invoke.build_segment();
 
@@ -306,13 +341,13 @@ mod tests {
     fn build_bytecode_invoke_pushes_args_in_reverse_order() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let func = bcb.fetch(SourceLocation::new(()), 0, 0);
         let args = vec![
+            bcb.fetch(SourceLocation::new(()), 0, 0),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(1)),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(2)),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(3)),
         ];
-        let invoke = bcb.invoke(func, args);
+        let invoke = bcb.invoke(SourceLocation::new(()), args);
 
         let cs = invoke.build_segment();
 

@@ -35,8 +35,20 @@ impl BlockChain {
         self.last.append_op(op);
     }
 
+    pub fn append_op_with_context(&self, op: Op, context: SourceLocation<()>) {
+        self.last.append_op_with_context(op, context);
+    }
+
     pub fn append_ops(&self, ops: impl IntoIterator<Item = Op>) {
         self.last.append_ops(ops);
+    }
+
+    pub fn append_ops_with_context(
+        &self,
+        ops: impl IntoIterator<Item = Op>,
+        context: SourceLocation<()>,
+    ) {
+        self.last.append_ops_with_context(ops, context);
     }
 
     pub fn chain(mut self, other: Self) -> Self {
@@ -49,11 +61,21 @@ impl BlockChain {
         self.last = other.last;
     }
 
-    pub fn branch_bool(self, true_branch: Self, false_branch: Self, finally: Self) -> Self {
+    pub fn branch_bool_with_context(
+        self,
+        true_branch: Self,
+        false_branch: Self,
+        finally: Self,
+        context: SourceLocation<()>,
+    ) -> Self {
         true_branch.last.end_branch();
         false_branch.last.end_branch();
-        self.last
-            .branch_true(true_branch.first, false_branch.first, finally.first);
+        self.last.branch_true_with_context(
+            true_branch.first,
+            false_branch.first,
+            finally.first,
+            context,
+        );
         BlockChain {
             first: self.first,
             last: finally.last,
@@ -68,8 +90,14 @@ impl BlockChain {
         self.last.return_from()
     }
 
-    pub fn make_closure(self, body: Self, continuation: Self) -> Self {
-        self.last.make_closure(body.first, continuation.first);
+    pub fn return_from_with_context(&self, context: SourceLocation<()>) {
+        *self.last.exit_context.borrow_mut() = Some(context);
+        self.last.return_from()
+    }
+
+    pub fn make_closure(self, context: SourceLocation<()>, body: Self, continuation: Self) -> Self {
+        self.last
+            .make_closure_with_context(body.first, continuation.first, context);
         BlockChain {
             first: self.first,
             last: continuation.last,
@@ -83,6 +111,7 @@ pub struct BasicBlock {
     constants: RefCell<Vec<Value>>,
     source_map: RefCell<HashMap<usize, SourceLocation<()>>>,
     exit: RefCell<Exit>,
+    exit_context: RefCell<Option<SourceLocation<()>>>,
 }
 
 impl BasicBlock {
@@ -92,6 +121,7 @@ impl BasicBlock {
             constants: RefCell::new(constants),
             source_map: RefCell::new(HashMap::new()),
             exit: Default::default(),
+            exit_context: RefCell::new(None),
         }
     }
 
@@ -104,7 +134,7 @@ impl BasicBlock {
         })
     }
 
-    pub fn map_source(&mut self, op_idx: usize, source: SourceLocation<()>) {
+    pub fn map_source(&self, op_idx: usize, source: SourceLocation<()>) {
         self.source_map.borrow_mut().insert(op_idx, source);
     }
 
@@ -112,9 +142,28 @@ impl BasicBlock {
         self.code.borrow_mut().push(op);
     }
 
+    pub fn append_op_with_context(&self, op: Op, context: SourceLocation<()>) {
+        let mut code = self.code.borrow_mut();
+        self.source_map.borrow_mut().insert(code.len(), context);
+        code.push(op);
+    }
+
     pub fn append_ops(&self, ops: impl IntoIterator<Item = Op>) {
         let mut code = self.code.borrow_mut();
         for op in ops {
+            code.push(op)
+        }
+    }
+
+    pub fn append_ops_with_context(
+        &self,
+        ops: impl IntoIterator<Item = Op>,
+        context: SourceLocation<()>,
+    ) {
+        let mut code = self.code.borrow_mut();
+        let mut source_map = self.source_map.borrow_mut();
+        for op in ops {
+            source_map.insert(code.len(), context.clone());
             code.push(op)
         }
     }
@@ -139,6 +188,22 @@ impl BasicBlock {
     ) {
         *self.exit.borrow_mut() =
             Exit::BranchTrue(true_target.into(), false_target.into(), final_target.into())
+    }
+
+    pub fn branch_true_with_context(
+        &self,
+        true_target: impl Into<Rc<BasicBlock>>,
+        false_target: impl Into<Rc<BasicBlock>>,
+        final_target: impl Into<Rc<BasicBlock>>,
+        context: SourceLocation<()>,
+    ) {
+        *self.exit_context.borrow_mut() = Some(context.clone());
+
+        let false_target = false_target.into();
+        *false_target.exit_context.borrow_mut() = Some(context);
+
+        *self.exit.borrow_mut() =
+            Exit::BranchTrue(true_target.into(), false_target, final_target.into())
     }
 
     pub fn branch_void(
@@ -167,12 +232,14 @@ impl BasicBlock {
         CodeSegment::new(builder.code, constants).with_source_map(builder.source_map)
     }
 
-    pub fn make_closure(
+    pub fn make_closure_with_context(
         &self,
         body_target: impl Into<Rc<BasicBlock>>,
         jump_target: impl Into<Rc<BasicBlock>>,
+        context: SourceLocation<()>,
     ) {
-        *self.exit.borrow_mut() = Exit::ClosureDefinition(body_target.into(), jump_target.into())
+        *self.exit.borrow_mut() = Exit::ClosureDefinition(body_target.into(), jump_target.into());
+        *self.exit_context.borrow_mut() = Some(context);
     }
 }
 
@@ -221,6 +288,10 @@ impl CodeBuilder {
             if let Some(source) = block.source_map.borrow().get(&op_idx) {
                 self.source_map.insert(self.code.len() - 1, source.clone());
             }
+        }
+
+        if let Some(source) = &*block.exit_context.borrow() {
+            self.source_map.insert(self.code.len(), source.clone());
         }
 
         match &*block.exit.borrow() {

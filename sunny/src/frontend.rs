@@ -63,7 +63,7 @@ impl Frontend {
                             .lookup(name)
                             .unwrap_or_else(|| self.add_global(name.to_string(), backend));
                         let value = self.meaning(argval, backend)?;
-                        Ok(backend.store(depth, idx, value))
+                        Ok(backend.store(sexpr.map(()), depth, idx, value))
                     }
                     "cons" => {
                         let arg1 = sexpr
@@ -74,7 +74,7 @@ impl Frontend {
                             .ok_or_else(|| error_after(arg1, MissingArgument))?;
                         let car = self.meaning(arg1, backend)?;
                         let cdr = self.meaning(arg2, backend)?;
-                        Ok(backend.cons(car, cdr))
+                        Ok(backend.cons(sexpr.map(()), car, cdr))
                     }
                     "quote" => {
                         let arg = sexpr
@@ -95,7 +95,7 @@ impl Frontend {
                         let condition = self.meaning(arg1, backend)?;
                         let consequent = self.meaning(arg2, backend)?;
                         let alternative = self.meaning(arg3, backend)?;
-                        Ok(backend.ifexpr(condition, consequent, alternative))
+                        Ok(backend.ifexpr(sexpr.map(()), condition, consequent, alternative))
                     }
                     "lambda" => {
                         let arg1 = sexpr
@@ -107,28 +107,26 @@ impl Frontend {
                         let body = self.meaning_sequence(body, backend)?;
                         self.pop_scope();
 
-                        Ok(backend.lambda(arg1.len(), body))
+                        Ok(backend.lambda(sexpr.map(()), arg1.len(), body))
                     }
-                    _ => self.meaning_application(first, sexpr.cdr().unwrap(), backend),
+                    _ => self.meaning_application(sexpr, backend),
                 }
             } else {
-                self.meaning_application(first, sexpr.cdr().unwrap(), backend)
+                self.meaning_application(sexpr, backend)
             }
         }
     }
 
     pub fn meaning_application<B: Backend>(
         &mut self,
-        func: &SourceLocation<Sexpr>,
-        arg_exprs: &SourceLocation<Sexpr>,
+        sexpr: &SourceLocation<Sexpr>,
         backend: &mut B,
     ) -> Result<B::Output> {
-        let func = self.meaning(func, backend)?;
         let mut args = vec![];
-        for a in arg_exprs.iter() {
+        for a in sexpr.iter() {
             args.push(self.meaning(a, backend)?);
         }
-        Ok(backend.invoke(func, args))
+        Ok(backend.invoke(sexpr.map(()), args))
     }
 
     pub fn meaning_sequence<B: Backend>(
@@ -255,7 +253,7 @@ mod tests {
         Cons(Box<Ast>, Box<Ast>),
         If(Box<Ast>, Box<Ast>, Box<Ast>),
         Lambda(usize, Box<Ast>),
-        Invoke(Box<Ast>, Vec<Ast>),
+        Invoke(Vec<Ast>),
     }
 
     struct AstBuilder;
@@ -273,16 +271,28 @@ mod tests {
             Ast::Ref(depth, idx)
         }
 
-        fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output {
+        fn store(
+            &mut self,
+            _: SourceLocation<()>,
+            depth: usize,
+            idx: usize,
+            val: Self::Output,
+        ) -> Self::Output {
             Ast::Set(depth, idx, Box::new(val))
         }
 
-        fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output {
+        fn cons(
+            &mut self,
+            _: SourceLocation<()>,
+            first: Self::Output,
+            second: Self::Output,
+        ) -> Self::Output {
             Ast::Cons(Box::new(first), Box::new(second))
         }
 
         fn ifexpr(
             &mut self,
+            _: SourceLocation<()>,
             condition: Self::Output,
             consequent: Self::Output,
             alternative: Self::Output,
@@ -298,12 +308,17 @@ mod tests {
             unimplemented!()
         }
 
-        fn lambda(&mut self, n_args: usize, body: Self::Output) -> Self::Output {
+        fn lambda(
+            &mut self,
+            _: SourceLocation<()>,
+            n_args: usize,
+            body: Self::Output,
+        ) -> Self::Output {
             Ast::Lambda(n_args, Box::new(body))
         }
 
-        fn invoke(&mut self, func: Self::Output, args: Vec<Self::Output>) -> Self::Output {
-            Ast::Invoke(Box::new(func), args)
+        fn invoke(&mut self, _: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output {
+            Ast::Invoke(args)
         }
     }
 
@@ -315,7 +330,7 @@ mod tests {
         (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
         (if $a:tt $b:tt $c:tt) => {Ast::If(Box::new(ast![$a]), Box::new(ast![$b]), Box::new(ast![$c]))};
         (lambda $p:tt $b:tt) => {Ast::Lambda($p, Box::new(ast![$b]))};
-        (invoke $f:tt $($a:tt)*) => {Ast::Invoke(Box::new(ast![$f]), vec![$(ast![$a]),*])};
+        (invoke $($a:tt)*) => {Ast::Invoke(vec![$(ast![$a]),*])};
     }
 
     macro_rules! sexpr {
