@@ -1,6 +1,7 @@
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
-use sunny_sexpr_parser::{parse_str, CxR, Error as ParseError, Sexpr, SourceLocation};
+use sunny_sexpr_parser::SourceLocation;
+use sunny_sexpr_parser::{parse_str, CxR, Error as ParseError, Sexpr};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 

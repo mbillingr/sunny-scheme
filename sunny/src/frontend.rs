@@ -1,6 +1,7 @@
 use crate::backend::Backend;
 use crate::frontend::Error::*;
-use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
+use sunny_sexpr_parser::SourceLocation;
+use sunny_sexpr_parser::{CxR, Sexpr};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 

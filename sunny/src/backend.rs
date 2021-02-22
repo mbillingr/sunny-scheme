@@ -1,4 +1,5 @@
-use sunny_sexpr_parser::{Sexpr, SourceLocation};
+use sunny_sexpr_parser::Sexpr;
+use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::bytecode::Op;
 use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 

@@ -1,5 +1,6 @@
 use std::str::FromStr;
-use crate::{SourceLocation, Sexpr};
+use crate::{ Sexpr};
+use crate::source_location::SourceLocation;
 
 grammar<'a>(context: &'a SourceLocation<()>);
 

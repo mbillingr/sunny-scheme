@@ -4,9 +4,11 @@ extern crate lalrpop_util;
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
 mod sexpr;
+mod source_location;
 pub mod str_utils;
 
-pub use sexpr::{Sexpr, SourceLocation};
+pub use sexpr::Sexpr;
+pub use source_location::{SourceKind, SourceLocation};
 
 type Int = i64;
 
@@ -56,8 +58,7 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
                 SourceLocation::new(Error::InvalidToken).with_span(location..location + 1)
             }
             lalrpop_util::ParseError::UnrecognizedEOF { location, expected } => {
-                SourceLocation::new(Error::UnexpectedEof { expected })
-                    .with_span(location..location)
+                SourceLocation::new(Error::UnexpectedEof { expected }).with_span(location..location)
             }
             lalrpop_util::ParseError::UnrecognizedToken {
                 token: (l, t, r),
