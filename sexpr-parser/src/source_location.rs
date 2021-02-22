@@ -159,7 +159,12 @@ impl<T> SourceLocation<T> {
                     let line_end = find_end_of_line(src, pos);
                     format!("{}", &src[line_start..line_end])
                 } else {
-                    format!("{}", &src[self.span.clone()])
+                    let line_end = find_end_of_line(src, self.span.start);
+                    if line_end < self.span.end {
+                        format!("{} ...", &src[self.span.start..line_end])
+                    } else {
+                        format!("{}", &src[self.span.clone()])
+                    }
                 }
             }
         }
@@ -235,5 +240,13 @@ mod tests {
             .in_string("ab\ncde\nefg")
             .with_span(3..3);
         assert_eq!(loc.pretty_fmt_inline(), "cde");
+    }
+
+    #[test]
+    fn pretty_fmt_inline_prints_first_line_if_spanned_multiple() {
+        let loc = SourceLocation::new(())
+            .in_string("ab\ncde\nefg")
+            .with_span(3..8);
+        assert_eq!(loc.pretty_fmt_inline(), "cde ...");
     }
 }
