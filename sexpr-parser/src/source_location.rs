@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use crate::str_utils::{find_end_of_line, find_start_of_line, line_number};
+use crate::{CxR, Sexpr};
+use std::ops::{Deref, Range};
 use std::path::PathBuf;
-use std::ops::{Range, Deref};
-use crate::str_utils::{find_start_of_line, find_end_of_line, line_number};
-use crate::{Sexpr, CxR};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SourceKind {
@@ -153,7 +153,7 @@ impl<T> SourceLocation<T> {
             SourceKind::None => String::new(),
             SourceKind::Filename(_) => String::new(),
             SourceKind::String(src) => {
-                if self.span.len() <= 1 {
+                if self.span.len() == 0 {
                     let pos = self.span.start;
                     let line_start = find_start_of_line(src, pos);
                     let line_end = find_end_of_line(src, pos);
@@ -216,5 +216,24 @@ impl PartialEq<Sexpr<'_>> for SourceLocation<Sexpr<'_>> {
 impl<T: std::fmt::Display> std::fmt::Display for SourceLocation<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         self.get_value().fmt(f)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pretty_fmt_inline_prints_span_of_string_exactly() {
+        let loc = SourceLocation::new(()).in_string("abcdefg").with_span(2..5);
+        assert_eq!(loc.pretty_fmt_inline(), "cde");
+    }
+
+    #[test]
+    fn pretty_fmt_inline_prints_whole_line_if_span_is_empty() {
+        let loc = SourceLocation::new(())
+            .in_string("ab\ncde\nefg")
+            .with_span(3..3);
+        assert_eq!(loc.pretty_fmt_inline(), "cde");
     }
 }
