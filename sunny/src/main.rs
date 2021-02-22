@@ -9,7 +9,7 @@ use simple_logger::SimpleLogger;
 use std::fs::File;
 use std::io::Read;
 use structopt::StructOpt;
-use sunny_sexpr_parser::{parse_str, Context, Error as ParseError};
+use sunny_sexpr_parser::{parse_str, Error as ParseError, SourceLocation};
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{Error as VmError, ErrorKind as VmErrorKind, Value, ValueStorage, Vm};
@@ -130,20 +130,20 @@ impl Repl {
 
 #[derive(Debug)]
 enum ReplError {
-    ParseError(Context<ParseError>),
-    FrontendError(Context<FrontendError>),
+    ParseError(SourceLocation<ParseError>),
+    FrontendError(SourceLocation<FrontendError>),
     VmError(VmError),
     VmErrorKind(VmErrorKind),
 }
 
-impl From<Context<ParseError>> for ReplError {
-    fn from(cpe: Context<ParseError>) -> Self {
+impl From<SourceLocation<ParseError>> for ReplError {
+    fn from(cpe: SourceLocation<ParseError>) -> Self {
         Self::ParseError(cpe)
     }
 }
 
-impl From<Context<FrontendError>> for ReplError {
-    fn from(fe: Context<FrontendError>) -> Self {
+impl From<SourceLocation<FrontendError>> for ReplError {
+    fn from(fe: SourceLocation<FrontendError>) -> Self {
         Self::FrontendError(fe)
     }
 }

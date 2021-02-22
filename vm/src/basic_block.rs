@@ -3,7 +3,7 @@ use crate::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use sunny_sexpr_parser::Context;
+use sunny_sexpr_parser::SourceLocation;
 
 /// A chain of blocks with a single entry and exit point.
 /// Control flow may branch in a chain, but all branches
@@ -81,7 +81,7 @@ impl BlockChain {
 pub struct BasicBlock {
     code: RefCell<Vec<Op>>,
     constants: RefCell<Vec<Value>>,
-    source_map: RefCell<HashMap<usize, Context<()>>>,
+    source_map: RefCell<HashMap<usize, SourceLocation<()>>>,
     exit: RefCell<Exit>,
 }
 
@@ -104,7 +104,7 @@ impl BasicBlock {
         })
     }
 
-    pub fn map_source(&mut self, op_idx: usize, source: Context<()>) {
+    pub fn map_source(&mut self, op_idx: usize, source: SourceLocation<()>) {
         self.source_map.borrow_mut().insert(op_idx, source);
     }
 
@@ -179,7 +179,7 @@ impl BasicBlock {
 struct CodeBuilder {
     code: Vec<Op>,
     constant_map: HashMap<Value, usize>,
-    source_map: HashMap<usize, Context<()>>,
+    source_map: HashMap<usize, SourceLocation<()>>,
     block_offsets: HashMap<*const BasicBlock, usize>,
 }
 

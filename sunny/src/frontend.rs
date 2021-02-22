@@ -1,8 +1,8 @@
 use crate::backend::Backend;
 use crate::frontend::Error::*;
-use sunny_sexpr_parser::{Context, CxR, Sexpr};
+use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
 
-pub type Result<T> = std::result::Result<T, Context<Error>>;
+pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -32,7 +32,7 @@ impl Frontend {
 
     pub fn meaning<B: Backend>(
         &mut self,
-        sexpr: &Context<Sexpr>,
+        sexpr: &SourceLocation<Sexpr>,
         backend: &mut B,
     ) -> Result<B::Output> {
         if is_atom(sexpr) {
@@ -118,8 +118,8 @@ impl Frontend {
 
     pub fn meaning_application<B: Backend>(
         &mut self,
-        func: &Context<Sexpr>,
-        arg_exprs: &Context<Sexpr>,
+        func: &SourceLocation<Sexpr>,
+        arg_exprs: &SourceLocation<Sexpr>,
         backend: &mut B,
     ) -> Result<B::Output> {
         let func = self.meaning(func, backend)?;
@@ -132,7 +132,7 @@ impl Frontend {
 
     pub fn meaning_sequence<B: Backend>(
         &mut self,
-        body: &Context<Sexpr>,
+        body: &SourceLocation<Sexpr>,
         backend: &mut B,
     ) -> Result<B::Output> {
         let first_expr = body.car().ok_or_else(|| error_at(body, ExpectedSymbol))?;
@@ -157,7 +157,7 @@ impl Frontend {
         (depth, idx)
     }
 
-    fn push_new_scope(&mut self, vars: &Context<Sexpr>) -> Result<()> {
+    fn push_new_scope(&mut self, vars: &SourceLocation<Sexpr>) -> Result<()> {
         let env = std::mem::replace(&mut self.env, Env::new());
         self.env = env.extend(vars)?;
         Ok(())
@@ -169,15 +169,15 @@ impl Frontend {
     }
 }
 
-fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
     sexpr.map(error.into())
 }
 
-fn error_after<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
     sexpr.map_after(error.into())
 }
 
-fn is_atom(sexpr: &Context<Sexpr>) -> bool {
+fn is_atom(sexpr: &SourceLocation<Sexpr>) -> bool {
     !sexpr.get_value().is_pair()
 }
 
@@ -194,7 +194,7 @@ impl Env {
         }
     }
 
-    fn from_sexpr(vars: &Context<Sexpr>) -> Result<Self> {
+    fn from_sexpr(vars: &SourceLocation<Sexpr>) -> Result<Self> {
         let mut variables = vec![];
 
         for v in vars.iter() {
@@ -211,7 +211,7 @@ impl Env {
         })
     }
 
-    fn extend(self, vars: &Context<Sexpr>) -> Result<Self> {
+    fn extend(self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
         let mut env = Env::from_sexpr(vars)?;
         env.parent = Some(Box::new(self));
         Ok(env)
@@ -264,11 +264,11 @@ mod tests {
 
         fn add_global(&mut self, _: usize) {}
 
-        fn constant(&mut self, _: Context<()>, c: &Sexpr) -> Self::Output {
+        fn constant(&mut self, _: SourceLocation<()>, c: &Sexpr) -> Self::Output {
             Ast::Const(c.to_string())
         }
 
-        fn fetch(&mut self, _: Context<()>, depth: usize, idx: usize) -> Self::Output {
+        fn fetch(&mut self, _: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output {
             Ast::Ref(depth, idx)
         }
 

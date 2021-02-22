@@ -1,8 +1,8 @@
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
-use sunny_sexpr_parser::{parse_str, Context, CxR, Error as ParseError, Sexpr};
+use sunny_sexpr_parser::{parse_str, CxR, Error as ParseError, Sexpr, SourceLocation};
 
-pub type Result<T> = std::result::Result<T, Context<Error>>;
+pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
 #[derive(Debug)]
 pub enum Error {
@@ -70,7 +70,7 @@ pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
 
 fn build_constant_section(
     mut cb: CodeBuilder,
-    constants_section: &Context<Sexpr>,
+    constants_section: &SourceLocation<Sexpr>,
     storage: &mut ValueStorage,
 ) -> Result<CodeBuilder> {
     for value in constants_section.iter() {
@@ -82,7 +82,7 @@ fn build_constant_section(
     Ok(cb)
 }
 
-fn build_code_section(mut cb: CodeBuilder, code: &Context<Sexpr>) -> Result<CodeBuilder> {
+fn build_code_section(mut cb: CodeBuilder, code: &SourceLocation<Sexpr>) -> Result<CodeBuilder> {
     let mut code_parts = code.iter();
     while let Some(statement) = code_parts.next() {
         let stmt = statement
@@ -180,8 +180,8 @@ fn label_name(stmt: &str) -> Option<&str> {
 }
 
 fn read_index<'a, 'b: 'a, T>(
-    sexpr_iter: &mut impl Iterator<Item = &'a Context<Sexpr<'b>>>,
-    previous: &Context<T>,
+    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr<'b>>>,
+    previous: &SourceLocation<T>,
 ) -> Result<usize> {
     let i = sexpr_iter
         .next()
@@ -191,8 +191,8 @@ fn read_index<'a, 'b: 'a, T>(
 }
 
 fn read_u8<'a, 'b: 'a, T>(
-    sexpr_iter: &mut impl Iterator<Item = &'a Context<Sexpr<'b>>>,
-    previous: &Context<T>,
+    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr<'b>>>,
+    previous: &SourceLocation<T>,
 ) -> Result<u8> {
     let i = sexpr_iter
         .next()
@@ -208,8 +208,8 @@ fn read_u8<'a, 'b: 'a, T>(
 }
 
 fn read_symbol<'a, 'b: 'a, T>(
-    sexpr_iter: &mut impl Iterator<Item = &'a Context<Sexpr<'b>>>,
-    previous: &Context<T>,
+    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr<'b>>>,
+    previous: &SourceLocation<T>,
 ) -> Result<&'a str> {
     let i = sexpr_iter
         .next()
@@ -218,11 +218,11 @@ fn read_symbol<'a, 'b: 'a, T>(
         .ok_or_else(|| error_at(i, Error::ExpectedSymbol))
 }
 
-fn error_at<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
     sexpr.map(error.into())
 }
 
-fn error_after<T>(sexpr: &Context<T>, error: impl Into<Error>) -> Context<Error> {
+fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
     sexpr.map_after(error.into())
 }
 

@@ -6,11 +6,11 @@ lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 mod sexpr;
 pub mod str_utils;
 
-pub use sexpr::{Context, Sexpr};
+pub use sexpr::{Sexpr, SourceLocation};
 
 type Int = i64;
 
-pub type Result<T> = std::result::Result<T, Context<Error>>;
+pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -46,38 +46,37 @@ impl std::fmt::Display for Error {
 }
 
 impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>>
-    for Context<Error>
+    for SourceLocation<Error>
 {
     fn from(
         pe: lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>,
     ) -> Self {
         match pe {
             lalrpop_util::ParseError::InvalidToken { location } => {
-                Context::position(location, Error::InvalidToken)
+                SourceLocation::new(Error::InvalidToken).with_span(location..location + 1)
             }
             lalrpop_util::ParseError::UnrecognizedEOF { location, expected } => {
-                Context::position(location, Error::UnexpectedEof { expected })
+                SourceLocation::new(Error::UnexpectedEof { expected })
+                    .with_span(location..location + 1)
             }
             lalrpop_util::ParseError::UnrecognizedToken {
                 token: (l, t, r),
                 expected,
-            } => Context::span(
-                l..r,
-                Error::UnrecognizedToken {
-                    token: t.to_string(),
-                    expected,
-                },
-            ),
+            } => SourceLocation::new(Error::UnrecognizedToken {
+                token: t.to_string(),
+                expected,
+            })
+            .with_span(l..r),
             lalrpop_util::ParseError::ExtraToken { token: (l, _, r) } => {
-                Context::span(l..r, Error::ExtraToken)
+                SourceLocation::new(Error::ExtraToken).with_span(l..r)
             }
             lalrpop_util::ParseError::User { .. } => unimplemented!(),
         }
     }
 }
 
-pub fn parse_str(s: &str) -> Result<Context<Sexpr>> {
-    let context = Context::<()>::None.in_string(s);
+pub fn parse_str(s: &str) -> Result<SourceLocation<Sexpr>> {
+    let context = SourceLocation::new(()).in_string(s);
     Ok(sexpr_grammar::DatumParser::new().parse(&context, s)?)
 }
 

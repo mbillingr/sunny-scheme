@@ -1,7 +1,7 @@
 use crate::mem::{Ref, Traceable, Tracer};
 use crate::Value;
 use std::collections::HashMap;
-use sunny_sexpr_parser::Context;
+use sunny_sexpr_parser::SourceLocation;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]
@@ -168,7 +168,7 @@ pub mod repr {
 pub struct CodeSegment {
     code: Box<[Op]>,
     constants: Box<[Value]>,
-    source_map: Option<HashMap<usize, Context<()>>>,
+    source_map: Option<HashMap<usize, SourceLocation<()>>>,
 }
 
 impl Traceable for CodeSegment {
@@ -186,7 +186,7 @@ impl CodeSegment {
         }
     }
 
-    pub fn with_source_map(mut self, source_map: HashMap<usize, Context<()>>) -> Self {
+    pub fn with_source_map(mut self, source_map: HashMap<usize, SourceLocation<()>>) -> Self {
         self.source_map = Some(source_map);
         self
     }

@@ -1,4 +1,4 @@
-use sunny_sexpr_parser::{Context, Sexpr};
+use sunny_sexpr_parser::{Sexpr, SourceLocation};
 use sunny_vm::bytecode::Op;
 use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 
@@ -7,9 +7,9 @@ pub trait Backend {
 
     fn add_global(&mut self, idx: usize);
 
-    fn constant(&mut self, context: Context<()>, c: &Sexpr) -> Self::Output;
+    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output;
 
-    fn fetch(&mut self, context: Context<()>, depth: usize, idx: usize) -> Self::Output;
+    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output;
     fn store(&mut self, depth: usize, idx: usize, val: Self::Output) -> Self::Output;
 
     fn cons(&mut self, first: Self::Output, second: Self::Output) -> Self::Output;
@@ -56,7 +56,7 @@ impl Backend for ByteCodeBackend<'_> {
         self.prelude.append(BlockChain::singleton(block));
     }
 
-    fn constant(&mut self, context: Context<()>, c: &Sexpr) -> Self::Output {
+    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output {
         let allocs = self.storage.count_allocations(c);
         self.storage.ensure(allocs);
         let value = self.storage.sexpr_to_value(c).unwrap();
@@ -65,7 +65,7 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(block)
     }
 
-    fn fetch(&mut self, context: Context<()>, depth: usize, idx: usize) -> Self::Output {
+    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Fetch, idx));
@@ -130,7 +130,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
 
-        let code = bcb.constant(Context::None, &Sexpr::nil());
+        let code = bcb.constant(SourceLocation::new(()), &Sexpr::nil());
 
         let cs = code.build_segment();
         assert_eq!(cs.code_slice(), &[Op::Const(0), Op::Halt]);
@@ -141,8 +141,8 @@ mod tests {
     fn build_bytecode_cons() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let a = bcb.constant(Context::None, &Sexpr::int(1));
-        let b = bcb.constant(Context::None, &Sexpr::int(2));
+        let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
+        let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
 
         let c = bcb.cons(a, b);
 
@@ -158,9 +158,9 @@ mod tests {
     fn build_bytecode_multiple_cons() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let a = bcb.constant(Context::None, &Sexpr::int(1));
-        let b = bcb.constant(Context::None, &Sexpr::int(2));
-        let c = bcb.constant(Context::None, &Sexpr::int(3));
+        let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
+        let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
+        let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
         let d = bcb.cons(b, a);
         let e = bcb.cons(c, d);
 
@@ -186,9 +186,9 @@ mod tests {
     fn build_bytecode_if() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let a = bcb.constant(Context::None, &Sexpr::int(1));
-        let b = bcb.constant(Context::None, &Sexpr::int(2));
-        let c = bcb.constant(Context::None, &Sexpr::int(3));
+        let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
+        let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
+        let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
 
         let cs = bcb.ifexpr(a, b, c).build_segment();
 
@@ -213,7 +213,7 @@ mod tests {
     fn build_bytecode_fetch() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let expr = bcb.fetch(Context::None, 0, 0);
+        let expr = bcb.fetch(SourceLocation::new(()), 0, 0);
 
         let cs = expr.build_segment();
 
@@ -224,7 +224,7 @@ mod tests {
     fn build_bytecode_store() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let val = bcb.constant(Context::None, &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.store(0, 0, val);
 
         let cs = expr.build_segment();
@@ -239,7 +239,7 @@ mod tests {
     fn build_bytecode_trivial_lambda() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let val = bcb.constant(Context::None, &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.lambda(0, val);
 
         let cs = expr.build_segment();
@@ -260,7 +260,7 @@ mod tests {
     fn build_bytecode_can_return_from_lambda_definition() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let val = bcb.constant(Context::None, &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.lambda(0, val);
         expr.return_from();
 
@@ -282,7 +282,7 @@ mod tests {
     fn build_bytecode_invoke_lambda() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let val = bcb.constant(Context::None, &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.lambda(0, val);
         let invoke = bcb.invoke(expr, vec![]);
 
@@ -305,11 +305,11 @@ mod tests {
     fn build_bytecode_invoke_pushes_args_in_reverse_order() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let func = bcb.fetch(Context::None, 0, 0);
+        let func = bcb.fetch(SourceLocation::new(()), 0, 0);
         let args = vec![
-            bcb.constant(Context::None, &Sexpr::int(1)),
-            bcb.constant(Context::None, &Sexpr::int(2)),
-            bcb.constant(Context::None, &Sexpr::int(3)),
+            bcb.constant(SourceLocation::new(()), &Sexpr::int(1)),
+            bcb.constant(SourceLocation::new(()), &Sexpr::int(2)),
+            bcb.constant(SourceLocation::new(()), &Sexpr::int(3)),
         ];
         let invoke = bcb.invoke(func, args);
 
