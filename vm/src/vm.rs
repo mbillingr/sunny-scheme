@@ -169,6 +169,7 @@ impl Vm {
                     self.set_local(depth as usize, Op::extend_arg(a, arg), value)?
                 }
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
+                Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(Op::extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg))?,
@@ -340,6 +341,18 @@ impl Vm {
         let args = self.pop_values(n_args)?;
         let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
         self.current_activation = self.storage.insert(act).unwrap();
+        Ok(())
+    }
+
+    fn prepare_args(&mut self, n_args: usize) -> Result<()> {
+        if self.current_activation.locals.len() < n_args {
+            return Err(ErrorKind::NotEnoughArgs);
+        }
+
+        if self.current_activation.locals.len() > n_args {
+            return Err(ErrorKind::TooManyArgs);
+        }
+
         Ok(())
     }
 

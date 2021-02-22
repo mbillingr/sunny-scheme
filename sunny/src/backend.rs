@@ -140,10 +140,14 @@ impl Backend for ByteCodeBackend<'_> {
         n_args: usize,
         body: Self::Output,
     ) -> Self::Output {
-        let start = BlockChain::empty();
-        let exit = BlockChain::empty();
         body.return_from_with_context(context.clone());
-        start.make_closure(context, body, exit)
+        let mut preamble = BlockChain::empty();
+        preamble.append_ops(Op::extended(Op::PrepareArgs, n_args));
+        preamble.append(body);
+
+        let prologue = BlockChain::empty();
+        let epilogue = BlockChain::empty();
+        prologue.make_closure(context, preamble, epilogue)
     }
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output {
