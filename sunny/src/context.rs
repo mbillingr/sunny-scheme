@@ -41,7 +41,7 @@ impl Context {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     ParseError(SourceLocation<ParseError>),
     FrontendError(SourceLocation<frontend::Error>),

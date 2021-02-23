@@ -13,3 +13,6 @@ simple_logger = "1.11"
 sunny-sexpr-parser = {path = "../sexpr-parser"}
 sunny-vm = {path = "../vm"}
 structopt = "0.3"
+
+[dev-dependencies]
+hamcrest2 = "0.3"

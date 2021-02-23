@@ -12,8 +12,10 @@ use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{ValueStorage, Vm};
 
 mod backend;
-mod frontend;
 mod context;
+mod frontend;
+#[cfg(test)]
+mod language_tests;
 
 #[derive(StructOpt)]
 enum Cli {
