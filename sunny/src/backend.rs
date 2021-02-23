@@ -288,7 +288,8 @@ mod tests {
             cs.code_slice(),
             &[
                 Op::MakeClosure { offset: 1 },
-                Op::Jump { forward: 2 },
+                Op::Jump { forward: 3 },
+                Op::PrepareArgs(0),
                 Op::Const(0),
                 Op::Return,
                 Op::Halt
@@ -310,7 +311,8 @@ mod tests {
             cs.code_slice(),
             &[
                 Op::MakeClosure { offset: 1 },
-                Op::Jump { forward: 2 },
+                Op::Jump { forward: 3 },
+                Op::PrepareArgs(0),
                 Op::Const(0),
                 Op::Return,
                 Op::Return
@@ -332,7 +334,8 @@ mod tests {
             cs.code_slice(),
             &[
                 Op::MakeClosure { offset: 1 },
-                Op::Jump { forward: 2 },
+                Op::Jump { forward: 3 },
+                Op::PrepareArgs(0),
                 Op::Const(0),
                 Op::Return,
                 Op::Call { n_args: 0 },
