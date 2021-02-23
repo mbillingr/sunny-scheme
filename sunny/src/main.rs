@@ -11,9 +11,9 @@ use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{ValueStorage, Vm};
 
-mod backend;
-mod context;
-mod frontend;
+pub mod backend;
+pub mod context;
+pub mod frontend;
 #[cfg(test)]
 mod language_tests;
 

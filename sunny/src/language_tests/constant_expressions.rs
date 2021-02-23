@@ -38,6 +38,12 @@ fn large_positive_integers() {
 }
 
 #[test]
+fn booleans() {
+    assert_that!("#t", EvaluatesTo::the_boolean(true));
+    assert_that!("#f", EvaluatesTo::the_boolean(false));
+}
+
+#[test]
 fn quoted_symbols_evaluate_to_symbols() {
     assert_that!("'foo", EvaluatesTo::the_symbol("foo"));
 }
@@ -51,6 +57,10 @@ impl EvaluatesTo {
 
     pub fn the_integer(i: i64) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
         EvaluationMatcher::new(equal_to(Ok(Value::Int(i))))
+    }
+
+    pub fn the_boolean(b: bool) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
+        EvaluationMatcher::new(equal_to(Ok(Value::bool(b))))
     }
 
     pub fn the_symbol(name: &str) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
