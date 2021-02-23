@@ -39,6 +39,20 @@ impl Context {
         let result = self.vm.eval_repl(code)?;
         Ok(result)
     }
+
+    pub fn preserve(&mut self, value: &Value) {
+        self.vm.borrow_storage().preserve(value);
+    }
+
+    pub fn release(&mut self, value: &Value) {
+        self.vm.borrow_storage().release(value);
+    }
+
+    pub fn symbol(&mut self, name: &str) -> Value {
+        let storage = self.vm.borrow_storage();
+        storage.ensure(1);
+        storage.interned_symbol(name).unwrap()
+    }
 }
 
 #[derive(Debug, PartialEq)]

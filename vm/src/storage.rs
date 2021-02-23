@@ -3,11 +3,13 @@ use crate::mem::{Ref, Storage, Traceable, Tracer};
 use crate::table::Table;
 use crate::value::Symbol;
 use crate::Value;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use sunny_sexpr_parser::Sexpr;
 
 pub struct ValueStorage {
     storage: Storage,
+    permanent_roots: HashMap<Value, usize>,
 }
 
 impl Default for ValueStorage {
@@ -20,6 +22,7 @@ impl ValueStorage {
     pub fn new(capacity: usize) -> Self {
         ValueStorage {
             storage: Storage::new(capacity),
+            permanent_roots: HashMap::new(),
         }
     }
 
@@ -132,11 +135,16 @@ impl ValueStorage {
     }
 
     pub unsafe fn collect_garbage(&mut self, root: &impl Traceable) {
-        self.storage.collect_garbage(root)
+        let gc = self.begin_garbage_collection().mark(root);
+        self.finish_garbage_collection(gc);
     }
 
     pub fn begin_garbage_collection(&mut self) -> Tracer {
-        self.storage.begin_garbage_collection()
+        let mut tracer = self.storage.begin_garbage_collection();
+        for root in self.permanent_roots.keys() {
+            tracer = tracer.mark(root);
+        }
+        tracer
     }
 
     pub unsafe fn finish_garbage_collection(&mut self, gc: Tracer) {
@@ -155,6 +163,19 @@ impl ValueStorage {
             Value::Table(p) => self.storage.is_valid(p),
             Value::Closure(p) => self.storage.is_valid(p),
             Value::Primitive(_) => true,
+        }
+    }
+
+    pub fn preserve(&mut self, value: &Value) {
+        *self.permanent_roots.entry(value.clone()).or_insert(0) += 1;
+    }
+
+    pub fn release(&mut self, value: &Value) {
+        if let Some(count) = self.permanent_roots.get_mut(value) {
+            *count -= 1;
+            if *count == 0 {
+                self.permanent_roots.remove(value);
+            }
         }
     }
 }
@@ -221,10 +242,45 @@ mod tests {
     }
 
     #[test]
-    fn uninterned_symbols_with_same_name_are_not_equal_to_interned_symbol() {
-        let mut storage = ValueStorage::new(2);
-        let a = storage.uninterned_symbol("foo").unwrap();
-        let b = storage.interned_symbol("foo").unwrap();
-        assert_ne!(a, b);
+    fn preserved_values_remain_valid_after_collection() {
+        let mut storage = ValueStorage::new(10);
+        let x = storage.interned_symbol("foo").unwrap();
+        storage.preserve(&x);
+        unsafe {
+            storage.collect_garbage(&());
+        }
+        assert!(storage.is_valid(&x));
+    }
+
+    #[test]
+    fn releasing_allows_a_previously_preserved_value_to_be_collected() {
+        let mut storage = ValueStorage::new(10);
+        let x = storage.interned_symbol("foo").unwrap();
+        storage.preserve(&x);
+        storage.release(&x);
+        unsafe {
+            storage.collect_garbage(&());
+        }
+        assert!(!storage.is_valid(&x));
+    }
+
+    #[test]
+    fn a_repeatedly_preserved_value_must_be_repeatedly_released() {
+        let mut storage = ValueStorage::new(10);
+        let x = storage.interned_symbol("foo").unwrap();
+        storage.preserve(&x);
+        storage.preserve(&x);
+
+        storage.release(&x);
+        unsafe {
+            storage.collect_garbage(&());
+        }
+        assert!(storage.is_valid(&x));
+
+        storage.release(&x);
+        unsafe {
+            storage.collect_garbage(&());
+        }
+        assert!(!storage.is_valid(&x));
     }
 }
