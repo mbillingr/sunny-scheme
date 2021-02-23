@@ -1,19 +1,19 @@
-mod backend;
-mod frontend;
+use std::fs::File;
+use std::io::Read;
 
-use crate::backend::ByteCodeBackend;
-use crate::frontend::{Error as FrontendError, Frontend};
 use log::LevelFilter;
 use rustyline::{error::ReadlineError, Editor};
 use simple_logger::SimpleLogger;
-use std::fs::File;
-use std::io::Read;
 use structopt::StructOpt;
-use sunny_sexpr_parser::SourceLocation;
-use sunny_sexpr_parser::{parse_str, Error as ParseError};
+
+use context::{Context, Error};
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
-use sunny_vm::{Error as VmError, ErrorKind as VmErrorKind, Value, ValueStorage, Vm};
+use sunny_vm::{ValueStorage, Vm};
+
+mod backend;
+mod frontend;
+mod context;
 
 #[derive(StructOpt)]
 enum Cli {
@@ -64,7 +64,7 @@ fn run_bytecode(path: &std::path::Path) {
 fn run_repl() {
     let mut rl = Editor::<()>::new();
 
-    let mut repl = Repl::new();
+    let mut context = Context::new();
 
     loop {
         match rl.readline(">> ") {
@@ -76,7 +76,7 @@ fn run_repl() {
                     continue;
                 }
 
-                match repl.eval(line) {
+                match context.eval(line) {
                     Ok(result) => println!("{}", result),
                     Err(e) => report_error(e),
                 }
@@ -93,85 +93,6 @@ fn run_repl() {
     }
 }
 
-struct Repl {
-    frontend: Frontend,
-    vm: Vm,
-}
-
-impl Repl {
-    fn new() -> Self {
-        let storage = ValueStorage::new(5);
-        let vm = Vm::new(storage).unwrap();
-        let frontend = Frontend::new();
-        Repl { frontend, vm }
-    }
-
-    fn eval(&mut self, src: &str) -> Result<Value, ReplError> {
-        let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
-
-        let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
-
-        let expression = self
-            .frontend
-            .meaning(&sexpr, &mut backend)
-            .map_err(|e| e.in_string(src))?;
-
-        let prelude = backend.generate_prelude();
-
-        let codegraph = prelude.chain(expression);
-        codegraph.return_from();
-
-        let code = codegraph.build_segment();
-        println!("{}", code);
-
-        let result = self.vm.eval_repl(code)?;
-        Ok(result)
-    }
-}
-
-#[derive(Debug)]
-enum ReplError {
-    ParseError(SourceLocation<ParseError>),
-    FrontendError(SourceLocation<FrontendError>),
-    VmError(VmError),
-    VmErrorKind(VmErrorKind),
-}
-
-impl From<SourceLocation<ParseError>> for ReplError {
-    fn from(cpe: SourceLocation<ParseError>) -> Self {
-        Self::ParseError(cpe)
-    }
-}
-
-impl From<SourceLocation<FrontendError>> for ReplError {
-    fn from(fe: SourceLocation<FrontendError>) -> Self {
-        Self::FrontendError(fe)
-    }
-}
-
-impl From<VmError> for ReplError {
-    fn from(vme: VmError) -> Self {
-        Self::VmError(vme)
-    }
-}
-
-impl From<VmErrorKind> for ReplError {
-    fn from(vme: VmErrorKind) -> Self {
-        Self::VmErrorKind(vme)
-    }
-}
-
-impl std::fmt::Display for ReplError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            ReplError::ParseError(e) => write!(f, "{}", e.pretty_fmt()),
-            ReplError::FrontendError(e) => write!(f, "{}", e.pretty_fmt()),
-            ReplError::VmErrorKind(e) => write!(f, "{}", e),
-            ReplError::VmError(e) => write!(f, "{}", e),
-        }
-    }
-}
-
-fn report_error(err: ReplError) {
+fn report_error(err: Error) {
     println!("Error: {}", err)
 }
