@@ -243,6 +243,24 @@ impl BasicBlock {
     }
 }
 
+impl From<Op> for BasicBlock {
+    fn from(op: Op) -> Self {
+        if let Op::Const(_) = op {
+            panic!("Can't convert Op::Const to BasicBlock")
+        }
+        Self::new(vec![op], vec![])
+    }
+}
+
+impl From<Op> for Rc<BasicBlock> {
+    fn from(op: Op) -> Self {
+        if let Op::Const(_) = op {
+            panic!("Can't convert Op::Const to BasicBlock")
+        }
+        Rc::new(BasicBlock::new(vec![op], vec![]))
+    }
+}
+
 struct CodeBuilder {
     code: Vec<Op>,
     constant_map: HashMap<Value, usize>,

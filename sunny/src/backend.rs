@@ -130,8 +130,8 @@ impl Backend for ByteCodeBackend<'_> {
         condition.branch_bool_with_context(consequent, alternative, exit, context)
     }
 
-    fn sequence(&mut self, _first: Self::Output, _next: Self::Output) -> Self::Output {
-        unimplemented!()
+    fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output {
+        first.chain(next)
     }
 
     fn lambda(
@@ -375,5 +375,19 @@ mod tests {
             cs.constant_slice(),
             &[Value::Int(3), Value::Int(2), Value::Int(1)]
         )
+    }
+
+    #[test]
+    fn build_bytecode_sequence() {
+        let mut storage = ValueStorage::new(100);
+        let mut bcb = ByteCodeBackend::new(&mut storage);
+
+        let first = BlockChain::singleton(Op::Integer(1));
+        let next = BlockChain::singleton(Op::Integer(2));
+
+        let code = bcb.sequence(first, next);
+
+        let cs = code.build_segment();
+        assert_eq!(cs.code_slice(), &[Op::Integer(1), Op::Integer(2), Op::Halt]);
     }
 }

@@ -82,6 +82,7 @@ impl Frontend {
                             .ok_or_else(|| error_after(first, MissingArgument))?;
                         Ok(backend.constant(arg.map(()), arg.get_value()))
                     }
+                    "begin" => self.meaning_sequence(sexpr.cdr().unwrap(), backend),
                     "if" => {
                         let arg1 = sexpr
                             .cadr()
@@ -251,6 +252,7 @@ mod tests {
         Ref(usize, usize),
         Set(usize, usize, Box<Ast>),
         Cons(Box<Ast>, Box<Ast>),
+        Begin(Box<Ast>, Box<Ast>),
         If(Box<Ast>, Box<Ast>, Box<Ast>),
         Lambda(usize, Box<Ast>),
         Invoke(Vec<Ast>),
@@ -304,8 +306,8 @@ mod tests {
             )
         }
 
-        fn sequence(&mut self, _first: Self::Output, _next: Self::Output) -> Self::Output {
-            unimplemented!()
+        fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output {
+            Ast::Begin(Box::new(first), Box::new(next))
         }
 
         fn lambda(
@@ -328,6 +330,8 @@ mod tests {
         (ref $d:tt $i:tt) => {Ast::Ref($d, $i)};
         (set $d:tt $i:tt $x:tt) => {Ast::Set($d, $i, Box::new(ast![$x]))};
         (cons $a:tt $b:tt) => {Ast::Cons(Box::new(ast![$a]), Box::new(ast![$b]))};
+        (begin $a:tt $b:tt) => {Ast::Begin(Box::new(ast![$a]), Box::new(ast![$b]))};
+        (begin $a:tt $($b:tt)+) => {Ast::Begin(Box::new(ast![$a]), Box::new(ast![begin $($b)+]))};
         (if $a:tt $b:tt $c:tt) => {Ast::If(Box::new(ast![$a]), Box::new(ast![$b]), Box::new(ast![$c]))};
         (lambda $p:tt $b:tt) => {Ast::Lambda($p, Box::new(ast![$b]))};
         (invoke $($a:tt)*) => {Ast::Invoke(vec![$(ast![$a]),*])};
@@ -416,5 +420,18 @@ mod tests {
     #[test]
     fn meaning_of_global_ref_in_lambda() {
         assert_eq!(meaning_of![(lambda () x)], Ok(ast!(lambda 0 (ref 1 0))));
+    }
+
+    #[test]
+    fn meaning_of_begin() {
+        assert_eq!(
+            meaning_of![(begin 1 2 3)],
+            Ok(ast!(begin (const "1") (const "2") (const "3")))
+        );
+    }
+
+    #[test]
+    fn meaning_of_singleton_begin_is_meaning_of_inner_expression() {
+        assert_eq!(meaning_of![(begin 1)], Ok(ast!(const "1")));
     }
 }

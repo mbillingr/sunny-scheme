@@ -53,6 +53,12 @@ impl Context {
         storage.ensure(1);
         storage.interned_symbol(name).unwrap()
     }
+
+    pub fn cons(&mut self, a: impl Into<Value>, b: impl Into<Value>) -> Value {
+        let storage = self.vm.borrow_storage();
+        storage.ensure(1);
+        storage.cons(a, b).unwrap()
+    }
 }
 
 #[derive(Debug, PartialEq)]
