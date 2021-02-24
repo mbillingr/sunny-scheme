@@ -20,6 +20,7 @@ pub enum Op {
     RJumpIfVoid { backward: u8 },
     Return,
     Call { n_args: u8 },
+    TailCall { n_args: u8 },
     PrepareArgs(u8),
 
     Peek(u8),
@@ -102,6 +103,7 @@ impl std::fmt::Display for Op {
             Op::RJumpIfVoid { backward } => write!(f, "{} {}", repr::RJUMPIFVOID, backward),
             Op::Return => write!(f, "{}", repr::RETURN),
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
+            Op::TailCall { n_args } => write!(f, "{} {}", repr::TAILCALL, n_args),
             Op::PrepareArgs(n) => write!(f, "{} {}", repr::PREPARGS, n),
             Op::Peek(x) => write!(f, "{} {}", repr::PEEK, x),
             Op::PushLocal => write!(f, "{}", repr::PUSHLOCAL),
@@ -142,6 +144,7 @@ pub mod repr {
     pub const RJUMPIFVOID: &'static str = "RJUMPIFVOID";
     pub const RETURN: &'static str = "RETURN";
     pub const CALL: &'static str = "CALL";
+    pub const TAILCALL: &'static str = "TAILCALL";
     pub const PREPARGS: &'static str = "PREPARGS";
     pub const PEEK: &'static str = "PEEK";
     pub const PUSHLOCAL: &'static str = "PUSHLOCAL";

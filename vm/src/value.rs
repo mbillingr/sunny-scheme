@@ -161,6 +161,17 @@ impl Value {
             _ => false,
         }
     }
+
+    pub fn as_traceable(&self) -> Option<Ref<dyn Traceable>> {
+        match self {
+            Value::Void | Value::Nil | Value::False | Value::True | Value::Int(_) => None,
+            Value::Symbol(s) => Some(s.as_dyn_traceable()),
+            Value::Pair(p) => Some(p.as_dyn_traceable()),
+            Value::Table(t) => Some(t.as_dyn_traceable()),
+            Value::Closure(c) => Some(c.as_dyn_traceable()),
+            Value::Primitive(_) => None,
+        }
+    }
 }
 
 impl Traceable for Value {

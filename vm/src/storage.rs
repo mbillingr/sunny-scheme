@@ -9,7 +9,7 @@ use sunny_sexpr_parser::Sexpr;
 
 pub struct ValueStorage {
     storage: Storage,
-    permanent_roots: HashMap<Value, usize>,
+    permanent_roots: HashMap<Ref<dyn Traceable>, usize>,
 }
 
 impl Default for ValueStorage {
@@ -166,15 +166,36 @@ impl ValueStorage {
         }
     }
 
-    pub fn preserve(&mut self, value: &Value) {
-        *self.permanent_roots.entry(value.clone()).or_insert(0) += 1;
+    pub fn preserve(&mut self, value: &Ref<impl 'static + Traceable>) {
+        *self
+            .permanent_roots
+            .entry(value.as_dyn_traceable())
+            .or_insert(0) += 1;
     }
 
-    pub fn release(&mut self, value: &Value) {
-        if let Some(count) = self.permanent_roots.get_mut(value) {
+    pub fn release(&mut self, value: &Ref<impl 'static + Traceable>) {
+        let value = value.as_dyn_traceable();
+        if let Some(count) = self.permanent_roots.get_mut(&value) {
             *count -= 1;
             if *count == 0 {
-                self.permanent_roots.remove(value);
+                self.permanent_roots.remove(&value);
+            }
+        }
+    }
+
+    pub fn preserve_value(&mut self, value: &Value) {
+        if let Some(x) = value.as_traceable() {
+            *self.permanent_roots.entry(x).or_insert(0) += 1;
+        }
+    }
+
+    pub fn release_value(&mut self, value: &Value) {
+        if let Some(x) = value.as_traceable() {
+            if let Some(count) = self.permanent_roots.get_mut(&x) {
+                *count -= 1;
+                if *count == 0 {
+                    self.permanent_roots.remove(&x);
+                }
             }
         }
     }
@@ -245,7 +266,7 @@ mod tests {
     fn preserved_values_remain_valid_after_collection() {
         let mut storage = ValueStorage::new(10);
         let x = storage.interned_symbol("foo").unwrap();
-        storage.preserve(&x);
+        storage.preserve_value(&x);
         unsafe {
             storage.collect_garbage(&());
         }
@@ -256,8 +277,8 @@ mod tests {
     fn releasing_allows_a_previously_preserved_value_to_be_collected() {
         let mut storage = ValueStorage::new(10);
         let x = storage.interned_symbol("foo").unwrap();
-        storage.preserve(&x);
-        storage.release(&x);
+        storage.preserve_value(&x);
+        storage.release_value(&x);
         unsafe {
             storage.collect_garbage(&());
         }
@@ -268,16 +289,16 @@ mod tests {
     fn a_repeatedly_preserved_value_must_be_repeatedly_released() {
         let mut storage = ValueStorage::new(10);
         let x = storage.interned_symbol("foo").unwrap();
-        storage.preserve(&x);
-        storage.preserve(&x);
+        storage.preserve_value(&x);
+        storage.preserve_value(&x);
 
-        storage.release(&x);
+        storage.release_value(&x);
         unsafe {
             storage.collect_garbage(&());
         }
         assert!(storage.is_valid(&x));
 
-        storage.release(&x);
+        storage.release_value(&x);
         unsafe {
             storage.collect_garbage(&());
         }

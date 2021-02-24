@@ -169,6 +169,7 @@ impl Vm {
                     self.set_local(depth as usize, Op::extend_arg(a, arg), value)?
                 }
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
+                Op::TailCall { n_args } => self.tail_call(Op::extend_arg(n_args, arg))?,
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
                 Op::Integer(a) => self.push_value(Value::Int(Op::extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
@@ -325,21 +326,41 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.call_closure(cls, n_args),
-            Value::Primitive(f) => match f(&mut self.value_stack, &mut self.storage) {
-                Ok(()) => Ok(()),
-                Err(e) => {
-                    self.push_value(func);
-                    Err(e)
-                }
-            },
+            Value::Primitive(f) => f(&mut self.value_stack, &mut self.storage),
+            _ => Err(ErrorKind::TypeError),
+        }
+    }
+
+    fn tail_call(&mut self, n_args: usize) -> Result<()> {
+        let func = self.pop_value()?;
+        match func {
+            Value::Closure(cls) => self.tail_call_closure(cls, n_args),
+            Value::Primitive(f) => f(&mut self.value_stack, &mut self.storage),
             _ => Err(ErrorKind::TypeError),
         }
     }
 
     fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
+        self.storage.preserve(&cls);
         self.ensure_storage_space(1)?;
+        self.storage.release(&cls);
         let args = self.pop_values(n_args)?;
         let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
+        self.current_activation = self.storage.insert(act).unwrap();
+        Ok(())
+    }
+
+    fn tail_call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
+        self.storage.preserve(&cls);
+        self.ensure_storage_space(1)?;
+        self.storage.release(&cls);
+        let args = self.pop_values(n_args)?;
+        let caller = self
+            .current_activation
+            .caller
+            .as_ref()
+            .unwrap_or(&self.current_activation);
+        let act = Activation::from_closure(caller.clone(), &*cls, args);
         self.current_activation = self.storage.insert(act).unwrap();
         Ok(())
     }

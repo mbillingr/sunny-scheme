@@ -23,6 +23,12 @@ impl<T: ?Sized> Ref<T> {
     }
 }
 
+impl<T: 'static + Traceable> Ref<T> {
+    pub fn as_dyn_traceable(&self) -> Ref<dyn Traceable> {
+        Ref::new(self.ptr)
+    }
+}
+
 impl<T: ?Sized> Deref for Ref<T> {
     type Target = T;
     fn deref(&self) -> &T {

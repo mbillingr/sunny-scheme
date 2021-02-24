@@ -41,11 +41,11 @@ impl Context {
     }
 
     pub fn preserve(&mut self, value: &Value) {
-        self.vm.borrow_storage().preserve(value);
+        self.vm.borrow_storage().preserve_value(value);
     }
 
     pub fn release(&mut self, value: &Value) {
-        self.vm.borrow_storage().release(value);
+        self.vm.borrow_storage().release_value(value);
     }
 
     pub fn symbol(&mut self, name: &str) -> Value {
