@@ -4,6 +4,7 @@ use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 use crate::backend::ByteCodeBackend;
 use crate::frontend;
 use crate::frontend::Frontend;
+use sunny_vm::optimizations::tail_call_optimization;
 
 pub struct Context {
     frontend: Frontend,
@@ -34,8 +35,9 @@ impl Context {
         codegraph.return_from();
 
         let code = codegraph.build_segment();
-        println!("{}", code);
+        let code = tail_call_optimization(code);
 
+        println!("{}", code);
         let result = self.vm.eval_repl(code)?;
         Ok(result)
     }

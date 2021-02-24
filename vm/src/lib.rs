@@ -3,6 +3,7 @@ mod basic_block;
 pub mod bytecode;
 pub mod bytecode_loader;
 mod closure;
+pub mod optimizations;
 mod storage;
 mod table;
 mod value;

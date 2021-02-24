@@ -208,6 +208,9 @@ impl CodeSegment {
     pub fn code_slice(&self) -> &[Op] {
         &*self.code
     }
+    pub fn code_slice_mut(&mut self) -> &mut [Op] {
+        &mut *self.code
+    }
 
     pub fn constant_slice(&self) -> &[Value] {
         &*self.constants
