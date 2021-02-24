@@ -1,4 +1,5 @@
 use std::any::Any;
+use std::cell::Cell;
 use std::ops::{Deref, DerefMut};
 use std::rc::{Rc, Weak};
 
@@ -94,6 +95,10 @@ impl Storage {
         None
     }
 
+    pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Result<Ref<T>, Box<T>> {
+        self.insert(*obj).map_err(Box::new)
+    }
+
     pub fn is_valid<T>(&self, _: &Ref<T>) -> bool {
         true
     }
@@ -117,6 +122,8 @@ pub trait Traceable {
     fn trace(&self, _: &mut Tracer) {}
 }
 
+impl Traceable for () {}
+
 impl<T: ?Sized> Traceable for Ref<T> {}
 
 impl<T> Traceable for Option<T> {}
@@ -128,6 +135,8 @@ impl<T> Traceable for Vec<T> {}
 impl<T: ?Sized> Traceable for Box<T> {}
 
 impl<T> Traceable for &[T] {}
+
+impl<T: Traceable + Default + ?Sized> Traceable for Cell<T> {}
 
 pub struct Tracer;
 
