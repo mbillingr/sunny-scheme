@@ -1,5 +1,6 @@
 mod constant_expressions;
 mod control_flow;
+mod libraries;
 
 use crate::context::{Context, Error};
 use hamcrest2::core::{success, MatchResult, Matcher};
@@ -13,6 +14,10 @@ struct EvaluatesTo;
 impl EvaluatesTo {
     pub fn an_error() -> EvaluationMatcher<IsErr<Value, Error>> {
         EvaluationMatcher::new(err())
+    }
+
+    pub fn void() -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
+        EvaluationMatcher::new(equal_to(Ok(Value::Void)))
     }
 
     pub fn the_integer(i: i64) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {

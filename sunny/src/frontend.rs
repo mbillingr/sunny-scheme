@@ -1,5 +1,6 @@
 use crate::backend::Backend;
 use crate::frontend::Error::*;
+use log::warn;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_sexpr_parser::{CxR, Sexpr};
 
@@ -10,14 +11,16 @@ pub enum Error {
     MissingArgument,
     ExpectedSymbol,
     ExpectedList,
+    UnexpectedStatement,
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Error::MissingArgument => write!(f, "Missing argument."),
-            Error::ExpectedSymbol => write!(f, "Expected symbol."),
-            Error::ExpectedList => write!(f, "Expected list."),
+            Error::MissingArgument => write!(f, "Missing argument"),
+            Error::ExpectedSymbol => write!(f, "Expected symbol"),
+            Error::ExpectedList => write!(f, "Expected list"),
+            Error::UnexpectedStatement => write!(f, "Unexpected statement"),
         }
     }
 }
@@ -49,6 +52,12 @@ impl Frontend {
             let first = sexpr.car().unwrap();
             if let Some(s) = first.as_symbol() {
                 match s {
+                    "define-library" => {
+                        let libname = sexpr
+                            .cadr()
+                            .ok_or_else(|| error_after(first, MissingArgument))?;
+                        self.library_definition(libname, sexpr.cddr().unwrap(), backend)
+                    }
                     "set!" => {
                         let arg1 = sexpr
                             .cadr()
@@ -145,6 +154,38 @@ impl Frontend {
             let rest = self.meaning_sequence(rest_expr, backend)?;
             Ok(backend.sequence(first, rest))
         }
+    }
+
+    pub fn library_definition<B: Backend>(
+        &mut self,
+        libname: &SourceLocation<Sexpr>,
+        statements: &SourceLocation<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        let mut body_parts = vec![];
+        let mut lib_frontend = Self::new();
+
+        for stmt in statements.iter() {
+            match stmt.car().and_then(|s| s.as_symbol()) {
+                Some("import") => warn!("Ignoring (import ...) statement in library definition"),
+                Some("export") => warn!("Ignoring (export ...) statement in library definition"),
+                Some("begin") => {
+                    body_parts.push(lib_frontend.meaning_sequence(stmt.cdr().unwrap(), backend)?)
+                }
+                _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
+            }
+        }
+
+        // TODO: Libraries should live in their own activation frame.
+        //       Currently, the way tho achieve that would be to wrap the body in a closure and call it.
+        //       What about a new opcode that creates a new activation frame?
+
+        let mut body = body_parts.pop().expect("Empty library body");
+        while let Some(prev_part) = body_parts.pop() {
+            body = backend.sequence(prev_part, body);
+        }
+
+        Ok(body)
     }
 
     fn lookup(&self, name: &str) -> Option<(usize, usize)> {
