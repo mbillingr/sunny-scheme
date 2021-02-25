@@ -164,11 +164,22 @@ impl Frontend {
     ) -> Result<B::Output> {
         let mut body_parts = vec![];
         let mut lib_frontend = Self::new();
+        backend.begin_module();
+
+        let mut exports = vec![];
 
         for stmt in statements.iter() {
             match stmt.car().and_then(|s| s.as_symbol()) {
                 Some("import") => warn!("Ignoring (import ...) statement in library definition"),
-                Some("export") => warn!("Ignoring (export ...) statement in library definition"),
+                Some("export") => {
+                    for export_item in stmt.cdr().unwrap().iter() {
+                        let export_name = export_item
+                            .as_symbol()
+                            .ok_or_else(|| error_at(export_item, ExpectedSymbol))?;
+                        let (_, var_idx) = lib_frontend.ensure_global(export_name, backend);
+                        exports.push((export_name, var_idx));
+                    }
+                }
                 Some("begin") => {
                     body_parts.push(lib_frontend.meaning_sequence(stmt.cdr().unwrap(), backend)?)
                 }
@@ -176,20 +187,31 @@ impl Frontend {
             }
         }
 
-        // TODO: Libraries should live in their own activation frame.
-        //       Currently, the way tho achieve that would be to wrap the body in a closure and call it.
-        //       What about a new opcode that creates a new activation frame?
-
         let mut body = body_parts.pop().expect("Empty library body");
         while let Some(prev_part) = body_parts.pop() {
             body = backend.sequence(prev_part, body);
         }
 
-        Ok(body)
+        let prelude = backend.end_module();
+        body = backend.sequence(prelude, body);
+
+        let meaning_exports = backend.export(exports);
+        body = backend.sequence(body, meaning_exports);
+
+        let body_func = backend.lambda(SourceLocation::new(()), 0, body);
+
+        Ok(backend.invoke(SourceLocation::new(()), vec![body_func]))
     }
 
     fn lookup(&self, name: &str) -> Option<(usize, usize)> {
         self.env.lookup(name)
+    }
+
+    fn ensure_global<B: Backend>(&mut self, name: &str, backend: &mut B) -> (usize, usize) {
+        self.env
+            .outermost_env()
+            .lookup(name)
+            .unwrap_or_else(|| self.add_global(name.to_string(), backend))
     }
 
     fn add_global<B: Backend>(&mut self, name: String, backend: &mut B) -> (usize, usize) {
@@ -281,6 +303,14 @@ impl Env {
         self.variables.push(name);
         (0, idx)
     }
+
+    fn outermost_env(&self) -> &Env {
+        if let Some(ref p) = self.parent {
+            p.outermost_env()
+        } else {
+            self
+        }
+    }
 }
 
 #[cfg(test)]
@@ -303,6 +333,14 @@ mod tests {
 
     impl Backend for AstBuilder {
         type Output = Ast;
+
+        fn begin_module(&mut self) {
+            unimplemented!()
+        }
+
+        fn end_module(&mut self) -> Self::Output {
+            unimplemented!()
+        }
 
         fn add_global(&mut self, _: usize) {}
 
@@ -362,6 +400,10 @@ mod tests {
 
         fn invoke(&mut self, _: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output {
             Ast::Invoke(args)
+        }
+
+        fn export(&mut self, _exports: Vec<(&str, usize)>) -> Self::Output {
+            unimplemented!()
         }
     }
 

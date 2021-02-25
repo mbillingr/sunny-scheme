@@ -1,7 +1,7 @@
 use sunny_sexpr_parser::{parse_str, Error as ParseError, SourceLocation};
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
-use crate::backend::ByteCodeBackend;
+use crate::backend::{Backend, ByteCodeBackend};
 use crate::frontend;
 use crate::frontend::Frontend;
 use sunny_vm::optimizations::tail_call_optimization;
@@ -24,12 +24,14 @@ impl Context {
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
 
+        backend.begin_module();
+
         let expression = self
             .frontend
             .meaning(&sexpr, &mut backend)
             .map_err(|e| e.in_string(src))?;
 
-        let prelude = backend.generate_prelude();
+        let prelude = backend.end_module();
 
         let codegraph = prelude.chain(expression);
         codegraph.return_from();

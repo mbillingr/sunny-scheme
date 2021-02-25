@@ -6,6 +6,10 @@ use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 pub trait Backend {
     type Output;
 
+    fn begin_module(&mut self);
+
+    fn end_module(&mut self) -> Self::Output;
+
     fn add_global(&mut self, idx: usize);
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output;
@@ -44,34 +48,41 @@ pub trait Backend {
     ) -> Self::Output;
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output;
+
+    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Output;
 }
 
 pub struct ByteCodeBackend<'s> {
     storage: &'s mut ValueStorage,
-    prelude: BlockChain,
+    prelude: Vec<BlockChain>,
 }
 
 impl<'s> ByteCodeBackend<'s> {
     pub fn new(storage: &'s mut ValueStorage) -> Self {
         ByteCodeBackend {
             storage,
-            prelude: BlockChain::empty(),
+            prelude: vec![BlockChain::empty()],
         }
-    }
-}
-
-impl ByteCodeBackend<'_> {
-    pub fn generate_prelude(&self) -> BlockChain {
-        self.prelude.clone()
     }
 }
 
 impl Backend for ByteCodeBackend<'_> {
     type Output = BlockChain;
 
+    fn begin_module(&mut self) {
+        self.prelude.push(BlockChain::empty())
+    }
+
+    fn end_module(&mut self) -> Self::Output {
+        self.prelude.pop().unwrap()
+    }
+
     fn add_global(&mut self, _: usize) {
         let block = BasicBlock::new(vec![Op::Const(0), Op::PushLocal], vec![Value::Void]);
-        self.prelude.append(BlockChain::singleton(block));
+        self.prelude
+            .last_mut()
+            .unwrap()
+            .append(BlockChain::singleton(block));
     }
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output {
@@ -158,6 +169,21 @@ impl Backend for ByteCodeBackend<'_> {
         }
         blocks.append_ops_with_context(Op::extended(|n_args| Op::Call { n_args }, n_args), context);
         blocks
+    }
+
+    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Output {
+        self.storage.ensure(exports.len());
+        let mut ops = vec![Op::Table];
+        let mut constants = vec![];
+        for (export_name, var_idx) in exports {
+            let cidx = constants.len();
+            constants.push(self.storage.interned_symbol(export_name).unwrap());
+            ops.extend(Op::extended(Op::Const, cidx));
+            ops.extend(Op::extended(Op::FetchLocal, var_idx));
+            ops.push(Op::TableSet);
+        }
+        let block = BasicBlock::new(ops, constants);
+        BlockChain::singleton(block)
     }
 }
 
