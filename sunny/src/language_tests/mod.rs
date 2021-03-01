@@ -1,5 +1,6 @@
 mod constant_expressions;
 mod control_flow;
+mod global_variables;
 mod libraries;
 
 use crate::context::{Context, Error};

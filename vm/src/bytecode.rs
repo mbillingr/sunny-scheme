@@ -33,6 +33,7 @@ pub enum Op {
     Fetch(u8),
     Store(u8),
 
+    Void,
     Integer(u8),
     Const(u8),
     GetStack(u8),
@@ -116,6 +117,7 @@ impl std::fmt::Display for Op {
             Op::FetchLocal(x) => write!(f, "{} {}", repr::FETCHLOCAL, x),
             Op::Fetch(x) => write!(f, "{} {}", repr::FETCH, x),
             Op::Store(x) => write!(f, "{} {}", repr::STORE, x),
+            Op::Void => write!(f, "{}", repr::VOID),
             Op::Integer(x) => write!(f, "{} {}", repr::INTEGER, x),
             Op::Const(x) => write!(f, "{} {}", repr::CONST, x),
             Op::GetStack(x) => write!(f, "{} {}", repr::GETSTACK, x),
@@ -159,6 +161,7 @@ pub mod repr {
     pub const FETCHLOCAL: &'static str = "FETCHLOCAL";
     pub const FETCH: &'static str = "FETCH";
     pub const STORE: &'static str = "STORE";
+    pub const VOID: &'static str = "VOID";
     pub const INTEGER: &'static str = "INTEGER";
     pub const CONST: &'static str = "CONST";
     pub const GETSTACK: &'static str = "GETSTACK";

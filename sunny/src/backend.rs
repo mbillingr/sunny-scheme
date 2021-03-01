@@ -114,6 +114,7 @@ impl Backend for ByteCodeBackend<'_> {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Store, idx));
+        ops.push(Op::Void);
         let block = BasicBlock::new(ops, vec![]);
         block.map_source(0, context.clone());
         block.map_source(1, context);
@@ -297,7 +298,13 @@ mod tests {
 
         assert_eq!(
             cs.code_slice(),
-            &[Op::Const(0), Op::Integer(0), Op::Store(0), Op::Halt]
+            &[
+                Op::Const(0),
+                Op::Integer(0),
+                Op::Store(0),
+                Op::Void,
+                Op::Halt
+            ]
         );
     }
 

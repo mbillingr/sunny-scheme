@@ -175,6 +175,7 @@ impl Vm {
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
                 Op::TailCall { n_args } => self.tail_call(Op::extend_arg(n_args, arg))?,
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
+                Op::Void => self.push_value(Value::Void),
                 Op::Integer(a) => self.push_value(Value::Int(Op::extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg))?,
@@ -285,7 +286,6 @@ impl Vm {
             act = self.current_activation.parent.as_ref().unwrap();
         }
         act.locals[idx].set(value);
-        self.push_value(Value::Void); // todo: really?
         Ok(())
     }
 
