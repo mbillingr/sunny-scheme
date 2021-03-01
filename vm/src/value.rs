@@ -145,6 +145,13 @@ impl Value {
             .map(|table| table.get(key).unwrap_or(&Value::Void))
     }
 
+    pub fn is_procedure(&self) -> bool {
+        match self {
+            Value::Closure(_) | Value::Primitive(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn equals(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {

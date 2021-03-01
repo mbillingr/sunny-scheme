@@ -58,22 +58,8 @@ impl Frontend {
                             .ok_or_else(|| error_after(first, MissingArgument))?;
                         self.library_definition(libname, sexpr.cddr().unwrap(), backend)
                     }
-                    "set!" => {
-                        let arg1 = sexpr
-                            .cadr()
-                            .ok_or_else(|| error_after(first, MissingArgument))?;
-                        let name = arg1
-                            .as_symbol()
-                            .ok_or_else(|| error_at(arg1, ExpectedSymbol))?;
-                        let argval = sexpr
-                            .caddr()
-                            .ok_or_else(|| error_after(arg1, MissingArgument))?;
-                        let (depth, idx) = self
-                            .lookup(name)
-                            .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-                        let value = self.meaning(argval, backend)?;
-                        Ok(backend.store(sexpr.map(()), depth, idx, value))
-                    }
+                    "set!" => self.meaning_assignment(sexpr, backend),
+                    "define" => self.meaning_definition(sexpr, backend),
                     "cons" => {
                         let arg1 = sexpr
                             .cadr()
@@ -113,11 +99,7 @@ impl Frontend {
                             .ok_or_else(|| error_after(first, MissingArgument))?;
                         let body = sexpr.cddr().unwrap();
 
-                        self.push_new_scope(arg1)?;
-                        let body = self.meaning_sequence(body, backend)?;
-                        self.pop_scope();
-
-                        Ok(backend.lambda(sexpr.map(()), arg1.len(), body))
+                        self.meaning_lambda(sexpr, arg1, body, backend)
                     }
                     _ => self.meaning_application(sexpr, backend),
                 }
@@ -137,6 +119,85 @@ impl Frontend {
             args.push(self.meaning(a, backend)?);
         }
         Ok(backend.invoke(sexpr.map(()), args))
+    }
+
+    pub fn meaning_assignment<B: Backend>(
+        &mut self,
+        sexpr: &SourceLocation<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        let arg1 = sexpr
+            .cadr()
+            .ok_or_else(|| error_after(sexpr.car().unwrap(), MissingArgument))?;
+        let name = arg1
+            .as_symbol()
+            .ok_or_else(|| error_at(arg1, ExpectedSymbol))?;
+        let argval = sexpr
+            .caddr()
+            .ok_or_else(|| error_after(arg1, MissingArgument))?;
+        let (depth, idx) = self
+            .lookup(name)
+            .unwrap_or_else(|| self.add_global(name.to_string(), backend));
+        let value = self.meaning(argval, backend)?;
+        Ok(backend.store(sexpr.map(()), depth, idx, value))
+    }
+
+    pub fn meaning_definition<B: Backend>(
+        &mut self,
+        sexpr: &SourceLocation<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        let name = self.definition_name(sexpr)?;
+        let value = self.definition_value(sexpr, backend)?;
+        let (depth, idx) = self
+            .lookup(name)
+            .unwrap_or_else(|| self.add_global(name.to_string(), backend));
+        Ok(backend.store(sexpr.map(()), depth, idx, value))
+    }
+
+    fn definition_name<'a>(&self, sexpr: &'a SourceLocation<Sexpr>) -> Result<&'a str> {
+        let arg1 = sexpr
+            .cadr()
+            .ok_or_else(|| error_after(sexpr.car().unwrap(), MissingArgument))?;
+        if let Some(name) = arg1.as_symbol() {
+            Ok(name)
+        } else if let Some(first) = arg1.car() {
+            first
+                .as_symbol()
+                .ok_or_else(|| error_at(arg1, ExpectedSymbol))
+        } else {
+            Err(error_at(arg1, ExpectedSymbol))
+        }
+    }
+
+    fn definition_value<B: Backend>(
+        &mut self,
+        sexpr: &SourceLocation<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        if sexpr.cadr().unwrap().is_symbol() {
+            let argval = sexpr
+                .caddr()
+                .ok_or_else(|| error_after(sexpr.cddr().unwrap(), MissingArgument))?;
+            self.meaning(argval, backend)
+        } else {
+            let args = sexpr.cdadr().unwrap();
+            let body = sexpr.cddr().unwrap();
+            self.meaning_lambda(sexpr, args, body, backend)
+        }
+    }
+
+    pub fn meaning_lambda<B: Backend>(
+        &mut self,
+        sexpr: &SourceLocation<Sexpr>,
+        args: &SourceLocation<Sexpr>,
+        body: &SourceLocation<Sexpr>,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        self.push_new_scope(args)?;
+        let body = self.meaning_sequence(body, backend)?;
+        self.pop_scope();
+        Ok(backend.lambda(sexpr.map(()), args.len(), body))
     }
 
     pub fn meaning_sequence<B: Backend>(

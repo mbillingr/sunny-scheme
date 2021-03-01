@@ -16,3 +16,18 @@ fn assigning_a_global_defines_it() {
 fn assignment_evaluates_to_void() {
     assert_that!("(set! x 1)", EvaluatesTo::void());
 }
+
+#[test]
+fn defining_a_variable_sets_its_value() {
+    assert_that!("(begin (define x 1) x)", EvaluatesTo::the_integer(1));
+}
+
+#[test]
+fn definition_evaluates_to_void() {
+    assert_that!("(define x 1)", EvaluatesTo::void());
+}
+
+#[test]
+fn function_definition_creates_a_procedure() {
+    assert_that!("(begin (define (x) 1) x)", EvaluatesTo::a_procedure());
+}

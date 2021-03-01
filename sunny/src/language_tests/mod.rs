@@ -7,9 +7,11 @@ use crate::context::{Context, Error};
 use hamcrest2::core::{success, MatchResult, Matcher};
 use hamcrest2::matchers::equal_to::EqualTo;
 use hamcrest2::matchers::err::IsErr;
+use hamcrest2::matchers::has::Has;
 use hamcrest2::prelude::*;
 use std::cell::RefCell;
 use sunny_vm::Value;
+
 struct EvaluatesTo;
 
 impl EvaluatesTo {
@@ -17,25 +19,29 @@ impl EvaluatesTo {
         EvaluationMatcher::new(err())
     }
 
-    pub fn void() -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
-        EvaluationMatcher::new(equal_to(Ok(Value::Void)))
+    pub fn a_procedure() -> EvaluationMatcher<ResultSatisfies> {
+        EvaluationMatcher::new(satisfies(Value::is_procedure, "<a procedure>"))
     }
 
-    pub fn the_integer(i: i64) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
-        EvaluationMatcher::new(equal_to(Ok(Value::Int(i))))
+    pub fn void() -> EvaluationMatcher<Has<Value>> {
+        EvaluationMatcher::new(has(Value::Void))
     }
 
-    pub fn the_boolean(b: bool) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
-        EvaluationMatcher::new(equal_to(Ok(Value::bool(b))))
+    pub fn the_integer(i: i64) -> EvaluationMatcher<Has<Value>> {
+        EvaluationMatcher::new(has(Value::Int(i)))
     }
 
-    pub fn the_symbol(name: &str) -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
+    pub fn the_boolean(b: bool) -> EvaluationMatcher<Has<Value>> {
+        EvaluationMatcher::new(has(Value::bool(b)))
+    }
+
+    pub fn the_symbol(name: &str) -> EvaluationMatcher<Has<Value>> {
         let mut context = Context::new();
         let symbol = context.symbol(name);
         context.preserve(&symbol);
         EvaluationMatcher {
             context: RefCell::new(context),
-            result_matcher: equal_to(Ok(symbol)),
+            result_matcher: has(symbol),
         }
     }
 
@@ -106,4 +112,32 @@ impl<E: std::fmt::Debug> Matcher<Result<Value, E>> for ValueEqualTo {
 
 pub fn equals(expected: Value) -> ValueEqualTo {
     ValueEqualTo { expected }
+}
+
+pub struct ResultSatisfies {
+    description: &'static str,
+    predicate: fn(&Value) -> bool,
+}
+
+impl std::fmt::Display for ResultSatisfies {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Ok(<{}>)", self.description)
+    }
+}
+
+impl<E: std::fmt::Debug> Matcher<Result<Value, E>> for ResultSatisfies {
+    fn matches(&self, actual: Result<Value, E>) -> MatchResult {
+        match actual {
+            Ok(val) if (self.predicate)(&val) => success(),
+            Ok(val) => Err(format!("was Ok({})", val)),
+            Err(e) => Err(format!("was Err({:?})", e)),
+        }
+    }
+}
+
+pub fn satisfies(predicate: fn(&Value) -> bool, description: &'static str) -> ResultSatisfies {
+    ResultSatisfies {
+        predicate,
+        description,
+    }
 }
