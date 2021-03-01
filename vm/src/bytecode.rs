@@ -23,6 +23,9 @@ pub enum Op {
     TailCall { n_args: u8 },
     PrepareArgs(u8),
 
+    FetchGlobal(u8),
+    StoreGlobal(u8),
+
     Peek(u8),
     PushLocal,
     DropLocal,
@@ -105,6 +108,8 @@ impl std::fmt::Display for Op {
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
             Op::TailCall { n_args } => write!(f, "{} {}", repr::TAILCALL, n_args),
             Op::PrepareArgs(n) => write!(f, "{} {}", repr::PREPARGS, n),
+            Op::FetchGlobal(x) => write!(f, "{} {}", repr::FETCHGLOBAL, x),
+            Op::StoreGlobal(x) => write!(f, "{} {}", repr::STOREGLOBAL, x),
             Op::Peek(x) => write!(f, "{} {}", repr::PEEK, x),
             Op::PushLocal => write!(f, "{}", repr::PUSHLOCAL),
             Op::DropLocal => write!(f, "{}", repr::DROPLOCAL),
@@ -146,6 +151,8 @@ pub mod repr {
     pub const CALL: &'static str = "CALL";
     pub const TAILCALL: &'static str = "TAILCALL";
     pub const PREPARGS: &'static str = "PREPARGS";
+    pub const FETCHGLOBAL: &'static str = "FETCHGLOBAL";
+    pub const STOREGLOBAL: &'static str = "STOREGLOBAL";
     pub const PEEK: &'static str = "PEEK";
     pub const PUSHLOCAL: &'static str = "PUSHLOCAL";
     pub const DROPLOCAL: &'static str = "DROPLOCAL";

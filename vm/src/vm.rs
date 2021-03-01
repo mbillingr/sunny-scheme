@@ -13,6 +13,7 @@ use sunny_sexpr_parser::Sexpr;
 pub struct Vm {
     storage: ValueStorage,
     value_stack: Vec<Value>,
+    globals: Vec<Value>,
 
     current_activation: Ref<Activation>,
 
@@ -50,6 +51,7 @@ impl Vm {
         Ok(Vm {
             storage,
             value_stack: vec![],
+            globals: vec![],
             current_activation: root_activation,
             empty_value_array,
             gc_preserve: vec![],
@@ -155,6 +157,8 @@ impl Vm {
                         return Ok(ret_val);
                     }
                 }
+                Op::FetchGlobal(a) => self.get_global(Op::extend_arg(a, arg))?,
+                Op::StoreGlobal(a) => self.set_global(Op::extend_arg(a, arg))?,
                 Op::Peek(i) => self.peek_closure(Op::extend_arg(i, arg))?,
                 Op::PushLocal => self.push_local()?,
                 Op::DropLocal => self.drop_local()?,
@@ -233,6 +237,24 @@ impl Vm {
         Ok(())
     }
 
+    fn get_global(&mut self, idx: usize) -> Result<()> {
+        if idx >= self.globals.len() {
+            self.globals.resize(idx.next_power_of_two(), Value::Void);
+        }
+        let x = self.globals[idx].clone();
+        self.push_value(x);
+        Ok(())
+    }
+
+    fn set_global(&mut self, idx: usize) -> Result<()> {
+        if idx >= self.globals.len() {
+            self.globals.resize(idx.next_power_of_two(), Value::Void);
+        }
+        let x = self.pop_value()?;
+        self.globals[idx] = x;
+        Ok(())
+    }
+
     fn push_local(&mut self) -> Result<()> {
         let x = self.pop_value()?;
         self.current_activation.locals.push(Cell::new(x));
@@ -263,7 +285,7 @@ impl Vm {
             act = self.current_activation.parent.as_ref().unwrap();
         }
         act.locals[idx].set(value);
-        self.push_value(Value::Void);
+        self.push_value(Value::Void); // todo: really?
         Ok(())
     }
 
