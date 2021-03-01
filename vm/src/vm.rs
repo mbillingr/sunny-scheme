@@ -85,11 +85,18 @@ impl Vm {
         match self.run() {
             Ok(x) => {
                 assert_eq!(self.current_activation, root_activation);
+                if !self.value_stack.is_empty() {
+                    panic!(
+                        "Value stack should be empty but contains {:?}",
+                        self.value_stack
+                    )
+                }
                 Ok(x)
             }
             Err(e) => {
                 let ce = self.add_error_context(e);
                 self.current_activation = root_activation; // restore root activation
+                self.value_stack.clear();
                 Err(ce)
             }
         }

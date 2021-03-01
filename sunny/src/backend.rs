@@ -143,6 +143,7 @@ impl Backend for ByteCodeBackend<'_> {
     }
 
     fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output {
+        first.append_op(Op::Drop);
         first.chain(next)
     }
 
@@ -421,6 +422,9 @@ mod tests {
         let code = bcb.sequence(first, next);
 
         let cs = code.build_segment();
-        assert_eq!(cs.code_slice(), &[Op::Integer(1), Op::Integer(2), Op::Halt]);
+        assert_eq!(
+            cs.code_slice(),
+            &[Op::Integer(1), Op::Drop, Op::Integer(2), Op::Halt]
+        );
     }
 }
