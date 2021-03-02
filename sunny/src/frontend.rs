@@ -1,6 +1,7 @@
 use crate::backend::Backend;
 use crate::frontend::Error::*;
 use log::warn;
+use std::collections::HashMap;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_sexpr_parser::{CxR, Sexpr};
 
@@ -41,10 +42,10 @@ impl Frontend {
     ) -> Result<B::Output> {
         if is_atom(sexpr) {
             if let Some(name) = sexpr.as_symbol() {
-                let (depth, idx) = self
+                let (depth, binding) = self
                     .lookup(name)
                     .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-                Ok(backend.fetch(sexpr.map(()), depth, idx))
+                binding.meaning_reference(sexpr.map(()), depth, backend)
             } else {
                 Ok(backend.constant(sexpr.map(()), sexpr.get_value()))
             }
@@ -135,11 +136,11 @@ impl Frontend {
         let argval = sexpr
             .caddr()
             .ok_or_else(|| error_after(arg1, MissingArgument))?;
-        let (depth, idx) = self
+        let (depth, binding) = self
             .lookup(name)
             .unwrap_or_else(|| self.add_global(name.to_string(), backend));
         let value = self.meaning(argval, backend)?;
-        Ok(backend.store(sexpr.map(()), depth, idx, value))
+        binding.meaning_assignment(sexpr.map(()), depth, value, backend)
     }
 
     pub fn meaning_definition<B: Backend>(
@@ -149,10 +150,10 @@ impl Frontend {
     ) -> Result<B::Output> {
         let name = self.definition_name(sexpr)?;
         let value = self.definition_value(sexpr, backend)?;
-        let (depth, idx) = self
+        let (depth, binding) = self
             .lookup(name)
             .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-        Ok(backend.store(sexpr.map(()), depth, idx, value))
+        binding.meaning_assignment(sexpr.map(()), depth, value, backend)
     }
 
     fn definition_name<'a>(&self, sexpr: &'a SourceLocation<Sexpr>) -> Result<&'a str> {
@@ -237,8 +238,12 @@ impl Frontend {
                         let export_name = export_item
                             .as_symbol()
                             .ok_or_else(|| error_at(export_item, ExpectedSymbol))?;
-                        let (_, var_idx) = lib_frontend.ensure_global(export_name, backend);
-                        exports.push((export_name, var_idx));
+                        let (_, binding) = lib_frontend.ensure_global(export_name, backend);
+                        if let EnvBinding::Variable(var_idx) = binding {
+                            exports.push((export_name, var_idx));
+                        } else {
+                            unimplemented!()
+                        }
                     }
                 }
                 Some("begin") => {
@@ -269,21 +274,22 @@ impl Frontend {
         Ok(libcode)
     }
 
-    fn lookup(&self, name: &str) -> Option<(usize, usize)> {
-        self.env.lookup(name)
+    fn lookup(&self, name: &str) -> Option<(usize, EnvBinding)> {
+        self.env.lookup(name).map(|(d, b)| (d, b.clone()))
     }
 
-    fn ensure_global<B: Backend>(&mut self, name: &str, backend: &mut B) -> (usize, usize) {
+    fn ensure_global<B: Backend>(&mut self, name: &str, backend: &mut B) -> (usize, EnvBinding) {
         self.env
             .outermost_env()
             .lookup(name)
+            .map(|(d, b)| (d, b.clone()))
             .unwrap_or_else(|| self.add_global(name.to_string(), backend))
     }
 
-    fn add_global<B: Backend>(&mut self, name: String, backend: &mut B) -> (usize, usize) {
-        let (depth, idx) = self.env.add_global(name);
-        backend.add_global(idx);
-        (depth, idx)
+    fn add_global<B: Backend>(&mut self, name: String, backend: &mut B) -> (usize, EnvBinding) {
+        let (depth, binding) = self.env.add_global(name);
+        backend.add_global(binding.index().unwrap());
+        (depth, binding.clone())
     }
 
     fn push_new_scope(&mut self, vars: &SourceLocation<Sexpr>) -> Result<()> {
@@ -310,28 +316,66 @@ fn is_atom(sexpr: &SourceLocation<Sexpr>) -> bool {
     !sexpr.get_value().is_pair()
 }
 
+#[derive(Debug, Clone)]
+enum EnvBinding {
+    Variable(usize),
+}
+
+impl EnvBinding {
+    pub fn meaning_reference<B: Backend>(
+        &self,
+        context: SourceLocation<()>,
+        depth: usize,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        match self {
+            EnvBinding::Variable(idx) => Ok(backend.fetch(context, depth, *idx)),
+        }
+    }
+
+    pub fn meaning_assignment<B: Backend>(
+        &self,
+        context: SourceLocation<()>,
+        depth: usize,
+        value: B::Output,
+        backend: &mut B,
+    ) -> Result<B::Output> {
+        match self {
+            EnvBinding::Variable(idx) => Ok(backend.store(context, depth, *idx, value)),
+        }
+    }
+
+    pub fn index(&self) -> Option<usize> {
+        match self {
+            EnvBinding::Variable(idx) => Some(*idx),
+        }
+    }
+}
+
 struct Env {
     parent: Option<Box<Env>>,
-    variables: Vec<String>,
+    variables: HashMap<String, EnvBinding>,
 }
 
 impl Env {
     fn new() -> Self {
         Env {
             parent: None,
-            variables: vec![],
+            variables: HashMap::new(),
         }
     }
 
     fn from_sexpr(vars: &SourceLocation<Sexpr>) -> Result<Self> {
-        let mut variables = vec![];
+        let mut variables = HashMap::new();
 
         for v in vars.iter() {
-            variables.push(
-                v.as_symbol()
-                    .ok_or_else(|| error_at(v, ExpectedSymbol))?
-                    .to_string(),
-            )
+            let name = v
+                .as_symbol()
+                .ok_or_else(|| error_at(v, ExpectedSymbol))?
+                .to_string();
+
+            let idx = variables.len();
+            variables.insert(name, EnvBinding::Variable(idx));
         }
 
         Ok(Env {
@@ -346,28 +390,25 @@ impl Env {
         Ok(env)
     }
 
-    fn lookup(&self, name: &str) -> Option<(usize, usize)> {
-        self.variables
-            .iter()
-            .position(|v| v == name)
-            .map(|idx| (0, idx))
-            .or_else(|| {
-                self.parent
-                    .as_ref()
-                    .and_then(|p| p.lookup(name))
-                    .map(|(depth, i)| (1 + depth, i))
-            })
+    fn lookup(&self, name: &str) -> Option<(usize, &EnvBinding)> {
+        self.variables.get(name).map(|b| (0, b)).or_else(|| {
+            self.parent
+                .as_ref()
+                .and_then(|p| p.lookup(name))
+                .map(|(depth, b)| (1 + depth, b))
+        })
     }
 
-    fn add_global(&mut self, name: String) -> (usize, usize) {
+    fn add_global(&mut self, name: String) -> (usize, &EnvBinding) {
         if let Some(p) = &mut self.parent {
             let (depth, idx) = p.add_global(name);
             return (1 + depth, idx);
         }
 
         let idx = self.variables.len();
-        self.variables.push(name);
-        (0, idx)
+        self.variables
+            .insert(name.clone(), EnvBinding::Variable(idx));
+        (0, self.variables.get(&name).unwrap())
     }
 
     fn outermost_env(&self) -> &Env {
