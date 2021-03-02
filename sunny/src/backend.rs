@@ -8,7 +8,7 @@ pub trait Backend {
 
     fn begin_module(&mut self);
 
-    fn end_module(&mut self) -> Self::Output;
+    fn end_module(&mut self, content: Self::Output) -> Self::Output;
 
     fn add_global(&mut self, idx: usize);
 
@@ -73,12 +73,12 @@ impl Backend for ByteCodeBackend<'_> {
         self.prelude.push(BlockChain::empty())
     }
 
-    fn end_module(&mut self) -> Self::Output {
-        self.prelude.pop().unwrap()
+    fn end_module(&mut self, content: Self::Output) -> Self::Output {
+        self.prelude.pop().unwrap().chain(content)
     }
 
     fn add_global(&mut self, _: usize) {
-        let block = BasicBlock::new(vec![Op::Const(0), Op::PushLocal], vec![Value::Void]);
+        let block = BasicBlock::new(vec![Op::Void, Op::PushLocal], vec![]);
         self.prelude
             .last_mut()
             .unwrap()

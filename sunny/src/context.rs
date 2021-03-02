@@ -31,9 +31,7 @@ impl Context {
             .meaning(&sexpr, &mut backend)
             .map_err(|e| e.in_string(src))?;
 
-        let prelude = backend.end_module();
-
-        let codegraph = prelude.chain(expression);
+        let codegraph = backend.end_module(expression);
         codegraph.return_from();
 
         let code = codegraph.build_segment();

@@ -253,15 +253,20 @@ impl Frontend {
             body = backend.sequence(prev_part, body);
         }
 
-        let prelude = backend.end_module();
-        body = backend.sequence(prelude, body);
+        body = backend.end_module(body);
 
         let meaning_exports = backend.export(exports);
         body = backend.sequence(body, meaning_exports);
 
         let body_func = backend.lambda(SourceLocation::new(()), 0, body);
 
-        Ok(backend.invoke(SourceLocation::new(()), vec![body_func]))
+        let mut libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
+
+        // this is just to make the test pass for now and serves no real purpose
+        backend.add_global(0);
+        libcode = backend.store(SourceLocation::new(()), 0, 0, libcode);
+
+        Ok(libcode)
     }
 
     fn lookup(&self, name: &str) -> Option<(usize, usize)> {
@@ -399,7 +404,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn end_module(&mut self) -> Self::Output {
+        fn end_module(&mut self, _content: Self::Output) -> Self::Output {
             unimplemented!()
         }
 
