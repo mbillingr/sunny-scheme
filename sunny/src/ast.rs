@@ -19,13 +19,11 @@ pub enum Ast<'src> {
     Lambda(SourceLocation<()>, usize, AstNode<'src>),
     Invoke(SourceLocation<()>, Vec<AstNode<'src>>),
     Module(AstNode<'src>),
-    Export,
+    Export(Vec<(&'src str, usize)>),
 }
 
 impl<'src> Ast<'src> {
-    pub fn begin_module() {}
-
-    pub fn end_module(content: AstNode<'src>) -> AstNode<'src> {
+    pub fn module(content: AstNode<'src>) -> AstNode<'src> {
         Box::new(Ast::Module(content))
     }
 
@@ -79,8 +77,8 @@ impl<'src> Ast<'src> {
         Box::new(Ast::Invoke(context, args))
     }
 
-    pub fn export(_exports: Vec<(&str, usize)>) -> AstNode<'src> {
-        unimplemented!()
+    pub fn export(exports: Vec<(&'src str, usize)>) -> AstNode<'src> {
+        Box::new(Ast::Export(exports))
     }
 
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
@@ -115,7 +113,14 @@ impl<'src> Ast<'src> {
                 let args = args.iter().map(|arg| arg.build(backend)).collect();
                 backend.invoke(ctx.clone(), args)
             }
-            _ => unimplemented!("{:?}", self),
+            Ast::Module(body) => {
+                let body = body.build(backend);
+                let body_func = backend.lambda(SourceLocation::new(()), 0, body);
+                let libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
+                // this is just to make the test pass for now and serves no real purpose
+                backend.store(SourceLocation::new(()), 0, 0, libcode)
+            }
+            Ast::Export(exports) => backend.export(exports.clone()),
         }
     }
 }

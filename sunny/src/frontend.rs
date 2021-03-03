@@ -222,7 +222,6 @@ impl Frontend {
         libname: &'src SourceLocation<Sexpr<'src>>,
         statements: &'src SourceLocation<Sexpr<'src>>,
     ) -> Result<AstNode<'src>> {
-        Ast::begin_module();
         let mut lib_frontend = Frontend::new();
 
         let mut exports = vec![];
@@ -255,19 +254,19 @@ impl Frontend {
             body = Ast::sequence(prev_part, body);
         }
 
-        body = Ast::end_module(body);
-
         let meaning_exports = Ast::export(exports);
         body = Ast::sequence(body, meaning_exports);
 
-        let body_func = Ast::lambda(SourceLocation::new(()), 0, body);
+        Ok(Ast::module(body))
 
-        let mut libcode = Ast::invoke(SourceLocation::new(()), vec![body_func]);
+        //let body_func = Ast::lambda(SourceLocation::new(()), 0, body);
+
+        //let mut libcode = Ast::invoke(SourceLocation::new(()), vec![body_func]);
 
         // this is just to make the test pass for now and serves no real purpose
-        libcode = Ast::store(SourceLocation::new(()), 0, 0, libcode);
+        //libcode = Ast::store(SourceLocation::new(()), 0, 0, libcode);
 
-        Ok(libcode)
+        //Ok(libcode)
     }
 
     fn lookup(&self, name: &str) -> Option<(usize, EnvBinding)> {
