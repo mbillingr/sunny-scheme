@@ -1,8 +1,9 @@
 use crate::ast::{Ast, AstNode};
-use crate::backend::Backend;
 use crate::frontend::Error::*;
 use log::warn;
+use maplit::hashmap;
 use std::collections::HashMap;
+use std::rc::Rc;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_sexpr_parser::{CxR, Sexpr};
 
@@ -14,6 +15,7 @@ pub enum Error {
     ExpectedSymbol,
     ExpectedList,
     UnexpectedStatement,
+    SyntaxAsValue,
 }
 
 impl std::fmt::Display for Error {
@@ -23,6 +25,7 @@ impl std::fmt::Display for Error {
             Error::ExpectedSymbol => write!(f, "Expected symbol"),
             Error::ExpectedList => write!(f, "Expected list"),
             Error::UnexpectedStatement => write!(f, "Unexpected statement"),
+            Error::SyntaxAsValue => write!(f, "Syntax used as value"),
         }
     }
 }
@@ -33,7 +36,9 @@ pub struct Frontend {
 
 impl Frontend {
     pub fn new() -> Self {
-        Frontend { env: Env::new() }
+        Frontend {
+            env: Env::new_base(),
+        }
     }
 
     pub fn meaning<'src>(
@@ -42,9 +47,7 @@ impl Frontend {
     ) -> Result<AstNode<'src>> {
         if is_atom(sexpr) {
             if let Some(name) = sexpr.as_symbol() {
-                let (depth, binding) = self
-                    .lookup(name)
-                    .unwrap_or_else(|| self.add_global(name.to_string()));
+                let (depth, binding) = self.lookup(name);
                 binding.meaning_reference(sexpr.map(()), depth)
             } else {
                 Ok(Ast::constant(sexpr.clone()))
@@ -71,12 +74,6 @@ impl Frontend {
                         let car = self.meaning(arg1)?;
                         let cdr = self.meaning(arg2)?;
                         Ok(Ast::cons(sexpr.map(()), car, cdr))
-                    }
-                    "quote" => {
-                        let arg = sexpr
-                            .cadr()
-                            .ok_or_else(|| error_after(first, MissingArgument))?;
-                        Ok(Ast::constant(arg.clone()))
                     }
                     "begin" => self.meaning_sequence(sexpr.cdr().unwrap()),
                     "if" => {
@@ -107,7 +104,13 @@ impl Frontend {
 
                         self.meaning_lambda(sexpr, arg1, body)
                     }
-                    _ => self.meaning_application(sexpr),
+                    _ => {
+                        if let Some(sx) = self.lookup_syntax(s) {
+                            sx.expand(sexpr)
+                        } else {
+                            self.meaning_application(sexpr)
+                        }
+                    }
                 }
             } else {
                 self.meaning_application(sexpr)
@@ -139,10 +142,8 @@ impl Frontend {
         let argval = sexpr
             .caddr()
             .ok_or_else(|| error_after(arg1, MissingArgument))?;
-        let (depth, binding) = self
-            .lookup(name)
-            .unwrap_or_else(|| self.add_global(name.to_string()));
         let value = self.meaning(argval)?;
+        let (depth, binding) = self.lookup(name);
         binding.meaning_assignment(sexpr.map(()), depth, value)
     }
 
@@ -152,9 +153,7 @@ impl Frontend {
     ) -> Result<AstNode<'src>> {
         let name = self.definition_name(sexpr)?;
         let value = self.definition_value(sexpr)?;
-        let (depth, binding) = self
-            .lookup(name)
-            .unwrap_or_else(|| self.add_global(name.to_string()));
+        let (depth, binding) = self.lookup(name);
         binding.meaning_assignment(sexpr.map(()), depth, value)
     }
 
@@ -258,19 +257,23 @@ impl Frontend {
         body = Ast::sequence(body, meaning_exports);
 
         Ok(Ast::module(body))
-
-        //let body_func = Ast::lambda(SourceLocation::new(()), 0, body);
-
-        //let mut libcode = Ast::invoke(SourceLocation::new(()), vec![body_func]);
-
-        // this is just to make the test pass for now and serves no real purpose
-        //libcode = Ast::store(SourceLocation::new(()), 0, 0, libcode);
-
-        //Ok(libcode)
     }
 
-    fn lookup(&self, name: &str) -> Option<(usize, EnvBinding)> {
-        self.env.lookup(name).map(|(d, b)| (d, b.clone()))
+    fn lookup_syntax(&mut self, name: &str) -> Option<&dyn SyntaxExpander> {
+        self.env.lookup(name).map(|(_, b)| b).and_then(|b| {
+            if let EnvBinding::Syntax(sx) = b {
+                Some(&**sx)
+            } else {
+                None
+            }
+        })
+    }
+
+    fn lookup(&mut self, name: &str) -> (usize, EnvBinding) {
+        self.env
+            .lookup(name)
+            .map(|(d, b)| (d, b.clone()))
+            .unwrap_or_else(|| self.add_global(name.to_string()))
     }
 
     fn ensure_global(&mut self, name: &str) -> (usize, EnvBinding) {
@@ -310,9 +313,24 @@ fn is_atom(sexpr: &SourceLocation<Sexpr>) -> bool {
     !sexpr.get_value().is_pair()
 }
 
-#[derive(Debug, Clone)]
+pub trait SyntaxExpander {
+    fn expand<'src>(&self, sexpr: &'src SourceLocation<Sexpr<'src>>) -> Result<AstNode<'src>>;
+}
+
+struct Quotation;
+impl SyntaxExpander for Quotation {
+    fn expand<'src>(&self, sexpr: &'src SourceLocation<Sexpr<'src>>) -> Result<AstNode<'src>> {
+        let arg = sexpr
+            .cadr()
+            .ok_or_else(|| error_after(sexpr.car().unwrap(), MissingArgument))?;
+        Ok(Ast::constant(arg.clone()))
+    }
+}
+
+#[derive(Clone)]
 enum EnvBinding {
     Variable(usize),
+    Syntax(Rc<dyn SyntaxExpander>),
 }
 
 impl EnvBinding {
@@ -323,6 +341,7 @@ impl EnvBinding {
     ) -> Result<AstNode<'src>> {
         match self {
             EnvBinding::Variable(idx) => Ok(Ast::fetch(context, depth, *idx)),
+            EnvBinding::Syntax(_) => Err(context.map(Error::SyntaxAsValue)),
         }
     }
 
@@ -334,26 +353,42 @@ impl EnvBinding {
     ) -> Result<AstNode<'src>> {
         match self {
             EnvBinding::Variable(idx) => Ok(Ast::store(context, depth, *idx, value)),
+            EnvBinding::Syntax(_) => Err(context.map(Error::SyntaxAsValue)),
         }
     }
-    pub fn expand_syntax<B: Backend>(
+
+    pub fn expand_syntax<'src>(
         &self,
-        _sexpr: &SourceLocation<Sexpr>,
-        _backend: &mut B,
-    ) -> Result<AstNode> {
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+    ) -> Result<AstNode<'src>> {
         match self {
             EnvBinding::Variable(_) => panic!("Attempt to expand variable as syntax"),
+            EnvBinding::Syntax(x) => x.expand(sexpr),
         }
     }
 
     pub fn index(&self) -> Option<usize> {
         match self {
             EnvBinding::Variable(idx) => Some(*idx),
+            EnvBinding::Syntax(_) => None,
+        }
+    }
+
+    pub fn is_variable(&self) -> bool {
+        match self {
+            EnvBinding::Variable(_) => true,
+            EnvBinding::Syntax(_) => false,
         }
     }
 }
 
-#[derive(Debug, Clone, Default)]
+impl<T: 'static + SyntaxExpander> From<T> for EnvBinding {
+    fn from(se: T) -> Self {
+        EnvBinding::Syntax(Rc::new(se))
+    }
+}
+
+#[derive(Default)]
 pub struct Env {
     parent: Option<Box<Env>>,
     variables: HashMap<String, EnvBinding>,
@@ -364,6 +399,16 @@ impl Env {
         Env {
             parent: None,
             variables: HashMap::new(),
+        }
+    }
+
+    pub fn new_base() -> Self {
+        let variables = hashmap![
+            "quote".to_string() => EnvBinding::from(Quotation),
+        ];
+        Env {
+            parent: None,
+            variables,
         }
     }
 
@@ -407,7 +452,7 @@ impl Env {
             return (1 + depth, idx);
         }
 
-        let idx = self.variables.len();
+        let idx = self.variables.values().filter(|b| b.is_variable()).count();
         self.variables
             .insert(name.clone(), EnvBinding::Variable(idx));
         (0, self.variables.get(&name).unwrap())
