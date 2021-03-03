@@ -29,7 +29,7 @@ pub trait Backend {
         &mut self,
         context: SourceLocation<()>,
         condition: Self::Ir,
-        consequent: Self::Ir,
+        consequence: Self::Ir,
         alternative: Self::Ir,
     ) -> Self::Ir;
 

@@ -265,8 +265,7 @@ impl Frontend {
         let mut libcode = Ast::invoke(SourceLocation::new(()), vec![body_func]);
 
         // this is just to make the test pass for now and serves no real purpose
-        Ast::add_global(0);
-        libcode = Ast::store(SourceLocation::new(()), 0, 0, libcode);
+        libcode = Ast::declare_global(0, Ast::store(SourceLocation::new(()), 0, 0, libcode));
 
         Ok(libcode)
     }
@@ -285,7 +284,7 @@ impl Frontend {
 
     fn add_global(&mut self, name: String) -> (usize, EnvBinding) {
         let (depth, binding) = self.env.add_global(name);
-        Ast::add_global(binding.index().unwrap());
+        //Ast::declare_global(binding.index().unwrap());
         (depth, binding.clone())
     }
 

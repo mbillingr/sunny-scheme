@@ -279,6 +279,9 @@ impl Vm {
         for _ in 0..depth {
             act = self.current_activation.parent.as_ref().unwrap();
         }
+        if idx >= act.locals.len() {
+            return Err(ErrorKind::UndefinedVariable);
+        }
         let x = cell_clone(&act.locals[idx]);
         if x.is_void() {
             return Err(ErrorKind::UndefinedVariable);
@@ -288,9 +291,13 @@ impl Vm {
     }
 
     fn set_local(&mut self, depth: usize, idx: usize, value: Value) -> Result<()> {
-        let mut act = &self.current_activation;
+        let mut act = &mut self.current_activation;
         for _ in 0..depth {
-            act = self.current_activation.parent.as_ref().unwrap();
+            act = self.current_activation.parent.as_mut().unwrap();
+        }
+        if idx >= act.locals.len() {
+            act.locals
+                .resize_with(idx.next_power_of_two(), || Cell::new(Value::Void));
         }
         act.locals[idx].set(value);
         Ok(())

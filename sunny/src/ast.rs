@@ -1,3 +1,4 @@
+use crate::ast::Ast::DeclareGlobal;
 use crate::backend::Backend;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
@@ -5,14 +6,21 @@ pub type AstNode<'src> = Box<Ast<'src>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Ast<'src> {
+    DeclareGlobal(usize, AstNode<'src>),
+
     Const(SourceLocation<Sexpr<'src>>), // todo: don't store constants as strings
-    Fetch(SourceLocation<(usize, usize)>),
-    Store(SourceLocation<(usize, usize, AstNode<'src>)>),
-    Cons(SourceLocation<(AstNode<'src>, AstNode<'src>)>),
-    If(SourceLocation<(AstNode<'src>, AstNode<'src>, AstNode<'src>)>),
+    Fetch(SourceLocation<()>, usize, usize),
+    Store(SourceLocation<()>, usize, usize, AstNode<'src>),
+    Cons(SourceLocation<()>, AstNode<'src>, AstNode<'src>),
     Sequence(AstNode<'src>, AstNode<'src>),
-    Lambda(SourceLocation<(usize, AstNode<'src>)>),
-    Invoke(SourceLocation<Vec<AstNode<'src>>>),
+    If(
+        SourceLocation<()>,
+        AstNode<'src>,
+        AstNode<'src>,
+        AstNode<'src>,
+    ),
+    Lambda(SourceLocation<()>, usize, AstNode<'src>),
+    Invoke(SourceLocation<()>, Vec<AstNode<'src>>),
     Module(AstNode<'src>),
     Export,
 }
@@ -24,14 +32,16 @@ impl<'src> Ast<'src> {
         Box::new(Ast::Module(content))
     }
 
-    pub fn add_global(idx: usize) {}
+    pub fn declare_global(idx: usize, body: AstNode<'src>) -> AstNode<'src> {
+        Box::new(DeclareGlobal(idx, body))
+    }
 
     pub fn constant(sexpr: SourceLocation<Sexpr<'src>>) -> AstNode<'src> {
         Box::new(Ast::Const(sexpr))
     }
 
     pub fn fetch(context: SourceLocation<()>, depth: usize, idx: usize) -> AstNode<'src> {
-        Box::new(Ast::Fetch(context.map((depth, idx))))
+        Box::new(Ast::Fetch(context, depth, idx))
     }
 
     pub fn store(
@@ -40,7 +50,7 @@ impl<'src> Ast<'src> {
         idx: usize,
         val: AstNode<'src>,
     ) -> AstNode<'src> {
-        Box::new(Ast::Store(context.map((depth, idx, val))))
+        Box::new(Ast::Store(context, depth, idx, val))
     }
 
     pub fn cons(
@@ -48,7 +58,11 @@ impl<'src> Ast<'src> {
         first: AstNode<'src>,
         second: AstNode<'src>,
     ) -> AstNode<'src> {
-        Box::new(Ast::Cons(context.map((first, second))))
+        Box::new(Ast::Cons(context, first, second))
+    }
+
+    pub fn sequence(first: AstNode<'src>, next: AstNode<'src>) -> AstNode<'src> {
+        Box::new(Ast::Sequence(first, next))
     }
 
     pub fn ifexpr(
@@ -57,11 +71,7 @@ impl<'src> Ast<'src> {
         consequent: AstNode<'src>,
         alternative: AstNode<'src>,
     ) -> AstNode<'src> {
-        Box::new(Ast::If(context.map((condition, consequent, alternative))))
-    }
-
-    pub fn sequence(first: AstNode<'src>, next: AstNode<'src>) -> AstNode<'src> {
-        Box::new(Ast::Sequence(first, next))
+        Box::new(Ast::If(context, condition, consequent, alternative))
     }
 
     pub fn lambda(
@@ -69,11 +79,11 @@ impl<'src> Ast<'src> {
         n_args: usize,
         body: AstNode<'src>,
     ) -> AstNode<'src> {
-        Box::new(Ast::Lambda(context.map((n_args, body))))
+        Box::new(Ast::Lambda(context, n_args, body))
     }
 
     pub fn invoke(context: SourceLocation<()>, args: Vec<AstNode<'src>>) -> AstNode<'src> {
-        Box::new(Ast::Invoke(context.map(args)))
+        Box::new(Ast::Invoke(context, args))
     }
 
     pub fn export(exports: Vec<(&str, usize)>) -> AstNode<'src> {
@@ -83,7 +93,36 @@ impl<'src> Ast<'src> {
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
             Ast::Const(sexpr) => backend.constant(sexpr.map(()), sexpr.get_value()),
-            _ => unimplemented!(),
+            Ast::Fetch(ctx, depth, idx) => backend.fetch(ctx.clone(), *depth, *idx),
+            Ast::Store(ctx, depth, idx, value) => {
+                let value = value.build(backend);
+                backend.store(ctx.clone(), *depth, *idx, value)
+            }
+            Ast::Cons(ctx, car, cdr) => {
+                let car = car.build(backend);
+                let cdr = cdr.build(backend);
+                backend.cons(ctx.clone(), car, cdr)
+            }
+            Ast::Sequence(first, next) => {
+                let first = first.build(backend);
+                let next = next.build(backend);
+                backend.sequence(first, next)
+            }
+            Ast::If(ctx, cond, consequence, alternative) => {
+                let condition = cond.build(backend);
+                let consequence = consequence.build(backend);
+                let alternative = alternative.build(backend);
+                backend.ifexpr(ctx.clone(), condition, consequence, alternative)
+            }
+            Ast::Lambda(ctx, nparams, body) => {
+                let body = body.build(backend);
+                backend.lambda(ctx.clone(), *nparams, body)
+            }
+            Ast::Invoke(ctx, args) => {
+                let args = args.iter().map(|arg| arg.build(backend)).collect();
+                backend.invoke(ctx.clone(), args)
+            }
+            _ => unimplemented!("{:?}", self),
         }
     }
 }
