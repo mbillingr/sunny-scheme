@@ -4,52 +4,42 @@ use sunny_vm::bytecode::Op;
 use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 
 pub trait Backend {
-    type Output;
+    type Ir;
 
     fn begin_module(&mut self);
 
-    fn end_module(&mut self, content: Self::Output) -> Self::Output;
+    fn end_module(&mut self, content: Self::Ir) -> Self::Ir;
 
     fn add_global(&mut self, idx: usize);
 
-    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output;
+    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir;
 
-    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output;
+    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir;
     fn store(
         &mut self,
         context: SourceLocation<()>,
         depth: usize,
         idx: usize,
-        val: Self::Output,
-    ) -> Self::Output;
+        val: Self::Ir,
+    ) -> Self::Ir;
 
-    fn cons(
-        &mut self,
-        context: SourceLocation<()>,
-        first: Self::Output,
-        second: Self::Output,
-    ) -> Self::Output;
+    fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir;
 
     fn ifexpr(
         &mut self,
         context: SourceLocation<()>,
-        condition: Self::Output,
-        consequent: Self::Output,
-        alternative: Self::Output,
-    ) -> Self::Output;
+        condition: Self::Ir,
+        consequent: Self::Ir,
+        alternative: Self::Ir,
+    ) -> Self::Ir;
 
-    fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output;
+    fn sequence(&mut self, first: Self::Ir, next: Self::Ir) -> Self::Ir;
 
-    fn lambda(
-        &mut self,
-        context: SourceLocation<()>,
-        n_args: usize,
-        body: Self::Output,
-    ) -> Self::Output;
+    fn lambda(&mut self, context: SourceLocation<()>, n_args: usize, body: Self::Ir) -> Self::Ir;
 
-    fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output;
+    fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir;
 
-    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Output;
+    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Ir;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -67,13 +57,13 @@ impl<'s> ByteCodeBackend<'s> {
 }
 
 impl Backend for ByteCodeBackend<'_> {
-    type Output = BlockChain;
+    type Ir = BlockChain;
 
     fn begin_module(&mut self) {
         self.prelude.push(BlockChain::empty())
     }
 
-    fn end_module(&mut self, content: Self::Output) -> Self::Output {
+    fn end_module(&mut self, content: Self::Ir) -> Self::Ir {
         self.prelude.pop().unwrap().chain(content)
     }
 
@@ -85,7 +75,7 @@ impl Backend for ByteCodeBackend<'_> {
             .append(BlockChain::singleton(block));
     }
 
-    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Output {
+    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir {
         let allocs = self.storage.count_allocations(c);
         self.storage.ensure(allocs);
         let value = self.storage.sexpr_to_value(c).unwrap();
@@ -94,7 +84,7 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(block)
     }
 
-    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output {
+    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Fetch, idx));
@@ -109,8 +99,8 @@ impl Backend for ByteCodeBackend<'_> {
         context: SourceLocation<()>,
         depth: usize,
         idx: usize,
-        val: Self::Output,
-    ) -> Self::Output {
+        val: Self::Ir,
+    ) -> Self::Ir {
         let mut ops = vec![];
         ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Store, idx));
@@ -121,12 +111,7 @@ impl Backend for ByteCodeBackend<'_> {
         val.chain(BlockChain::singleton(block))
     }
 
-    fn cons(
-        &mut self,
-        context: SourceLocation<()>,
-        first: Self::Output,
-        second: Self::Output,
-    ) -> Self::Output {
+    fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir {
         second.append_op_with_context(Op::Cons, context);
         first.chain(second)
     }
@@ -134,25 +119,20 @@ impl Backend for ByteCodeBackend<'_> {
     fn ifexpr(
         &mut self,
         context: SourceLocation<()>,
-        condition: Self::Output,
-        consequent: Self::Output,
-        alternative: Self::Output,
-    ) -> Self::Output {
+        condition: Self::Ir,
+        consequent: Self::Ir,
+        alternative: Self::Ir,
+    ) -> Self::Ir {
         let exit = BlockChain::empty();
         condition.branch_bool_with_context(consequent, alternative, exit, context)
     }
 
-    fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output {
+    fn sequence(&mut self, first: Self::Ir, next: Self::Ir) -> Self::Ir {
         first.append_op(Op::Drop);
         first.chain(next)
     }
 
-    fn lambda(
-        &mut self,
-        context: SourceLocation<()>,
-        n_args: usize,
-        body: Self::Output,
-    ) -> Self::Output {
+    fn lambda(&mut self, context: SourceLocation<()>, n_args: usize, body: Self::Ir) -> Self::Ir {
         body.return_from_with_context(context.clone());
         let mut preamble = BlockChain::empty();
         preamble.append_ops(Op::extended(Op::PrepareArgs, n_args));
@@ -163,7 +143,7 @@ impl Backend for ByteCodeBackend<'_> {
         prologue.make_closure(context, preamble, epilogue)
     }
 
-    fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output {
+    fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir {
         let mut blocks = BlockChain::empty();
         let n_args = args.len() - 1;
         for a in args.into_iter().rev() {
@@ -173,7 +153,7 @@ impl Backend for ByteCodeBackend<'_> {
         blocks
     }
 
-    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Output {
+    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Ir {
         self.storage.ensure(exports.len());
         let mut ops = vec![Op::Table];
         let mut constants = vec![];

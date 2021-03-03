@@ -26,28 +26,28 @@ impl std::fmt::Display for Error {
     }
 }
 
-pub struct Frontend {
-    env: Env,
+pub struct Frontend<'f, B: Backend> {
+    pub env: Env,
+    pub backend: &'f mut B,
 }
 
-impl Frontend {
-    pub fn new() -> Self {
-        Frontend { env: Env::new() }
+impl<'f, B: Backend> Frontend<'f, B> {
+    pub fn new(backend: &'f mut B) -> Self {
+        Frontend {
+            env: Env::new(),
+            backend,
+        }
     }
 
-    pub fn meaning<B: Backend>(
-        &mut self,
-        sexpr: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    pub fn meaning(&mut self, sexpr: &SourceLocation<Sexpr>) -> Result<B::Ir> {
         if is_atom(sexpr) {
             if let Some(name) = sexpr.as_symbol() {
                 let (depth, binding) = self
                     .lookup(name)
-                    .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-                binding.meaning_reference(sexpr.map(()), depth, backend)
+                    .unwrap_or_else(|| self.add_global(name.to_string()));
+                binding.meaning_reference(sexpr.map(()), depth, self.backend)
             } else {
-                Ok(backend.constant(sexpr.map(()), sexpr.get_value()))
+                Ok(self.backend.constant(sexpr.map(()), sexpr.get_value()))
             }
         } else {
             let first = sexpr.car().unwrap();
@@ -57,10 +57,10 @@ impl Frontend {
                         let libname = sexpr
                             .cadr()
                             .ok_or_else(|| error_after(first, MissingArgument))?;
-                        self.library_definition(libname, sexpr.cddr().unwrap(), backend)
+                        self.library_definition(libname, sexpr.cddr().unwrap())
                     }
-                    "set!" => self.meaning_assignment(sexpr, backend),
-                    "define" => self.meaning_definition(sexpr, backend),
+                    "set!" => self.meaning_assignment(sexpr),
+                    "define" => self.meaning_definition(sexpr),
                     "cons" => {
                         let arg1 = sexpr
                             .cadr()
@@ -68,17 +68,17 @@ impl Frontend {
                         let arg2 = sexpr
                             .caddr()
                             .ok_or_else(|| error_after(arg1, MissingArgument))?;
-                        let car = self.meaning(arg1, backend)?;
-                        let cdr = self.meaning(arg2, backend)?;
-                        Ok(backend.cons(sexpr.map(()), car, cdr))
+                        let car = self.meaning(arg1)?;
+                        let cdr = self.meaning(arg2)?;
+                        Ok(self.backend.cons(sexpr.map(()), car, cdr))
                     }
                     "quote" => {
                         let arg = sexpr
                             .cadr()
                             .ok_or_else(|| error_after(first, MissingArgument))?;
-                        Ok(backend.constant(arg.map(()), arg.get_value()))
+                        Ok(self.backend.constant(arg.map(()), arg.get_value()))
                     }
-                    "begin" => self.meaning_sequence(sexpr.cdr().unwrap(), backend),
+                    "begin" => self.meaning_sequence(sexpr.cdr().unwrap()),
                     "if" => {
                         let arg1 = sexpr
                             .cadr()
@@ -89,10 +89,12 @@ impl Frontend {
                         let arg3 = sexpr
                             .cadddr()
                             .ok_or_else(|| error_after(arg2, MissingArgument))?;
-                        let condition = self.meaning(arg1, backend)?;
-                        let consequent = self.meaning(arg2, backend)?;
-                        let alternative = self.meaning(arg3, backend)?;
-                        Ok(backend.ifexpr(sexpr.map(()), condition, consequent, alternative))
+                        let condition = self.meaning(arg1)?;
+                        let consequent = self.meaning(arg2)?;
+                        let alternative = self.meaning(arg3)?;
+                        Ok(self
+                            .backend
+                            .ifexpr(sexpr.map(()), condition, consequent, alternative))
                     }
                     "lambda" => {
                         let arg1 = sexpr
@@ -100,33 +102,25 @@ impl Frontend {
                             .ok_or_else(|| error_after(first, MissingArgument))?;
                         let body = sexpr.cddr().unwrap();
 
-                        self.meaning_lambda(sexpr, arg1, body, backend)
+                        self.meaning_lambda(sexpr, arg1, body)
                     }
-                    _ => self.meaning_application(sexpr, backend),
+                    _ => self.meaning_application(sexpr),
                 }
             } else {
-                self.meaning_application(sexpr, backend)
+                self.meaning_application(sexpr)
             }
         }
     }
 
-    pub fn meaning_application<B: Backend>(
-        &mut self,
-        sexpr: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    pub fn meaning_application(&mut self, sexpr: &SourceLocation<Sexpr>) -> Result<B::Ir> {
         let mut args = vec![];
         for a in sexpr.iter() {
-            args.push(self.meaning(a, backend)?);
+            args.push(self.meaning(a)?);
         }
-        Ok(backend.invoke(sexpr.map(()), args))
+        Ok(self.backend.invoke(sexpr.map(()), args))
     }
 
-    pub fn meaning_assignment<B: Backend>(
-        &mut self,
-        sexpr: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    pub fn meaning_assignment(&mut self, sexpr: &SourceLocation<Sexpr>) -> Result<B::Ir> {
         let arg1 = sexpr
             .cadr()
             .ok_or_else(|| error_after(sexpr.car().unwrap(), MissingArgument))?;
@@ -138,22 +132,18 @@ impl Frontend {
             .ok_or_else(|| error_after(arg1, MissingArgument))?;
         let (depth, binding) = self
             .lookup(name)
-            .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-        let value = self.meaning(argval, backend)?;
-        binding.meaning_assignment(sexpr.map(()), depth, value, backend)
+            .unwrap_or_else(|| self.add_global(name.to_string()));
+        let value = self.meaning(argval)?;
+        binding.meaning_assignment(sexpr.map(()), depth, value, self.backend)
     }
 
-    pub fn meaning_definition<B: Backend>(
-        &mut self,
-        sexpr: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    pub fn meaning_definition(&mut self, sexpr: &SourceLocation<Sexpr>) -> Result<B::Ir> {
         let name = self.definition_name(sexpr)?;
-        let value = self.definition_value(sexpr, backend)?;
+        let value = self.definition_value(sexpr)?;
         let (depth, binding) = self
             .lookup(name)
-            .unwrap_or_else(|| self.add_global(name.to_string(), backend));
-        binding.meaning_assignment(sexpr.map(()), depth, value, backend)
+            .unwrap_or_else(|| self.add_global(name.to_string()));
+        binding.meaning_assignment(sexpr.map(()), depth, value, self.backend)
     }
 
     fn definition_name<'a>(&self, sexpr: &'a SourceLocation<Sexpr>) -> Result<&'a str> {
@@ -171,65 +161,54 @@ impl Frontend {
         }
     }
 
-    fn definition_value<B: Backend>(
-        &mut self,
-        sexpr: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    fn definition_value(&mut self, sexpr: &SourceLocation<Sexpr>) -> Result<B::Ir> {
         if sexpr.cadr().unwrap().is_symbol() {
             let argval = sexpr
                 .caddr()
                 .ok_or_else(|| error_after(sexpr.cddr().unwrap(), MissingArgument))?;
-            self.meaning(argval, backend)
+            self.meaning(argval)
         } else {
             let args = sexpr.cdadr().unwrap();
             let body = sexpr.cddr().unwrap();
-            self.meaning_lambda(sexpr, args, body, backend)
+            self.meaning_lambda(sexpr, args, body)
         }
     }
 
-    pub fn meaning_lambda<B: Backend>(
+    pub fn meaning_lambda(
         &mut self,
         sexpr: &SourceLocation<Sexpr>,
         args: &SourceLocation<Sexpr>,
         body: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    ) -> Result<B::Ir> {
         self.push_new_scope(args)?;
-        let body = self.meaning_sequence(body, backend)?;
+        let body = self.meaning_sequence(body)?;
         self.pop_scope();
-        Ok(backend.lambda(sexpr.map(()), args.len(), body))
+        Ok(self.backend.lambda(sexpr.map(()), args.len(), body))
     }
 
-    pub fn meaning_sequence<B: Backend>(
-        &mut self,
-        body: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
+    pub fn meaning_sequence(&mut self, body: &SourceLocation<Sexpr>) -> Result<B::Ir> {
         let first_expr = body.car().ok_or_else(|| error_at(body, ExpectedSymbol))?;
         let rest_expr = body.cdr().unwrap();
 
         if rest_expr.is_null() {
-            self.meaning(first_expr, backend)
+            self.meaning(first_expr)
         } else {
-            let first = self.meaning(first_expr, backend)?;
-            let rest = self.meaning_sequence(rest_expr, backend)?;
-            Ok(backend.sequence(first, rest))
+            let first = self.meaning(first_expr)?;
+            let rest = self.meaning_sequence(rest_expr)?;
+            Ok(self.backend.sequence(first, rest))
         }
     }
 
-    pub fn library_definition<B: Backend>(
+    pub fn library_definition(
         &mut self,
         libname: &SourceLocation<Sexpr>,
         statements: &SourceLocation<Sexpr>,
-        backend: &mut B,
-    ) -> Result<B::Output> {
-        let mut body_parts = vec![];
-        let mut lib_frontend = Self::new();
-        backend.begin_module();
+    ) -> Result<B::Ir> {
+        self.backend.begin_module();
+        let mut lib_frontend = Frontend::new(self.backend);
 
         let mut exports = vec![];
-
+        let mut body_parts = vec![];
         for stmt in statements.iter() {
             match stmt.car().and_then(|s| s.as_symbol()) {
                 Some("import") => warn!("Ignoring (import ...) statement in library definition"),
@@ -238,7 +217,7 @@ impl Frontend {
                         let export_name = export_item
                             .as_symbol()
                             .ok_or_else(|| error_at(export_item, ExpectedSymbol))?;
-                        let (_, binding) = lib_frontend.ensure_global(export_name, backend);
+                        let (_, binding) = lib_frontend.ensure_global(export_name);
                         if let EnvBinding::Variable(var_idx) = binding {
                             exports.push((export_name, var_idx));
                         } else {
@@ -247,7 +226,7 @@ impl Frontend {
                     }
                 }
                 Some("begin") => {
-                    body_parts.push(lib_frontend.meaning_sequence(stmt.cdr().unwrap(), backend)?)
+                    body_parts.push(lib_frontend.meaning_sequence(stmt.cdr().unwrap())?)
                 }
                 _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
             }
@@ -255,21 +234,23 @@ impl Frontend {
 
         let mut body = body_parts.pop().expect("Empty library body");
         while let Some(prev_part) = body_parts.pop() {
-            body = backend.sequence(prev_part, body);
+            body = self.backend.sequence(prev_part, body);
         }
 
-        body = backend.end_module(body);
+        body = self.backend.end_module(body);
 
-        let meaning_exports = backend.export(exports);
-        body = backend.sequence(body, meaning_exports);
+        let meaning_exports = self.backend.export(exports);
+        body = self.backend.sequence(body, meaning_exports);
 
-        let body_func = backend.lambda(SourceLocation::new(()), 0, body);
+        let body_func = self.backend.lambda(SourceLocation::new(()), 0, body);
 
-        let mut libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
+        let mut libcode = self
+            .backend
+            .invoke(SourceLocation::new(()), vec![body_func]);
 
         // this is just to make the test pass for now and serves no real purpose
-        backend.add_global(0);
-        libcode = backend.store(SourceLocation::new(()), 0, 0, libcode);
+        self.backend.add_global(0);
+        libcode = self.backend.store(SourceLocation::new(()), 0, 0, libcode);
 
         Ok(libcode)
     }
@@ -278,17 +259,17 @@ impl Frontend {
         self.env.lookup(name).map(|(d, b)| (d, b.clone()))
     }
 
-    fn ensure_global<B: Backend>(&mut self, name: &str, backend: &mut B) -> (usize, EnvBinding) {
+    fn ensure_global(&mut self, name: &str) -> (usize, EnvBinding) {
         self.env
             .outermost_env()
             .lookup(name)
             .map(|(d, b)| (d, b.clone()))
-            .unwrap_or_else(|| self.add_global(name.to_string(), backend))
+            .unwrap_or_else(|| self.add_global(name.to_string()))
     }
 
-    fn add_global<B: Backend>(&mut self, name: String, backend: &mut B) -> (usize, EnvBinding) {
+    fn add_global(&mut self, name: String) -> (usize, EnvBinding) {
         let (depth, binding) = self.env.add_global(name);
-        backend.add_global(binding.index().unwrap());
+        self.backend.add_global(binding.index().unwrap());
         (depth, binding.clone())
     }
 
@@ -327,7 +308,7 @@ impl EnvBinding {
         context: SourceLocation<()>,
         depth: usize,
         backend: &mut B,
-    ) -> Result<B::Output> {
+    ) -> Result<B::Ir> {
         match self {
             EnvBinding::Variable(idx) => Ok(backend.fetch(context, depth, *idx)),
         }
@@ -337,9 +318,9 @@ impl EnvBinding {
         &self,
         context: SourceLocation<()>,
         depth: usize,
-        value: B::Output,
+        value: B::Ir,
         backend: &mut B,
-    ) -> Result<B::Output> {
+    ) -> Result<B::Ir> {
         match self {
             EnvBinding::Variable(idx) => Ok(backend.store(context, depth, *idx, value)),
         }
@@ -352,13 +333,14 @@ impl EnvBinding {
     }
 }
 
-struct Env {
+#[derive(Debug, Clone, Default)]
+pub struct Env {
     parent: Option<Box<Env>>,
     variables: HashMap<String, EnvBinding>,
 }
 
 impl Env {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Env {
             parent: None,
             variables: HashMap::new(),
@@ -439,23 +421,23 @@ mod tests {
     struct AstBuilder;
 
     impl Backend for AstBuilder {
-        type Output = Ast;
+        type Ir = Ast;
 
         fn begin_module(&mut self) {
             unimplemented!()
         }
 
-        fn end_module(&mut self, _content: Self::Output) -> Self::Output {
+        fn end_module(&mut self, _content: Self::Ir) -> Self::Ir {
             unimplemented!()
         }
 
         fn add_global(&mut self, _: usize) {}
 
-        fn constant(&mut self, _: SourceLocation<()>, c: &Sexpr) -> Self::Output {
+        fn constant(&mut self, _: SourceLocation<()>, c: &Sexpr) -> Self::Ir {
             Ast::Const(c.to_string())
         }
 
-        fn fetch(&mut self, _: SourceLocation<()>, depth: usize, idx: usize) -> Self::Output {
+        fn fetch(&mut self, _: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir {
             Ast::Ref(depth, idx)
         }
 
@@ -464,27 +446,22 @@ mod tests {
             _: SourceLocation<()>,
             depth: usize,
             idx: usize,
-            val: Self::Output,
-        ) -> Self::Output {
+            val: Self::Ir,
+        ) -> Self::Ir {
             Ast::Set(depth, idx, Box::new(val))
         }
 
-        fn cons(
-            &mut self,
-            _: SourceLocation<()>,
-            first: Self::Output,
-            second: Self::Output,
-        ) -> Self::Output {
+        fn cons(&mut self, _: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir {
             Ast::Cons(Box::new(first), Box::new(second))
         }
 
         fn ifexpr(
             &mut self,
             _: SourceLocation<()>,
-            condition: Self::Output,
-            consequent: Self::Output,
-            alternative: Self::Output,
-        ) -> Self::Output {
+            condition: Self::Ir,
+            consequent: Self::Ir,
+            alternative: Self::Ir,
+        ) -> Self::Ir {
             Ast::If(
                 Box::new(condition),
                 Box::new(consequent),
@@ -492,24 +469,19 @@ mod tests {
             )
         }
 
-        fn sequence(&mut self, first: Self::Output, next: Self::Output) -> Self::Output {
+        fn sequence(&mut self, first: Self::Ir, next: Self::Ir) -> Self::Ir {
             Ast::Begin(Box::new(first), Box::new(next))
         }
 
-        fn lambda(
-            &mut self,
-            _: SourceLocation<()>,
-            n_args: usize,
-            body: Self::Output,
-        ) -> Self::Output {
+        fn lambda(&mut self, _: SourceLocation<()>, n_args: usize, body: Self::Ir) -> Self::Ir {
             Ast::Lambda(n_args, Box::new(body))
         }
 
-        fn invoke(&mut self, _: SourceLocation<()>, args: Vec<Self::Output>) -> Self::Output {
+        fn invoke(&mut self, _: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir {
             Ast::Invoke(args)
         }
 
-        fn export(&mut self, _exports: Vec<(&str, usize)>) -> Self::Output {
+        fn export(&mut self, _exports: Vec<(&str, usize)>) -> Self::Ir {
             unimplemented!()
         }
     }
@@ -547,7 +519,7 @@ mod tests {
     macro_rules! meaning_of {
         ($expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
-            Frontend::new().meaning(&sexpr.into(), &mut AstBuilder)
+            Frontend::new(&mut AstBuilder).meaning(&sexpr.into())
         }};
     }
 
