@@ -1,4 +1,3 @@
-use crate::ast::Ast::DeclareGlobal;
 use crate::backend::Backend;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
@@ -6,8 +5,6 @@ pub type AstNode<'src> = Box<Ast<'src>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Ast<'src> {
-    DeclareGlobal(usize, AstNode<'src>),
-
     Const(SourceLocation<Sexpr<'src>>), // todo: don't store constants as strings
     Fetch(SourceLocation<()>, usize, usize),
     Store(SourceLocation<()>, usize, usize, AstNode<'src>),
@@ -30,10 +27,6 @@ impl<'src> Ast<'src> {
 
     pub fn end_module(content: AstNode<'src>) -> AstNode<'src> {
         Box::new(Ast::Module(content))
-    }
-
-    pub fn declare_global(idx: usize, body: AstNode<'src>) -> AstNode<'src> {
-        Box::new(DeclareGlobal(idx, body))
     }
 
     pub fn constant(sexpr: SourceLocation<Sexpr<'src>>) -> AstNode<'src> {
@@ -86,7 +79,7 @@ impl<'src> Ast<'src> {
         Box::new(Ast::Invoke(context, args))
     }
 
-    pub fn export(exports: Vec<(&str, usize)>) -> AstNode<'src> {
+    pub fn export(_exports: Vec<(&str, usize)>) -> AstNode<'src> {
         unimplemented!()
     }
 

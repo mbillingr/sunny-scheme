@@ -3,7 +3,7 @@ use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
 use crate::backend::{Backend, ByteCodeBackend};
 use crate::frontend;
-use crate::frontend::{Env, Frontend};
+use crate::frontend::Frontend;
 use sunny_vm::optimizations::tail_call_optimization;
 
 pub struct Context {

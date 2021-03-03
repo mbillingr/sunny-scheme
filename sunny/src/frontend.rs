@@ -265,7 +265,7 @@ impl Frontend {
         let mut libcode = Ast::invoke(SourceLocation::new(()), vec![body_func]);
 
         // this is just to make the test pass for now and serves no real purpose
-        libcode = Ast::declare_global(0, Ast::store(SourceLocation::new(()), 0, 0, libcode));
+        libcode = Ast::store(SourceLocation::new(()), 0, 0, libcode);
 
         Ok(libcode)
     }
@@ -284,7 +284,6 @@ impl Frontend {
 
     fn add_global(&mut self, name: String) -> (usize, EnvBinding) {
         let (depth, binding) = self.env.add_global(name);
-        //Ast::declare_global(binding.index().unwrap());
         (depth, binding.clone())
     }
 
@@ -340,8 +339,8 @@ impl EnvBinding {
     }
     pub fn expand_syntax<B: Backend>(
         &self,
-        sexpr: &SourceLocation<Sexpr>,
-        backend: &mut B,
+        _sexpr: &SourceLocation<Sexpr>,
+        _backend: &mut B,
     ) -> Result<AstNode> {
         match self {
             EnvBinding::Variable(_) => panic!("Attempt to expand variable as syntax"),

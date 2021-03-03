@@ -10,8 +10,6 @@ pub trait Backend {
 
     fn end_module(&mut self, content: Self::Ir) -> Self::Ir;
 
-    fn add_global(&mut self, idx: usize);
-
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir;
 
     fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir;
@@ -65,14 +63,6 @@ impl Backend for ByteCodeBackend<'_> {
 
     fn end_module(&mut self, content: Self::Ir) -> Self::Ir {
         self.prelude.pop().unwrap().chain(content)
-    }
-
-    fn add_global(&mut self, _: usize) {
-        let block = BasicBlock::new(vec![Op::Void, Op::PushLocal], vec![]);
-        self.prelude
-            .last_mut()
-            .unwrap()
-            .append(BlockChain::singleton(block));
     }
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir {
