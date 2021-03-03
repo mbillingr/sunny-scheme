@@ -7,7 +7,7 @@ use crate::frontend::{Env, Frontend};
 use sunny_vm::optimizations::tail_call_optimization;
 
 pub struct Context {
-    env: Env,
+    frontend: Frontend,
     vm: Vm,
 }
 
@@ -15,28 +15,24 @@ impl Context {
     pub fn new() -> Self {
         let storage = ValueStorage::new(5);
         let vm = Vm::new(storage).unwrap();
-        let env = Env::new();
-        Context { env, vm }
+        let frontend = Frontend::new();
+        Context { frontend, vm }
     }
 
     pub fn eval(&mut self, src: &str) -> Result<Value, Error> {
         let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
+        let ast = self
+            .frontend
+            .meaning(&sexpr)
+            .map_err(|e| e.in_string(src))?;
+
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
         backend.begin_module();
 
-        let (expression, env) = {
-            let mut frontend = Frontend {
-                env: self.env.clone(),
-                backend: &mut backend,
-            };
+        let ir = ast.build(&mut backend);
 
-            let expression = frontend.meaning(&sexpr).map_err(|e| e.in_string(src))?;
-
-            (expression, frontend.env)
-        };
-
-        let codegraph = backend.end_module(expression);
+        let codegraph = backend.end_module(ir);
         codegraph.return_from();
 
         let code = codegraph.build_segment();
@@ -44,8 +40,6 @@ impl Context {
 
         println!("{}", code);
         let result = self.vm.eval_repl(code)?;
-
-        self.env = env;
 
         Ok(result)
     }

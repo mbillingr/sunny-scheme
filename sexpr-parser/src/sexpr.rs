@@ -2,7 +2,7 @@ use crate::{CxR, Int, SourceLocation};
 use std::fmt::Debug;
 use std::rc::Rc;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Sexpr<'src> {
     Nil,
     Bool(bool),
@@ -149,6 +149,12 @@ impl CxR for Sexpr<'_> {
 impl From<i64> for Sexpr<'_> {
     fn from(i: i64) -> Self {
         Sexpr::int(i)
+    }
+}
+
+impl<'s> From<&'s str> for Sexpr<'s> {
+    fn from(s: &'s str) -> Self {
+        Sexpr::symbol(s)
     }
 }
 

@@ -17,7 +17,7 @@ impl Default for SourceKind {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default)]
 pub struct SourceLocation<T> {
     inner_value: T,
     span: Range<usize>,
@@ -184,6 +184,12 @@ impl SourceLocation<Sexpr<'_>> {
             })
             .take_while(Option::is_some)
             .map(Option::unwrap)
+    }
+}
+
+impl<T: PartialEq> PartialEq for SourceLocation<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner_value == other.inner_value
     }
 }
 
