@@ -44,10 +44,11 @@ impl EnvBinding {
     pub fn expand_syntax<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
     ) -> Result<AstNode<'src>> {
         match self {
             EnvBinding::Variable(_) => panic!("Attempt to expand variable as syntax"),
-            EnvBinding::Syntax(x) => x.expand(sexpr),
+            EnvBinding::Syntax(x) => x.expand(sexpr, further),
         }
     }
 

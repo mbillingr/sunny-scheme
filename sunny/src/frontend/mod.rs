@@ -5,16 +5,26 @@ pub mod error;
 pub mod frontend;
 pub mod syntax_forms;
 
-use crate::frontend::{ast::AstNode, environment::Env, error::Result, syntax_forms::Quotation};
+use crate::frontend::{
+    ast::AstNode,
+    environment::Env,
+    error::Result,
+    syntax_forms::{Quotation, Sequence},
+};
 pub use frontend::Frontend;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
 pub trait SyntaxExpander {
-    fn expand<'src>(&self, sexpr: &'src SourceLocation<Sexpr<'src>>) -> Result<AstNode<'src>>;
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+    ) -> Result<AstNode<'src>>;
 }
 
 pub fn base_environment() -> Env {
     let mut env = Env::new();
+    env.insert_syntax("begin", Sequence);
     env.insert_syntax("quote", Quotation);
     env
 }
