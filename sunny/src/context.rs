@@ -1,10 +1,10 @@
 use sunny_sexpr_parser::{parse_str, Error as ParseError, SourceLocation};
+use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
 use crate::backend::{Backend, ByteCodeBackend};
-use crate::frontend;
+use crate::frontend::error;
 use crate::frontend::Frontend;
-use sunny_vm::optimizations::tail_call_optimization;
 
 pub struct Context {
     frontend: Frontend,
@@ -68,7 +68,7 @@ impl Context {
 #[derive(Debug, PartialEq)]
 pub enum Error {
     ParseError(SourceLocation<ParseError>),
-    FrontendError(SourceLocation<frontend::Error>),
+    FrontendError(SourceLocation<error::Error>),
     VmError(sunny_vm::Error),
     VmErrorKind(ErrorKind),
 }
@@ -79,8 +79,8 @@ impl From<SourceLocation<ParseError>> for Error {
     }
 }
 
-impl From<SourceLocation<frontend::Error>> for Error {
-    fn from(fe: SourceLocation<frontend::Error>) -> Self {
+impl From<SourceLocation<error::Error>> for Error {
+    fn from(fe: SourceLocation<error::Error>) -> Self {
         Self::FrontendError(fe)
     }
 }
