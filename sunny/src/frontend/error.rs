@@ -7,8 +7,16 @@ pub enum Error {
     MissingArgument,
     ExpectedSymbol,
     ExpectedList,
+    ExpectedEmptyList,
     UnexpectedStatement,
     SyntaxAsValue,
+    Expected(Expectation),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Expectation {
+    EmptyList,
+    List,
 }
 
 impl std::fmt::Display for Error {
@@ -17,8 +25,19 @@ impl std::fmt::Display for Error {
             Error::MissingArgument => write!(f, "Missing argument"),
             Error::ExpectedSymbol => write!(f, "Expected symbol"),
             Error::ExpectedList => write!(f, "Expected list"),
+            Error::ExpectedEmptyList => write!(f, "Expected ()"),
             Error::UnexpectedStatement => write!(f, "Unexpected statement"),
             Error::SyntaxAsValue => write!(f, "Syntax used as value"),
+            Error::Expected(ex) => write!(f, "Expected {}", ex),
+        }
+    }
+}
+
+impl std::fmt::Display for Expectation {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Expectation::EmptyList => write!(f, "()"),
+            Expectation::List => write!(f, "<list>"),
         }
     }
 }
@@ -29,4 +48,10 @@ pub fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> Source
 
 pub fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
     sexpr.map_after(error.into())
+}
+
+impl From<Expectation> for Error {
+    fn from(ex: Expectation) -> Self {
+        Error::Expected(ex)
+    }
 }

@@ -1,9 +1,41 @@
 use crate::frontend::{
     ast::{Ast, AstNode},
-    error::{error_after, error_at, Error, Result},
+    error::{error_at, Error, Expectation, Result},
     SyntaxExpander,
 };
 use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
+
+macro_rules! match_sexpr {
+    ($expr:tt; $($rules:tt)*) => {
+        _match_sexpr![$expr; $($rules)*].map_err(|cte| cte.map(cte.get_value().clone().into()))
+    }
+}
+
+macro_rules! _match_sexpr {
+    ($expr:tt; _ => $action:block) => {{ let _ = $expr; $action }};
+
+    ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; $action }};
+
+    ($expr:tt; () => $action:block) => {
+        if $expr.is_null() {
+            $action
+        } else {
+            Err($expr.map(Expectation::EmptyList))
+        }
+    };
+
+    ($expr:tt; ($first:tt $($rest:tt)*) => $action:block) => {
+        if $expr.is_pair() {
+            let car = $expr.car().unwrap();
+            let cdr = $expr.cdr().unwrap();
+            _match_sexpr![car; $first => {
+                _match_sexpr![cdr; ($($rest)*) => $action]
+            }]
+        } else {
+            Err($expr.map(Expectation::List))
+        }
+    };
+}
 
 pub struct Quotation;
 
@@ -13,10 +45,9 @@ impl SyntaxExpander for Quotation {
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         _further: &dyn SyntaxExpander,
     ) -> Result<AstNode<'src>> {
-        let arg = sexpr
-            .cadr()
-            .ok_or_else(|| error_after(sexpr.car().unwrap(), Error::MissingArgument))?;
-        Ok(Ast::constant(arg.clone()))
+        match_sexpr![
+            sexpr; (_ arg) => { Ok(Ast::constant(arg.clone())) }
+        ]
     }
 }
 
