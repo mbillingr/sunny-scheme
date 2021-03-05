@@ -36,17 +36,6 @@ impl SyntaxExpander for Frontend {
                         self.library_definition(libname, sexpr.cddr().unwrap())
                     }
                     "define" => self.meaning_definition(sexpr, env),
-                    "cons" => {
-                        let arg1 = sexpr
-                            .cadr()
-                            .ok_or_else(|| error_after(first, Error::MissingArgument))?;
-                        let arg2 = sexpr
-                            .caddr()
-                            .ok_or_else(|| error_after(arg1, Error::MissingArgument))?;
-                        let car = self.expand(arg1, self, env)?;
-                        let cdr = self.expand(arg2, self, env)?;
-                        Ok(Ast::cons(sexpr.map(()), car, cdr))
-                    }
                     _ => {
                         if let Some(sx) = env.lookup_syntax(s) {
                             sx.expand(sexpr, self, env)

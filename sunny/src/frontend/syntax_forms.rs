@@ -199,3 +199,23 @@ impl SyntaxExpander for Lambda {
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
 }
+
+pub struct Cons;
+
+impl SyntaxExpander for Cons {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+        env: &Env,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_, car, cdr) => {
+                let car = further.expand(car, further, env)?;
+                let cdr = further.expand(cdr, further, env)?;
+                Ok(Ast::cons(sexpr.map(()), car, cdr))
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
+}
