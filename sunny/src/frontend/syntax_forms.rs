@@ -6,7 +6,7 @@ use crate::frontend::{
     SyntaxExpander,
 };
 use log::warn;
-use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
+use sunny_sexpr_parser::{CxR, RefExpr};
 
 macro_rules! match_sexpr {
     ([$expr:tt: $($rules:tt)*]) => {
@@ -90,11 +90,7 @@ macro_rules! _match_sexpr {
 pub struct Begin;
 
 impl SyntaxExpander for Begin {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_ . rest) => {
                 Sequence.expand(rest, env)
@@ -107,11 +103,7 @@ impl SyntaxExpander for Begin {
 pub struct Quotation;
 
 impl SyntaxExpander for Quotation {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        _env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, _env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, arg) => { Ok(Ast::constant(arg.clone())) }]
         ]
@@ -122,11 +114,7 @@ impl SyntaxExpander for Quotation {
 pub struct Assignment;
 
 impl SyntaxExpander for Assignment {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, name: Symbol, value) => {
                 let (depth, binding) = env.lookup_or_insert_global(name);
@@ -141,11 +129,7 @@ impl SyntaxExpander for Assignment {
 pub struct Definition;
 
 impl SyntaxExpander for Definition {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, name: Symbol, value) => {
                 let value = Expression.expand(value, env)?;
@@ -168,11 +152,7 @@ impl SyntaxExpander for Definition {
 pub struct Sequence;
 
 impl SyntaxExpander for Sequence {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (expr) => { Expression.expand(expr, env) }]
             [sexpr: (expr . rest) => {
@@ -188,11 +168,7 @@ impl SyntaxExpander for Sequence {
 pub struct Branch;
 
 impl SyntaxExpander for Branch {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, condition, consequence, alternative) => {
                 let condition = Expression.expand(condition, env)?;
@@ -214,11 +190,7 @@ impl SyntaxExpander for Branch {
 pub struct Lambda;
 
 impl SyntaxExpander for Lambda {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, params . body) => {
                 let body_env = env.extend(params)?;
@@ -234,11 +206,7 @@ impl SyntaxExpander for Lambda {
 pub struct Cons;
 
 impl SyntaxExpander for Cons {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, car, cdr) => {
                 let car = Expression.expand(car, env)?;
@@ -253,11 +221,7 @@ impl SyntaxExpander for Cons {
 pub struct LibraryDefinition;
 
 impl SyntaxExpander for LibraryDefinition {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        _env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, _env: &Env) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, libname: List . statements) => {
                 let lib_env = base_environment();
@@ -305,11 +269,7 @@ impl SyntaxExpander for LibraryDefinition {
 pub struct Expression;
 
 impl SyntaxExpander for Expression {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         return match_sexpr![
             [sexpr: (f: Symbol . _) => {
                 if let Some(sx) = env.lookup_syntax(f) {
@@ -334,11 +294,7 @@ impl SyntaxExpander for Expression {
 }
 
 impl Expression {
-    fn expand_application<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
+    fn expand_application<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
         let mut args = vec![];
         for a in sexpr.iter() {
             args.push(self.expand(a, env)?);

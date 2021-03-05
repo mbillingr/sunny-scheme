@@ -2,6 +2,9 @@ use crate::{CxR, Int, SourceLocation};
 use std::fmt::Debug;
 use std::rc::Rc;
 
+pub type SrcExpr<'src> = SourceLocation<Sexpr<'src>>;
+pub type RefExpr<'src> = &'src SrcExpr<'src>;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Sexpr<'src> {
     Nil,
@@ -9,7 +12,7 @@ pub enum Sexpr<'src> {
     Integer(Int),
     Symbol(&'src str),
     String(&'src str),
-    Pair(Rc<(SourceLocation<Sexpr<'src>>, SourceLocation<Sexpr<'src>>)>),
+    Pair(Rc<(SrcExpr<'src>, SrcExpr<'src>)>),
 }
 
 impl<'src> Sexpr<'src> {
@@ -33,14 +36,11 @@ impl<'src> Sexpr<'src> {
         Sexpr::String(name)
     }
 
-    pub fn cons(
-        car: impl Into<SourceLocation<Sexpr<'src>>>,
-        cdr: impl Into<SourceLocation<Sexpr<'src>>>,
-    ) -> Self {
+    pub fn cons(car: impl Into<SrcExpr<'src>>, cdr: impl Into<SrcExpr<'src>>) -> Self {
         Sexpr::Pair(Rc::new((car.into(), cdr.into())))
     }
 
-    pub fn list(items: impl DoubleEndedIterator<Item = SourceLocation<Sexpr<'src>>>) -> Self {
+    pub fn list(items: impl DoubleEndedIterator<Item = SrcExpr<'src>>) -> Self {
         let l = items.rfold(Self::nil(), |acc, x| Self::cons(x, acc));
         l
     }
@@ -158,7 +158,7 @@ impl<'s> From<&'s str> for Sexpr<'s> {
     }
 }
 
-impl<'src> From<SourceLocation<Sexpr<'src>>> for Sexpr<'src> {
+impl<'src> From<SrcExpr<'src>> for Sexpr<'src> {
     fn from(c: SourceLocation<Sexpr>) -> Sexpr {
         c.into_value()
     }

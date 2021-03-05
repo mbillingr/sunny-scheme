@@ -7,7 +7,7 @@ mod sexpr;
 mod source_location;
 pub mod str_utils;
 
-pub use sexpr::Sexpr;
+pub use sexpr::{RefExpr, Sexpr, SrcExpr};
 pub use source_location::{SourceKind, SourceLocation};
 
 type Int = i64;

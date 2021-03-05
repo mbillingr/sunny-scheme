@@ -1,12 +1,12 @@
 use crate::backend::Backend;
-use sunny_sexpr_parser::{Sexpr, SourceLocation};
+use sunny_sexpr_parser::{SourceLocation, SrcExpr};
 
 pub type AstNode<'src> = Box<Ast<'src>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Ast<'src> {
     Void,
-    Const(SourceLocation<Sexpr<'src>>), // todo: don't store constants as strings
+    Const(SrcExpr<'src>),
     Fetch(SourceLocation<()>, usize, usize),
     Store(SourceLocation<()>, usize, usize, AstNode<'src>),
     Cons(SourceLocation<()>, AstNode<'src>, AstNode<'src>),
@@ -32,7 +32,7 @@ impl<'src> Ast<'src> {
         Box::new(Ast::Void)
     }
 
-    pub fn constant(sexpr: SourceLocation<Sexpr<'src>>) -> AstNode<'src> {
+    pub fn constant(sexpr: SrcExpr<'src>) -> AstNode<'src> {
         Box::new(Ast::Const(sexpr))
     }
 
