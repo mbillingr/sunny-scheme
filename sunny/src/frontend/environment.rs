@@ -3,7 +3,9 @@ use crate::frontend::{
     error::{error_at, Error, Result},
     SyntaxExpander,
 };
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::rc::Rc;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
@@ -45,10 +47,11 @@ impl EnvBinding {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         match self {
             EnvBinding::Variable(_) => panic!("Attempt to expand variable as syntax"),
-            EnvBinding::Syntax(x) => x.expand(sexpr, further),
+            EnvBinding::Syntax(x) => x.expand(sexpr, further, env),
         }
     }
 
@@ -73,25 +76,39 @@ impl<T: 'static + SyntaxExpander> From<T> for EnvBinding {
     }
 }
 
-#[derive(Default)]
-pub struct Env {
-    parent: Option<Box<Env>>,
-    variables: HashMap<String, EnvBinding>,
-}
+#[derive(Clone)]
+pub struct Env(Rc<Environment>);
 
 impl Env {
     pub fn new() -> Self {
-        Env {
+        Env(Rc::new(Environment {
             parent: None,
-            variables: HashMap::new(),
-        }
+            variables: RefCell::new(HashMap::new()),
+        }))
     }
 
-    pub fn insert_syntax(&mut self, name: impl ToString, expander: impl SyntaxExpander + 'static) {
-        self.variables
-            .insert(name.to_string(), EnvBinding::syntax(expander));
+    pub fn extend(&self, vars: &SourceLocation<Sexpr>) -> Result<Env> {
+        let mut env = Environment::from_sexpr(vars)?;
+        env.parent = Some(self.clone());
+        Ok(Env(Rc::new(env)))
     }
+}
 
+impl Deref for Env {
+    type Target = Environment;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.0
+    }
+}
+
+#[derive(Default)]
+pub struct Environment {
+    parent: Option<Env>,
+    variables: RefCell<HashMap<String, EnvBinding>>,
+}
+
+impl Environment {
     fn from_sexpr(vars: &SourceLocation<Sexpr>) -> Result<Self> {
         let mut variables = HashMap::new();
 
@@ -105,48 +122,77 @@ impl Env {
             variables.insert(name, EnvBinding::Variable(idx));
         }
 
-        Ok(Env {
+        Ok(Environment {
             parent: None,
-            variables,
+            variables: RefCell::new(variables),
         })
     }
 
-    pub fn extend(self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
-        let mut env = Env::from_sexpr(vars)?;
-        env.parent = Some(Box::new(self));
-        Ok(env)
+    pub fn insert_syntax(&self, name: impl ToString, expander: impl SyntaxExpander + 'static) {
+        self.variables
+            .borrow_mut()
+            .insert(name.to_string(), EnvBinding::syntax(expander));
     }
 
-    pub fn lookup(&self, name: &str) -> Option<(usize, &EnvBinding)> {
-        self.variables.get(name).map(|b| (0, b)).or_else(|| {
-            self.parent
-                .as_ref()
-                .and_then(|p| p.lookup(name))
-                .map(|(depth, b)| (1 + depth, b))
+    pub fn lookup(&self, name: &str) -> Option<(usize, EnvBinding)> {
+        self.variables
+            .borrow()
+            .get(name)
+            .map(|b| (0, b.clone()))
+            .or_else(|| {
+                self.parent
+                    .as_ref()
+                    .and_then(|p| p.lookup(name))
+                    .map(|(depth, b)| (1 + depth, b.clone()))
+            })
+    }
+
+    pub fn lookup_syntax(&self, name: &str) -> Option<Rc<dyn SyntaxExpander>> {
+        self.lookup(name).map(|(_, b)| b).and_then(|b| {
+            if let EnvBinding::Syntax(sx) = b {
+                Some(sx.clone())
+            } else {
+                None
+            }
         })
     }
 
-    pub fn add_global(&mut self, name: String) -> (usize, &EnvBinding) {
-        if let Some(p) = &mut self.parent {
+    pub fn lookup_or_insert_global(&self, name: &str) -> (usize, EnvBinding) {
+        let var = self.lookup(name.as_ref()).map(|(d, b)| (d, b.clone()));
+        var.unwrap_or_else(|| self.add_global(name.to_string()))
+    }
+
+    pub fn ensure_global(&self, name: impl AsRef<str> + ToString) -> (usize, EnvBinding) {
+        let var = self
+            .outermost_env()
+            .lookup(name.as_ref())
+            .map(|(d, b)| (d, b.clone()));
+        var.unwrap_or_else(|| self.add_global(name.to_string()))
+    }
+
+    pub fn add_global(&self, name: String) -> (usize, EnvBinding) {
+        if let Some(p) = &self.parent {
             let (depth, idx) = p.add_global(name);
             return (1 + depth, idx);
         }
 
-        let idx = self.variables.values().filter(|b| b.is_variable()).count();
+        let idx = self
+            .variables
+            .borrow()
+            .values()
+            .filter(|b| b.is_variable())
+            .count();
         self.variables
+            .borrow_mut()
             .insert(name.clone(), EnvBinding::Variable(idx));
-        (0, self.variables.get(&name).unwrap())
+        (0, self.variables.borrow().get(&name).unwrap().clone())
     }
 
-    pub fn outermost_env(&self) -> &Env {
+    pub fn outermost_env(&self) -> &Self {
         if let Some(ref p) = self.parent {
             p.outermost_env()
         } else {
             self
         }
-    }
-
-    pub fn pop_scope(&mut self) {
-        *self = *self.parent.take().unwrap();
     }
 }

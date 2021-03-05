@@ -1,3 +1,4 @@
+use crate::frontend::syntax_forms::Sequence;
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
@@ -6,43 +7,20 @@ use crate::frontend::{
     SyntaxExpander,
 };
 use log::warn;
-use std::cell::RefCell;
-use std::rc::Rc;
 use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
 
-pub struct Frontend {
-    env: RefCell<Env>,
-}
+pub struct Frontend;
 
 impl SyntaxExpander for Frontend {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         _further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
-        self.meaning(sexpr)
-    }
-
-    fn push_new_scope(&self, vars: &SourceLocation<Sexpr>) -> Result<()> {
-        self.push_new_scope(vars)
-    }
-
-    fn pop_scope(&self) {
-        self.pop_scope()
-    }
-}
-
-impl Frontend {
-    pub fn new() -> Self {
-        Frontend {
-            env: RefCell::new(base_environment()),
-        }
-    }
-
-    pub fn meaning<'src>(&self, sexpr: &'src SourceLocation<Sexpr<'src>>) -> Result<AstNode<'src>> {
         if is_atom(sexpr) {
             if let Some(name) = sexpr.as_symbol() {
-                let (depth, binding) = self.lookup(name);
+                let (depth, binding) = env.lookup_or_insert_global(name);
                 binding.meaning_reference(sexpr.map(()), depth)
             } else {
                 Ok(Ast::constant(sexpr.clone()))
@@ -57,8 +35,8 @@ impl Frontend {
                             .ok_or_else(|| error_after(first, Error::MissingArgument))?;
                         self.library_definition(libname, sexpr.cddr().unwrap())
                     }
-                    "set!" => self.meaning_assignment(sexpr),
-                    "define" => self.meaning_definition(sexpr),
+                    "set!" => self.meaning_assignment(sexpr, env),
+                    "define" => self.meaning_definition(sexpr, env),
                     "cons" => {
                         let arg1 = sexpr
                             .cadr()
@@ -66,31 +44,34 @@ impl Frontend {
                         let arg2 = sexpr
                             .caddr()
                             .ok_or_else(|| error_after(arg1, Error::MissingArgument))?;
-                        let car = self.meaning(arg1)?;
-                        let cdr = self.meaning(arg2)?;
+                        let car = self.expand(arg1, self, env)?;
+                        let cdr = self.expand(arg2, self, env)?;
                         Ok(Ast::cons(sexpr.map(()), car, cdr))
                     }
                     _ => {
-                        if let Some(sx) = self.lookup_syntax(s) {
-                            sx.expand(sexpr, self)
+                        if let Some(sx) = env.lookup_syntax(s) {
+                            sx.expand(sexpr, self, env)
                         } else {
-                            self.meaning_application(sexpr)
+                            self.meaning_application(sexpr, env)
                         }
                     }
                 }
             } else {
-                self.meaning_application(sexpr)
+                self.meaning_application(sexpr, env)
             }
         }
     }
+}
 
+impl Frontend {
     pub fn meaning_application<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         let mut args = vec![];
         for a in sexpr.iter() {
-            args.push(self.meaning(a)?);
+            args.push(self.expand(a, self, env)?);
         }
         Ok(Ast::invoke(sexpr.map(()), args))
     }
@@ -98,6 +79,7 @@ impl Frontend {
     pub fn meaning_assignment<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         let arg1 = sexpr
             .cadr()
@@ -108,18 +90,19 @@ impl Frontend {
         let argval = sexpr
             .caddr()
             .ok_or_else(|| error_after(arg1, Error::MissingArgument))?;
-        let value = self.meaning(argval)?;
-        let (depth, binding) = self.lookup(name);
+        let value = self.expand(argval, self, env)?;
+        let (depth, binding) = env.lookup_or_insert_global(name);
         binding.meaning_assignment(sexpr.map(()), depth, value)
     }
 
     pub fn meaning_definition<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         let name = self.definition_name(sexpr)?;
-        let value = self.definition_value(sexpr)?;
-        let (depth, binding) = self.lookup(name);
+        let value = self.definition_value(sexpr, env)?;
+        let (depth, binding) = env.lookup_or_insert_global(name);
         binding.meaning_assignment(sexpr.map(()), depth, value)
     }
 
@@ -138,46 +121,24 @@ impl Frontend {
         }
     }
 
-    fn definition_value<'src>(&self, sexpr: &'src SourceLocation<Sexpr>) -> Result<AstNode<'src>> {
+    fn definition_value<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr>,
+        env: &Env,
+    ) -> Result<AstNode<'src>> {
         if sexpr.cadr().unwrap().is_symbol() {
             let argval = sexpr
                 .caddr()
                 .ok_or_else(|| error_after(sexpr.cddr().unwrap(), Error::MissingArgument))?;
-            self.meaning(argval)
+            self.expand(argval, self, env)
         } else {
             let args = sexpr.cdadr().unwrap();
             let body = sexpr.cddr().unwrap();
-            self.meaning_lambda(sexpr, args, body)
-        }
-    }
 
-    pub fn meaning_lambda<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        args: &'src SourceLocation<Sexpr<'src>>,
-        body: &'src SourceLocation<Sexpr<'src>>,
-    ) -> Result<AstNode<'src>> {
-        self.push_new_scope(args)?;
-        let body = self.meaning_sequence(body)?;
-        self.pop_scope();
-        Ok(Ast::lambda(sexpr.map(()), args.len(), body))
-    }
+            let body_env = env.extend(args)?;
+            let body = Sequence.expand(body, self, &body_env)?;
 
-    pub fn meaning_sequence<'src>(
-        &self,
-        body: &'src SourceLocation<Sexpr<'src>>,
-    ) -> Result<AstNode<'src>> {
-        let first_expr = body
-            .car()
-            .ok_or_else(|| error_at(body, Error::ExpectedSymbol))?;
-        let rest_expr = body.cdr().unwrap();
-
-        if rest_expr.is_null() {
-            self.meaning(first_expr)
-        } else {
-            let first = self.meaning(first_expr)?;
-            let rest = self.meaning_sequence(rest_expr)?;
-            Ok(Ast::sequence(first, rest))
+            Ok(Ast::lambda(sexpr.map(()), args.len(), body))
         }
     }
 
@@ -186,7 +147,7 @@ impl Frontend {
         libname: &'src SourceLocation<Sexpr<'src>>,
         statements: &'src SourceLocation<Sexpr<'src>>,
     ) -> Result<AstNode<'src>> {
-        let lib_frontend = Frontend::new();
+        let lib_env = base_environment();
 
         let mut exports = vec![];
         let mut body_parts = vec![];
@@ -198,7 +159,7 @@ impl Frontend {
                         let export_name = export_item
                             .as_symbol()
                             .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
-                        let (_, binding) = lib_frontend.ensure_global(export_name);
+                        let (_, binding) = lib_env.ensure_global(export_name);
                         if let EnvBinding::Variable(var_idx) = binding {
                             exports.push((export_name, var_idx));
                         } else {
@@ -207,7 +168,7 @@ impl Frontend {
                     }
                 }
                 Some("begin") => {
-                    body_parts.push(lib_frontend.meaning_sequence(stmt.cdr().unwrap())?)
+                    body_parts.push(Sequence.expand(stmt.cdr().unwrap(), self, &lib_env)?)
                 }
                 _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
             }
@@ -222,51 +183,6 @@ impl Frontend {
         body = Ast::sequence(body, meaning_exports);
 
         Ok(Ast::module(body))
-    }
-
-    fn lookup_syntax(&self, name: &str) -> Option<Rc<dyn SyntaxExpander>> {
-        self.env
-            .borrow()
-            .lookup(name)
-            .map(|(_, b)| b)
-            .and_then(|b| {
-                if let EnvBinding::Syntax(sx) = b {
-                    Some(sx.clone())
-                } else {
-                    None
-                }
-            })
-    }
-
-    fn lookup(&self, name: &str) -> (usize, EnvBinding) {
-        let var = self.env.borrow().lookup(name).map(|(d, b)| (d, b.clone()));
-        var.unwrap_or_else(|| self.add_global(name.to_string()))
-    }
-
-    fn ensure_global(&self, name: &str) -> (usize, EnvBinding) {
-        let var = self
-            .env
-            .borrow()
-            .outermost_env()
-            .lookup(name)
-            .map(|(d, b)| (d, b.clone()));
-        var.unwrap_or_else(|| self.add_global(name.to_string()))
-    }
-
-    fn add_global(&self, name: String) -> (usize, EnvBinding) {
-        let mut env = self.env.borrow_mut();
-        let (depth, binding) = env.add_global(name);
-        (depth, binding.clone())
-    }
-
-    fn push_new_scope(&self, vars: &SourceLocation<Sexpr>) -> Result<()> {
-        let env = std::mem::replace(&mut *self.env.borrow_mut(), Env::new());
-        *self.env.borrow_mut() = env.extend(vars)?;
-        Ok(())
-    }
-
-    fn pop_scope(&self) {
-        self.env.borrow_mut().pop_scope();
     }
 }
 

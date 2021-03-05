@@ -19,18 +19,12 @@ pub trait SyntaxExpander {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>>;
-
-    fn push_new_scope(&self, _vars: &SourceLocation<Sexpr>) -> Result<()> {
-        panic!("Syntax expander does not support additional scopes")
-    }
-    fn pop_scope(&self) {
-        unreachable!()
-    }
 }
 
 pub fn base_environment() -> Env {
-    let mut env = Env::new();
+    let env = Env::new();
     env.insert_syntax("begin", Begin);
     env.insert_syntax("if", Branch);
     env.insert_syntax("lambda", Lambda);
@@ -65,7 +59,8 @@ mod tests {
     macro_rules! meaning_of {
         ($expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
-            Frontend::new().meaning(&sexpr.into())
+            let env = base_environment();
+            Frontend.expand(&sexpr.into(), &Frontend, &env)
         }};
     }
 

@@ -1,3 +1,4 @@
+use crate::frontend::environment::Env;
 use crate::frontend::{
     ast::{Ast, AstNode},
     error::{Error, Result},
@@ -63,10 +64,11 @@ impl SyntaxExpander for Begin {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_ . rest) => {
-                Sequence.expand(rest, further)
+                Sequence.expand(rest, further, env)
             }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
@@ -80,9 +82,28 @@ impl SyntaxExpander for Quotation {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         _further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_ arg) => { Ok(Ast::constant(arg.clone())) }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
+}
+
+pub struct Assignment;
+
+impl SyntaxExpander for Assignment {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+        env: &Env,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_ name value) => {
+                unimplemented!()
+            }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
@@ -95,12 +116,13 @@ impl SyntaxExpander for Sequence {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            [sexpr: (expr) => { further.expand(expr, further) }]
+            [sexpr: (expr) => { further.expand(expr, further, env) }]
             [sexpr: (expr . rest) => {
-                let first = further.expand(expr, further)?;
-                let rest = self.expand(rest, further)?;
+                let first = further.expand(expr, further, env)?;
+                let rest = self.expand(rest, further, env)?;
                 Ok(Ast::sequence(first, rest))
             }]
         ]
@@ -115,17 +137,18 @@ impl SyntaxExpander for Branch {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_ condition consequence alternative) => {
-                let condition = further.expand(condition, further)?;
-                let consequence = further.expand(consequence, further)?;
-                let alternative = further.expand(alternative, further)?;
+                let condition = further.expand(condition, further, env)?;
+                let consequence = further.expand(consequence, further, env)?;
+                let alternative = further.expand(alternative, further, env)?;
                 Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
             }]
             [sexpr: (_ condition consequence) => {
-                let condition = further.expand(condition, further)?;
-                let consequence = further.expand(consequence, further)?;
+                let condition = further.expand(condition, further, env)?;
+                let consequence = further.expand(consequence, further, env)?;
                 let alternative = Ast::void();
                 Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
             }]
@@ -141,12 +164,12 @@ impl SyntaxExpander for Lambda {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
+        env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_ params . body) => {
-                further.push_new_scope(params)?;
-                let body = Sequence.expand(body, further)?;
-                further.pop_scope();
+                let body_env = env.extend(params)?;
+                let body = Sequence.expand(body, further, &body_env)?;
 
                 Ok(Ast::lambda(sexpr.map(()), params.len(), body))
             }]

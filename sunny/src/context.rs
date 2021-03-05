@@ -3,11 +3,12 @@ use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
 use crate::backend::{Backend, ByteCodeBackend};
-use crate::frontend::error;
+use crate::frontend::environment::Env;
 use crate::frontend::Frontend;
+use crate::frontend::{base_environment, error, SyntaxExpander};
 
 pub struct Context {
-    frontend: Frontend,
+    env: Env,
     vm: Vm,
 }
 
@@ -15,16 +16,17 @@ impl Context {
     pub fn new() -> Self {
         let storage = ValueStorage::new(5);
         let vm = Vm::new(storage).unwrap();
-        let frontend = Frontend::new();
-        Context { frontend, vm }
+        Context {
+            env: base_environment(),
+            vm,
+        }
     }
 
     pub fn eval(&mut self, src: &str) -> Result<Value, Error> {
         let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
-        let ast = self
-            .frontend
-            .meaning(&sexpr)
+        let ast = Frontend
+            .expand(&sexpr, &Frontend, &self.env)
             .map_err(|e| e.in_string(src))?;
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
