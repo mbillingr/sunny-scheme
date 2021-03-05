@@ -1,26 +1,45 @@
 use crate::frontend::{
     ast::{Ast, AstNode},
-    error::{error_at, Error, Expectation, Result},
+    error::{Error, Result},
     SyntaxExpander,
 };
 use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
 
 macro_rules! match_sexpr {
-    ($expr:tt; $($rules:tt)*) => {
-        _match_sexpr![$expr; $($rules)*].map_err(|cte| cte.map(cte.get_value().clone().into()))
-    }
+    ([$expr:tt: $($rules:tt)*]) => {
+        _match_sexpr![$expr; $($rules)*]
+    };
+
+    ([$($first:tt)*] $($rest:tt)*) => {{
+        match match_sexpr![[$($first)*]] {
+            Some(r) => Some(r),
+            None => match_sexpr![$($rest)*],
+        }
+    }};
 }
 
 macro_rules! _match_sexpr {
-    ($expr:tt; _ => $action:block) => {{ let _ = $expr; $action }};
+    ($expr:tt; _ => $action:block) => {{ let _ = $expr; Some($action) }};
 
-    ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; $action }};
+    ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; Some($action) }};
 
     ($expr:tt; () => $action:block) => {
         if $expr.is_null() {
-            $action
+            Some($action)
         } else {
-            Err($expr.map(Expectation::EmptyList))
+            None
+        }
+    };
+
+    ($expr:tt; ($first:tt . $second:tt) => $action:block) => {
+        if $expr.is_pair() {
+            let car = $expr.car().unwrap();
+            let cdr = $expr.cdr().unwrap();
+            _match_sexpr![car; $first => {
+                _match_sexpr![cdr; $second => $action]
+            }].flatten()
+        } else {
+            None
         }
     };
 
@@ -30,11 +49,28 @@ macro_rules! _match_sexpr {
             let cdr = $expr.cdr().unwrap();
             _match_sexpr![car; $first => {
                 _match_sexpr![cdr; ($($rest)*) => $action]
-            }]
+            }].flatten()
         } else {
-            Err($expr.map(Expectation::List))
+            None
         }
     };
+}
+
+pub struct Begin;
+
+impl SyntaxExpander for Begin {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_ . rest) => {
+                Sequence.expand(rest, further)
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
 }
 
 pub struct Quotation;
@@ -46,8 +82,9 @@ impl SyntaxExpander for Quotation {
         _further: &dyn SyntaxExpander,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            sexpr; (_ arg) => { Ok(Ast::constant(arg.clone())) }
+            [sexpr: (_ arg) => { Ok(Ast::constant(arg.clone())) }]
         ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
 }
 
@@ -59,21 +96,14 @@ impl SyntaxExpander for Sequence {
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
     ) -> Result<AstNode<'src>> {
-        let body = sexpr.cdr().unwrap();
-
-        let first_expr = body
-            .car()
-            .ok_or_else(|| error_at(body, Error::ExpectedSymbol))?;
-        let rest_expr = body.cdr().unwrap();
-
-        if rest_expr.is_null() {
-            further.expand(first_expr, further)
-        } else {
-            let first = further.expand(first_expr, further)?;
-            // expand `body` instead of `rest_expr` because the expander
-            // ignores the first argument.
-            let rest = self.expand(body, further)?;
-            Ok(Ast::sequence(first, rest))
-        }
+        match_sexpr![
+            [sexpr: (expr) => { further.expand(expr, further) }]
+            [sexpr: (expr . rest) => {
+                let first = further.expand(expr, further)?;
+                let rest = self.expand(rest, further)?;
+                Ok(Ast::sequence(first, rest))
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
 }

@@ -2,7 +2,7 @@ use sunny_sexpr_parser::SourceLocation;
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Error {
     MissingArgument,
     ExpectedSymbol,
@@ -10,13 +10,7 @@ pub enum Error {
     ExpectedEmptyList,
     UnexpectedStatement,
     SyntaxAsValue,
-    Expected(Expectation),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Expectation {
-    EmptyList,
-    List,
+    InvalidForm,
 }
 
 impl std::fmt::Display for Error {
@@ -28,16 +22,7 @@ impl std::fmt::Display for Error {
             Error::ExpectedEmptyList => write!(f, "Expected ()"),
             Error::UnexpectedStatement => write!(f, "Unexpected statement"),
             Error::SyntaxAsValue => write!(f, "Syntax used as value"),
-            Error::Expected(ex) => write!(f, "Expected {}", ex),
-        }
-    }
-}
-
-impl std::fmt::Display for Expectation {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Expectation::EmptyList => write!(f, "()"),
-            Expectation::List => write!(f, "<list>"),
+            Error::InvalidForm => write!(f, "Invalid syntactic form"),
         }
     }
 }
@@ -48,10 +33,4 @@ pub fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> Source
 
 pub fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
     sexpr.map_after(error.into())
-}
-
-impl From<Expectation> for Error {
-    fn from(ex: Expectation) -> Self {
-        Error::Expected(ex)
-    }
 }
