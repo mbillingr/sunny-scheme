@@ -20,7 +20,7 @@ impl EnvBinding {
         EnvBinding::Syntax(Rc::new(expander))
     }
 
-    pub fn meaning_reference<'src>(
+    pub fn expand_reference<'src>(
         &self,
         context: SourceLocation<()>,
         depth: usize,
@@ -31,7 +31,7 @@ impl EnvBinding {
         }
     }
 
-    pub fn meaning_assignment<'src>(
+    pub fn expand_assignment<'src>(
         &self,
         context: SourceLocation<()>,
         depth: usize,
@@ -40,18 +40,6 @@ impl EnvBinding {
         match self {
             EnvBinding::Variable(idx) => Ok(Ast::store(context, depth, *idx, value)),
             EnvBinding::Syntax(_) => Err(context.map(Error::SyntaxAsValue)),
-        }
-    }
-
-    pub fn expand_syntax<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
-        match self {
-            EnvBinding::Variable(_) => panic!("Attempt to expand variable as syntax"),
-            EnvBinding::Syntax(x) => x.expand(sexpr, further, env),
         }
     }
 

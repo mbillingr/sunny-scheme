@@ -93,12 +93,11 @@ impl SyntaxExpander for Begin {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_ . rest) => {
-                Sequence.expand(rest, further, env)
+                Sequence.expand(rest, env)
             }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
@@ -111,7 +110,6 @@ impl SyntaxExpander for Quotation {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        _further: &dyn SyntaxExpander,
         _env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
@@ -127,14 +125,13 @@ impl SyntaxExpander for Assignment {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, name: Symbol, value) => {
                 let (depth, binding) = env.lookup_or_insert_global(name);
-                let value = further.expand(value, further, env)?;
-                binding.meaning_assignment(sexpr.map(()), depth, value)
+                let value = Expression.expand(value, env)?;
+                binding.expand_assignment(sexpr.map(()), depth, value)
             }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
@@ -147,22 +144,21 @@ impl SyntaxExpander for Definition {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, name: Symbol, value) => {
-                let value = further.expand(value, further, env)?;
+                let value = Expression.expand(value, env)?;
                 let (depth, binding) = env.ensure_global(name);
-                binding.meaning_assignment(sexpr.map(()), depth, value)
+                binding.expand_assignment(sexpr.map(()), depth, value)
             }]
             [sexpr: (_, (name: Symbol . args) . body) => {
                 let body_env = env.extend(args)?;
-                let body = Sequence.expand(body, further, &body_env)?;
+                let body = Sequence.expand(body, &body_env)?;
                 let function = Ast::lambda(sexpr.map(()), args.len(), body);
 
                 let (depth, binding) = env.ensure_global(name);
-                binding.meaning_assignment(sexpr.map(()), depth, function)
+                binding.expand_assignment(sexpr.map(()), depth, function)
             }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
@@ -175,14 +171,13 @@ impl SyntaxExpander for Sequence {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            [sexpr: (expr) => { further.expand(expr, further, env) }]
+            [sexpr: (expr) => { Expression.expand(expr, env) }]
             [sexpr: (expr . rest) => {
-                let first = further.expand(expr, further, env)?;
-                let rest = self.expand(rest, further, env)?;
+                let first = Expression.expand(expr, env)?;
+                let rest = self.expand(rest, env)?;
                 Ok(Ast::sequence(first, rest))
             }]
         ]
@@ -196,19 +191,18 @@ impl SyntaxExpander for Branch {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, condition, consequence, alternative) => {
-                let condition = further.expand(condition, further, env)?;
-                let consequence = further.expand(consequence, further, env)?;
-                let alternative = further.expand(alternative, further, env)?;
+                let condition = Expression.expand(condition, env)?;
+                let consequence = Expression.expand(consequence, env)?;
+                let alternative = Expression.expand(alternative, env)?;
                 Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
             }]
             [sexpr: (_, condition, consequence) => {
-                let condition = further.expand(condition, further, env)?;
-                let consequence = further.expand(consequence, further, env)?;
+                let condition = Expression.expand(condition, env)?;
+                let consequence = Expression.expand(consequence, env)?;
                 let alternative = Ast::void();
                 Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
             }]
@@ -223,13 +217,12 @@ impl SyntaxExpander for Lambda {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, params . body) => {
                 let body_env = env.extend(params)?;
-                let body = Sequence.expand(body, further, &body_env)?;
+                let body = Sequence.expand(body, &body_env)?;
 
                 Ok(Ast::lambda(sexpr.map(()), params.len(), body))
             }]
@@ -244,13 +237,12 @@ impl SyntaxExpander for Cons {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
             [sexpr: (_, car, cdr) => {
-                let car = further.expand(car, further, env)?;
-                let cdr = further.expand(cdr, further, env)?;
+                let car = Expression.expand(car, env)?;
+                let cdr = Expression.expand(cdr, env)?;
                 Ok(Ast::cons(sexpr.map(()), car, cdr))
             }]
         ]
@@ -264,7 +256,6 @@ impl SyntaxExpander for LibraryDefinition {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        _further: &dyn SyntaxExpander,
         _env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
@@ -290,7 +281,7 @@ impl SyntaxExpander for LibraryDefinition {
                             }
                         }
                         Some("begin") => {
-                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &Expression, &lib_env)?)
+                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &lib_env)?)
                         }
                         _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
                     }
@@ -317,13 +308,12 @@ impl SyntaxExpander for Expression {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        _further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
         return match_sexpr![
             [sexpr: (f: Symbol . _) => {
                 if let Some(sx) = env.lookup_syntax(f) {
-                    sx.expand(sexpr, &Expression, env)
+                    sx.expand(sexpr, env)
                 } else {
                     self.expand_application(sexpr, env)
                 }
@@ -333,7 +323,7 @@ impl SyntaxExpander for Expression {
             }]
             [sexpr: name: Symbol => {
                 let (depth, binding) = env.lookup_or_insert_global(name);
-                binding.meaning_reference(sexpr.map(()), depth)
+                binding.expand_reference(sexpr.map(()), depth)
             }]
             [sexpr: _ => {
                 Ok(Ast::constant(sexpr.clone()))
@@ -351,7 +341,7 @@ impl Expression {
     ) -> Result<AstNode<'src>> {
         let mut args = vec![];
         for a in sexpr.iter() {
-            args.push(self.expand(a, self, env)?);
+            args.push(self.expand(a, env)?);
         }
         Ok(Ast::invoke(sexpr.map(()), args))
     }

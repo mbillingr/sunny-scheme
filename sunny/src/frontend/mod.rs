@@ -19,7 +19,6 @@ pub trait SyntaxExpander {
     fn expand<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
-        further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>>;
 }
@@ -65,7 +64,7 @@ mod tests {
         ($expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
             let env = base_environment();
-            Expression.expand(&sexpr.into(), &Expression, &env)
+            Expression.expand(&sexpr.into(), &env)
         }};
     }
 
