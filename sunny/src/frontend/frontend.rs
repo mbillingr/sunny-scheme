@@ -62,26 +62,6 @@ impl Frontend {
                         let cdr = self.meaning(arg2)?;
                         Ok(Ast::cons(sexpr.map(()), car, cdr))
                     }
-                    "if" => {
-                        let arg1 = sexpr
-                            .cadr()
-                            .ok_or_else(|| error_after(first, Error::MissingArgument))?;
-                        let arg2 = sexpr
-                            .caddr()
-                            .ok_or_else(|| error_after(arg1, Error::MissingArgument))?;
-                        let arg3 = sexpr
-                            .cadddr()
-                            .ok_or_else(|| error_after(arg2, Error::MissingArgument))?;
-                        let condition = self.meaning(arg1)?;
-                        let consequent = self.meaning(arg2)?;
-                        let alternative = self.meaning(arg3)?;
-                        Ok(Ast::ifexpr(
-                            sexpr.map(()),
-                            condition,
-                            consequent,
-                            alternative,
-                        ))
-                    }
                     "lambda" => {
                         let arg1 = sexpr
                             .cadr()

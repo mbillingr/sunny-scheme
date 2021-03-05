@@ -107,3 +107,23 @@ impl SyntaxExpander for Sequence {
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
 }
+
+pub struct Branch;
+
+impl SyntaxExpander for Branch {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_ condition consequence alternative) => {
+                let condition = further.expand(condition, further)?;
+                let consequence = further.expand(consequence, further)?;
+                let alternative = further.expand(alternative, further)?;
+                Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
+}

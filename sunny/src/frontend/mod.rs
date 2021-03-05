@@ -9,7 +9,7 @@ use crate::frontend::{
     ast::AstNode,
     environment::Env,
     error::Result,
-    syntax_forms::{Begin, Quotation},
+    syntax_forms::{Begin, Branch, Quotation},
 };
 pub use frontend::Frontend;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
@@ -25,6 +25,7 @@ pub trait SyntaxExpander {
 pub fn base_environment() -> Env {
     let mut env = Env::new();
     env.insert_syntax("begin", Begin);
+    env.insert_syntax("if", Branch);
     env.insert_syntax("quote", Quotation);
     env
 }
