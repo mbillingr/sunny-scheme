@@ -87,135 +87,132 @@ macro_rules! _match_sexpr {
     };
 }
 
-pub struct Begin;
-
-impl SyntaxExpander for Begin {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_ . rest) => {
-                Sequence.expand(rest, env)
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+macro_rules! declare_form {
+    ($t:ident($xpr:ident, $env:ident): $([$($rules:tt)*])+) => {
+        pub struct $t;
+        impl SyntaxExpander for $t {
+            fn expand<'src>(&self, $xpr: RefExpr<'src>, $env: &Env) -> Result<AstNode<'src>> {
+                match_sexpr![
+                    $([$xpr: $($rules)*])+
+                ]
+                .unwrap_or_else(|| Err($xpr.map(Error::InvalidForm)))
+            }
+        }
     }
 }
 
-pub struct Quotation;
+//////////////////////////////////////////////////////////////////////////////////////////////////
 
-impl SyntaxExpander for Quotation {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, _env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_, arg) => { Ok(Ast::constant(arg.clone())) }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+declare_form! {
+    Expression(sexpr, env):
+        [(f: Symbol . _) => {
+            if let Some(sx) = env.lookup_syntax(f) {
+                sx.expand(sexpr, env)
+            } else {
+                Expression.expand_application(sexpr, env)
+            }
+        }]
+        [list: List => {
+            Expression.expand_application(sexpr, env)
+        }]
+        [name: Symbol => {
+            let (depth, binding) = env.lookup_or_insert_global(name);
+            binding.expand_reference(sexpr.map(()), depth)
+        }]
+        [_ => {
+            Ok(Ast::constant(sexpr.clone()))
+        }]
+}
+
+impl Expression {
+    fn expand_application<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
+        let mut args = vec![];
+        for a in sexpr.iter() {
+            args.push(self.expand(a, env)?);
+        }
+        Ok(Ast::invoke(sexpr.map(()), args))
     }
 }
 
-pub struct Assignment;
-
-impl SyntaxExpander for Assignment {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_, name: Symbol, value) => {
-                let (depth, binding) = env.lookup_or_insert_global(name);
-                let value = Expression.expand(value, env)?;
-                binding.expand_assignment(sexpr.map(()), depth, value)
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
+declare_form! {
+    Begin(sexpr, env):
+        [(_ . rest) => { Sequence.expand(rest, env) }]
 }
 
-pub struct Definition;
-
-impl SyntaxExpander for Definition {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_, name: Symbol, value) => {
-                let value = Expression.expand(value, env)?;
-                let (depth, binding) = env.ensure_global(name);
-                binding.expand_assignment(sexpr.map(()), depth, value)
-            }]
-            [sexpr: (_, (name: Symbol . args) . body) => {
-                let body_env = env.extend(args)?;
-                let body = Sequence.expand(body, &body_env)?;
-                let function = Ast::lambda(sexpr.map(()), args.len(), body);
-
-                let (depth, binding) = env.ensure_global(name);
-                binding.expand_assignment(sexpr.map(()), depth, function)
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
+declare_form! {
+    Quotation(sexpr, _env):
+        [(_, value) => { Ok(Ast::constant(value.clone())) }]
 }
 
-pub struct Sequence;
-
-impl SyntaxExpander for Sequence {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (expr) => { Expression.expand(expr, env) }]
-            [sexpr: (expr . rest) => {
-                let first = Expression.expand(expr, env)?;
-                let rest = self.expand(rest, env)?;
-                Ok(Ast::sequence(first, rest))
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
+declare_form! {
+    Assignment(sexpr, env):
+        [(_, name: Symbol, value) => {
+            let (depth, binding) = env.lookup_or_insert_global(name);
+            let value = Expression.expand(value, env)?;
+            binding.expand_assignment(sexpr.map(()), depth, value)
+        }]
 }
 
-pub struct Branch;
+declare_form! {
+    Definition(sexpr, env):
+        [(_, name: Symbol, value) => {
+            let value = Expression.expand(value, env)?;
+            let (depth, binding) = env.ensure_global(name);
+            binding.expand_assignment(sexpr.map(()), depth, value)
+        }]
+        [(_, (name: Symbol . args) . body) => {
+            let body_env = env.extend(args)?;
+            let body = Sequence.expand(body, &body_env)?;
+            let function = Ast::lambda(sexpr.map(()), args.len(), body);
 
-impl SyntaxExpander for Branch {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_, condition, consequence, alternative) => {
-                let condition = Expression.expand(condition, env)?;
-                let consequence = Expression.expand(consequence, env)?;
-                let alternative = Expression.expand(alternative, env)?;
-                Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
-            }]
-            [sexpr: (_, condition, consequence) => {
-                let condition = Expression.expand(condition, env)?;
-                let consequence = Expression.expand(consequence, env)?;
-                let alternative = Ast::void();
-                Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
+            let (depth, binding) = env.ensure_global(name);
+            binding.expand_assignment(sexpr.map(()), depth, function)
+        }]
 }
 
-pub struct Lambda;
-
-impl SyntaxExpander for Lambda {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_, params . body) => {
-                let body_env = env.extend(params)?;
-                let body = Sequence.expand(body, &body_env)?;
-
-                Ok(Ast::lambda(sexpr.map(()), params.len(), body))
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
+declare_form! {
+    Sequence(sexpr, env):
+        [(expr) => { Expression.expand(expr, env) }]
+        [(expr . rest) => {
+            let first = Expression.expand(expr, env)?;
+            let rest = Sequence.expand(rest, env)?;
+            Ok(Ast::sequence(first, rest))
+        }]
 }
 
-pub struct Cons;
+declare_form! {
+    Branch(sexpr, env):
+        [(_, condition, consequence, alternative) => {
+            let condition = Expression.expand(condition, env)?;
+            let consequence = Expression.expand(consequence, env)?;
+            let alternative = Expression.expand(alternative, env)?;
+            Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
+        }]
+        [(_, condition, consequence) => {
+            let condition = Expression.expand(condition, env)?;
+            let consequence = Expression.expand(consequence, env)?;
+            let alternative = Ast::void();
+            Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
+        }]
+}
 
-impl SyntaxExpander for Cons {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        match_sexpr![
-            [sexpr: (_, car, cdr) => {
-                let car = Expression.expand(car, env)?;
-                let cdr = Expression.expand(cdr, env)?;
-                Ok(Ast::cons(sexpr.map(()), car, cdr))
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
+declare_form! {
+    Lambda(sexpr, env):
+        [(_, params . body) => {
+            let body_env = env.extend(params)?;
+            let body = Sequence.expand(body, &body_env)?;
+
+            Ok(Ast::lambda(sexpr.map(()), params.len(), body))
+        }]
+}
+
+declare_form! {
+    Cons(sexpr, env):
+       [(_, car, cdr) => {
+            let car = Expression.expand(car, env)?;
+            let cdr = Expression.expand(cdr, env)?;
+            Ok(Ast::cons(sexpr.map(()), car, cdr))
+        }]
 }
 
 pub struct LibraryDefinition;
@@ -263,42 +260,5 @@ impl SyntaxExpander for LibraryDefinition {
             }]
         ]
             .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
-    }
-}
-
-pub struct Expression;
-
-impl SyntaxExpander for Expression {
-    fn expand<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        return match_sexpr![
-            [sexpr: (f: Symbol . _) => {
-                if let Some(sx) = env.lookup_syntax(f) {
-                    sx.expand(sexpr, env)
-                } else {
-                    self.expand_application(sexpr, env)
-                }
-            }]
-            [sexpr: list: List => {
-                self.expand_application(sexpr, env)
-            }]
-            [sexpr: name: Symbol => {
-                let (depth, binding) = env.lookup_or_insert_global(name);
-                binding.expand_reference(sexpr.map(()), depth)
-            }]
-            [sexpr: _ => {
-                Ok(Ast::constant(sexpr.clone()))
-            }]
-        ]
-        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)));
-    }
-}
-
-impl Expression {
-    fn expand_application<'src>(&self, sexpr: RefExpr<'src>, env: &Env) -> Result<AstNode<'src>> {
-        let mut args = vec![];
-        for a in sexpr.iter() {
-            args.push(self.expand(a, env)?);
-        }
-        Ok(Ast::invoke(sexpr.map(()), args))
     }
 }
