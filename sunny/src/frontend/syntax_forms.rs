@@ -1,14 +1,12 @@
-use log::warn;
-
-use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
-
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
     environment::{Env, EnvBinding},
-    error::{Error, error_at, Result},
+    error::{error_at, Error, Result},
     SyntaxExpander,
 };
+use log::warn;
+use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
 
 macro_rules! match_sexpr {
     ([$expr:tt: $($rules:tt)*]) => {
@@ -322,34 +320,31 @@ impl SyntaxExpander for Expression {
         _further: &dyn SyntaxExpander,
         env: &Env,
     ) -> Result<AstNode<'src>> {
-        if is_atom(sexpr) {
-            if let Some(name) = sexpr.as_symbol() {
+        return match_sexpr![
+            [sexpr: (f: Symbol . _) => {
+                if let Some(sx) = env.lookup_syntax(f) {
+                    sx.expand(sexpr, &Expression, env)
+                } else {
+                    self.expand_application(sexpr, env)
+                }
+            }]
+            [sexpr: list: List => {
+                self.expand_application(sexpr, env)
+            }]
+            [sexpr: name: Symbol => {
                 let (depth, binding) = env.lookup_or_insert_global(name);
                 binding.meaning_reference(sexpr.map(()), depth)
-            } else {
+            }]
+            [sexpr: _ => {
                 Ok(Ast::constant(sexpr.clone()))
-            }
-        } else {
-            let first = sexpr.car().unwrap();
-            if let Some(s) = first.as_symbol() {
-                match s {
-                    _ => {
-                        if let Some(sx) = env.lookup_syntax(s) {
-                            sx.expand(sexpr, self, env)
-                        } else {
-                            self.meaning_application(sexpr, env)
-                        }
-                    }
-                }
-            } else {
-                self.meaning_application(sexpr, env)
-            }
-        }
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)));
     }
 }
 
 impl Expression {
-    fn meaning_application<'src>(
+    fn expand_application<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         env: &Env,
@@ -360,8 +355,4 @@ impl Expression {
         }
         Ok(Ast::invoke(sexpr.map(()), args))
     }
-}
-
-fn is_atom(sexpr: &SourceLocation<Sexpr>) -> bool {
-    !sexpr.get_value().is_pair()
 }

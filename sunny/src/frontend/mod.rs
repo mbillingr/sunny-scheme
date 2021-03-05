@@ -9,10 +9,10 @@ use crate::frontend::{
     environment::Env,
     error::Result,
     syntax_forms::{
-        Assignment, Begin, Branch, Cons, Definition, Lambda, LibraryDefinition, Quotation,
+        Assignment, Begin, Branch, Cons, Definition, Expression, Lambda, LibraryDefinition,
+        Quotation,
     },
 };
-pub use syntax_forms::Expression;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
 pub trait SyntaxExpander {
