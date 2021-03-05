@@ -131,6 +131,34 @@ impl SyntaxExpander for Assignment {
     }
 }
 
+pub struct Definition;
+
+impl SyntaxExpander for Definition {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+        env: &Env,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_, name: Symbol, value) => {
+                let value = further.expand(value, further, env)?;
+                let (depth, binding) = env.ensure_global(name);
+                binding.meaning_assignment(sexpr.map(()), depth, value)
+            }]
+            [sexpr: (_, (name: Symbol . args) . body) => {
+                let body_env = env.extend(args)?;
+                let body = Sequence.expand(body, further, &body_env)?;
+                let function = Ast::lambda(sexpr.map(()), args.len(), body);
+
+                let (depth, binding) = env.ensure_global(name);
+                binding.meaning_assignment(sexpr.map(()), depth, function)
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
+}
+
 pub struct Sequence;
 
 impl SyntaxExpander for Sequence {

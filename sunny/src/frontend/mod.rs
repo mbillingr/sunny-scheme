@@ -9,7 +9,7 @@ use crate::frontend::{
     ast::AstNode,
     environment::Env,
     error::Result,
-    syntax_forms::{Assignment, Begin, Branch, Cons, Lambda, Quotation},
+    syntax_forms::{Assignment, Begin, Branch, Cons, Definition, Lambda, Quotation},
 };
 pub use frontend::Frontend;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
@@ -27,6 +27,7 @@ pub fn base_environment() -> Env {
     let env = Env::new();
     env.insert_syntax("begin", Begin);
     env.insert_syntax("cons", Cons);
+    env.insert_syntax("define", Definition);
     env.insert_syntax("if", Branch);
     env.insert_syntax("lambda", Lambda);
     env.insert_syntax("quote", Quotation);

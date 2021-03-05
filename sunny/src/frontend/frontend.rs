@@ -35,7 +35,6 @@ impl SyntaxExpander for Frontend {
                             .ok_or_else(|| error_after(first, Error::MissingArgument))?;
                         self.library_definition(libname, sexpr.cddr().unwrap())
                     }
-                    "define" => self.meaning_definition(sexpr, env),
                     _ => {
                         if let Some(sx) = env.lookup_syntax(s) {
                             sx.expand(sexpr, self, env)
