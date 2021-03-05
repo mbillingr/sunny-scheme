@@ -51,7 +51,7 @@ impl SyntaxExpander for Frontend {
 }
 
 impl Frontend {
-    pub fn meaning_application<'src>(
+    fn meaning_application<'src>(
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         env: &Env,
@@ -63,54 +63,7 @@ impl Frontend {
         Ok(Ast::invoke(sexpr.map(()), args))
     }
 
-    pub fn meaning_definition<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
-        let name = self.definition_name(sexpr)?;
-        let value = self.definition_value(sexpr, env)?;
-        let (depth, binding) = env.lookup_or_insert_global(name);
-        binding.meaning_assignment(sexpr.map(()), depth, value)
-    }
-
-    fn definition_name<'a>(&self, sexpr: &'a SourceLocation<Sexpr>) -> Result<&'a str> {
-        let arg1 = sexpr
-            .cadr()
-            .ok_or_else(|| error_after(sexpr.car().unwrap(), Error::MissingArgument))?;
-        if let Some(name) = arg1.as_symbol() {
-            Ok(name)
-        } else if let Some(first) = arg1.car() {
-            first
-                .as_symbol()
-                .ok_or_else(|| error_at(arg1, Error::ExpectedSymbol))
-        } else {
-            Err(error_at(arg1, Error::ExpectedSymbol))
-        }
-    }
-
-    fn definition_value<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
-        if sexpr.cadr().unwrap().is_symbol() {
-            let argval = sexpr
-                .caddr()
-                .ok_or_else(|| error_after(sexpr.cddr().unwrap(), Error::MissingArgument))?;
-            self.expand(argval, self, env)
-        } else {
-            let args = sexpr.cdadr().unwrap();
-            let body = sexpr.cddr().unwrap();
-
-            let body_env = env.extend(args)?;
-            let body = Sequence.expand(body, self, &body_env)?;
-
-            Ok(Ast::lambda(sexpr.map(()), args.len(), body))
-        }
-    }
-
-    pub fn library_definition<'src>(
+    fn library_definition<'src>(
         &self,
         libname: &'src SourceLocation<Sexpr<'src>>,
         statements: &'src SourceLocation<Sexpr<'src>>,
