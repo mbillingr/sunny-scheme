@@ -9,7 +9,7 @@ use crate::frontend::{
     ast::AstNode,
     environment::Env,
     error::Result,
-    syntax_forms::{Begin, Branch, Quotation},
+    syntax_forms::{Begin, Branch, Lambda, Quotation},
 };
 pub use frontend::Frontend;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
@@ -20,12 +20,20 @@ pub trait SyntaxExpander {
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         further: &dyn SyntaxExpander,
     ) -> Result<AstNode<'src>>;
+
+    fn push_new_scope(&self, _vars: &SourceLocation<Sexpr>) -> Result<()> {
+        panic!("Syntax expander does not support additional scopes")
+    }
+    fn pop_scope(&self) {
+        unreachable!()
+    }
 }
 
 pub fn base_environment() -> Env {
     let mut env = Env::new();
     env.insert_syntax("begin", Begin);
     env.insert_syntax("if", Branch);
+    env.insert_syntax("lambda", Lambda);
     env.insert_syntax("quote", Quotation);
     env
 }

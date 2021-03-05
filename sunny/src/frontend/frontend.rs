@@ -22,6 +22,14 @@ impl SyntaxExpander for Frontend {
     ) -> Result<AstNode<'src>> {
         self.meaning(sexpr)
     }
+
+    fn push_new_scope(&self, vars: &SourceLocation<Sexpr>) -> Result<()> {
+        self.push_new_scope(vars)
+    }
+
+    fn pop_scope(&self) {
+        self.pop_scope()
+    }
 }
 
 impl Frontend {
@@ -61,14 +69,6 @@ impl Frontend {
                         let car = self.meaning(arg1)?;
                         let cdr = self.meaning(arg2)?;
                         Ok(Ast::cons(sexpr.map(()), car, cdr))
-                    }
-                    "lambda" => {
-                        let arg1 = sexpr
-                            .cadr()
-                            .ok_or_else(|| error_after(first, Error::MissingArgument))?;
-                        let body = sexpr.cddr().unwrap();
-
-                        self.meaning_lambda(sexpr, arg1, body)
                     }
                     _ => {
                         if let Some(sx) = self.lookup_syntax(s) {

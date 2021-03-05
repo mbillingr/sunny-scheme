@@ -133,3 +133,24 @@ impl SyntaxExpander for Branch {
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
 }
+
+pub struct Lambda;
+
+impl SyntaxExpander for Lambda {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        further: &dyn SyntaxExpander,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_ params . body) => {
+                further.push_new_scope(params)?;
+                let body = Sequence.expand(body, further)?;
+                further.pop_scope();
+
+                Ok(Ast::lambda(sexpr.map(()), params.len(), body))
+            }]
+        ]
+        .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
+}
