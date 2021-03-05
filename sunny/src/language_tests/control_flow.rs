@@ -55,3 +55,13 @@ fn if_does_not_evaluate_the_true_branch_on_false() {
         EvaluatesTo::the_integer(0)
     );
 }
+
+#[test]
+fn if_alternative_is_optional() {
+    assert_that!("(if #t 1)", EvaluatesTo::the_integer(1));
+}
+
+#[test]
+fn if_without_alternative_is_void_on_false() {
+    assert_that!("(if #f 1)", EvaluatesTo::void());
+}

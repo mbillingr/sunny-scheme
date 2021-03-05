@@ -10,6 +10,8 @@ pub trait Backend {
 
     fn end_module(&mut self, content: Self::Ir) -> Self::Ir;
 
+    fn void(&mut self) -> Self::Ir;
+
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir;
 
     fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir;
@@ -63,6 +65,10 @@ impl Backend for ByteCodeBackend<'_> {
 
     fn end_module(&mut self, content: Self::Ir) -> Self::Ir {
         self.prelude.pop().unwrap().chain(content)
+    }
+
+    fn void(&mut self) -> Self::Ir {
+        BlockChain::singleton(BasicBlock::new(vec![Op::Void], vec![]))
     }
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir {

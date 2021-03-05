@@ -5,6 +5,7 @@ pub type AstNode<'src> = Box<Ast<'src>>;
 
 #[derive(Debug, PartialEq)]
 pub enum Ast<'src> {
+    Void,
     Const(SourceLocation<Sexpr<'src>>), // todo: don't store constants as strings
     Fetch(SourceLocation<()>, usize, usize),
     Store(SourceLocation<()>, usize, usize, AstNode<'src>),
@@ -25,6 +26,10 @@ pub enum Ast<'src> {
 impl<'src> Ast<'src> {
     pub fn module(content: AstNode<'src>) -> AstNode<'src> {
         Box::new(Ast::Module(content))
+    }
+
+    pub fn void() -> AstNode<'src> {
+        Box::new(Ast::Void)
     }
 
     pub fn constant(sexpr: SourceLocation<Sexpr<'src>>) -> AstNode<'src> {
@@ -83,6 +88,7 @@ impl<'src> Ast<'src> {
 
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
+            Ast::Void => backend.void(),
             Ast::Const(sexpr) => backend.constant(sexpr.map(()), sexpr.get_value()),
             Ast::Fetch(ctx, depth, idx) => backend.fetch(ctx.clone(), *depth, *idx),
             Ast::Store(ctx, depth, idx, value) => {

@@ -123,6 +123,12 @@ impl SyntaxExpander for Branch {
                 let alternative = further.expand(alternative, further)?;
                 Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
             }]
+            [sexpr: (_ condition consequence) => {
+                let condition = further.expand(condition, further)?;
+                let consequence = further.expand(consequence, further)?;
+                let alternative = Ast::void();
+                Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
+            }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
