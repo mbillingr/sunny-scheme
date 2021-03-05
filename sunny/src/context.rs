@@ -4,7 +4,7 @@ use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
 use crate::backend::{Backend, ByteCodeBackend};
 use crate::frontend::environment::Env;
-use crate::frontend::Frontend;
+use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
 
 pub struct Context {
@@ -25,8 +25,8 @@ impl Context {
     pub fn eval(&mut self, src: &str) -> Result<Value, Error> {
         let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
-        let ast = Frontend
-            .expand(&sexpr, &Frontend, &self.env)
+        let ast = Expression
+            .expand(&sexpr, &Expression, &self.env)
             .map_err(|e| e.in_string(src))?;
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());

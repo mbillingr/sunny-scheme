@@ -2,7 +2,6 @@
 pub mod ast;
 pub mod environment;
 pub mod error;
-pub mod frontend;
 pub mod syntax_forms;
 
 use crate::frontend::{
@@ -13,7 +12,7 @@ use crate::frontend::{
         Assignment, Begin, Branch, Cons, Definition, Lambda, LibraryDefinition, Quotation,
     },
 };
-pub use frontend::Frontend;
+pub use syntax_forms::Expression;
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
 pub trait SyntaxExpander {
@@ -66,7 +65,7 @@ mod tests {
         ($expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
             let env = base_environment();
-            Frontend.expand(&sexpr.into(), &Frontend, &env)
+            Expression.expand(&sexpr.into(), &Expression, &env)
         }};
     }
 
