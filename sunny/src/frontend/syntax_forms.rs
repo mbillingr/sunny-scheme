@@ -1,9 +1,11 @@
-use crate::frontend::environment::Env;
 use crate::frontend::{
     ast::{Ast, AstNode},
-    error::{Error, Result},
-    SyntaxExpander,
+    base_environment,
+    environment::{Env, EnvBinding},
+    error::{error_at, Error, Result},
+    Frontend, SyntaxExpander,
 };
+use log::warn;
 use sunny_sexpr_parser::{CxR, Sexpr, SourceLocation};
 
 macro_rules! match_sexpr {
@@ -23,6 +25,14 @@ macro_rules! _match_sexpr {
     ($expr:tt; _ => $action:block) => {{ let _ = $expr; Some($action) }};
 
     ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; Some($action) }};
+
+    ($expr:tt; $x:ident: List => $action:block) => {
+        if $expr.is_pair() {
+            Some($action)
+        } else {
+            None
+        }
+    };
 
     ($expr:tt; $x:ident: Symbol => $action:block) => {
         if let Some($x) = $expr.as_symbol() {
@@ -245,5 +255,58 @@ impl SyntaxExpander for Cons {
             }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
+    }
+}
+
+pub struct LibraryDefinition;
+
+impl SyntaxExpander for LibraryDefinition {
+    fn expand<'src>(
+        &self,
+        sexpr: &'src SourceLocation<Sexpr<'src>>,
+        _further: &dyn SyntaxExpander,
+        _env: &Env,
+    ) -> Result<AstNode<'src>> {
+        match_sexpr![
+            [sexpr: (_, libname: List . statements) => {
+                let lib_env = base_environment();
+
+                let mut exports = vec![];
+                let mut body_parts = vec![];
+                for stmt in statements.iter() {
+                    match stmt.car().and_then(|s| s.as_symbol()) {
+                        Some("import") => warn!("Ignoring (import ...) statement in library definition"),
+                        Some("export") => {
+                            for export_item in stmt.cdr().unwrap().iter() {
+                                let export_name = export_item
+                                    .as_symbol()
+                                    .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
+                                let (_, binding) = lib_env.ensure_global(export_name);
+                                if let EnvBinding::Variable(var_idx) = binding {
+                                    exports.push((export_name, var_idx));
+                                } else {
+                                    unimplemented!()
+                                }
+                            }
+                        }
+                        Some("begin") => {
+                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &Frontend, &lib_env)?)
+                        }
+                        _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
+                    }
+                }
+
+                let mut body = body_parts.pop().expect("Empty library body");
+                while let Some(prev_part) = body_parts.pop() {
+                    body = Ast::sequence(prev_part, body);
+                }
+
+                let meaning_exports = Ast::export(exports);
+                body = Ast::sequence(body, meaning_exports);
+
+                Ok(Ast::module(body))
+            }]
+        ]
+            .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
 }
