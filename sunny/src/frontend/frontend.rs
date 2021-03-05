@@ -35,7 +35,6 @@ impl SyntaxExpander for Frontend {
                             .ok_or_else(|| error_after(first, Error::MissingArgument))?;
                         self.library_definition(libname, sexpr.cddr().unwrap())
                     }
-                    "set!" => self.meaning_assignment(sexpr, env),
                     "define" => self.meaning_definition(sexpr, env),
                     "cons" => {
                         let arg1 = sexpr
@@ -74,25 +73,6 @@ impl Frontend {
             args.push(self.expand(a, self, env)?);
         }
         Ok(Ast::invoke(sexpr.map(()), args))
-    }
-
-    pub fn meaning_assignment<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>> {
-        let arg1 = sexpr
-            .cadr()
-            .ok_or_else(|| error_after(sexpr.car().unwrap(), Error::MissingArgument))?;
-        let name = arg1
-            .as_symbol()
-            .ok_or_else(|| error_at(arg1, Error::ExpectedSymbol))?;
-        let argval = sexpr
-            .caddr()
-            .ok_or_else(|| error_after(arg1, Error::MissingArgument))?;
-        let value = self.expand(argval, self, env)?;
-        let (depth, binding) = env.lookup_or_insert_global(name);
-        binding.meaning_assignment(sexpr.map(()), depth, value)
     }
 
     pub fn meaning_definition<'src>(

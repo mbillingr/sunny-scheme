@@ -24,6 +24,14 @@ macro_rules! _match_sexpr {
 
     ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; Some($action) }};
 
+    ($expr:tt; $x:ident: Symbol => $action:block) => {
+        if let Some($x) = $expr.as_symbol() {
+            Some($action)
+        } else {
+            None
+        }
+    };
+
     ($expr:tt; () => $action:block) => {
         if $expr.is_null() {
             Some($action)
@@ -32,23 +40,35 @@ macro_rules! _match_sexpr {
         }
     };
 
-    ($expr:tt; ($first:tt . $second:tt) => $action:block) => {
+    ($expr:tt; ($first:tt $(:$typ1:tt)? . $second:tt $(:$typ2:tt)?) => $action:block) => {
         if $expr.is_pair() {
             let car = $expr.car().unwrap();
             let cdr = $expr.cdr().unwrap();
-            _match_sexpr![car; $first => {
-                _match_sexpr![cdr; $second => $action]
+            _match_sexpr![car; $first $(:$typ1)? => {
+                _match_sexpr![cdr; $second $(:$typ2)? => $action]
             }].flatten()
         } else {
             None
         }
     };
 
-    ($expr:tt; ($first:tt $($rest:tt)*) => $action:block) => {
+    ($expr:tt; ($first:tt $(:$typ:tt)?) => $action:block) => {
         if $expr.is_pair() {
             let car = $expr.car().unwrap();
             let cdr = $expr.cdr().unwrap();
-            _match_sexpr![car; $first => {
+            _match_sexpr![cdr; () => {
+                _match_sexpr![car; $first $(:$typ)? => $action]
+            }].flatten()
+        } else {
+            None
+        }
+    };
+
+    ($expr:tt; ($first:tt $(:$typ:tt)?, $($rest:tt)*) => $action:block) => {
+        if $expr.is_pair() {
+            let car = $expr.car().unwrap();
+            let cdr = $expr.cdr().unwrap();
+            _match_sexpr![car; $first $(:$typ)? => {
                 _match_sexpr![cdr; ($($rest)*) => $action]
             }].flatten()
         } else {
@@ -82,10 +102,10 @@ impl SyntaxExpander for Quotation {
         &self,
         sexpr: &'src SourceLocation<Sexpr<'src>>,
         _further: &dyn SyntaxExpander,
-        env: &Env,
+        _env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            [sexpr: (_ arg) => { Ok(Ast::constant(arg.clone())) }]
+            [sexpr: (_, arg) => { Ok(Ast::constant(arg.clone())) }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
     }
@@ -101,8 +121,10 @@ impl SyntaxExpander for Assignment {
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            [sexpr: (_ name value) => {
-                unimplemented!()
+            [sexpr: (_, name: Symbol, value) => {
+                let (depth, binding) = env.lookup_or_insert_global(name);
+                let value = further.expand(value, further, env)?;
+                binding.meaning_assignment(sexpr.map(()), depth, value)
             }]
         ]
         .unwrap_or_else(|| Err(sexpr.map(Error::InvalidForm)))
@@ -140,13 +162,13 @@ impl SyntaxExpander for Branch {
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            [sexpr: (_ condition consequence alternative) => {
+            [sexpr: (_, condition, consequence, alternative) => {
                 let condition = further.expand(condition, further, env)?;
                 let consequence = further.expand(consequence, further, env)?;
                 let alternative = further.expand(alternative, further, env)?;
                 Ok(Ast::ifexpr(sexpr.map(()), condition, consequence, alternative))
             }]
-            [sexpr: (_ condition consequence) => {
+            [sexpr: (_, condition, consequence) => {
                 let condition = further.expand(condition, further, env)?;
                 let consequence = further.expand(consequence, further, env)?;
                 let alternative = Ast::void();
@@ -167,7 +189,7 @@ impl SyntaxExpander for Lambda {
         env: &Env,
     ) -> Result<AstNode<'src>> {
         match_sexpr![
-            [sexpr: (_ params . body) => {
+            [sexpr: (_, params . body) => {
                 let body_env = env.extend(params)?;
                 let body = Sequence.expand(body, further, &body_env)?;
 
