@@ -87,7 +87,7 @@ macro_rules! _match_sexpr {
     };
 }
 
-macro_rules! declare_form {
+macro_rules! define_form {
     ($t:ident($xpr:ident, $env:ident): $([$($rules:tt)*])+) => {
         pub struct $t;
         impl SyntaxExpander for $t {
@@ -103,7 +103,7 @@ macro_rules! declare_form {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-declare_form! {
+define_form! {
     Expression(sexpr, env):
         [(f: Symbol . _) => {
             if let Some(sx) = env.lookup_syntax(f) {
@@ -134,17 +134,17 @@ impl Expression {
     }
 }
 
-declare_form! {
+define_form! {
     Begin(sexpr, env):
         [(_ . rest) => { Sequence.expand(rest, env) }]
 }
 
-declare_form! {
+define_form! {
     Quotation(sexpr, _env):
         [(_, value) => { Ok(Ast::constant(value.clone())) }]
 }
 
-declare_form! {
+define_form! {
     Assignment(sexpr, env):
         [(_, name: Symbol, value) => {
             let (depth, binding) = env.lookup_or_insert_global(name);
@@ -153,7 +153,7 @@ declare_form! {
         }]
 }
 
-declare_form! {
+define_form! {
     Definition(sexpr, env):
         [(_, name: Symbol, value) => {
             let value = Expression.expand(value, env)?;
@@ -170,7 +170,7 @@ declare_form! {
         }]
 }
 
-declare_form! {
+define_form! {
     Sequence(sexpr, env):
         [(expr) => { Expression.expand(expr, env) }]
         [(expr . rest) => {
@@ -180,7 +180,7 @@ declare_form! {
         }]
 }
 
-declare_form! {
+define_form! {
     Branch(sexpr, env):
         [(_, condition, consequence, alternative) => {
             let condition = Expression.expand(condition, env)?;
@@ -196,7 +196,7 @@ declare_form! {
         }]
 }
 
-declare_form! {
+define_form! {
     Lambda(sexpr, env):
         [(_, params . body) => {
             let body_env = env.extend(params)?;
@@ -206,7 +206,7 @@ declare_form! {
         }]
 }
 
-declare_form! {
+define_form! {
     Cons(sexpr, env):
        [(_, car, cdr) => {
             let car = Expression.expand(car, env)?;
