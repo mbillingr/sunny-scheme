@@ -31,3 +31,11 @@ fn definition_evaluates_to_void() {
 fn function_definition_creates_a_procedure() {
     assert_that!("(begin (define (x) 1) x)", EvaluatesTo::a_procedure());
 }
+
+#[test]
+fn allow_redefinition_of_syntax_as_variables() {
+    assert_that!(
+        "(begin (define lambda 42) lambda)",
+        EvaluatesTo::the_integer(42)
+    );
+}

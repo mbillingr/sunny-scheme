@@ -157,7 +157,7 @@ define_form! {
     Definition(sexpr, env):
         [(_, name: Symbol, value) => {
             let value = Expression.expand(value, env)?;
-            let (depth, binding) = env.ensure_global(name);
+            let (depth, binding) = env.ensure_global_variable(name);
             binding.expand_assignment(sexpr.map(()), depth, value)
         }]
         [(_, (name: Symbol . args) . body) => {
@@ -165,7 +165,7 @@ define_form! {
             let body = Sequence.expand(body, &body_env)?;
             let function = Ast::lambda(sexpr.map(()), args.len(), body);
 
-            let (depth, binding) = env.ensure_global(name);
+            let (depth, binding) = env.ensure_global_variable(name);
             binding.expand_assignment(sexpr.map(()), depth, function)
         }]
 }

@@ -158,6 +158,17 @@ impl Environment {
         var.unwrap_or_else(|| self.add_global(name.to_string()))
     }
 
+    pub fn ensure_global_variable(&self, name: impl AsRef<str> + ToString) -> (usize, EnvBinding) {
+        let entry = self
+            .outermost_env()
+            .lookup(name.as_ref())
+            .map(|(d, b)| (d, b.clone()));
+        match entry {
+            Some((d, b)) if b.is_variable() => (d, b),
+            _ => self.add_global(name.to_string()),
+        }
+    }
+
     pub fn add_global(&self, name: String) -> (usize, EnvBinding) {
         if let Some(p) = &self.parent {
             let (depth, idx) = p.add_global(name);
