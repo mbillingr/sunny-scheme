@@ -39,7 +39,7 @@ pub trait Backend {
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir;
 
-    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Ir;
+    fn export(&mut self, exports: &[(String, usize)]) -> Self::Ir;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -149,7 +149,7 @@ impl Backend for ByteCodeBackend<'_> {
         blocks
     }
 
-    fn export(&mut self, exports: Vec<(&str, usize)>) -> Self::Ir {
+    fn export(&mut self, exports: &[(String, usize)]) -> Self::Ir {
         self.storage.ensure(exports.len());
         let mut ops = vec![Op::Table];
         let mut constants = vec![];
@@ -157,7 +157,7 @@ impl Backend for ByteCodeBackend<'_> {
             let cidx = constants.len();
             constants.push(self.storage.interned_symbol(export_name).unwrap());
             ops.extend(Op::extended(Op::Const, cidx));
-            ops.extend(Op::extended(Op::FetchLocal, var_idx));
+            ops.extend(Op::extended(Op::FetchLocal, *var_idx));
             ops.push(Op::TableSet);
         }
         let block = BasicBlock::new(ops, constants);

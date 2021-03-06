@@ -4,11 +4,11 @@ use crate::source_location::SourceLocation;
 
 grammar<'a>(context: &'a SourceLocation<()>);
 
-pub Datum: SourceLocation<Sexpr<'input>> = {
-    <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_span(l..r).map(x),
+pub Datum: SourceLocation<Sexpr> = {
+    <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_span(l..r).map_value(x),
 };
 
-pub RawSexpr: Sexpr<'input> = {
+pub RawSexpr: Sexpr = {
     <b:Bool> => Sexpr::bool(b),
     <n:Num> => Sexpr::int(n),
     <s:Sym> => Sexpr::symbol(s),
@@ -31,20 +31,20 @@ Str: &'input str = {
     <s:r#""[^"]*""#> => &s[1..s.len()-1],
  };
 
-Pair: (SourceLocation<Sexpr<'input>>, SourceLocation<Sexpr<'input>>) = {
+Pair: (SourceLocation<Sexpr>, SourceLocation<Sexpr>) = {
     "(" <car:Datum> "." <cdr:Datum> ")" => (car, cdr)
 };
 
-List: Sexpr<'input> = {
+List: Sexpr = {
     "(" ")" => Sexpr::nil(),
     "(" <Sequence> ")" => <>,
 };
 
-Sequence: Sexpr<'input> = {
-    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_span(l..r).map(cdr)),
+Sequence: Sexpr = {
+    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_span(l..r).map_value(cdr)),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
 };
 
-Quotation: Sexpr<'input> = {
-    <l:@L> "'" <r:@R> <x:Datum> => Sexpr::list(vec![context.clone().with_span(l..r).map(Sexpr::symbol("quote")), x].into_iter())
+Quotation: Sexpr = {
+    <l:@L> "'" <r:@R> <x:Datum> => Sexpr::list(vec![context.clone().with_span(l..r).map_value(Sexpr::symbol("quote")), x].into_iter())
 };

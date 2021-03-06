@@ -11,6 +11,7 @@ pub enum Error {
     UnexpectedStatement,
     SyntaxAsValue,
     InvalidForm,
+    UnknownSyntaxTransformer,
 }
 
 impl std::fmt::Display for Error {
@@ -23,12 +24,13 @@ impl std::fmt::Display for Error {
             Error::UnexpectedStatement => write!(f, "Unexpected statement"),
             Error::SyntaxAsValue => write!(f, "Syntax used as value"),
             Error::InvalidForm => write!(f, "Invalid syntactic form"),
+            Error::UnknownSyntaxTransformer => write!(f, "Unknown syntax transformer"),
         }
     }
 }
 
 pub fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
-    sexpr.map(error.into())
+    sexpr.map_value(error.into())
 }
 
 pub fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {

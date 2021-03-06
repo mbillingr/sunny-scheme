@@ -74,9 +74,17 @@ impl<T> SourceLocation<T> {
         }
     }
 
-    pub fn map<U>(&self, new_value: U) -> SourceLocation<U> {
+    pub fn map_value<U>(&self, new_value: U) -> SourceLocation<U> {
         SourceLocation {
             inner_value: new_value,
+            span: self.span.clone(),
+            source: self.source.clone(),
+        }
+    }
+
+    pub fn map<U>(&self, f: impl FnOnce(&T) -> U) -> SourceLocation<U> {
+        SourceLocation {
+            inner_value: f(&self.inner_value),
             span: self.span.clone(),
             source: self.source.clone(),
         }
@@ -171,7 +179,7 @@ impl<T> SourceLocation<T> {
     }
 }
 
-impl SourceLocation<Sexpr<'_>> {
+impl SourceLocation<Sexpr> {
     pub fn iter(&self) -> impl Iterator<Item = &SourceLocation<Sexpr>> {
         let mut cursor = self;
         (0..)
@@ -200,7 +208,7 @@ impl<T> Deref for SourceLocation<T> {
     }
 }
 
-impl CxR for SourceLocation<Sexpr<'_>> {
+impl CxR for SourceLocation<Sexpr> {
     type Result = Self;
 
     fn car(&self) -> Option<&Self> {
@@ -218,7 +226,7 @@ impl<T> From<T> for SourceLocation<T> {
     }
 }
 
-impl PartialEq<Sexpr<'_>> for SourceLocation<Sexpr<'_>> {
+impl PartialEq<Sexpr> for SourceLocation<Sexpr> {
     fn eq(&self, other: &Sexpr) -> bool {
         self.get_value() == other
     }

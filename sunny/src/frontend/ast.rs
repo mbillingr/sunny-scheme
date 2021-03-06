@@ -1,95 +1,77 @@
 use crate::backend::Backend;
 use sunny_sexpr_parser::{SourceLocation, SrcExpr};
 
-pub type AstNode<'src> = Box<Ast<'src>>;
+pub type AstNode = Box<Ast>;
 
 #[derive(Debug, PartialEq)]
-pub enum Ast<'src> {
+pub enum Ast {
     Void,
-    Const(SrcExpr<'src>),
+    Const(SrcExpr),
     Fetch(SourceLocation<()>, usize, usize),
-    Store(SourceLocation<()>, usize, usize, AstNode<'src>),
-    Cons(SourceLocation<()>, AstNode<'src>, AstNode<'src>),
-    Sequence(AstNode<'src>, AstNode<'src>),
-    If(
-        SourceLocation<()>,
-        AstNode<'src>,
-        AstNode<'src>,
-        AstNode<'src>,
-    ),
-    Lambda(SourceLocation<()>, usize, AstNode<'src>),
-    Invoke(SourceLocation<()>, Vec<AstNode<'src>>),
-    Module(AstNode<'src>),
-    Export(Vec<(&'src str, usize)>),
+    Store(SourceLocation<()>, usize, usize, AstNode),
+    Cons(SourceLocation<()>, AstNode, AstNode),
+    Sequence(AstNode, AstNode),
+    If(SourceLocation<()>, AstNode, AstNode, AstNode),
+    Lambda(SourceLocation<()>, usize, AstNode),
+    Invoke(SourceLocation<()>, Vec<AstNode>),
+    Module(AstNode),
+    Export(Vec<(String, usize)>),
 }
 
-impl<'src> Ast<'src> {
-    pub fn module(content: AstNode<'src>) -> AstNode<'src> {
+impl Ast {
+    pub fn module(content: AstNode) -> AstNode {
         Box::new(Ast::Module(content))
     }
 
-    pub fn void() -> AstNode<'src> {
+    pub fn void() -> AstNode {
         Box::new(Ast::Void)
     }
 
-    pub fn constant(sexpr: SrcExpr<'src>) -> AstNode<'src> {
+    pub fn constant(sexpr: SrcExpr) -> AstNode {
         Box::new(Ast::Const(sexpr))
     }
 
-    pub fn fetch(context: SourceLocation<()>, depth: usize, idx: usize) -> AstNode<'src> {
+    pub fn fetch(context: SourceLocation<()>, depth: usize, idx: usize) -> AstNode {
         Box::new(Ast::Fetch(context, depth, idx))
     }
 
-    pub fn store(
-        context: SourceLocation<()>,
-        depth: usize,
-        idx: usize,
-        val: AstNode<'src>,
-    ) -> AstNode<'src> {
+    pub fn store(context: SourceLocation<()>, depth: usize, idx: usize, val: AstNode) -> AstNode {
         Box::new(Ast::Store(context, depth, idx, val))
     }
 
-    pub fn cons(
-        context: SourceLocation<()>,
-        first: AstNode<'src>,
-        second: AstNode<'src>,
-    ) -> AstNode<'src> {
+    pub fn cons(context: SourceLocation<()>, first: AstNode, second: AstNode) -> AstNode {
         Box::new(Ast::Cons(context, first, second))
     }
 
-    pub fn sequence(first: AstNode<'src>, next: AstNode<'src>) -> AstNode<'src> {
+    pub fn sequence(first: AstNode, next: AstNode) -> AstNode {
         Box::new(Ast::Sequence(first, next))
     }
 
     pub fn ifexpr(
         context: SourceLocation<()>,
-        condition: AstNode<'src>,
-        consequent: AstNode<'src>,
-        alternative: AstNode<'src>,
-    ) -> AstNode<'src> {
+        condition: AstNode,
+        consequent: AstNode,
+        alternative: AstNode,
+    ) -> AstNode {
         Box::new(Ast::If(context, condition, consequent, alternative))
     }
 
-    pub fn lambda(
-        context: SourceLocation<()>,
-        n_args: usize,
-        body: AstNode<'src>,
-    ) -> AstNode<'src> {
+    pub fn lambda(context: SourceLocation<()>, n_args: usize, body: AstNode) -> AstNode {
         Box::new(Ast::Lambda(context, n_args, body))
     }
 
-    pub fn invoke(context: SourceLocation<()>, args: Vec<AstNode<'src>>) -> AstNode<'src> {
+    pub fn invoke(context: SourceLocation<()>, args: Vec<AstNode>) -> AstNode {
         Box::new(Ast::Invoke(context, args))
     }
 
-    pub fn export(exports: Vec<(&'src str, usize)>) -> AstNode<'src> {
+    pub fn export(exports: Vec<(String, usize)>) -> AstNode {
         Box::new(Ast::Export(exports))
     }
 
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
             Ast::Void => backend.void(),
-            Ast::Const(sexpr) => backend.constant(sexpr.map(()), sexpr.get_value()),
+            Ast::Const(sexpr) => backend.constant(sexpr.map_value(()), sexpr.get_value()),
             Ast::Fetch(ctx, depth, idx) => backend.fetch(ctx.clone(), *depth, *idx),
             Ast::Store(ctx, depth, idx, value) => {
                 let value = value.build(backend);
@@ -126,7 +108,7 @@ impl<'src> Ast<'src> {
                 // this is just to make the test pass for now and serves no real purpose
                 backend.store(SourceLocation::new(()), 0, 0, libcode)
             }
-            Ast::Export(exports) => backend.export(exports.clone()),
+            Ast::Export(exports) => backend.export(exports),
         }
     }
 }

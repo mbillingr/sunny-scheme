@@ -181,7 +181,7 @@ fn label_name(stmt: &str) -> Option<&str> {
 }
 
 fn read_index<'a, 'b: 'a, T>(
-    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr<'b>>>,
+    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr>>,
     previous: &SourceLocation<T>,
 ) -> Result<usize> {
     let i = sexpr_iter
@@ -192,7 +192,7 @@ fn read_index<'a, 'b: 'a, T>(
 }
 
 fn read_u8<'a, 'b: 'a, T>(
-    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr<'b>>>,
+    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr>>,
     previous: &SourceLocation<T>,
 ) -> Result<u8> {
     let i = sexpr_iter
@@ -209,7 +209,7 @@ fn read_u8<'a, 'b: 'a, T>(
 }
 
 fn read_symbol<'a, 'b: 'a, T>(
-    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr<'b>>>,
+    sexpr_iter: &mut impl Iterator<Item = &'a SourceLocation<Sexpr>>,
     previous: &SourceLocation<T>,
 ) -> Result<&'a str> {
     let i = sexpr_iter
@@ -220,7 +220,7 @@ fn read_symbol<'a, 'b: 'a, T>(
 }
 
 fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {
-    sexpr.map(error.into())
+    sexpr.map_value(error.into())
 }
 
 fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {

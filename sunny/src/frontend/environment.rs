@@ -20,26 +20,22 @@ impl EnvBinding {
         EnvBinding::Syntax(Rc::new(expander))
     }
 
-    pub fn expand_reference<'src>(
-        &self,
-        context: SourceLocation<()>,
-        depth: usize,
-    ) -> Result<AstNode<'src>> {
+    pub fn expand_reference(&self, context: SourceLocation<()>, depth: usize) -> Result<AstNode> {
         match self {
             EnvBinding::Variable(idx) => Ok(Ast::fetch(context, depth, *idx)),
-            EnvBinding::Syntax(_) => Err(context.map(Error::SyntaxAsValue)),
+            EnvBinding::Syntax(_) => Err(context.map_value(Error::SyntaxAsValue)),
         }
     }
 
-    pub fn expand_assignment<'src>(
+    pub fn expand_assignment(
         &self,
         context: SourceLocation<()>,
         depth: usize,
-        value: AstNode<'src>,
-    ) -> Result<AstNode<'src>> {
+        value: AstNode,
+    ) -> Result<AstNode> {
         match self {
             EnvBinding::Variable(idx) => Ok(Ast::store(context, depth, *idx, value)),
-            EnvBinding::Syntax(_) => Err(context.map(Error::SyntaxAsValue)),
+            EnvBinding::Syntax(_) => Err(context.map_value(Error::SyntaxAsValue)),
         }
     }
 
@@ -116,10 +112,20 @@ impl Environment {
         })
     }
 
-    pub fn insert_syntax(&self, name: impl ToString, expander: impl SyntaxExpander + 'static) {
+    pub fn insert_syntax_static(
+        &self,
+        name: impl ToString,
+        expander: impl SyntaxExpander + 'static,
+    ) {
         self.variables
             .borrow_mut()
             .insert(name.to_string(), EnvBinding::syntax(expander));
+    }
+
+    pub fn insert_syntax_shared(&self, name: impl ToString, expander: Rc<dyn SyntaxExpander>) {
+        self.variables
+            .borrow_mut()
+            .insert(name.to_string(), EnvBinding::Syntax(expander));
     }
 
     pub fn lookup(&self, name: &str) -> Option<(usize, EnvBinding)> {

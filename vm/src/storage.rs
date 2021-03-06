@@ -26,7 +26,7 @@ impl ValueStorage {
         }
     }
 
-    pub fn sexpr_to_value(&mut self, sexpr: &Sexpr<'_>) -> Result<Value, ()> {
+    pub fn sexpr_to_value(&mut self, sexpr: &Sexpr) -> Result<Value, ()> {
         Ok(match sexpr {
             Sexpr::Nil => Value::Nil,
             Sexpr::Bool(false) => Value::False,
@@ -42,7 +42,7 @@ impl ValueStorage {
         })
     }
 
-    pub fn count_allocations(&mut self, sexpr: &Sexpr<'_>) -> usize {
+    pub fn count_allocations(&mut self, sexpr: &Sexpr) -> usize {
         match sexpr {
             Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) => 0,
             Sexpr::Symbol(_) => 1,

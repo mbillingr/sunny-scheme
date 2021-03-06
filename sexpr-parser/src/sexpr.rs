@@ -1,21 +1,22 @@
 use crate::{CxR, Int, SourceLocation};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-pub type SrcExpr<'src> = SourceLocation<Sexpr<'src>>;
-pub type RefExpr<'src> = &'src SrcExpr<'src>;
+pub type SrcExpr = SourceLocation<Sexpr>;
+pub type RefExpr<'a> = &'a SrcExpr;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Sexpr<'src> {
+pub enum Sexpr {
     Nil,
     Bool(bool),
     Integer(Int),
-    Symbol(&'src str),
-    String(&'src str),
-    Pair(Rc<(SrcExpr<'src>, SrcExpr<'src>)>),
+    Symbol(String),
+    String(String),
+    Pair(Rc<(SrcExpr, SrcExpr)>),
 }
 
-impl<'src> Sexpr<'src> {
+impl Sexpr {
     pub fn nil() -> Self {
         Sexpr::Nil
     }
@@ -28,19 +29,19 @@ impl<'src> Sexpr<'src> {
         Sexpr::Integer(i)
     }
 
-    pub fn symbol(name: &'src str) -> Self {
-        Sexpr::Symbol(name)
+    pub fn symbol(name: &str) -> Self {
+        Sexpr::Symbol(name.to_string())
     }
 
-    pub fn string(name: &'src str) -> Self {
-        Sexpr::String(name)
+    pub fn string(name: &str) -> Self {
+        Sexpr::String(name.to_string())
     }
 
-    pub fn cons(car: impl Into<SrcExpr<'src>>, cdr: impl Into<SrcExpr<'src>>) -> Self {
+    pub fn cons(car: impl Into<SrcExpr>, cdr: impl Into<SrcExpr>) -> Self {
         Sexpr::Pair(Rc::new((car.into(), cdr.into())))
     }
 
-    pub fn list(items: impl DoubleEndedIterator<Item = SrcExpr<'src>>) -> Self {
+    pub fn list(items: impl DoubleEndedIterator<Item = SrcExpr>) -> Self {
         let l = items.rfold(Self::nil(), |acc, x| Self::cons(x, acc));
         l
     }
@@ -81,7 +82,7 @@ impl<'src> Sexpr<'src> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Sexpr<'_>> {
+    pub fn iter(&self) -> impl Iterator<Item = &Sexpr> {
         let mut cursor = self;
         (0..)
             .map(move |_| match cursor {
@@ -101,9 +102,29 @@ impl<'src> Sexpr<'src> {
             0
         }
     }
+
+    pub fn substitute(
+        template: &SourceLocation<Self>,
+        mapping: &HashMap<&String, &SrcExpr>,
+    ) -> SourceLocation<Self> {
+        match template.get_value() {
+            Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => template.clone(),
+            Sexpr::Pair(p) => template.map_value(Sexpr::Pair(Rc::new((
+                Sexpr::substitute(&p.0, mapping),
+                Sexpr::substitute(&p.1, mapping),
+            )))),
+            Sexpr::Symbol(s) => {
+                if let Some(replacement) = mapping.get(s) {
+                    (**replacement).clone()
+                } else {
+                    template.clone()
+                }
+            }
+        }
+    }
 }
 
-impl std::fmt::Display for Sexpr<'_> {
+impl std::fmt::Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Sexpr::Nil => write!(f, "()"),
@@ -128,7 +149,7 @@ impl std::fmt::Display for Sexpr<'_> {
     }
 }
 
-impl CxR for Sexpr<'_> {
+impl CxR for Sexpr {
     type Result = SourceLocation<Self>;
 
     fn car(&self) -> Option<&SourceLocation<Self>> {
@@ -146,19 +167,19 @@ impl CxR for Sexpr<'_> {
     }
 }
 
-impl From<i64> for Sexpr<'_> {
+impl From<i64> for Sexpr {
     fn from(i: i64) -> Self {
         Sexpr::int(i)
     }
 }
 
-impl<'s> From<&'s str> for Sexpr<'s> {
+impl<'s> From<&'s str> for Sexpr {
     fn from(s: &'s str) -> Self {
         Sexpr::symbol(s)
     }
 }
 
-impl<'src> From<SrcExpr<'src>> for Sexpr<'src> {
+impl From<SrcExpr> for Sexpr {
     fn from(c: SourceLocation<Sexpr>) -> Sexpr {
         c.into_value()
     }

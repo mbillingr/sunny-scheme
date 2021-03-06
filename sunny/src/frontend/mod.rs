@@ -10,29 +10,26 @@ use crate::frontend::{
     error::Result,
     syntax_forms::{
         Assignment, Begin, Branch, Cons, Definition, Expression, Lambda, LibraryDefinition,
-        Quotation,
+        Quotation, SyntaxDefinition,
     },
 };
-use sunny_sexpr_parser::{Sexpr, SourceLocation};
+use sunny_sexpr_parser::SrcExpr;
 
 pub trait SyntaxExpander {
-    fn expand<'src>(
-        &self,
-        sexpr: &'src SourceLocation<Sexpr<'src>>,
-        env: &Env,
-    ) -> Result<AstNode<'src>>;
+    fn expand(&self, sexpr: &SrcExpr, env: &Env) -> Result<AstNode>;
 }
 
 pub fn base_environment() -> Env {
     let env = Env::new();
-    env.insert_syntax("begin", Begin);
-    env.insert_syntax("cons", Cons);
-    env.insert_syntax("define", Definition);
-    env.insert_syntax("define-library", LibraryDefinition);
-    env.insert_syntax("if", Branch);
-    env.insert_syntax("lambda", Lambda);
-    env.insert_syntax("quote", Quotation);
-    env.insert_syntax("set!", Assignment);
+    env.insert_syntax_static("begin", Begin);
+    env.insert_syntax_static("cons", Cons);
+    env.insert_syntax_static("define", Definition);
+    env.insert_syntax_static("define-library", LibraryDefinition);
+    env.insert_syntax_static("define-syntax", SyntaxDefinition);
+    env.insert_syntax_static("if", Branch);
+    env.insert_syntax_static("lambda", Lambda);
+    env.insert_syntax_static("quote", Quotation);
+    env.insert_syntax_static("set!", Assignment);
     env
 }
 

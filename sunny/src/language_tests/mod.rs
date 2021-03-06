@@ -2,6 +2,7 @@ mod constant_expressions;
 mod control_flow;
 mod global_variables;
 mod libraries;
+mod macros;
 
 use crate::context::{Context, Error};
 use hamcrest2::core::{success, MatchResult, Matcher};
