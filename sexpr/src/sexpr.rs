@@ -9,7 +9,9 @@ use std::any::Any;
 pub type SrcExpr = SourceLocation<Sexpr>;
 pub type RefExpr<'a> = &'a SrcExpr;
 
-pub trait SexprObject: Any + Display + Debug {}
+pub trait SexprObject: Any + Display + Debug {
+    fn substitute(&self, mapping: &HashMap<&str, SrcExpr>) -> Rc<dyn AnySexprObject>;
+}
 
 pub trait AnySexprObject: Any + SexprObject {
     fn as_any(&self) -> &dyn Any;
@@ -159,22 +161,22 @@ impl Sexpr {
 
     pub fn substitute(
         template: &SourceLocation<Self>,
-        mapping: &HashMap<&String, &SrcExpr>,
+        mapping: &HashMap<&str, SrcExpr>,
     ) -> SourceLocation<Self> {
         match template.get_value() {
             Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => template.clone(),
-            Sexpr::Object(_) => template.clone(),
             Sexpr::Pair(p) => template.map_value(Sexpr::Pair(Rc::new((
                 Sexpr::substitute(&p.0, mapping),
                 Sexpr::substitute(&p.1, mapping),
             )))),
             Sexpr::Symbol(s) => {
-                if let Some(replacement) = mapping.get(s) {
-                    (**replacement).clone()
+                if let Some(replacement) = mapping.get(s.as_str()) {
+                    replacement.clone()
                 } else {
                     template.clone()
                 }
             }
+            Sexpr::Object(obj) => template.map_value(Sexpr::Object(obj.substitute(mapping))),
         }
     }
 }

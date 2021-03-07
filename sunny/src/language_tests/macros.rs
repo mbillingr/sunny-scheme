@@ -19,3 +19,15 @@ fn can_define_simple_macros() {
         EvaluatesTo::the_integer(1)
     );
 }
+
+#[test]
+fn macros_resolve_symbols_in_their_definition_environment() {
+    assert_that!(
+        "(begin
+           (define-syntax delay
+             (simple-macro (expr) (lambda () expr)))
+           (define lambda 0)
+           (delay 1))",
+        EvaluatesTo::a_procedure()
+    );
+}

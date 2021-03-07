@@ -8,6 +8,11 @@ fn empty_input_is_error() {
 }
 
 #[test]
+fn an_empty_list_is_an_error() {
+    assert_that!("()", EvaluatesTo::an_error());
+}
+
+#[test]
 fn the_quoted_empty_list_is_nil() {
     assert_that!("'()", EvaluatesTo::nil());
 }

@@ -2,6 +2,7 @@
 pub mod ast;
 pub mod environment;
 pub mod error;
+pub mod syntactic_closure;
 pub mod syntax_forms;
 
 use crate::frontend::{
@@ -14,23 +15,25 @@ use crate::frontend::{
     },
 };
 use sunny_sexpr_parser::SrcExpr;
+use crate::frontend::environment::Environment;
 
-pub trait SyntaxExpander {
+pub trait SyntaxExpander: std::fmt::Debug {
     fn expand(&self, sexpr: &SrcExpr, env: &Env) -> Result<AstNode>;
 }
 
 pub fn base_environment() -> Env {
-    let env = Env::new();
-    env.insert_syntax_static("begin", Begin);
-    env.insert_syntax_static("cons", Cons);
-    env.insert_syntax_static("define", Definition);
-    env.insert_syntax_static("define-library", LibraryDefinition);
-    env.insert_syntax_static("define-syntax", SyntaxDefinition);
-    env.insert_syntax_static("if", Branch);
-    env.insert_syntax_static("lambda", Lambda);
-    env.insert_syntax_static("quote", Quotation);
-    env.insert_syntax_static("set!", Assignment);
-    env
+    let global = Environment::Empty;
+    global.add_syntax("begin", Begin);
+    global.add_syntax("cons", Cons);
+    global.add_syntax("define", Definition);
+    global.add_syntax("define-library", LibraryDefinition);
+    global.add_syntax("define-syntax", SyntaxDefinition);
+    global.add_syntax("if", Branch);
+    global.add_syntax("lambda", Lambda);
+    global.add_syntax("quote", Quotation);
+    global.add_syntax("set!", Assignment);
+
+    Env::new(global, Environment::Empty)
 }
 
 #[cfg(test)]

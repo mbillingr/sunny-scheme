@@ -6,6 +6,7 @@ use log::warn;
 use sunny_sexpr_parser::CxR;
 use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
 
+use crate::frontend::syntactic_closure::SyntacticClosure;
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
@@ -42,6 +43,14 @@ macro_rules! _match_sexpr {
 
     ($expr:tt; $x:ident: Symbol => $action:block) => {
         if let Some($x) = $expr.as_symbol() {
+            Some($action)
+        } else {
+            None
+        }
+    };
+
+    ($expr:tt; $x:ident: Obj<$t:ty> => $action:block) => {
+        if let Some($x) = $expr.as_object::<$t>() {
             Some($action)
         } else {
             None
@@ -103,6 +112,7 @@ macro_rules! _match_sexpr {
 
 macro_rules! define_form {
     ($t:ident($xpr:ident, $env:ident): $([$($rules:tt)*])+) => {
+        #[derive(Debug)]
         pub struct $t;
         impl SyntaxExpander for $t {
             fn expand(&self, $xpr: RefExpr, $env: &Env) -> Result<AstNode> {
@@ -120,11 +130,14 @@ macro_rules! define_form {
 define_form! {
     Expression(sexpr, env):
         [(f: Symbol . _) => {
-            if let Some(sx) = env.lookup_syntax(f) {
+            if let Some(sx) = dbg!(env.lookup_syntax(f)) {
                 sx.expand(sexpr, env)
             } else {
                 Expression.expand_application(sexpr, env)
             }
+        }]
+        [() => {
+            Err(sexpr.map(|_|Error::InvalidForm))
         }]
         [list: List => {
             Expression.expand_application(sexpr, env)
@@ -132,6 +145,9 @@ define_form! {
         [name: Symbol => {
             let (depth, binding) = env.lookup_or_insert_global(name);
             binding.expand_reference(sexpr.map_value(()), depth)
+        }]
+        [sc: Obj<SyntacticClosure> => {
+            sc.expand(&Expression)
         }]
         [_ => {
             Ok(Ast::constant(sexpr.clone()))
@@ -241,13 +257,14 @@ define_form! {
 pub struct SyntaxTransformer;
 
 impl SyntaxTransformer {
-    fn build(&self, spec: RefExpr, _env: &Env) -> Result<Rc<dyn SyntaxExpander>> {
+    fn build(&self, spec: RefExpr, env: &Env) -> Result<Rc<dyn SyntaxExpander>> {
         match_sexpr![
-            [spec: ("simple-macro", args, body) => { Ok(Rc::new(SimpleMacro::new(args, body)?) as Rc<dyn SyntaxExpander>) }]
+            [spec: ("simple-macro", args, body) => { Ok(Rc::new(SimpleMacro::new(args, body, env)?) as Rc<dyn SyntaxExpander>) }]
         ].unwrap_or_else(|| Err(spec.map_value(Error::InvalidForm)))
     }
 }
 
+#[derive(Debug)]
 pub struct SimpleMacro {
     args: Vec<String>,
     template: SourceLocation<Sexpr>,
@@ -263,9 +280,13 @@ impl SyntaxExpander for SimpleMacro {
         for name in &self.args {
             let arg = more_args
                 .car()
+                .cloned()
+                .map(|a| SyntacticClosure::new(a, env.clone()))
+                .map(|sc| Sexpr::obj(sc))
+                .map(SourceLocation::new)
                 .ok_or_else(|| more_args.map_value(Error::MissingArgument))?;
             more_args = more_args.cdr().unwrap();
-            substitutions.insert(name, arg);
+            substitutions.insert(name.as_str(), arg);
         }
 
         let new_sexpr = Sexpr::substitute(&self.template, &substitutions);
@@ -274,7 +295,7 @@ impl SyntaxExpander for SimpleMacro {
 }
 
 impl SimpleMacro {
-    pub fn new(args: RefExpr, body: RefExpr) -> Result<Self> {
+    pub fn new(args: RefExpr, body: RefExpr, env: &Env) -> Result<Self> {
         let mut argnames = vec![];
         for arg in args.iter() {
             if let Some(name) = arg.as_symbol() {
@@ -284,13 +305,17 @@ impl SimpleMacro {
             }
         }
 
+        let template =
+            SourceLocation::new(Sexpr::obj(SyntacticClosure::new(body.clone(), env.clone())));
+
         Ok(SimpleMacro {
             args: argnames,
-            template: body.clone(),
+            template,
         })
     }
 }
 
+#[derive(Debug)]
 pub struct LibraryDefinition;
 
 impl SyntaxExpander for LibraryDefinition {
