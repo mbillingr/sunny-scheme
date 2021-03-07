@@ -1,14 +1,27 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::rc::Rc;
 
 use crate::cxr::CxR;
 use crate::{Int, SourceLocation};
+use std::any::Any;
 
 pub type SrcExpr = SourceLocation<Sexpr>;
 pub type RefExpr<'a> = &'a SrcExpr;
 
-#[derive(Debug, Clone, PartialEq)]
+pub trait SexprObject: Any + Display + Debug {}
+
+pub trait AnySexprObject: Any + SexprObject {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T: Any + SexprObject> AnySexprObject for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Sexpr {
     Nil,
     Bool(bool),
@@ -16,6 +29,23 @@ pub enum Sexpr {
     Symbol(String),
     String(String),
     Pair(Rc<(SrcExpr, SrcExpr)>),
+    Object(Rc<dyn AnySexprObject>),
+}
+
+impl PartialEq for Sexpr {
+    fn eq(&self, other: &Self) -> bool {
+        use Sexpr::*;
+        match (self, other) {
+            (Nil, Nil) => true,
+            (Bool(a), Bool(b)) => a == b,
+            (Integer(a), Integer(b)) => a == b,
+            (Symbol(a), Symbol(b)) => a == b,
+            (String(a), String(b)) => a == b,
+            (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
+            (Object(a), Object(b)) => Rc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
 }
 
 impl Sexpr {
@@ -46,6 +76,10 @@ impl Sexpr {
     pub fn list(items: impl DoubleEndedIterator<Item = SrcExpr>) -> Self {
         let l = items.rfold(Self::nil(), |acc, x| Self::cons(x, acc));
         l
+    }
+
+    pub fn obj(obj: impl SexprObject) -> Self {
+        Sexpr::Object(Rc::new(obj))
     }
 
     pub fn is_null(&self) -> bool {
@@ -84,6 +118,24 @@ impl Sexpr {
         }
     }
 
+    pub fn is_an_object(&self) -> bool {
+        match self {
+            Sexpr::Object(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_object<T: Any>(&self) -> bool {
+        self.as_object::<T>().is_some()
+    }
+
+    pub fn as_object<T: Any>(&self) -> Option<&T> {
+        match self {
+            Sexpr::Object(obj) => obj.as_any().downcast_ref(),
+            _ => None,
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Sexpr> {
         let mut cursor = self;
         (0..)
@@ -111,6 +163,7 @@ impl Sexpr {
     ) -> SourceLocation<Self> {
         match template.get_value() {
             Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => template.clone(),
+            Sexpr::Object(_) => template.clone(),
             Sexpr::Pair(p) => template.map_value(Sexpr::Pair(Rc::new((
                 Sexpr::substitute(&p.0, mapping),
                 Sexpr::substitute(&p.1, mapping),
@@ -126,7 +179,7 @@ impl Sexpr {
     }
 }
 
-impl std::fmt::Display for Sexpr {
+impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Sexpr::Nil => write!(f, "()"),
@@ -147,6 +200,7 @@ impl std::fmt::Display for Sexpr {
                     }
                 }
             }
+            Sexpr::Object(obj) => write!(f, "{}", obj),
         }
     }
 }

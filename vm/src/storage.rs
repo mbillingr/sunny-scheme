@@ -39,6 +39,7 @@ impl ValueStorage {
                 let cdr = self.sexpr_to_value(p.1.get_value())?;
                 self.cons(car, cdr).map_err(|_| ())?
             }
+            Sexpr::Object(_) => Err(())?,
         })
     }
 
@@ -52,6 +53,7 @@ impl ValueStorage {
                 let n_cdr = self.count_allocations(p.1.get_value());
                 1 + n_car + n_cdr
             }
+            Sexpr::Object(_) => 0,
         }
     }
 
