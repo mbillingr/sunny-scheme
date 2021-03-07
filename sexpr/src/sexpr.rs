@@ -1,7 +1,9 @@
-use crate::{CxR, Int, SourceLocation};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
+
+use crate::cxr::CxR;
+use crate::{Int, SourceLocation};
 
 pub type SrcExpr = SourceLocation<Sexpr>;
 pub type RefExpr<'a> = &'a SrcExpr;

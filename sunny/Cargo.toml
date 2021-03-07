@@ -11,7 +11,7 @@ maplit = "1.0"
 log = "0.4"
 rustyline = "7.1"
 simple_logger = "1.11"
-sunny-sexpr-parser = {path = "../sexpr-parser"}
+sunny-sexpr-parser = {path = "../sexpr" }
 sunny-vm = {path = "../vm"}
 structopt = "0.3"
 

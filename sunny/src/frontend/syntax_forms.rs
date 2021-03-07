@@ -1,3 +1,11 @@
+use std::collections::HashMap;
+use std::rc::Rc;
+
+use log::warn;
+
+use sunny_sexpr_parser::CxR;
+use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
+
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
@@ -5,10 +13,6 @@ use crate::frontend::{
     error::{error_at, Error, Result},
     SyntaxExpander,
 };
-use log::warn;
-use std::collections::HashMap;
-use std::rc::Rc;
-use sunny_sexpr_parser::{CxR, RefExpr, Sexpr, SourceLocation};
 
 macro_rules! match_sexpr {
     ([$expr:tt: $($rules:tt)*]) => {

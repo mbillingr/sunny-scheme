@@ -1,4 +1,5 @@
-use sunny_sexpr_parser::{parse_str, Error as ParseError, SourceLocation};
+use sunny_sexpr_parser::parser::{parse_str, Error as ParseError};
+use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 

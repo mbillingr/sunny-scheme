@@ -1,8 +1,10 @@
-use crate::str_utils::{find_end_of_line, find_start_of_line, line_number};
-use crate::{CxR, Sexpr};
 use std::ops::{Deref, Range};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use crate::cxr::CxR;
+use crate::str_utils::{find_end_of_line, find_start_of_line, line_number};
+use crate::Sexpr;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SourceKind {

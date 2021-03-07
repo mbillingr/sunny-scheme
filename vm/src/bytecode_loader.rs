@@ -1,7 +1,10 @@
+use sunny_sexpr_parser::parser::{parse_str, Error as ParseError};
+use sunny_sexpr_parser::CxR;
+use sunny_sexpr_parser::Sexpr;
+use sunny_sexpr_parser::SourceLocation;
+
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
-use sunny_sexpr_parser::SourceLocation;
-use sunny_sexpr_parser::{parse_str, CxR, Error as ParseError, Sexpr};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
@@ -229,8 +232,9 @@ fn error_after<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceL
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::Value;
+
+    use super::*;
 
     #[test]
     fn bytecode_loader() {
