@@ -33,7 +33,7 @@ pub fn base_environment() -> Env {
         .add_binding("quote", Quotation)
         .add_binding("set!", Assignment);
 
-    Env::new(dbg!(global), Environment::Empty)
+    Env::new(global, Environment::Empty)
 }
 
 #[cfg(test)]

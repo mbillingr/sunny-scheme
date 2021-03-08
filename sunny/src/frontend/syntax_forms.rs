@@ -10,7 +10,7 @@ use crate::frontend::syntactic_closure::SyntacticClosure;
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
-    environment::{Env, EnvBinding},
+    environment::Env,
     error::{error_at, Error, Result},
     SyntaxExpander,
 };
@@ -130,7 +130,7 @@ macro_rules! define_form {
 define_form! {
     Expression(sexpr, env):
         [(f: Symbol . _) => {
-            if let Some(sx) = dbg!(env).lookup_syntax(f) {
+            if let Some(sx) = env.lookup_syntax(f) {
                 sx.expand(sexpr, env)
             } else {
                 Expression.expand_application(sexpr, env)
@@ -328,14 +328,14 @@ impl SyntaxExpander for LibraryDefinition {
             [sexpr: (_, libname: List . statements) => {
                 let lib_env = base_environment();
 
-                let mut exports = vec![];
+                let exports = vec![];
                 let mut body_parts = vec![];
                 for stmt in statements.iter() {
                     match stmt.car().and_then(|s| s.as_symbol()) {
                         Some("import") => warn!("Ignoring (import ...) statement in library definition"),
                         Some("export") => {
                             for export_item in stmt.cdr().unwrap().iter() {
-                                let export_name = export_item
+                                let _export_name = export_item
                                     .as_symbol()
                                     .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
                                 /*let (_, binding) = lib_env.ensure_global(export_name);
