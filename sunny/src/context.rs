@@ -31,6 +31,7 @@ impl Context {
         let ast = Expression
             .expand(&sexpr, &mut self.env)
             .map_err(|e| e.in_string(src))?;
+        println!("{}", ast);
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage(), &mut self.globals);
         backend.begin_module();
@@ -42,8 +43,8 @@ impl Context {
 
         let code = codegraph.build_segment();
         let code = tail_call_optimization(code);
-
         println!("{}", code);
+
         let result = self.vm.eval_repl(code)?;
 
         Ok(result)

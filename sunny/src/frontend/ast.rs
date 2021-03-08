@@ -126,6 +126,65 @@ impl Ast {
             Ast::Export(exports) => backend.export(exports),
         }
     }
+
+    fn pretty_fmt(&self, f: &mut std::fmt::Formatter, indent: usize) -> std::fmt::Result {
+        match self {
+            Ast::Void => writeln!(f, "{: <1$}void", "", indent),
+            Ast::Const(c) => writeln!(f, "{: <1$}const {2}", "", indent, c),
+            Ast::Fetch(_, idx) => writeln!(f, "{: <1$}fetch {2}", "", indent, idx),
+            Ast::Store(_, idx, val) => {
+                writeln!(f, "{: <1$}store {2}", "", indent, idx)?;
+                val.pretty_fmt(f, indent + 4)
+            }
+            Ast::FetchGlobal(_, idx) => writeln!(f, "{: <1$}global-fetch {2}", "", indent, idx),
+            Ast::StoreGlobal(_, idx, val) => {
+                writeln!(f, "{: <1$}global-store {2}", "", indent, idx)?;
+                val.pretty_fmt(f, indent + 4)
+            }
+            Ast::Cons(_, car, cdr) => {
+                writeln!(f, "{: <1$}cons", "", indent)?;
+                car.pretty_fmt(f, indent + 4)?;
+                cdr.pretty_fmt(f, indent + 4)
+            }
+            Ast::Sequence(first, next) => {
+                writeln!(f, "{: <1$}sequence", "", indent)?;
+                first.pretty_fmt(f, indent + 4)?;
+                next.pretty_fmt(f, indent + 4)
+            }
+            Ast::If(_, a, b, c) => {
+                writeln!(f, "{: <1$}if", "", indent)?;
+                a.pretty_fmt(f, indent + 4)?;
+                writeln!(f, "{: <1$}then", "", indent)?;
+                b.pretty_fmt(f, indent + 4)?;
+                writeln!(f, "{: <1$}else", "", indent)?;
+                c.pretty_fmt(f, indent + 4)
+            }
+            Ast::Lambda(_, n, body) => {
+                writeln!(f, "{: <1$}lambda {2}", "", indent, n)?;
+                body.pretty_fmt(f, indent + 4)
+            }
+            Ast::Invoke(_, args) => {
+                writeln!(f, "{: <1$}invoke", "", indent)?;
+                for arg in args {
+                    arg.pretty_fmt(f, indent + 4)?;
+                }
+                Ok(())
+            }
+            Ast::Module(body) => {
+                writeln!(f, "{: <1$}module", "", indent)?;
+                body.pretty_fmt(f, indent + 4)
+            }
+            Ast::Export(items) => {
+                writeln!(f, "{: <1$}export {2:?}", "", indent, items)
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for Ast {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.pretty_fmt(f, 0)
+    }
 }
 
 #[macro_export]
