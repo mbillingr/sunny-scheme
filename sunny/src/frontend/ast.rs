@@ -9,6 +9,8 @@ pub enum Ast {
     Const(SrcExpr),
     Fetch(SourceLocation<()>, usize),
     Store(SourceLocation<()>, usize, AstNode),
+    FetchGlobal(SourceLocation<()>, String),
+    StoreGlobal(SourceLocation<()>, String, AstNode),
     Cons(SourceLocation<()>, AstNode, AstNode),
     Sequence(AstNode, AstNode),
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
@@ -37,6 +39,14 @@ impl Ast {
 
     pub fn store(context: SourceLocation<()>, idx: usize, val: AstNode) -> AstNode {
         Box::new(Ast::Store(context, idx, val))
+    }
+
+    pub fn fetch_global(context: SourceLocation<()>, name: impl ToString) -> AstNode {
+        Box::new(Ast::FetchGlobal(context, name.to_string()))
+    }
+
+    pub fn store_global(context: SourceLocation<()>, name: impl ToString, val: AstNode) -> AstNode {
+        Box::new(Ast::StoreGlobal(context, name.to_string(), val))
     }
 
     pub fn cons(context: SourceLocation<()>, first: AstNode, second: AstNode) -> AstNode {
@@ -76,6 +86,11 @@ impl Ast {
             Ast::Store(ctx, idx, value) => {
                 let value = value.build(backend);
                 backend.store(ctx.clone(), *idx, value)
+            }
+            Ast::FetchGlobal(ctx, name) => backend.fetch_global(ctx.clone(), name),
+            Ast::StoreGlobal(ctx, name, value) => {
+                let value = value.build(backend);
+                backend.store_global(ctx.clone(), name, value)
             }
             Ast::Cons(ctx, car, cdr) => {
                 let car = car.build(backend);
@@ -119,6 +134,8 @@ macro_rules! ast {
     (const $x:expr) => {Ast::constant(SourceLocation::new(Sexpr::from($x)))};
     (ref $i:tt) => {Ast::fetch(SourceLocation::new(()), $i)};
     (set $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $i, ast![$x])};
+    (gref $i:tt) => {Ast::fetch_global(SourceLocation::new(()), $i)};
+    (gset $i:tt $x:tt) => {Ast::store_global(SourceLocation::new(()), $i, ast![$x])};
     (cons $a:tt $b:tt) => {Ast::cons(SourceLocation::new(()), ast![$a], ast![$b])};
     (begin $a:tt $b:tt) => {Ast::sequence(ast![$a], ast![$b])};
     (begin $a:tt $($b:tt)+) => {Ast::sequence(ast![$a], ast![begin $($b)+])};

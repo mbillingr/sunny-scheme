@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use sunny_sexpr_parser::Sexpr;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::bytecode::Op;
@@ -16,6 +17,9 @@ pub trait Backend {
 
     fn fetch(&mut self, context: SourceLocation<()>, idx: usize) -> Self::Ir;
     fn store(&mut self, context: SourceLocation<()>, idx: usize, val: Self::Ir) -> Self::Ir;
+
+    fn fetch_global(&mut self, context: SourceLocation<()>, name: &str) -> Self::Ir;
+    fn store_global(&mut self, context: SourceLocation<()>, name: &str, val: Self::Ir) -> Self::Ir;
 
     fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir;
 
@@ -39,13 +43,15 @@ pub trait Backend {
 pub struct ByteCodeBackend<'s> {
     storage: &'s mut ValueStorage,
     prelude: Vec<BlockChain>,
+    global_table: &'s mut GlobalTable,
 }
 
 impl<'s> ByteCodeBackend<'s> {
-    pub fn new(storage: &'s mut ValueStorage) -> Self {
+    pub fn new(storage: &'s mut ValueStorage, global_table: &'s mut GlobalTable) -> Self {
         ByteCodeBackend {
             storage,
             prelude: vec![BlockChain::empty()],
+            global_table,
         }
     }
 }
@@ -91,6 +97,16 @@ impl Backend for ByteCodeBackend<'_> {
         block.map_source(0, context.clone());
         block.map_source(1, context);
         val.chain(BlockChain::singleton(block))
+    }
+
+    fn fetch_global(&mut self, context: SourceLocation<()>, name: &str) -> Self::Ir {
+        let idx = self.global_table.determine_index(name);
+        self.fetch(context, idx)
+    }
+
+    fn store_global(&mut self, context: SourceLocation<()>, name: &str, val: Self::Ir) -> Self::Ir {
+        let idx = self.global_table.determine_index(name);
+        self.store(context, idx, val)
     }
 
     fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir {
@@ -151,6 +167,28 @@ impl Backend for ByteCodeBackend<'_> {
     }
 }
 
+pub struct GlobalTable {
+    mappings: HashMap<String, usize>,
+}
+
+impl GlobalTable {
+    pub fn new() -> Self {
+        GlobalTable {
+            mappings: HashMap::new(),
+        }
+    }
+
+    pub fn determine_index(&mut self, name: &str) -> usize {
+        if let Some(idx) = self.mappings.get(name) {
+            return *idx;
+        }
+
+        let idx = self.mappings.len();
+        self.mappings.insert(name.to_string(), idx);
+        idx
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,7 +196,8 @@ mod tests {
     #[test]
     fn build_bytecode_constant() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
 
         let code = bcb.constant(SourceLocation::new(()), &Sexpr::nil());
 
@@ -170,7 +209,8 @@ mod tests {
     #[test]
     fn build_bytecode_cons() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
         let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
 
@@ -187,7 +227,8 @@ mod tests {
     #[test]
     fn build_bytecode_multiple_cons() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
         let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
         let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
@@ -215,7 +256,8 @@ mod tests {
     #[test]
     fn build_bytecode_if() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
         let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
         let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
@@ -242,7 +284,8 @@ mod tests {
     #[test]
     fn build_bytecode_fetch() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let expr = bcb.fetch(SourceLocation::new(()), 0);
 
         let cs = expr.build_segment();
@@ -253,7 +296,8 @@ mod tests {
     #[test]
     fn build_bytecode_store() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.store(SourceLocation::new(()), 0, val);
 
@@ -268,7 +312,8 @@ mod tests {
     #[test]
     fn build_bytecode_trivial_lambda() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, val);
 
@@ -290,7 +335,8 @@ mod tests {
     #[test]
     fn build_bytecode_can_return_from_lambda_definition() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, val);
         expr.return_from();
@@ -313,7 +359,8 @@ mod tests {
     #[test]
     fn build_bytecode_invoke_lambda() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, val);
         let invoke = bcb.invoke(SourceLocation::new(()), vec![expr]);
@@ -337,7 +384,8 @@ mod tests {
     #[test]
     fn build_bytecode_invoke_pushes_args_in_reverse_order() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let args = vec![
             bcb.fetch(SourceLocation::new(()), 0),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(1)),
@@ -369,7 +417,8 @@ mod tests {
     #[test]
     fn build_bytecode_sequence() {
         let mut storage = ValueStorage::new(100);
-        let mut bcb = ByteCodeBackend::new(&mut storage);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
 
         let first = BlockChain::singleton(Op::Integer(1));
         let next = BlockChain::singleton(Op::Integer(2));

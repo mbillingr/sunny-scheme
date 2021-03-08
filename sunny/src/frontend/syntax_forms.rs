@@ -143,9 +143,14 @@ define_form! {
             Expression.expand_application(sexpr, env)
         }]
         [name: Symbol => {
+            let context = sexpr.map_value(());
             env.ensure_variable(name);
-            let offset = env.lookup_variable_index(name).unwrap();
-            Ok(Ast::fetch(sexpr.map_value(()), offset))
+            if let Some(full_name) = env.lookup_variable(name).unwrap().as_global() {
+                Ok(Ast::fetch_global(context, full_name))
+            } else {
+                let offset = env.lookup_variable_index(name).unwrap();
+                Ok(Ast::fetch(context, offset))
+            }
         }]
         [sc: Obj<SyntacticClosure> => {
             sc.expand(&Expression)
@@ -178,10 +183,15 @@ define_form! {
 define_form! {
     Assignment(sexpr, env):
         [(_, name: Symbol, value) => {
+            let context = sexpr.map_value(());
             env.ensure_variable(name);
-            let offset = env.lookup_variable_index(name).unwrap();
             let value = Expression.expand(value, env)?;
-            Ok(Ast::store(sexpr.map_value(()), offset, value))
+            if let Some(full_name) = env.lookup_variable(name).unwrap().as_global() {
+                Ok(Ast::store_global(context, full_name, value))
+            } else {
+                let offset = env.lookup_variable_index(name).unwrap();
+                Ok(Ast::store(sexpr.map_value(()), offset, value))
+            }
         }]
 }
 
@@ -325,8 +335,8 @@ pub struct LibraryDefinition;
 impl SyntaxExpander for LibraryDefinition {
     fn expand(&self, sexpr: RefExpr, _env: &Env) -> Result<AstNode> {
         match_sexpr![
-            [sexpr: (_, libname: List . statements) => {
-                let lib_env = base_environment();
+            [sexpr: (_, libname . statements) => {
+                let lib_env = base_environment(libname);
 
                 let exports = vec![];
                 let mut body_parts = vec![];

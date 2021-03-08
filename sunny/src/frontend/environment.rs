@@ -9,6 +9,7 @@ use sunny_sexpr_parser::{Sexpr, SourceLocation};
 #[derive(Clone)]
 pub enum EnvBinding {
     Variable,
+    Global(Rc<str>),
     Syntax(Rc<dyn SyntaxExpander>),
 }
 
@@ -20,13 +21,23 @@ impl EnvBinding {
     pub fn is_variable(&self) -> bool {
         match self {
             EnvBinding::Variable => true,
+            EnvBinding::Global(_) => true,
             EnvBinding::Syntax(_) => false,
+        }
+    }
+
+    pub fn as_global(&self) -> Option<&str> {
+        match self {
+            EnvBinding::Variable => None,
+            EnvBinding::Global(name) => Some(name),
+            EnvBinding::Syntax(_) => None,
         }
     }
 
     pub fn is_syntax(&self) -> bool {
         match self {
             EnvBinding::Variable => false,
+            EnvBinding::Global(_) => false,
             EnvBinding::Syntax(_) => true,
         }
     }
@@ -34,6 +45,7 @@ impl EnvBinding {
     pub fn as_syntax(&self) -> Option<&Rc<dyn SyntaxExpander>> {
         match self {
             EnvBinding::Variable => None,
+            EnvBinding::Global(_) => None,
             EnvBinding::Syntax(x) => Some(x),
         }
     }
@@ -53,20 +65,23 @@ impl From<Rc<dyn SyntaxExpander>> for EnvBinding {
 
 #[derive(Debug, Clone)]
 pub struct Env {
+    name: String,
     global: RefCell<Environment>,
     lexical: Environment,
 }
 
 impl Env {
-    pub fn new(global: Environment, lexical: Environment) -> Self {
+    pub fn new(name: String, global: Environment, lexical: Environment) -> Self {
         Env {
+            name,
             global: RefCell::new(global),
             lexical,
         }
     }
 
-    pub fn empty() -> Self {
+    pub fn empty(name: String) -> Self {
         Env {
+            name,
             global: RefCell::new(Environment::Empty),
             lexical: Environment::Empty,
         }
@@ -109,7 +124,9 @@ impl Env {
             return;
         }
 
-        self.add_global_binding(name, EnvBinding::Variable)
+        let full_name = format!("{}.{}", self.name, name);
+
+        self.add_global_binding(name, EnvBinding::Global(full_name.into()))
     }
 
     pub fn lookup_syntax(&self, name: &str) -> Option<Rc<dyn SyntaxExpander>> {
@@ -117,6 +134,13 @@ impl Env {
             .lookup_syntax(name)
             .cloned()
             .or_else(|| self.global.borrow().lookup_syntax(name).cloned())
+    }
+
+    pub fn lookup_variable(&self, name: &str) -> Option<EnvBinding> {
+        self.lexical
+            .lookup(name)
+            .cloned()
+            .or_else(|| self.global.borrow().lookup(name).cloned())
     }
 
     pub fn lookup_variable_index(&self, name: &str) -> Option<usize> {
@@ -167,14 +191,6 @@ impl Environment {
         }
     }
 
-    pub fn find(&self, name: &str) -> Option<&Self> {
-        match self {
-            Environment::Empty => None,
-            Environment::Entry(entry) if entry.0 == name => Some(self),
-            Environment::Entry(entry) => entry.2.find(name),
-        }
-    }
-
     pub fn lookup_variable_index(&self, name: &str) -> Option<usize> {
         match self {
             Environment::Empty => None,
@@ -194,6 +210,18 @@ impl Environment {
         self.find(name)
             .and_then(Environment::get_binding)
             .and_then(EnvBinding::as_syntax)
+    }
+
+    pub fn lookup(&self, name: &str) -> Option<&EnvBinding> {
+        self.find(name).and_then(Environment::get_binding)
+    }
+
+    pub fn find(&self, name: &str) -> Option<&Self> {
+        match self {
+            Environment::Empty => None,
+            Environment::Entry(entry) if entry.0 == name => Some(self),
+            Environment::Entry(entry) => entry.2.find(name),
+        }
     }
 }
 

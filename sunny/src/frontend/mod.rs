@@ -21,7 +21,7 @@ pub trait SyntaxExpander: std::fmt::Debug {
     fn expand(&self, sexpr: &SrcExpr, env: &Env) -> Result<AstNode>;
 }
 
-pub fn base_environment() -> Env {
+pub fn base_environment(name: impl ToString) -> Env {
     let global = Environment::Empty
         .add_binding("begin", Begin)
         .add_binding("cons", Cons)
@@ -33,7 +33,7 @@ pub fn base_environment() -> Env {
         .add_binding("quote", Quotation)
         .add_binding("set!", Assignment);
 
-    Env::new(global, Environment::Empty)
+    Env::new(name.to_string(), global, Environment::Empty)
 }
 
 #[cfg(test)]
@@ -63,7 +63,7 @@ mod tests {
     macro_rules! meaning_of {
         ($expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
-            let env = base_environment();
+            let env = base_environment("test");
             Expression.expand(&sexpr.into(), &env)
         }};
     }
@@ -74,8 +74,29 @@ mod tests {
     }
 
     #[test]
-    fn meaning_of_symbol() {
-        assert_eq!(meaning_of![x], Ok(ast!(ref 0)));
+    fn meaning_of_global_symbol() {
+        assert_eq!(meaning_of![x], Ok(ast!(gref "test.x")));
+    }
+
+    #[test]
+    fn meaning_of_local_symbol() {
+        assert_eq!(meaning_of![(lambda (x) x)], Ok(ast!(lambda 1 (ref 0))));
+    }
+
+    #[test]
+    fn meaning_of_global_set() {
+        assert_eq!(
+            meaning_of![(["set!"] x 42)],
+            Ok(ast!(gset "test.x" (const 42)))
+        );
+    }
+
+    #[test]
+    fn meaning_of_local_set() {
+        assert_eq!(
+            meaning_of![(lambda (x) ("set!" x 42))],
+            Ok(ast!(lambda 1 (set 0 (const 42))))
+        );
     }
 
     #[test]
@@ -97,11 +118,6 @@ mod tests {
     }
 
     #[test]
-    fn meaning_of_set() {
-        assert_eq!(meaning_of![(["set!"] x 42)], Ok(ast!(set 0 (const 42))));
-    }
-
-    #[test]
     fn meaning_of_trivial_lambda() {
         assert_eq!(meaning_of![(lambda () 0)], Ok(ast!(lambda 0 (const 0))));
     }
@@ -116,7 +132,7 @@ mod tests {
 
     #[test]
     fn meaning_of_variable_application() {
-        assert_eq!(meaning_of![(foo)], Ok(ast!(invoke (ref 0))));
+        assert_eq!(meaning_of![(foo)], Ok(ast!(invoke (gref "test.foo"))));
     }
 
     #[test]
@@ -126,7 +142,10 @@ mod tests {
 
     #[test]
     fn meaning_of_global_ref_in_lambda() {
-        assert_eq!(meaning_of![(lambda (y) x)], Ok(ast!(lambda 1 (ref 1))));
+        assert_eq!(
+            meaning_of![(lambda (y) x)],
+            Ok(ast!(lambda 1 (gref "test.x")))
+        );
     }
 
     #[test]

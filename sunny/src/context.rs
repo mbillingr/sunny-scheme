@@ -3,7 +3,7 @@ use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
-use crate::backend::{Backend, ByteCodeBackend};
+use crate::backend::{Backend, ByteCodeBackend, GlobalTable};
 use crate::frontend::environment::Env;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
@@ -11,6 +11,7 @@ use crate::frontend::{base_environment, error, SyntaxExpander};
 pub struct Context {
     env: Env,
     vm: Vm,
+    globals: GlobalTable,
 }
 
 impl Context {
@@ -18,8 +19,9 @@ impl Context {
         let storage = ValueStorage::new(5);
         let vm = Vm::new(storage).unwrap();
         Context {
-            env: base_environment(),
+            env: base_environment("main"),
             vm,
+            globals: GlobalTable::new(),
         }
     }
 
@@ -30,7 +32,7 @@ impl Context {
             .expand(&sexpr, &mut self.env)
             .map_err(|e| e.in_string(src))?;
 
-        let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
+        let mut backend = ByteCodeBackend::new(self.vm.borrow_storage(), &mut self.globals);
         backend.begin_module();
 
         let ir = ast.build(&mut backend);
