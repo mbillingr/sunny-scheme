@@ -242,7 +242,7 @@ impl Vm {
 
     fn get_global(&mut self, idx: usize) -> Result<()> {
         if idx >= self.globals.len() {
-            self.globals.resize(idx.next_power_of_two(), Value::Void);
+            self.globals.resize((idx+1).next_power_of_two(), Value::Void);
         }
         let x = self.globals[idx].clone();
         self.push_value(x);
@@ -251,7 +251,7 @@ impl Vm {
 
     fn set_global(&mut self, idx: usize) -> Result<()> {
         if idx >= self.globals.len() {
-            self.globals.resize(idx.next_power_of_two(), Value::Void);
+            self.globals.resize((idx+1).next_power_of_two(), Value::Void);
         }
         let x = self.pop_value()?;
         self.globals[idx] = x;
@@ -293,7 +293,7 @@ impl Vm {
 
         if idx >= act.locals.len() {
             act.locals
-                .resize_with(idx.next_power_of_two(), || Cell::new(Value::Void));
+                .resize_with((idx+1).next_power_of_two(), || Cell::new(Value::Void));
         }
         act.locals[idx].set(value);
         Ok(())
