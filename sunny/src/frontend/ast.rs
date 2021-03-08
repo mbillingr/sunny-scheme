@@ -7,8 +7,8 @@ pub type AstNode = Box<Ast>;
 pub enum Ast {
     Void,
     Const(SrcExpr),
-    Fetch(SourceLocation<()>, usize, usize),
-    Store(SourceLocation<()>, usize, usize, AstNode),
+    Fetch(SourceLocation<()>, usize),
+    Store(SourceLocation<()>, usize, AstNode),
     Cons(SourceLocation<()>, AstNode, AstNode),
     Sequence(AstNode, AstNode),
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
@@ -31,12 +31,12 @@ impl Ast {
         Box::new(Ast::Const(sexpr))
     }
 
-    pub fn fetch(context: SourceLocation<()>, depth: usize, idx: usize) -> AstNode {
-        Box::new(Ast::Fetch(context, depth, idx))
+    pub fn fetch(context: SourceLocation<()>, idx: usize) -> AstNode {
+        Box::new(Ast::Fetch(context, idx))
     }
 
-    pub fn store(context: SourceLocation<()>, depth: usize, idx: usize, val: AstNode) -> AstNode {
-        Box::new(Ast::Store(context, depth, idx, val))
+    pub fn store(context: SourceLocation<()>, idx: usize, val: AstNode) -> AstNode {
+        Box::new(Ast::Store(context, idx, val))
     }
 
     pub fn cons(context: SourceLocation<()>, first: AstNode, second: AstNode) -> AstNode {
@@ -72,10 +72,10 @@ impl Ast {
         match self {
             Ast::Void => backend.void(),
             Ast::Const(sexpr) => backend.constant(sexpr.map_value(()), sexpr.get_value()),
-            Ast::Fetch(ctx, depth, idx) => backend.fetch(ctx.clone(), *depth, *idx),
-            Ast::Store(ctx, depth, idx, value) => {
+            Ast::Fetch(ctx, idx) => backend.fetch(ctx.clone(), *idx),
+            Ast::Store(ctx, idx, value) => {
                 let value = value.build(backend);
-                backend.store(ctx.clone(), *depth, *idx, value)
+                backend.store(ctx.clone(), *idx, value)
             }
             Ast::Cons(ctx, car, cdr) => {
                 let car = car.build(backend);
@@ -106,7 +106,7 @@ impl Ast {
                 let body_func = backend.lambda(SourceLocation::new(()), 0, body);
                 let libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
                 // this is just to make the test pass for now and serves no real purpose
-                backend.store(SourceLocation::new(()), 0, 0, libcode)
+                backend.store(SourceLocation::new(()), 0, libcode)
             }
             Ast::Export(exports) => backend.export(exports),
         }
@@ -117,8 +117,8 @@ impl Ast {
 macro_rules! ast {
     (($($parts:tt)*)) => {ast![$($parts)*]};
     (const $x:expr) => {Ast::constant(SourceLocation::new(Sexpr::from($x)))};
-    (ref $d:tt $i:tt) => {Ast::fetch(SourceLocation::new(()), $d, $i)};
-    (set $d:tt $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $d, $i, ast![$x])};
+    (ref $i:tt) => {Ast::fetch(SourceLocation::new(()), $i)};
+    (set $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $i, ast![$x])};
     (cons $a:tt $b:tt) => {Ast::cons(SourceLocation::new(()), ast![$a], ast![$b])};
     (begin $a:tt $b:tt) => {Ast::sequence(ast![$a], ast![$b])};
     (begin $a:tt $($b:tt)+) => {Ast::sequence(ast![$a], ast![begin $($b)+])};

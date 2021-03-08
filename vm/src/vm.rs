@@ -169,15 +169,10 @@ impl Vm {
                 Op::Peek(i) => self.peek_closure(Op::extend_arg(i, arg))?,
                 Op::PushLocal => self.push_local()?,
                 Op::DropLocal => self.drop_local()?,
-                Op::FetchLocal(a) => self.get_local(0, Op::extend_arg(a, arg))?,
-                Op::Fetch(a) => {
-                    let depth = self.pop_int()?;
-                    self.get_local(depth as usize, Op::extend_arg(a, arg))?
-                }
+                Op::Fetch(a) => self.get_local(Op::extend_arg(a, arg))?,
                 Op::Store(a) => {
-                    let depth = self.pop_int()?;
                     let value = self.pop_value()?;
-                    self.set_local(depth as usize, Op::extend_arg(a, arg), value)?
+                    self.set_local(Op::extend_arg(a, arg), value)?
                 }
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
                 Op::TailCall { n_args } => self.tail_call(Op::extend_arg(n_args, arg))?,
@@ -274,16 +269,11 @@ impl Vm {
         Ok(())
     }
 
-    fn get_local(&mut self, depth: usize, mut idx: usize) -> Result<()> {
+    fn get_local(&mut self, mut idx: usize) -> Result<()> {
         let mut act = &self.current_activation;
-
         while idx >= act.locals.len() {
             idx -= act.locals.len();
-            act = self
-                .current_activation
-                .parent
-                .as_ref()
-                .ok_or(ErrorKind::UndefinedVariable)?;
+            act = act.parent.as_ref().ok_or(ErrorKind::UndefinedVariable)?;
         }
 
         let x = cell_clone(&act.locals[idx]);
@@ -294,11 +284,13 @@ impl Vm {
         Ok(())
     }
 
-    fn set_local(&mut self, depth: usize, idx: usize, value: Value) -> Result<()> {
+    fn set_local(&mut self, mut idx: usize, value: Value) -> Result<()> {
         let mut act = &mut self.current_activation;
-        for _ in 0..depth {
-            act = self.current_activation.parent.as_mut().unwrap();
+        while idx >= act.locals.len() && act.parent.is_some() {
+            idx -= act.locals.len();
+            act = act.parent.as_mut().unwrap();
         }
+
         if idx >= act.locals.len() {
             act.locals
                 .resize_with(idx.next_power_of_two(), || Cell::new(Value::Void));
@@ -811,10 +803,10 @@ mod tests {
                 .op(Op::Call { n_args: 3 })
                 .op(Op::Halt)
                 .label("callee")
-                .op(Op::FetchLocal(0))
-                .op(Op::FetchLocal(2))
-                .op(Op::FetchLocal(2))
-                .op(Op::FetchLocal(1))
+                .op(Op::Fetch(0))
+                .op(Op::Fetch(2))
+                .op(Op::Fetch(2))
+                .op(Op::Fetch(1))
                 .op(Op::Halt),
         );
 
@@ -844,13 +836,9 @@ mod tests {
                 .op(Op::Call { n_args: 0 })
                 .op(Op::Halt)
                 .label("callee")
-                .op(Op::Integer(1))
                 .op(Op::Fetch(0))
-                .op(Op::Integer(1))
                 .op(Op::Fetch(2))
-                .op(Op::Integer(1))
                 .op(Op::Fetch(2))
-                .op(Op::Integer(1))
                 .op(Op::Fetch(1))
                 .op(Op::Halt),
         );
@@ -1177,8 +1165,8 @@ mod tests {
                 .op(Op::PushLocal)
                 .op(Op::Integer(2))
                 .op(Op::PushLocal)
-                .op(Op::FetchLocal(0))
-                .op(Op::FetchLocal(1))
+                .op(Op::Fetch(0))
+                .op(Op::Fetch(1))
                 .op(Op::Halt),
         );
 
@@ -1191,11 +1179,11 @@ mod tests {
             CodeBuilder::new()
                 .op(Op::Integer(1))
                 .op(Op::PushLocal)
-                .op(Op::FetchLocal(0))
+                .op(Op::Fetch(0))
                 .op(Op::Integer(2))
                 .op(Op::DropLocal)
                 .op(Op::PushLocal)
-                .op(Op::FetchLocal(0))
+                .op(Op::Fetch(0))
                 .op(Op::Halt),
         );
 
@@ -1253,7 +1241,7 @@ mod tests {
             CodeBuilder::new()
                 .constant(Value::Void)
                 .op(Op::PushLocal)
-                .op(Op::FetchLocal(0))
+                .op(Op::Fetch(0))
                 .op(Op::Halt),
         );
 

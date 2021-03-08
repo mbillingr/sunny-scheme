@@ -14,14 +14,8 @@ pub trait Backend {
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir;
 
-    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir;
-    fn store(
-        &mut self,
-        context: SourceLocation<()>,
-        depth: usize,
-        idx: usize,
-        val: Self::Ir,
-    ) -> Self::Ir;
+    fn fetch(&mut self, context: SourceLocation<()>, idx: usize) -> Self::Ir;
+    fn store(&mut self, context: SourceLocation<()>, idx: usize, val: Self::Ir) -> Self::Ir;
 
     fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir;
 
@@ -80,9 +74,8 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(block)
     }
 
-    fn fetch(&mut self, context: SourceLocation<()>, depth: usize, idx: usize) -> Self::Ir {
+    fn fetch(&mut self, context: SourceLocation<()>, idx: usize) -> Self::Ir {
         let mut ops = vec![];
-        ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Fetch, idx));
         let block = BasicBlock::new(ops, vec![]);
         block.map_source(0, context.clone());
@@ -90,15 +83,8 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(block)
     }
 
-    fn store(
-        &mut self,
-        context: SourceLocation<()>,
-        depth: usize,
-        idx: usize,
-        val: Self::Ir,
-    ) -> Self::Ir {
+    fn store(&mut self, context: SourceLocation<()>, idx: usize, val: Self::Ir) -> Self::Ir {
         let mut ops = vec![];
-        ops.extend(Op::extended(Op::Integer, depth));
         ops.extend(Op::extended(Op::Store, idx));
         ops.push(Op::Void);
         let block = BasicBlock::new(ops, vec![]);
@@ -157,7 +143,7 @@ impl Backend for ByteCodeBackend<'_> {
             let cidx = constants.len();
             constants.push(self.storage.interned_symbol(export_name).unwrap());
             ops.extend(Op::extended(Op::Const, cidx));
-            ops.extend(Op::extended(Op::FetchLocal, *var_idx));
+            ops.extend(Op::extended(Op::Fetch, *var_idx));
             ops.push(Op::TableSet);
         }
         let block = BasicBlock::new(ops, constants);
@@ -257,11 +243,11 @@ mod tests {
     fn build_bytecode_fetch() {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
-        let expr = bcb.fetch(SourceLocation::new(()), 0, 0);
+        let expr = bcb.fetch(SourceLocation::new(()), 0);
 
         let cs = expr.build_segment();
 
-        assert_eq!(cs.code_slice(), &[Op::Integer(0), Op::Fetch(0), Op::Halt]);
+        assert_eq!(cs.code_slice(), &[Op::Fetch(0), Op::Halt]);
     }
 
     #[test]
@@ -269,19 +255,13 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.store(SourceLocation::new(()), 0, 0, val);
+        let expr = bcb.store(SourceLocation::new(()), 0, val);
 
         let cs = expr.build_segment();
 
         assert_eq!(
             cs.code_slice(),
-            &[
-                Op::Const(0),
-                Op::Integer(0),
-                Op::Store(0),
-                Op::Void,
-                Op::Halt
-            ]
+            &[Op::Const(0), Op::Store(0), Op::Void, Op::Halt]
         );
     }
 
@@ -359,7 +339,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut bcb = ByteCodeBackend::new(&mut storage);
         let args = vec![
-            bcb.fetch(SourceLocation::new(()), 0, 0),
+            bcb.fetch(SourceLocation::new(()), 0),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(1)),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(2)),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(3)),
@@ -374,7 +354,6 @@ mod tests {
                 Op::Const(0),
                 Op::Const(1),
                 Op::Const(2),
-                Op::Integer(0),
                 Op::Fetch(0),
                 Op::Call { n_args: 3 },
                 Op::Halt

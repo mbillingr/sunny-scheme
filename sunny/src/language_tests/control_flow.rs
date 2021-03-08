@@ -43,7 +43,7 @@ fn if_treats_any_non_false_condition_as_true() {
 #[test]
 fn if_does_not_evaluate_the_false_branch_on_true() {
     assert_that!(
-        "(begin (set! x 0) (if #t 'ok (set! x 1)) x)",
+        "(begin (define x 0) (if #t 'ok (set! x 1)) x)",
         EvaluatesTo::the_integer(0)
     );
 }
@@ -51,7 +51,7 @@ fn if_does_not_evaluate_the_false_branch_on_true() {
 #[test]
 fn if_does_not_evaluate_the_true_branch_on_false() {
     assert_that!(
-        "(begin (set! x 0) (if #f (set! x 1) 'ok) x)",
+        "(begin (define x 0) (if #f (set! x 1) 'ok) x)",
         EvaluatesTo::the_integer(0)
     );
 }

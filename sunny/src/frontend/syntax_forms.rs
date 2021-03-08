@@ -145,7 +145,7 @@ define_form! {
         [name: Symbol => {
             env.ensure_variable(name);
             let offset = env.lookup_variable_index(name).unwrap();
-            Ok(Ast::fetch(sexpr.map_value(()), 0, offset))
+            Ok(Ast::fetch(sexpr.map_value(()), offset))
         }]
         [sc: Obj<SyntacticClosure> => {
             sc.expand(&Expression)
@@ -181,7 +181,7 @@ define_form! {
             env.ensure_variable(name);
             let offset = env.lookup_variable_index(name).unwrap();
             let value = Expression.expand(value, env)?;
-            Ok(Ast::store(sexpr.map_value(()), 0, offset, value))
+            Ok(Ast::store(sexpr.map_value(()), offset, value))
         }]
 }
 
@@ -191,7 +191,7 @@ define_form! {
             let value = Expression.expand(value, env)?;
             env.ensure_global_variable(name);
             let offset = env.lookup_global_variable_index(name).unwrap();
-            Ok(Ast::store(sexpr.map_value(()), 0, offset, value))
+            Ok(Ast::store(sexpr.map_value(()), offset, value))
         }]
         [(_, (name: Symbol . args) . body) => {
             let body_env = env.extend(args)?;
@@ -200,7 +200,7 @@ define_form! {
 
             env.ensure_global_variable(name);
             let offset = env.lookup_global_variable_index(name).unwrap();
-            Ok(Ast::store(sexpr.map_value(()), 0, offset, function))
+            Ok(Ast::store(sexpr.map_value(()), offset, function))
         }]
 }
 

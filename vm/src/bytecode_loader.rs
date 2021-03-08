@@ -140,10 +140,6 @@ fn build_code_section(mut cb: CodeBuilder, code: &SourceLocation<Sexpr>) -> Resu
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::Const, i)
             }
-            repr::FETCHLOCAL => {
-                let i = read_index(&mut code_parts, statement)?;
-                cb = cb.with(Op::FetchLocal, i)
-            }
             repr::FETCH => {
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(Op::Fetch, i)

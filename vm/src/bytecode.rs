@@ -29,7 +29,6 @@ pub enum Op {
     Peek(u8),
     PushLocal,
     DropLocal,
-    FetchLocal(u8),
     Fetch(u8),
     Store(u8),
 
@@ -114,7 +113,6 @@ impl std::fmt::Display for Op {
             Op::Peek(x) => write!(f, "{} {}", repr::PEEK, x),
             Op::PushLocal => write!(f, "{}", repr::PUSHLOCAL),
             Op::DropLocal => write!(f, "{}", repr::DROPLOCAL),
-            Op::FetchLocal(x) => write!(f, "{} {}", repr::FETCHLOCAL, x),
             Op::Fetch(x) => write!(f, "{} {}", repr::FETCH, x),
             Op::Store(x) => write!(f, "{} {}", repr::STORE, x),
             Op::Void => write!(f, "{}", repr::VOID),
@@ -158,7 +156,6 @@ pub mod repr {
     pub const PEEK: &'static str = "PEEK";
     pub const PUSHLOCAL: &'static str = "PUSHLOCAL";
     pub const DROPLOCAL: &'static str = "DROPLOCAL";
-    pub const FETCHLOCAL: &'static str = "FETCHLOCAL";
     pub const FETCH: &'static str = "FETCH";
     pub const STORE: &'static str = "STORE";
     pub const VOID: &'static str = "VOID";
