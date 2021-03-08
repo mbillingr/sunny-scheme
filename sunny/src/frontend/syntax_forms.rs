@@ -130,7 +130,7 @@ macro_rules! define_form {
 define_form! {
     Expression(sexpr, env):
         [(f: Symbol . _) => {
-            if let Some(sx) = dbg!(env.lookup_syntax(f)) {
+            if let Some(sx) = dbg!(env).lookup_syntax(f) {
                 sx.expand(sexpr, env)
             } else {
                 Expression.expand_application(sexpr, env)
@@ -143,8 +143,9 @@ define_form! {
             Expression.expand_application(sexpr, env)
         }]
         [name: Symbol => {
-            let (depth, binding) = env.lookup_or_insert_global(name);
-            binding.expand_reference(sexpr.map_value(()), depth)
+            env.ensure_variable(name);
+            let offset = env.lookup_variable_index(name).unwrap();
+            Ok(Ast::fetch(sexpr.map_value(()), 0, offset))
         }]
         [sc: Obj<SyntacticClosure> => {
             sc.expand(&Expression)
@@ -177,9 +178,10 @@ define_form! {
 define_form! {
     Assignment(sexpr, env):
         [(_, name: Symbol, value) => {
-            let (depth, binding) = env.lookup_or_insert_global(name);
+            env.ensure_variable(name);
+            let offset = env.lookup_variable_index(name).unwrap();
             let value = Expression.expand(value, env)?;
-            binding.expand_assignment(sexpr.map_value(()), depth, value)
+            Ok(Ast::store(sexpr.map_value(()), 0, offset, value))
         }]
 }
 
@@ -187,16 +189,18 @@ define_form! {
     Definition(sexpr, env):
         [(_, name: Symbol, value) => {
             let value = Expression.expand(value, env)?;
-            let (depth, binding) = env.ensure_global_variable(name);
-            binding.expand_assignment(sexpr.map_value(()), depth, value)
+            env.ensure_global_variable(name);
+            let offset = env.lookup_global_variable_index(name).unwrap();
+            Ok(Ast::store(sexpr.map_value(()), 0, offset, value))
         }]
         [(_, (name: Symbol . args) . body) => {
             let body_env = env.extend(args)?;
             let body = Sequence.expand(body, &body_env)?;
             let function = Ast::lambda(sexpr.map_value(()), args.len(), body);
 
-            let (depth, binding) = env.ensure_global_variable(name);
-            binding.expand_assignment(sexpr.map_value(()), depth, function)
+            env.ensure_global_variable(name);
+            let offset = env.lookup_global_variable_index(name).unwrap();
+            Ok(Ast::store(sexpr.map_value(()), 0, offset, function))
         }]
 }
 
@@ -249,7 +253,7 @@ define_form! {
     SyntaxDefinition(sexpr, env):
        [(_, keyword: Symbol, transformer_spec) => {
             let transformer = SyntaxTransformer.build(transformer_spec, env)?;
-            env.outermost_env().insert_syntax_shared(keyword, transformer);
+            env.add_global_binding(keyword, transformer);
             Ok(Ast::void())
        }]
 }
@@ -334,12 +338,15 @@ impl SyntaxExpander for LibraryDefinition {
                                 let export_name = export_item
                                     .as_symbol()
                                     .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
-                                let (_, binding) = lib_env.ensure_global(export_name);
-                                if let EnvBinding::Variable(var_idx) = binding {
-                                    exports.push((export_name.to_string(), var_idx));
+                                /*let (_, binding) = lib_env.ensure_global(export_name);
+                                if let EnvBinding::Variable = binding {
+                                    //exports.push((export_name.to_string(), var_idx));
+                                    unimplemented!()
                                 } else {
                                     unimplemented!()
-                                }
+                                }*/
+
+                                warn!("Ignoring (export ...) statement in library definition");
                             }
                         }
                         Some("begin") => {

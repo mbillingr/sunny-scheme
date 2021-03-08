@@ -5,6 +5,7 @@ pub mod error;
 pub mod syntactic_closure;
 pub mod syntax_forms;
 
+use crate::frontend::environment::Environment;
 use crate::frontend::{
     ast::AstNode,
     environment::Env,
@@ -15,25 +16,24 @@ use crate::frontend::{
     },
 };
 use sunny_sexpr_parser::SrcExpr;
-use crate::frontend::environment::Environment;
 
 pub trait SyntaxExpander: std::fmt::Debug {
     fn expand(&self, sexpr: &SrcExpr, env: &Env) -> Result<AstNode>;
 }
 
 pub fn base_environment() -> Env {
-    let global = Environment::Empty;
-    global.add_syntax("begin", Begin);
-    global.add_syntax("cons", Cons);
-    global.add_syntax("define", Definition);
-    global.add_syntax("define-library", LibraryDefinition);
-    global.add_syntax("define-syntax", SyntaxDefinition);
-    global.add_syntax("if", Branch);
-    global.add_syntax("lambda", Lambda);
-    global.add_syntax("quote", Quotation);
-    global.add_syntax("set!", Assignment);
+    let global = Environment::Empty
+        .add_binding("begin", Begin)
+        .add_binding("cons", Cons)
+        .add_binding("define", Definition)
+        .add_binding("define-library", LibraryDefinition)
+        .add_binding("define-syntax", SyntaxDefinition)
+        .add_binding("if", Branch)
+        .add_binding("lambda", Lambda)
+        .add_binding("quote", Quotation)
+        .add_binding("set!", Assignment);
 
-    Env::new(global, Environment::Empty)
+    Env::new(dbg!(global), Environment::Empty)
 }
 
 #[cfg(test)]
@@ -63,7 +63,7 @@ mod tests {
     macro_rules! meaning_of {
         ($expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
-            let env = base_environment();
+            let env = dbg!(base_environment());
             Expression.expand(&sexpr.into(), &env)
         }};
     }
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn meaning_of_global_ref_in_lambda() {
-        assert_eq!(meaning_of![(lambda () x)], Ok(ast!(lambda 0 (ref 1 0))));
+        assert_eq!(meaning_of![(lambda (y) x)], Ok(ast!(lambda 1 (ref 0 1))));
     }
 
     #[test]

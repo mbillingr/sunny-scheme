@@ -27,7 +27,7 @@ impl Context {
         let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
         let ast = Expression
-            .expand(&sexpr, &self.env)
+            .expand(&sexpr, &mut self.env)
             .map_err(|e| e.in_string(src))?;
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage());
