@@ -107,14 +107,18 @@ impl Env {
     }
 
     pub fn extend(&self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
-        let mut env = self.clone();
-
+        let mut names = vec![];
         for v in vars.iter() {
             let name = v
                 .as_symbol()
                 .ok_or_else(|| error_at(v, Error::ExpectedSymbol))?
                 .to_string();
 
+            names.push(name);
+        }
+
+        let mut env = self.clone();
+        for name in names.into_iter().rev() {
             env.lexical = env.lexical.add_binding(name, EnvBinding::Variable);
         }
 

@@ -130,6 +130,12 @@ mod tests {
     }
 
     #[test]
+    fn meaning_of_lambda_with_multiple_arguments() {
+        assert_eq!(meaning_of![(lambda (x y) x)], Ok(ast!(lambda 2 (ref 0 0))));
+        assert_eq!(meaning_of![(lambda (x y) y)], Ok(ast!(lambda 2 (ref 0 1))));
+    }
+
+    #[test]
     fn meaning_of_begin() {
         assert_eq!(
             meaning_of![(begin 1 2 3)],
