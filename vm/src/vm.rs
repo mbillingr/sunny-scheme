@@ -274,14 +274,18 @@ impl Vm {
         Ok(())
     }
 
-    fn get_local(&mut self, depth: usize, idx: usize) -> Result<()> {
+    fn get_local(&mut self, depth: usize, mut idx: usize) -> Result<()> {
         let mut act = &self.current_activation;
-        for _ in 0..depth {
-            act = self.current_activation.parent.as_ref().unwrap();
+
+        while idx >= act.locals.len() {
+            idx -= act.locals.len();
+            act = self
+                .current_activation
+                .parent
+                .as_ref()
+                .ok_or(ErrorKind::UndefinedVariable)?;
         }
-        if idx >= act.locals.len() {
-            return Err(ErrorKind::UndefinedVariable);
-        }
+
         let x = cell_clone(&act.locals[idx]);
         if x.is_void() {
             return Err(ErrorKind::UndefinedVariable);
