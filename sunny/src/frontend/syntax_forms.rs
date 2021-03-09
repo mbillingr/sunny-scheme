@@ -388,10 +388,7 @@ impl SyntaxExpander for LibraryDefinition {
                     body = Ast::sequence(prev_part, body);
                 }
 
-                let meaning_exports = Ast::export(exports);
-                body = Ast::sequence(body, meaning_exports);
-
-                Ok(Ast::module(libname, body))
+                Ok(Ast::module(libname, body, exports))
             }]
         ]
             .unwrap_or_else(|| Err(sexpr.map_value(Error::InvalidForm)))

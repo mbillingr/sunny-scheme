@@ -11,8 +11,8 @@ use crate::frontend::{
     environment::Env,
     error::Result,
     syntax_forms::{
-        Assignment, Begin, Branch, Cons, Definition, Expression, Lambda, LibraryDefinition,
-        Quotation, SyntaxDefinition,
+        Assignment, Begin, Branch, Cons, Definition, Lambda, LibraryDefinition, Quotation,
+        SyntaxDefinition,
     },
 };
 use sunny_sexpr_parser::SrcExpr;
@@ -39,6 +39,7 @@ pub fn base_environment(name: impl ToString) -> Env {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::frontend::syntax_forms::Expression;
     use ast::Ast;
     use sunny_sexpr_parser::Sexpr;
     use sunny_sexpr_parser::SourceLocation;
@@ -184,7 +185,7 @@ mod tests {
     fn meaning_of_library_definition_without_exports() {
         assert_eq!(
             meaning_of![("define-library" (foo bar) (begin (define baz 42)))],
-            Ok(ast!(module "(foo bar)" (begin (gset "(foo bar).baz" (const 42)) (export))))
+            Ok(ast!(module "(foo bar)" (gset "(foo bar).baz" (const 42))))
         );
     }
 
@@ -192,9 +193,7 @@ mod tests {
     fn meaning_of_library_definition_with_exports() {
         assert_eq!(
             meaning_of![("define-library" (foo bar) (export baz) (begin (define baz 42)))],
-            Ok(
-                ast!(module "(foo bar)" (begin (gset "(foo bar).baz" (const 42)) (export ("baz" "(foo bar).baz"))))
-            )
+            Ok(ast!(module "(foo bar)" (gset "(foo bar).baz" (const 42)) ("baz" "(foo bar).baz")))
         );
     }
 }

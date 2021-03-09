@@ -242,8 +242,9 @@ impl Vm {
 
     fn get_global(&mut self, idx: usize) -> Result<()> {
         if idx >= self.globals.len() {
-            self.globals
-                .resize((idx + 1).next_power_of_two(), Value::Void);
+            /*self.globals
+            .resize((idx + 1).next_power_of_two(), Value::Void);*/
+            return Err(ErrorKind::UndefinedVariable);
         }
         let x = self.globals[idx].clone();
         self.push_value(x);
@@ -251,13 +252,18 @@ impl Vm {
     }
 
     fn set_global(&mut self, idx: usize) -> Result<()> {
+        let x = self.pop_value()?;
+        self.assign_global(idx, x);
+        Ok(())
+    }
+
+    pub fn assign_global(&mut self, idx: usize, value: Value) {
         if idx >= self.globals.len() {
             self.globals
                 .resize((idx + 1).next_power_of_two(), Value::Void);
         }
-        let x = self.pop_value()?;
-        self.globals[idx] = x;
-        Ok(())
+        self.globals[idx] = value;
+        println!("{:?}", self.globals);
     }
 
     fn push_local(&mut self) -> Result<()> {

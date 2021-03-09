@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use sunny_sexpr_parser::Sexpr;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::bytecode::Op;
-use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
+use sunny_vm::{BasicBlock, BlockChain, ValueStorage};
 
 pub trait Backend {
     type Ir;
@@ -33,7 +33,7 @@ pub trait Backend {
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir;
 
-    fn export(&mut self, exports: &[(String, String)]) -> Self::Ir;
+    fn module(&mut self, name: &str, body: Self::Ir, exports: &[(String, String)]) -> Self::Ir;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -47,6 +47,24 @@ impl<'s> ByteCodeBackend<'s> {
             storage,
             global_table,
         }
+    }
+}
+
+impl ByteCodeBackend<'_> {
+    fn export(&mut self, exports: &[(String, String)]) -> BlockChain {
+        self.storage.ensure(exports.len());
+        let mut ops = vec![];
+        let mut constants = vec![];
+        for (export_name, var_name) in exports {
+            let cidx = constants.len();
+            constants.push(self.storage.interned_symbol(export_name).unwrap());
+            ops.extend(Op::extended(Op::Const, cidx));
+            let idx = self.global_table.determine_index(var_name);
+            ops.extend(Op::extended(Op::FetchGlobal, idx));
+            ops.push(Op::TableSet);
+        }
+        let block = BasicBlock::new(ops, constants);
+        BlockChain::singleton(block)
     }
 }
 
@@ -87,12 +105,25 @@ impl Backend for ByteCodeBackend<'_> {
 
     fn fetch_global(&mut self, context: SourceLocation<()>, name: &str) -> Self::Ir {
         let idx = self.global_table.determine_index(name);
-        self.fetch(context, idx)
+
+        let mut ops = vec![];
+        ops.extend(Op::extended(Op::FetchGlobal, idx));
+        let block = BasicBlock::new(ops, vec![]);
+        block.map_source(0, context.clone());
+        block.map_source(1, context);
+        BlockChain::singleton(block)
     }
 
     fn store_global(&mut self, context: SourceLocation<()>, name: &str, val: Self::Ir) -> Self::Ir {
         let idx = self.global_table.determine_index(name);
-        self.store(context, idx, val)
+
+        let mut ops = vec![];
+        ops.extend(Op::extended(Op::StoreGlobal, idx));
+        ops.push(Op::Void);
+        let block = BasicBlock::new(ops, vec![]);
+        block.map_source(0, context.clone());
+        block.map_source(1, context);
+        val.chain(BlockChain::singleton(block))
     }
 
     fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir {
@@ -137,20 +168,31 @@ impl Backend for ByteCodeBackend<'_> {
         blocks
     }
 
-    fn export(&mut self, exports: &[(String, String)]) -> Self::Ir {
-        self.storage.ensure(exports.len());
-        let mut ops = vec![Op::Table];
-        let mut constants = vec![];
-        for (export_name, var_name) in exports {
-            let cidx = constants.len();
-            constants.push(self.storage.interned_symbol(export_name).unwrap());
-            ops.extend(Op::extended(Op::Const, cidx));
-            let idx = self.global_table.determine_index(var_name);
-            ops.extend(Op::extended(Op::Fetch, idx));
-            ops.push(Op::TableSet);
-        }
-        let block = BasicBlock::new(ops, constants);
-        BlockChain::singleton(block)
+    fn module(&mut self, name: &str, body: Self::Ir, exports: &[(String, String)]) -> Self::Ir {
+        let body = body.chain(BlockChain::singleton(Op::Drop));
+
+        let fetch_module_table = self.fetch_global(SourceLocation::new(()), "*modules*");
+
+        let libname = {
+            self.storage.ensure(1);
+            let value = self.storage.interned_symbol(name).unwrap();
+            let block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
+            BlockChain::singleton(block)
+        };
+
+        let exports = BlockChain::singleton(Op::Table).chain(self.export(exports));
+
+        // it's ok to drop the table because it is stored in the global *modules* variable
+        let store_module = BlockChain::singleton(BasicBlock::new(
+            vec![Op::TableSet, Op::Drop, Op::Void],
+            vec![],
+        ));
+
+        fetch_module_table
+            .chain(libname)
+            .chain(body)
+            .chain(exports)
+            .chain(store_module)
     }
 }
 
@@ -168,8 +210,12 @@ impl GlobalTable {
     pub fn determine_index(&mut self, name: &str) -> usize {
         if let Some(idx) = self.mappings.get(name) {
             return *idx;
+        } else {
+            self.add_variable(name)
         }
+    }
 
+    pub fn add_variable(&mut self, name: impl ToString) -> usize {
         let idx = self.mappings.len();
         self.mappings.insert(name.to_string(), idx);
         idx
@@ -179,6 +225,7 @@ impl GlobalTable {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sunny_vm::Value;
 
     #[test]
     fn build_bytecode_constant() {
@@ -373,8 +420,15 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
+        let context = SourceLocation::new(());
+        let idx = 0;
+        let mut ops = vec![];
+        ops.extend(Op::extended(Op::Fetch, idx));
+        let block = BasicBlock::new(ops, vec![]);
+        block.map_source(0, context.clone());
+        block.map_source(1, context);
         let args = vec![
-            bcb.fetch(SourceLocation::new(()), 0),
+            BlockChain::singleton(block),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(1)),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(2)),
             bcb.constant(SourceLocation::new(()), &Sexpr::int(3)),
@@ -432,14 +486,37 @@ mod tests {
         let cs = code.build_segment();
         assert_eq!(
             cs.code_slice(),
+            &[Op::Const(0), Op::FetchGlobal(0), Op::TableSet, Op::Halt]
+        );
+        assert_eq!(cs.constant_slice(), &[x_symbol]);
+    }
+
+    #[test]
+    fn build_module() {
+        let mut storage = ValueStorage::new(100);
+        let mod_symbol = storage.interned_symbol("mod").unwrap();
+
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
+
+        let body = bcb.constant(SourceLocation::new(()), &Sexpr::Integer(42));
+        let code = bcb.module("mod", body, &[]);
+
+        let cs = code.build_segment();
+        assert_eq!(
+            cs.code_slice(),
             &[
-                Op::Table,
+                Op::FetchGlobal(0),
                 Op::Const(0),
-                Op::Fetch(0),
+                Op::Const(1),
+                Op::Drop,
+                Op::Table,
                 Op::TableSet,
+                Op::Drop,
+                Op::Void,
                 Op::Halt
             ]
         );
-        assert_eq!(cs.constant_slice(), &[x_symbol]);
+        assert_eq!(cs.constant_slice(), &[mod_symbol, Value::Int(42)]);
     }
 }

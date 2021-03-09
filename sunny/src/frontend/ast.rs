@@ -16,13 +16,16 @@ pub enum Ast {
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
     Lambda(SourceLocation<()>, usize, AstNode),
     Invoke(SourceLocation<()>, Vec<AstNode>),
-    Module(String, AstNode),
-    Export(Vec<(String, String)>),
+    Module(String, AstNode, Vec<(String, String)>),
 }
 
 impl Ast {
-    pub fn module(name: impl ToString, content: AstNode) -> AstNode {
-        Box::new(Ast::Module(name.to_string(), content))
+    pub fn module(
+        name: impl ToString,
+        content: AstNode,
+        exports: Vec<(String, String)>,
+    ) -> AstNode {
+        Box::new(Ast::Module(name.to_string(), content, exports))
     }
 
     pub fn void() -> AstNode {
@@ -74,10 +77,6 @@ impl Ast {
         Box::new(Ast::Invoke(context, args))
     }
 
-    pub fn export(exports: Vec<(String, String)>) -> AstNode {
-        Box::new(Ast::Export(exports))
-    }
-
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
             Ast::Void => backend.void(),
@@ -116,14 +115,21 @@ impl Ast {
                 let args = args.iter().map(|arg| arg.build(backend)).collect();
                 backend.invoke(ctx.clone(), args)
             }
-            Ast::Module(_name, body) => {
+            Ast::Module(name, body, exports) => {
                 let body = body.build(backend);
+                backend.module(name, body, exports)
+                /*let body = body.build(backend);
                 let body_func = backend.lambda(SourceLocation::new(()), 0, body);
+
+                let fetch = backend.fetch_global(SourceLocation::new(()), "*modules*");
+
                 let libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
+
+                let libcode = backend.sequence(fetch, libcode);
+
                 // this is just to make the test pass for now and serves no real purpose
-                backend.store(SourceLocation::new(()), 0, libcode)
+                backend.store(SourceLocation::new(()), 0, libcode)*/
             }
-            Ast::Export(exports) => backend.export(exports),
         }
     }
 
@@ -170,12 +176,9 @@ impl Ast {
                 }
                 Ok(())
             }
-            Ast::Module(name, body) => {
-                writeln!(f, "{: <1$}module {2}", "", indent, name)?;
+            Ast::Module(name, body, exports) => {
+                writeln!(f, "{: <1$}module {2} {3:?}", "", indent, name, exports)?;
                 body.pretty_fmt(f, indent + 4)
-            }
-            Ast::Export(items) => {
-                writeln!(f, "{: <1$}export {2:?}", "", indent, items)
             }
         }
     }
@@ -201,6 +204,5 @@ macro_rules! ast {
     (if $a:tt $b:tt $c:tt) => {Ast::ifexpr(SourceLocation::new(()), ast![$a], ast![$b], ast![$c])};
     (lambda $p:tt $b:tt) => {Ast::lambda(SourceLocation::new(()), $p, ast![$b])};
     (invoke $($a:tt)*) => {Ast::invoke(SourceLocation::new(()), vec![$(ast![$a]),*])};
-    (module $n:tt $x:tt) => {Ast::module($n, ast![$x])};
-    (export $(($v:tt $e:tt))*) => {Ast::export(vec![$(($v.to_string(), $e.to_string())),*])};
+    (module $n:tt $x:tt $(($v:tt $e:tt))*) => {Ast::module($n, ast![$x], vec![$(($v.to_string(), $e.to_string())),*])};
 }

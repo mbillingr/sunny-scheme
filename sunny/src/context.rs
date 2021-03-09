@@ -16,12 +16,19 @@ pub struct Context {
 
 impl Context {
     pub fn new() -> Self {
-        let storage = ValueStorage::new(5);
-        let vm = Vm::new(storage).unwrap();
+        let mut globals = GlobalTable::new();
+        let modvar = globals.add_variable("*modules*");
+
+        let mut storage = ValueStorage::new(11);
+        let module_table = storage.new_table().unwrap();
+
+        let mut vm = Vm::new(storage).unwrap();
+        vm.assign_global(modvar, module_table);
+
         Context {
             env: base_environment("main"),
             vm,
-            globals: GlobalTable::new(),
+            globals,
         }
     }
 
