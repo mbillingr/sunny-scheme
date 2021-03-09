@@ -432,4 +432,28 @@ mod tests {
             &[Op::Integer(1), Op::Drop, Op::Integer(2), Op::Halt]
         );
     }
+
+    #[test]
+    fn build_bytecode_export() {
+        let mut storage = ValueStorage::new(100);
+        let x_symbol = storage.interned_symbol("x").unwrap();
+
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
+
+        let code = bcb.export(&[("x".to_string(), "y".to_string())]);
+
+        let cs = code.build_segment();
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::Table,
+                Op::Const(0),
+                Op::Fetch(0),
+                Op::TableSet,
+                Op::Halt
+            ]
+        );
+        assert_eq!(cs.constant_slice(), &[x_symbol]);
+    }
 }
