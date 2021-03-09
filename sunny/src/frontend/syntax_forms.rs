@@ -6,6 +6,7 @@ use log::warn;
 use sunny_sexpr_parser::CxR;
 use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
 
+use crate::frontend::environment::EnvBinding;
 use crate::frontend::syntactic_closure::SyntacticClosure;
 use crate::frontend::{
     ast::{Ast, AstNode},
@@ -340,31 +341,45 @@ impl SyntaxExpander for LibraryDefinition {
             [sexpr: (_, libname . statements) => {
                 let lib_env = base_environment(libname);
 
-                let exports = vec![];
-                let mut body_parts = vec![];
                 for stmt in statements.iter() {
                     match stmt.car().and_then(|s| s.as_symbol()) {
                         Some("import") => warn!("Ignoring (import ...) statement in library definition"),
-                        Some("export") => {
-                            for export_item in stmt.cdr().unwrap().iter() {
-                                let _export_name = export_item
-                                    .as_symbol()
-                                    .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
-                                /*let (_, binding) = lib_env.ensure_global(export_name);
-                                if let EnvBinding::Variable = binding {
-                                    //exports.push((export_name.to_string(), var_idx));
-                                    unimplemented!()
-                                } else {
-                                    unimplemented!()
-                                }*/
+                        Some("export") => {}
+                        Some("begin") => {}
+                        _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
+                    }
+                }
 
-                                warn!("Ignoring (export ...) statement in library definition");
-                            }
-                        }
+                let mut body_parts = vec![];
+                for stmt in statements.iter() {
+                    match stmt.car().and_then(|s| s.as_symbol()) {
                         Some("begin") => {
                             body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &lib_env)?)
                         }
-                        _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
+                        _ => {}
+                    }
+                }
+
+                let mut exports = vec![];
+                for stmt in statements.iter() {
+                    match stmt.car().and_then(|s| s.as_symbol()) {
+                        Some("export") => {
+                            for export_item in stmt.cdr().unwrap().iter() {
+                                let export_name = export_item
+                                    .as_symbol()
+                                    .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
+                                let binding = lib_env.lookup_global_variable(export_name).ok_or(Error::UndefinedImport)?;
+                                match binding {
+                                    EnvBinding::Variable => unreachable!(),
+                                    EnvBinding::Global(fully_qualified_name) => {
+                                        exports.push((export_name.to_string(),
+                                                      fully_qualified_name.to_string()));
+                                    }
+                                    EnvBinding::Syntax(_) => unimplemented!(),
+                                }
+                            }
+                        }
+                        _ => {}
                     }
                 }
 

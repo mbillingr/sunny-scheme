@@ -17,7 +17,7 @@ pub enum Ast {
     Lambda(SourceLocation<()>, usize, AstNode),
     Invoke(SourceLocation<()>, Vec<AstNode>),
     Module(String, AstNode),
-    Export(Vec<(String, usize)>),
+    Export(Vec<(String, String)>),
 }
 
 impl Ast {
@@ -74,7 +74,7 @@ impl Ast {
         Box::new(Ast::Invoke(context, args))
     }
 
-    pub fn export(exports: Vec<(String, usize)>) -> AstNode {
+    pub fn export(exports: Vec<(String, String)>) -> AstNode {
         Box::new(Ast::Export(exports))
     }
 
@@ -202,5 +202,5 @@ macro_rules! ast {
     (lambda $p:tt $b:tt) => {Ast::lambda(SourceLocation::new(()), $p, ast![$b])};
     (invoke $($a:tt)*) => {Ast::invoke(SourceLocation::new(()), vec![$(ast![$a]),*])};
     (module $n:tt $x:tt) => {Ast::module($n, ast![$x])};
-    (export $($x:tt)*) => {Ast::export(vec![$($x),*])};
+    (export $(($v:tt $e:tt))*) => {Ast::export(vec![$(($v.to_string(), $e.to_string())),*])};
 }

@@ -168,10 +168,33 @@ mod tests {
     }
 
     #[test]
+    fn meaning_of_value_definition() {
+        assert_eq!(meaning_of![(define x 1)], Ok(ast!(gset "test.x" (const 1))));
+    }
+
+    #[test]
+    fn meaning_of_function_definition() {
+        assert_eq!(
+            meaning_of![(define (x y) y)],
+            Ok(ast!(gset "test.x" (lambda 1 (ref 0))))
+        );
+    }
+
+    #[test]
     fn meaning_of_library_definition_without_exports() {
         assert_eq!(
             meaning_of![("define-library" (foo bar) (begin (define baz 42)))],
             Ok(ast!(module "(foo bar)" (begin (gset "(foo bar).baz" (const 42)) (export))))
+        );
+    }
+
+    #[test]
+    fn meaning_of_library_definition_with_exports() {
+        assert_eq!(
+            meaning_of![("define-library" (foo bar) (export baz) (begin (define baz 42)))],
+            Ok(
+                ast!(module "(foo bar)" (begin (gset "(foo bar).baz" (const 42)) (export ("baz" "(foo bar).baz"))))
+            )
         );
     }
 }
