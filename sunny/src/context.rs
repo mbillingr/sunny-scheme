@@ -3,7 +3,7 @@ use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
-use crate::backend::{Backend, ByteCodeBackend, GlobalTable};
+use crate::backend::{ByteCodeBackend, GlobalTable};
 use crate::frontend::environment::Env;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
@@ -34,14 +34,11 @@ impl Context {
         println!("{}", ast);
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage(), &mut self.globals);
-        backend.begin_module();
 
         let ir = ast.build(&mut backend);
+        ir.return_from();
 
-        let codegraph = backend.end_module(ir);
-        codegraph.return_from();
-
-        let code = codegraph.build_segment();
+        let code = ir.build_segment();
         let code = tail_call_optimization(code);
         println!("{}", code);
 

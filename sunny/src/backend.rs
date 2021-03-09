@@ -7,10 +7,6 @@ use sunny_vm::{BasicBlock, BlockChain, Value, ValueStorage};
 pub trait Backend {
     type Ir;
 
-    fn begin_module(&mut self);
-
-    fn end_module(&mut self, content: Self::Ir) -> Self::Ir;
-
     fn void(&mut self) -> Self::Ir;
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir;
@@ -42,7 +38,6 @@ pub trait Backend {
 
 pub struct ByteCodeBackend<'s> {
     storage: &'s mut ValueStorage,
-    prelude: Vec<BlockChain>,
     global_table: &'s mut GlobalTable,
 }
 
@@ -50,7 +45,6 @@ impl<'s> ByteCodeBackend<'s> {
     pub fn new(storage: &'s mut ValueStorage, global_table: &'s mut GlobalTable) -> Self {
         ByteCodeBackend {
             storage,
-            prelude: vec![BlockChain::empty()],
             global_table,
         }
     }
@@ -58,14 +52,6 @@ impl<'s> ByteCodeBackend<'s> {
 
 impl Backend for ByteCodeBackend<'_> {
     type Ir = BlockChain;
-
-    fn begin_module(&mut self) {
-        self.prelude.push(BlockChain::empty())
-    }
-
-    fn end_module(&mut self, content: Self::Ir) -> Self::Ir {
-        self.prelude.pop().unwrap().chain(content)
-    }
 
     fn void(&mut self) -> Self::Ir {
         BlockChain::singleton(BasicBlock::new(vec![Op::Void], vec![]))
