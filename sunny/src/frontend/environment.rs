@@ -26,6 +26,10 @@ impl EnvBinding {
         }
     }
 
+    pub fn is_global(&self) -> bool {
+        self.as_global().is_some()
+    }
+
     pub fn as_global(&self) -> Option<&str> {
         match self {
             EnvBinding::Variable => None,
@@ -120,7 +124,12 @@ impl Env {
     }
 
     pub fn ensure_global_variable(&self, name: &str) {
-        if let Some(_) = self.global.borrow().find(name) {
+        if let Some(_) = self
+            .global
+            .borrow()
+            .lookup(name)
+            .filter(|binding| binding.is_variable())
+        {
             return;
         }
 
@@ -141,6 +150,10 @@ impl Env {
             .lookup(name)
             .cloned()
             .or_else(|| self.global.borrow().lookup(name).cloned())
+    }
+
+    pub fn lookup_global_variable(&self, name: &str) -> Option<EnvBinding> {
+        self.global.borrow().lookup(name).cloned()
     }
 
     pub fn lookup_variable_index(&self, name: &str) -> Option<usize> {

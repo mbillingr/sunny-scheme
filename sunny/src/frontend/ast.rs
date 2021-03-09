@@ -16,13 +16,13 @@ pub enum Ast {
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
     Lambda(SourceLocation<()>, usize, AstNode),
     Invoke(SourceLocation<()>, Vec<AstNode>),
-    Module(AstNode),
+    Module(String, AstNode),
     Export(Vec<(String, usize)>),
 }
 
 impl Ast {
-    pub fn module(content: AstNode) -> AstNode {
-        Box::new(Ast::Module(content))
+    pub fn module(name: impl ToString, content: AstNode) -> AstNode {
+        Box::new(Ast::Module(name.to_string(), content))
     }
 
     pub fn void() -> AstNode {
@@ -116,7 +116,7 @@ impl Ast {
                 let args = args.iter().map(|arg| arg.build(backend)).collect();
                 backend.invoke(ctx.clone(), args)
             }
-            Ast::Module(body) => {
+            Ast::Module(_name, body) => {
                 let body = body.build(backend);
                 let body_func = backend.lambda(SourceLocation::new(()), 0, body);
                 let libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
@@ -170,8 +170,8 @@ impl Ast {
                 }
                 Ok(())
             }
-            Ast::Module(body) => {
-                writeln!(f, "{: <1$}module", "", indent)?;
+            Ast::Module(name, body) => {
+                writeln!(f, "{: <1$}module {2}", "", indent, name)?;
                 body.pretty_fmt(f, indent + 4)
             }
             Ast::Export(items) => {
@@ -201,4 +201,6 @@ macro_rules! ast {
     (if $a:tt $b:tt $c:tt) => {Ast::ifexpr(SourceLocation::new(()), ast![$a], ast![$b], ast![$c])};
     (lambda $p:tt $b:tt) => {Ast::lambda(SourceLocation::new(()), $p, ast![$b])};
     (invoke $($a:tt)*) => {Ast::invoke(SourceLocation::new(()), vec![$(ast![$a]),*])};
+    (module $n:tt $x:tt) => {Ast::module($n, ast![$x])};
+    (export $($x:tt)*) => {Ast::export(vec![$($x),*])};
 }

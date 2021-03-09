@@ -190,7 +190,7 @@ define_form! {
                 Ok(Ast::store_global(context, full_name, value))
             } else {
                 let offset = env.lookup_variable_index(name).unwrap();
-                Ok(Ast::store(sexpr.map_value(()), offset, value))
+                Ok(Ast::store(context, offset, value))
             }
         }]
 }
@@ -200,8 +200,9 @@ define_form! {
         [(_, name: Symbol, value) => {
             let value = Expression.expand(value, env)?;
             env.ensure_global_variable(name);
-            let offset = env.lookup_global_variable_index(name).unwrap();
-            Ok(Ast::store(sexpr.map_value(()), offset, value))
+            let binding = env.lookup_global_variable(name).unwrap();
+            let full_name = binding.as_global().unwrap();
+            Ok(Ast::store_global(sexpr.map_value(()), full_name, value))
         }]
         [(_, (name: Symbol . args) . body) => {
             let body_env = env.extend(args)?;
@@ -209,8 +210,9 @@ define_form! {
             let function = Ast::lambda(sexpr.map_value(()), args.len(), body);
 
             env.ensure_global_variable(name);
-            let offset = env.lookup_global_variable_index(name).unwrap();
-            Ok(Ast::store(sexpr.map_value(()), offset, function))
+            let binding = env.lookup_global_variable(name).unwrap();
+            let full_name = binding.as_global().unwrap();
+            Ok(Ast::store_global(sexpr.map_value(()), full_name, function))
         }]
 }
 
@@ -374,7 +376,7 @@ impl SyntaxExpander for LibraryDefinition {
                 let meaning_exports = Ast::export(exports);
                 body = Ast::sequence(body, meaning_exports);
 
-                Ok(Ast::module(body))
+                Ok(Ast::module(libname, body))
             }]
         ]
             .unwrap_or_else(|| Err(sexpr.map_value(Error::InvalidForm)))

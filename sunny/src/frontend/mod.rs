@@ -166,4 +166,12 @@ mod tests {
     fn meaning_of_singleton_begin_is_meaning_of_inner_expression() {
         assert_eq!(meaning_of![(begin 1)], Ok(ast!(const 1)));
     }
+
+    #[test]
+    fn meaning_of_library_definition_without_exports() {
+        assert_eq!(
+            meaning_of![("define-library" (foo bar) (begin (define baz 42)))],
+            Ok(ast!(module "(foo bar)" (begin (gset "(foo bar).baz" (const 42)) (export))))
+        );
+    }
 }
