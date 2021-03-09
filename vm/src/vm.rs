@@ -263,7 +263,6 @@ impl Vm {
                 .resize((idx + 1).next_power_of_two(), Value::Void);
         }
         self.globals[idx] = value;
-        println!("{:?}", self.globals);
     }
 
     fn push_local(&mut self) -> Result<()> {
