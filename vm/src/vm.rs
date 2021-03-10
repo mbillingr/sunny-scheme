@@ -26,6 +26,7 @@ pub struct Vm {
 impl Traceable for Vm {
     fn trace(&self, gc: &mut Tracer) {
         self.value_stack.trace(gc);
+        self.globals.trace(gc);
         self.current_activation.trace(gc);
         self.empty_value_array.trace(gc);
         self.gc_preserve.trace(gc);
@@ -134,7 +135,8 @@ impl Vm {
     fn run(&mut self) -> Result<Value> {
         let mut arg: usize = 0;
         loop {
-            match self.fetch_op() {
+            let op = self.fetch_op();
+            match op {
                 Op::Nop => {}
                 Op::ExtArg(a) => {
                     arg = Op::extend_arg(a, arg);
