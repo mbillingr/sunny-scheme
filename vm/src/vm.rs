@@ -17,9 +17,6 @@ pub struct Vm {
 
     current_activation: Ref<Activation>,
 
-    // constants
-    empty_value_array: Ref<Box<[Value]>>,
-
     gc_preserve: Vec<&'static dyn Traceable>,
 }
 
@@ -28,15 +25,13 @@ impl Traceable for Vm {
         self.value_stack.trace(gc);
         self.globals.trace(gc);
         self.current_activation.trace(gc);
-        self.empty_value_array.trace(gc);
         self.gc_preserve.trace(gc);
     }
 }
 
 impl Vm {
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
-        storage.ensure(3);
-        let empty_value_array = storage.insert(vec![].into_boxed_slice()).unwrap();
+        storage.ensure(2);
 
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
@@ -54,7 +49,6 @@ impl Vm {
             value_stack: vec![],
             globals: vec![],
             current_activation: root_activation,
-            empty_value_array,
             gc_preserve: vec![],
         })
     }
