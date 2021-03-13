@@ -17,7 +17,7 @@ impl Drop for Storage {
     fn drop(&mut self) {
         if !self.objects.is_empty() {
             warn!(
-                "Leaked {} objects from dropped storage. (Hint: did you run garbage collection?)",
+                "{} objects remaining in storage. (Hint: did you run garbage collection?)",
                 self.objects.len()
             )
         }

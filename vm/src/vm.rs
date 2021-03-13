@@ -29,6 +29,16 @@ impl Traceable for Vm {
     }
 }
 
+impl Drop for Vm {
+    fn drop(&mut self) {
+        unsafe {
+            // I think it's safe to invalidate all
+            // contained references at this point
+            self.storage.collect_garbage(&());
+        }
+    }
+}
+
 impl Vm {
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
         storage.ensure(2);
