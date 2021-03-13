@@ -16,6 +16,22 @@ fn can_import_after_library_was_defined() {
 }
 
 #[test]
+fn reexports_target_same_variable() {
+    assert_that!(
+        vec![
+            // todo: use renaming import or export when they are implemented
+            "(define-library (foo) (export x) (begin (define x 1)))",
+            "(define-library (bar) (export x) (begin (import (foo))))",
+            "(import (bar))",
+            "(set! x 42)",
+            "(import (foo))",
+            "x",
+        ],
+        EvaluatesTo::the_integer(42)
+    );
+}
+
+#[test]
 fn can_import_macros_from_library() {
     assert_that!(
         vec![

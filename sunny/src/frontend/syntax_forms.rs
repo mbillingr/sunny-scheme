@@ -274,14 +274,14 @@ define_form! {
 define_form! {
     Import(sexpr, env):
        [(_, libname) => {
-            let libname = libname_to_string(libname);
-            if let Some(lib) = env.find_library(&libname) {
+            let libstr = libname_to_string(libname);
+            if let Some(lib) = env.find_library(&libstr) {
                 for export in lib.exports() {
                     env.add_global_binding(export.export_name.to_string(), export.binding.clone());
                 }
                 Ok(Ast::void())
             } else {
-                unimplemented!()
+                Err(error_at(libname, Error::UnknownLibrary))
             }
        }]
 }
@@ -354,7 +354,8 @@ impl SyntaxExpander for LibraryDefinition {
     fn expand(&self, sexpr: RefExpr, env: &Env) -> Result<AstNode> {
         match_sexpr![
             [sexpr: (_, libname . statements) => {
-                let lib_env = base_environment(libname);
+                let mut lib_env = base_environment(libname);
+                lib_env.use_libraries_from(env);
 
                 for stmt in statements.iter() {
                     match stmt.car().and_then(|s| s.as_symbol()) {

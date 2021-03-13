@@ -13,6 +13,7 @@ pub enum Error {
     InvalidForm,
     UnknownSyntaxTransformer,
     UndefinedExport,
+    UnknownLibrary,
 }
 
 impl std::fmt::Display for Error {
@@ -27,6 +28,7 @@ impl std::fmt::Display for Error {
             Error::InvalidForm => write!(f, "Invalid syntactic form"),
             Error::UnknownSyntaxTransformer => write!(f, "Unknown syntax transformer"),
             Error::UndefinedExport => write!(f, "Undefined export"),
+            Error::UnknownLibrary => write!(f, "Unknown library"),
         }
     }
 }

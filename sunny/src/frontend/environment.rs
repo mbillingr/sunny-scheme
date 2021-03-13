@@ -124,6 +124,10 @@ impl Env {
         }
     }
 
+    pub fn use_libraries_from(&mut self, other: &Env) {
+        self.libraries = other.libraries.clone();
+    }
+
     pub fn add_global_binding(&self, name: impl ToString, binding: impl Into<EnvBinding>) {
         let mut globals = self.global.borrow_mut();
         *globals = globals.add_binding(name, binding);
