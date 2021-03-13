@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use log::warn;
-
 use sunny_sexpr_parser::CxR;
 use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
 
@@ -359,7 +357,7 @@ impl SyntaxExpander for LibraryDefinition {
 
                 for stmt in statements.iter() {
                     match stmt.car().and_then(|s| s.as_symbol()) {
-                        Some("import") => warn!("Ignoring (import ...) statement in library definition"),
+                        Some("import") => {Import.expand(stmt, &lib_env)?;}
                         Some("export") => {}
                         Some("begin") => {}
                         _ => return Err(error_at(stmt, Error::UnexpectedStatement)),
@@ -396,7 +394,7 @@ impl SyntaxExpander for LibraryDefinition {
 
                 env.define_library(libname, exports);
 
-                let mut body = body_parts.pop().expect("Empty library body");
+                let mut body = body_parts.pop().unwrap_or_else(|| Ast::void());
                 while let Some(prev_part) = body_parts.pop() {
                     body = Ast::sequence(prev_part, body);
                 }

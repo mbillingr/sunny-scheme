@@ -21,7 +21,7 @@ fn reexports_target_same_variable() {
         vec![
             // todo: use renaming import or export when they are implemented
             "(define-library (foo) (export x) (begin (define x 1)))",
-            "(define-library (bar) (export x) (begin (import (foo))))",
+            "(define-library (bar) (export x) (import (foo)))",
             "(import (bar))",
             "(set! x 42)",
             "(import (foo))",
@@ -45,7 +45,6 @@ fn can_import_macros_from_library() {
 
 const SIMPLE_LIBRARY_DEFINITION: &str = "
 (define-library (foo bar)
-    (import (scheme base))
     (export baz get-private)
     (begin
         (define baz 42)
