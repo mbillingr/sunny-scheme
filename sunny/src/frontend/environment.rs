@@ -18,6 +18,10 @@ pub enum EnvBinding {
 }
 
 impl EnvBinding {
+    pub fn global(fully_qualified_name: impl Into<Rc<str>>) -> Self {
+        EnvBinding::Global(fully_qualified_name.into())
+    }
+
     pub fn syntax(expander: impl SyntaxExpander + 'static) -> Self {
         EnvBinding::Syntax(Rc::new(expander))
     }
@@ -71,6 +75,28 @@ impl From<Rc<dyn SyntaxExpander>> for EnvBinding {
     }
 }
 
+impl std::fmt::Debug for EnvBinding {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            EnvBinding::Variable => write!(f, "var"),
+            EnvBinding::Global(fqn) => write!(f, "@{}", fqn),
+            EnvBinding::Syntax(exp) => write!(f, "{}", exp.description()),
+        }
+    }
+}
+
+impl PartialEq for EnvBinding {
+    fn eq(&self, other: &Self) -> bool {
+        use EnvBinding::*;
+        match (self, other) {
+            (Variable, Variable) => true,
+            (Global(fqn1), Global(fqn2)) => fqn1 == fqn2,
+            (Syntax(exp1), Syntax(exp2)) => Rc::ptr_eq(exp1, exp2),
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Env {
     name: String,
@@ -101,11 +127,6 @@ impl Env {
     pub fn add_global_binding(&self, name: impl ToString, binding: impl Into<EnvBinding>) {
         let mut globals = self.global.borrow_mut();
         *globals = globals.add_binding(name, binding);
-    }
-
-    pub fn add_global_alias(&self, name: impl ToString, fully_qualified_name: Rc<str>) {
-        let binding = EnvBinding::Global(fully_qualified_name);
-        self.add_global_binding(name, binding);
     }
 
     pub fn extend(&self, vars: &SourceLocation<Sexpr>) -> Result<Self> {

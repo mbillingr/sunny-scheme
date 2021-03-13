@@ -21,6 +21,10 @@ use sunny_sexpr_parser::SrcExpr;
 
 pub trait SyntaxExpander: std::fmt::Debug {
     fn expand(&self, sexpr: &SrcExpr, env: &Env) -> Result<AstNode>;
+
+    fn description(&self) -> String {
+        format!("<native syntax {:p}>", self)
+    }
 }
 
 pub fn base_environment(name: impl ToString) -> Env {

@@ -6,14 +6,13 @@ use log::warn;
 use sunny_sexpr_parser::CxR;
 use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
 
-use crate::frontend::environment::EnvBinding;
-use crate::frontend::syntactic_closure::SyntacticClosure;
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
     environment::Env,
     error::{error_at, Error, Result},
     library::{libname_to_string, Export},
+    syntactic_closure::SyntacticClosure,
     SyntaxExpander,
 };
 
@@ -278,7 +277,7 @@ define_form! {
             let libname = libname_to_string(libname);
             if let Some(lib) = env.find_library(&libname) {
                 for export in lib.exports() {
-                    env.add_global_alias(export.export_name.to_string(), export.fully_qualified_name.clone());
+                    env.add_global_binding(export.export_name.to_string(), export.binding.clone());
                 }
                 Ok(Ast::void())
             } else {
@@ -385,14 +384,7 @@ impl SyntaxExpander for LibraryDefinition {
                                     .as_symbol()
                                     .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
                                 let binding = lib_env.lookup_global_variable(export_name).ok_or(Error::UndefinedImport)?;
-                                match binding {
-                                    EnvBinding::Variable => unreachable!(),
-                                    EnvBinding::Global(fully_qualified_name) => {
-                                        exports.push(Export::new(export_name,
-                                                      fully_qualified_name));
-                                    }
-                                    EnvBinding::Syntax(_) => unimplemented!(),
-                                }
+                                exports.push(Export::new(export_name, binding));
                             }
                         }
                         _ => {}

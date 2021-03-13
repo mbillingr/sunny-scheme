@@ -62,7 +62,7 @@ impl ByteCodeBackend<'_> {
             ops.extend(Op::extended(Op::Const, cidx));
             let idx = self
                 .global_table
-                .determine_index(&*exp.fully_qualified_name);
+                .determine_index(exp.binding.as_global().expect("global variable"));
             ops.extend(Op::extended(Op::FetchGlobal, idx));
             ops.push(Op::TableSet);
         }
@@ -228,6 +228,7 @@ impl GlobalTable {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::frontend::environment::EnvBinding;
     use sunny_vm::Value;
 
     #[test]
@@ -484,7 +485,8 @@ mod tests {
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
 
-        let code = bcb.export(&[Export::new("x", "y")]);
+        let x_binding = EnvBinding::global("y");
+        let code = bcb.export(&[Export::new("x", x_binding)]);
 
         let cs = code.build_segment();
         assert_eq!(

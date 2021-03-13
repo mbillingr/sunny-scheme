@@ -1,3 +1,4 @@
+use crate::frontend::environment::EnvBinding;
 use std::rc::Rc;
 use sunny_sexpr_parser::Sexpr;
 
@@ -7,14 +8,14 @@ pub fn libname_to_string(libname: &Sexpr) -> String {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Export {
-    pub fully_qualified_name: Rc<str>,
+    pub binding: EnvBinding,
     pub export_name: Rc<str>,
 }
 
 impl Export {
-    pub fn new(export_name: impl Into<Rc<str>>, fully_qualified_name: impl Into<Rc<str>>) -> Self {
+    pub fn new(export_name: impl Into<Rc<str>>, binding: EnvBinding) -> Self {
         Export {
-            fully_qualified_name: fully_qualified_name.into(),
+            binding,
             export_name: export_name.into(),
         }
     }
