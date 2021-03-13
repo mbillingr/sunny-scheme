@@ -383,7 +383,7 @@ impl SyntaxExpander for LibraryDefinition {
                                 let export_name = export_item
                                     .as_symbol()
                                     .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
-                                let binding = lib_env.lookup_global_variable(export_name).ok_or(Error::UndefinedImport)?;
+                                let binding = lib_env.lookup_global_variable(export_name).ok_or_else(||error_at(export_item, Error::UndefinedExport))?;
                                 exports.push(Export::new(export_name, binding));
                             }
                         }

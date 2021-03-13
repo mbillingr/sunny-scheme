@@ -12,7 +12,7 @@ pub enum Error {
     SyntaxAsValue,
     InvalidForm,
     UnknownSyntaxTransformer,
-    UndefinedImport,
+    UndefinedExport,
 }
 
 impl std::fmt::Display for Error {
@@ -26,7 +26,7 @@ impl std::fmt::Display for Error {
             Error::SyntaxAsValue => write!(f, "Syntax used as value"),
             Error::InvalidForm => write!(f, "Invalid syntactic form"),
             Error::UnknownSyntaxTransformer => write!(f, "Unknown syntax transformer"),
-            Error::UndefinedImport => write!(f, "Undefined import"),
+            Error::UndefinedExport => write!(f, "Undefined export"),
         }
     }
 }
