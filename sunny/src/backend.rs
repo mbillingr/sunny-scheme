@@ -60,9 +60,11 @@ impl ByteCodeBackend<'_> {
             let cidx = constants.len();
             constants.push(self.storage.interned_symbol(&*exp.export_name).unwrap());
             ops.extend(Op::extended(Op::Const, cidx));
-            let idx = self
-                .global_table
-                .determine_index(exp.binding.as_global().expect("global variable"));
+            let idx = self.global_table.determine_index(
+                exp.binding
+                    .as_global()
+                    .expect("only global variables can be exported at the bytecode level"),
+            );
             ops.extend(Op::extended(Op::FetchGlobal, idx));
             ops.push(Op::TableSet);
         }

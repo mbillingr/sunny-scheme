@@ -391,14 +391,16 @@ impl SyntaxExpander for LibraryDefinition {
                     }
                 }
 
-                env.define_library(libname, exports.clone());
+                let export_vars = exports.iter().filter(|exp| exp.binding.is_global()).cloned().collect();
+
+                env.define_library(libname, exports);
 
                 let mut body = body_parts.pop().expect("Empty library body");
                 while let Some(prev_part) = body_parts.pop() {
                     body = Ast::sequence(prev_part, body);
                 }
 
-                Ok(Ast::module(libname, body, exports))
+                Ok(Ast::module(libname, body, export_vars))
             }]
         ]
             .unwrap_or_else(|| Err(sexpr.map_value(Error::InvalidForm)))

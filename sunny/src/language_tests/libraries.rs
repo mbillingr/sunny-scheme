@@ -15,11 +15,25 @@ fn can_import_after_library_was_defined() {
     );
 }
 
+#[test]
+fn can_import_macros_from_library() {
+    assert_that!(
+        vec![
+            SIMPLE_LIBRARY_DEFINITION,
+            "(import (foo bar))",
+            "(get-private)"
+        ],
+        EvaluatesTo::the_integer(123)
+    );
+}
+
 const SIMPLE_LIBRARY_DEFINITION: &str = "
 (define-library (foo bar)
     (import (scheme base))
-    (export baz)
+    (export baz get-private)
     (begin
         (define baz 42)
+        (define private 123)
+        (define-syntax get-private (simple-macro () private))
     )
 )";
