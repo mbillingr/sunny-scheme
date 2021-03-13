@@ -2,10 +2,12 @@
 pub mod ast;
 pub mod environment;
 pub mod error;
+pub mod library;
 pub mod syntactic_closure;
 pub mod syntax_forms;
 
 use crate::frontend::environment::Environment;
+use crate::frontend::syntax_forms::Import;
 use crate::frontend::{
     ast::AstNode,
     environment::Env,
@@ -29,6 +31,7 @@ pub fn base_environment(name: impl ToString) -> Env {
         .add_binding("define-library", LibraryDefinition)
         .add_binding("define-syntax", SyntaxDefinition)
         .add_binding("if", Branch)
+        .add_binding("import", Import)
         .add_binding("lambda", Lambda)
         .add_binding("quote", Quotation)
         .add_binding("set!", Assignment);
@@ -63,9 +66,13 @@ mod tests {
 
     macro_rules! meaning_of {
         ($expr:tt) => {{
-            let sexpr = sexpr![Sexpr: $expr];
             let env = base_environment("test");
-            Expression.expand(&sexpr.into(), &env)
+            meaning_of![env @ $expr]
+        }};
+
+        ($env:tt @ $expr:tt) => {{
+            let sexpr = sexpr![Sexpr: $expr];
+            Expression.expand(&sexpr.into(), &$env)
         }};
     }
 
@@ -194,6 +201,24 @@ mod tests {
         assert_eq!(
             meaning_of![("define-library" (foo bar) (export baz) (begin (define baz 42)))],
             Ok(ast!(module "(foo bar)" (gset "(foo bar).baz" (const 42)) ("baz" "(foo bar).baz")))
+        );
+    }
+
+    #[test]
+    fn import_produces_no_code_but_extends_the_environment_with_existing_variables() {
+        let env = base_environment("test");
+        meaning_of![env @ ("define-library" (foo bar) (export baz) (begin (define baz 42)))]
+            .unwrap();
+
+        assert_eq!(meaning_of![env @ (import (foo bar))], Ok(ast!(void)));
+
+        println!("{:?}", env);
+
+        assert_eq!(
+            env.lookup_global_variable("baz")
+                .and_then(|b| b.as_global().map(str::to_string))
+                .unwrap(),
+            "(foo bar).baz"
         );
     }
 }

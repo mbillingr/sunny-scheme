@@ -1,10 +1,14 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use sunny_sexpr_parser::{Sexpr, SourceLocation};
+
+use crate::frontend::library::{Export, LibraryBinding};
 use crate::frontend::{
     error::{error_at, Error, Result},
     SyntaxExpander,
 };
-use std::cell::RefCell;
-use std::rc::Rc;
-use sunny_sexpr_parser::{Sexpr, SourceLocation};
+use std::collections::HashMap;
 
 #[derive(Clone)]
 pub enum EnvBinding {
@@ -70,6 +74,7 @@ impl From<Rc<dyn SyntaxExpander>> for EnvBinding {
 #[derive(Debug, Clone)]
 pub struct Env {
     name: String,
+    libraries: Rc<RefCell<HashMap<String, LibraryBinding>>>,
     global: RefCell<Environment>,
     lexical: Environment,
 }
@@ -78,6 +83,7 @@ impl Env {
     pub fn new(name: String, global: Environment, lexical: Environment) -> Self {
         Env {
             name,
+            libraries: Rc::new(RefCell::new(HashMap::new())),
             global: RefCell::new(global),
             lexical,
         }
@@ -86,6 +92,7 @@ impl Env {
     pub fn empty(name: String) -> Self {
         Env {
             name,
+            libraries: Rc::new(RefCell::new(HashMap::new())),
             global: RefCell::new(Environment::Empty),
             lexical: Environment::Empty,
         }
@@ -94,6 +101,11 @@ impl Env {
     pub fn add_global_binding(&self, name: impl ToString, binding: impl Into<EnvBinding>) {
         let mut globals = self.global.borrow_mut();
         *globals = globals.add_binding(name, binding);
+    }
+
+    pub fn add_global_alias(&self, name: impl ToString, fully_qualified_name: Rc<str>) {
+        let binding = EnvBinding::Global(fully_qualified_name);
+        self.add_global_binding(name, binding);
     }
 
     pub fn extend(&self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
@@ -169,6 +181,16 @@ impl Env {
             .borrow()
             .lookup_variable_index(name)
             .map(|index| index + self.lexical.len())
+    }
+
+    pub fn define_library(&self, name: impl ToString, exports: Vec<Export>) {
+        self.libraries
+            .borrow_mut()
+            .insert(name.to_string(), LibraryBinding::new(exports));
+    }
+
+    pub fn find_library(&self, name: &str) -> Option<LibraryBinding> {
+        self.libraries.borrow().get(name).cloned()
     }
 }
 

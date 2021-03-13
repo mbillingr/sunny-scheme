@@ -1,3 +1,4 @@
+use crate::frontend::library::Export;
 use std::collections::HashMap;
 use sunny_sexpr_parser::Sexpr;
 use sunny_sexpr_parser::SourceLocation;
@@ -33,7 +34,7 @@ pub trait Backend {
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir;
 
-    fn module(&mut self, name: &str, body: Self::Ir, exports: &[(String, String)]) -> Self::Ir;
+    fn module(&mut self, name: &str, body: Self::Ir, exports: &[Export]) -> Self::Ir;
 }
 
 pub struct ByteCodeBackend<'s> {
@@ -51,15 +52,17 @@ impl<'s> ByteCodeBackend<'s> {
 }
 
 impl ByteCodeBackend<'_> {
-    fn export(&mut self, exports: &[(String, String)]) -> BlockChain {
+    fn export(&mut self, exports: &[Export]) -> BlockChain {
         self.storage.ensure(exports.len());
         let mut ops = vec![];
         let mut constants = vec![];
-        for (export_name, var_name) in exports {
+        for exp in exports {
             let cidx = constants.len();
-            constants.push(self.storage.interned_symbol(export_name).unwrap());
+            constants.push(self.storage.interned_symbol(&*exp.export_name).unwrap());
             ops.extend(Op::extended(Op::Const, cidx));
-            let idx = self.global_table.determine_index(var_name);
+            let idx = self
+                .global_table
+                .determine_index(&*exp.fully_qualified_name);
             ops.extend(Op::extended(Op::FetchGlobal, idx));
             ops.push(Op::TableSet);
         }
@@ -168,7 +171,7 @@ impl Backend for ByteCodeBackend<'_> {
         blocks
     }
 
-    fn module(&mut self, name: &str, body: Self::Ir, exports: &[(String, String)]) -> Self::Ir {
+    fn module(&mut self, name: &str, body: Self::Ir, exports: &[Export]) -> Self::Ir {
         let body = body.chain(BlockChain::singleton(Op::Drop));
 
         let fetch_module_table = self.fetch_global(SourceLocation::new(()), "*modules*");
@@ -481,7 +484,7 @@ mod tests {
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
 
-        let code = bcb.export(&[("x".to_string(), "y".to_string())]);
+        let code = bcb.export(&[Export::new("x", "y")]);
 
         let cs = code.build_segment();
         assert_eq!(

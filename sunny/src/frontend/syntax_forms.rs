@@ -13,6 +13,7 @@ use crate::frontend::{
     base_environment,
     environment::Env,
     error::{error_at, Error, Result},
+    library::{libname_to_string, Export},
     SyntaxExpander,
 };
 
@@ -271,6 +272,21 @@ define_form! {
        }]
 }
 
+define_form! {
+    Import(sexpr, env):
+       [(_, libname) => {
+            let libname = libname_to_string(libname);
+            if let Some(lib) = env.find_library(&libname) {
+                for export in lib.exports() {
+                    env.add_global_alias(export.export_name.to_string(), export.fully_qualified_name.clone());
+                }
+                Ok(Ast::void())
+            } else {
+                unimplemented!()
+            }
+       }]
+}
+
 pub struct SyntaxTransformer;
 
 impl SyntaxTransformer {
@@ -336,7 +352,7 @@ impl SimpleMacro {
 pub struct LibraryDefinition;
 
 impl SyntaxExpander for LibraryDefinition {
-    fn expand(&self, sexpr: RefExpr, _env: &Env) -> Result<AstNode> {
+    fn expand(&self, sexpr: RefExpr, env: &Env) -> Result<AstNode> {
         match_sexpr![
             [sexpr: (_, libname . statements) => {
                 let lib_env = base_environment(libname);
@@ -372,8 +388,8 @@ impl SyntaxExpander for LibraryDefinition {
                                 match binding {
                                     EnvBinding::Variable => unreachable!(),
                                     EnvBinding::Global(fully_qualified_name) => {
-                                        exports.push((export_name.to_string(),
-                                                      fully_qualified_name.to_string()));
+                                        exports.push(Export::new(export_name,
+                                                      fully_qualified_name));
                                     }
                                     EnvBinding::Syntax(_) => unimplemented!(),
                                 }
@@ -382,6 +398,8 @@ impl SyntaxExpander for LibraryDefinition {
                         _ => {}
                     }
                 }
+
+                env.define_library(libname, exports.clone());
 
                 let mut body = body_parts.pop().expect("Empty library body");
                 while let Some(prev_part) = body_parts.pop() {

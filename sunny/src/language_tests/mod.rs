@@ -89,6 +89,17 @@ impl<M: Matcher<Result<Value, Error>>> Matcher<&str> for EvaluationMatcher<M> {
     }
 }
 
+impl<M: Matcher<Result<Value, Error>>, T: AsRef<str>> Matcher<Vec<T>> for EvaluationMatcher<M> {
+    fn matches(&self, sequence: Vec<T>) -> MatchResult {
+        let mut context = self.context.borrow_mut();
+        let mut result = None;
+        for expr in sequence {
+            result = Some(context.eval(expr.as_ref()));
+        }
+        self.result_matcher.matches(result.unwrap())
+    }
+}
+
 pub struct ValueEqualTo {
     expected: Value,
 }

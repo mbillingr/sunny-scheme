@@ -1,4 +1,5 @@
 use crate::backend::Backend;
+use crate::frontend::library::Export;
 use sunny_sexpr_parser::{SourceLocation, SrcExpr};
 
 pub type AstNode = Box<Ast>;
@@ -16,15 +17,11 @@ pub enum Ast {
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
     Lambda(SourceLocation<()>, usize, AstNode),
     Invoke(SourceLocation<()>, Vec<AstNode>),
-    Module(String, AstNode, Vec<(String, String)>),
+    Module(String, AstNode, Vec<Export>),
 }
 
 impl Ast {
-    pub fn module(
-        name: impl ToString,
-        content: AstNode,
-        exports: Vec<(String, String)>,
-    ) -> AstNode {
+    pub fn module(name: impl ToString, content: AstNode, exports: Vec<Export>) -> AstNode {
         Box::new(Ast::Module(name.to_string(), content, exports))
     }
 
@@ -118,17 +115,6 @@ impl Ast {
             Ast::Module(name, body, exports) => {
                 let body = body.build(backend);
                 backend.module(name, body, exports)
-                /*let body = body.build(backend);
-                let body_func = backend.lambda(SourceLocation::new(()), 0, body);
-
-                let fetch = backend.fetch_global(SourceLocation::new(()), "*modules*");
-
-                let libcode = backend.invoke(SourceLocation::new(()), vec![body_func]);
-
-                let libcode = backend.sequence(fetch, libcode);
-
-                // this is just to make the test pass for now and serves no real purpose
-                backend.store(SourceLocation::new(()), 0, libcode)*/
             }
         }
     }
@@ -193,6 +179,7 @@ impl std::fmt::Display for Ast {
 #[macro_export]
 macro_rules! ast {
     (($($parts:tt)*)) => {ast![$($parts)*]};
+    (void) => {Ast::void()};
     (const $x:expr) => {Ast::constant(SourceLocation::new(Sexpr::from($x)))};
     (ref $i:tt) => {Ast::fetch(SourceLocation::new(()), $i)};
     (set $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $i, ast![$x])};
@@ -204,5 +191,5 @@ macro_rules! ast {
     (if $a:tt $b:tt $c:tt) => {Ast::ifexpr(SourceLocation::new(()), ast![$a], ast![$b], ast![$c])};
     (lambda $p:tt $b:tt) => {Ast::lambda(SourceLocation::new(()), $p, ast![$b])};
     (invoke $($a:tt)*) => {Ast::invoke(SourceLocation::new(()), vec![$(ast![$a]),*])};
-    (module $n:tt $x:tt $(($v:tt $e:tt))*) => {Ast::module($n, ast![$x], vec![$(($v.to_string(), $e.to_string())),*])};
+    (module $n:tt $x:tt $(($v:tt $e:tt))*) => {Ast::module($n, ast![$x], vec![$(crate::frontend::library::Export::new($v, $e)),*])};
 }
