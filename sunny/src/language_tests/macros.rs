@@ -31,3 +31,11 @@ fn macros_resolve_symbols_in_their_definition_environment() {
         EvaluatesTo::a_procedure()
     );
 }
+
+#[test]
+fn syntax_used_as_value_is_an_error() {
+    assert_that!(
+        vec!["(define-syntax zero (simple-macro () 0))", "zero"],
+        EvaluatesTo::an_error()
+    );
+}

@@ -7,7 +7,7 @@ use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
-    environment::Env,
+    environment::{Env, EnvBinding},
     error::{error_at, Error, Result},
     library::{libname_to_string, Export},
     syntactic_closure::SyntacticClosure,
@@ -142,13 +142,19 @@ define_form! {
             Expression.expand_application(sexpr, env)
         }]
         [name: Symbol => {
+            use EnvBinding::*;
             let context = sexpr.map_value(());
-            env.ensure_variable(name);
-            if let Some(full_name) = env.lookup_variable(name).unwrap().as_global() {
-                Ok(Ast::fetch_global(context, full_name))
-            } else {
-                let offset = env.lookup_variable_index(name).unwrap();
-                Ok(Ast::fetch(context, offset))
+            match env.lookup_variable(name) {
+                Some(Variable) => {
+                    let offset = env.lookup_variable_index(name).unwrap();
+                    Ok(Ast::fetch(context, offset))
+                }
+                Some(Global(full_name)) => Ok(Ast::fetch_global(context, full_name)),
+                Some(Syntax(_)) => Err(error_at(&context, Error::SyntaxAsValue)),
+                None => {
+                    env.ensure_global_variable(name);
+                    Expression.expand(sexpr, env)
+                }
             }
         }]
         [sc: Obj<SyntacticClosure> => {

@@ -46,6 +46,7 @@ pub fn base_environment(name: impl ToString) -> Env {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::frontend::error::Error;
     use crate::frontend::syntax_forms::Expression;
     use ast::Ast;
     use sunny_sexpr_parser::Sexpr;
@@ -78,6 +79,14 @@ mod tests {
             let sexpr = sexpr![Sexpr: $expr];
             Expression.expand(&sexpr.into(), &$env)
         }};
+    }
+
+    #[test]
+    fn meaning_of_syntax_as_value_is_an_error() {
+        assert_eq!(
+            meaning_of![begin],
+            Err(SourceLocation::new(Error::SyntaxAsValue))
+        );
     }
 
     #[test]
