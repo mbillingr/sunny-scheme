@@ -8,6 +8,8 @@ use std::hash::{Hash, Hasher};
 
 pub type Symbol = Box<str>;
 
+pub type Primitive = fn(&mut Vec<Value>, &mut ValueStorage) -> Result<()>;
+
 #[derive(Clone)]
 #[repr(u8)]
 pub enum Value {
@@ -21,7 +23,7 @@ pub enum Value {
     Table(Ref<Table>),
 
     Closure(Ref<Closure>),
-    Primitive(fn(&mut Vec<Value>, &mut ValueStorage) -> Result<()>),
+    Primitive(Primitive),
 }
 
 impl Default for Value {

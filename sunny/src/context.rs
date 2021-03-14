@@ -1,12 +1,13 @@
 use sunny_sexpr_parser::parser::{parse_str, Error as ParseError};
 use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::optimizations::tail_call_optimization;
-use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
+use sunny_vm::{ErrorKind, Primitive, Value, ValueStorage, Vm};
 
 use crate::backend::{ByteCodeBackend, GlobalTable};
-use crate::frontend::environment::Env;
+use crate::frontend::environment::{Env, EnvBinding};
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
+use std::rc::Rc;
 
 pub struct Context {
     env: Env,
@@ -75,6 +76,10 @@ impl Context {
         storage.ensure(1);
         storage.cons(a, b).unwrap()
     }
+
+    pub fn define_library(&mut self, libname: impl ToString) -> LibDefiner {
+        LibDefiner::new(libname, self)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -117,5 +122,57 @@ impl std::fmt::Display for Error {
             Error::VmErrorKind(e) => write!(f, "{}", e),
             Error::VmError(e) => write!(f, "{}", e),
         }
+    }
+}
+
+pub struct LibDefiner<'c> {
+    libname: String,
+    context: &'c mut Context,
+}
+
+impl<'c> LibDefiner<'c> {
+    pub fn new(libname: impl ToString, context: &'c mut Context) -> Self {
+        LibDefiner {
+            libname: libname.to_string(),
+            context,
+        }
+    }
+
+    pub fn define_syntax(mut self, name: &str, syntax: impl SyntaxExpander + 'static) -> Self {
+        self.env().add_global_binding(name, syntax);
+        self
+    }
+
+    pub fn define_primitive(self, name: &str, proc: Primitive) -> Self {
+        self.define_value(name, |_| Value::Primitive(proc))
+    }
+
+    pub fn define_value(mut self, name: &str, f: impl FnOnce(&mut ValueStorage) -> Value) -> Self {
+        let fqn = self.fully_qualified_name(name);
+        self.env().add_global_binding(name, EnvBinding::global(fqn));
+        let idx = self.runtime_globals().determine_index(name);
+        let value = f(self.storage());
+        self.vm().assign_global(idx, value);
+        self
+    }
+
+    pub fn fully_qualified_name(&self, name: &str) -> Rc<str> {
+        format!("{}.{}", self.libname, name).into()
+    }
+
+    fn env(&mut self) -> &mut Env {
+        &mut self.context.env
+    }
+
+    fn runtime_globals(&mut self) -> &mut GlobalTable {
+        &mut self.context.globals
+    }
+
+    fn storage(&mut self) -> &mut ValueStorage {
+        self.context.vm.borrow_storage()
+    }
+
+    fn vm(&mut self) -> &mut Vm {
+        &mut self.context.vm
     }
 }

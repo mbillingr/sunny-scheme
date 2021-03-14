@@ -6,6 +6,7 @@ mod macros;
 mod scoping;
 
 use crate::context::{Context, Error};
+use crate::stdlib::define_standard_libraries;
 use hamcrest2::core::{success, MatchResult, Matcher};
 use hamcrest2::matchers::equal_to::EqualTo;
 use hamcrest2::matchers::err::IsErr;
@@ -84,7 +85,9 @@ impl<M: Matcher<Result<Value, Error>>> std::fmt::Display for EvaluationMatcher<M
 
 impl<M: Matcher<Result<Value, Error>>> Matcher<&str> for EvaluationMatcher<M> {
     fn matches(&self, actual: &str) -> MatchResult {
-        let result = self.context.borrow_mut().eval(actual);
+        let mut context = self.context.borrow_mut();
+        define_standard_libraries(&mut context);
+        let result = context.eval(actual);
         self.result_matcher.matches(result)
     }
 }
@@ -92,6 +95,7 @@ impl<M: Matcher<Result<Value, Error>>> Matcher<&str> for EvaluationMatcher<M> {
 impl<M: Matcher<Result<Value, Error>>, T: AsRef<str>> Matcher<Vec<T>> for EvaluationMatcher<M> {
     fn matches(&self, sequence: Vec<T>) -> MatchResult {
         let mut context = self.context.borrow_mut();
+        define_standard_libraries(&mut context);
         let mut result = None;
         for expr in sequence {
             result = Some(context.eval(expr.as_ref()));

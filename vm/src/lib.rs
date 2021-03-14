@@ -14,7 +14,7 @@ use sunny_memory::gc as mem;
 use crate::bytecode::CodePointer;
 pub use basic_block::{BasicBlock, BlockChain};
 pub use storage::ValueStorage;
-pub use value::Value;
+pub use value::{Primitive, Value};
 pub use vm::Vm;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;

@@ -253,6 +253,9 @@ impl Vm {
             return Err(ErrorKind::UndefinedVariable);
         }
         let x = self.globals[idx].clone();
+        if x.is_void() {
+            return Err(ErrorKind::UndefinedVariable);
+        }
         self.push_value(x);
         Ok(())
     }

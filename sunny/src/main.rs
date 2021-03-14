@@ -6,6 +6,7 @@ use rustyline::{error::ReadlineError, Editor};
 use simple_logger::SimpleLogger;
 use structopt::StructOpt;
 
+use crate::stdlib::define_standard_libraries;
 use context::{Context, Error};
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
@@ -16,6 +17,7 @@ pub mod context;
 pub mod frontend;
 #[cfg(test)]
 mod language_tests;
+pub mod stdlib;
 
 #[derive(StructOpt)]
 enum Cli {
@@ -67,6 +69,7 @@ fn run_repl() {
     let mut rl = Editor::<()>::new();
 
     let mut context = Context::new();
+    define_standard_libraries(&mut context);
 
     loop {
         match rl.readline(">> ") {
