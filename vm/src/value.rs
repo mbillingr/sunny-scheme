@@ -1,14 +1,12 @@
-use crate::closure::Closure;
-use crate::mem::{Ref, Traceable, Tracer};
-use crate::storage::ValueStorage;
-use crate::table::Table;
-use crate::Result;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
-pub type Symbol = Box<str>;
+use crate::closure::Closure;
+use crate::mem::{Ref, Traceable, Tracer};
+use crate::primitive::Primitive;
+use crate::table::Table;
 
-pub type Primitive = fn(&mut Vec<Value>, &mut ValueStorage) -> Result<()>;
+pub type Symbol = Box<str>;
 
 #[derive(Clone)]
 #[repr(u8)]

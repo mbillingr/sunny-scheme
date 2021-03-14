@@ -1,14 +1,16 @@
+use std::rc::Rc;
+
 use sunny_sexpr_parser::parser::{parse_str, Error as ParseError};
 use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::optimizations::tail_call_optimization;
-use sunny_vm::{ErrorKind, Primitive, Value, ValueStorage, Vm};
+use sunny_vm::Primitive;
+use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
 use crate::backend::{ByteCodeBackend, GlobalTable};
 use crate::frontend::environment::{Env, EnvBinding};
 use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
-use std::rc::Rc;
 
 pub struct Context {
     env: Env,
@@ -148,8 +150,8 @@ impl<'c> LibDefiner<'c> {
     pub fn define_syntax(mut self, name: &str, syntax: impl SyntaxExpander + 'static) -> Self {
         self.env().add_global_binding(name, syntax);
 
-        //let binding = self.env().lookup_variable(name).unwrap();
-        //self.exports.push(Export::new(name, binding));
+        let binding = self.env().lookup_variable(name).unwrap();
+        self.exports.push(Export::new(name, binding));
         self
     }
 

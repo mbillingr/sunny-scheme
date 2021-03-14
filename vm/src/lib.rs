@@ -1,21 +1,23 @@
+pub use basic_block::{BasicBlock, BlockChain};
+pub use primitive::Primitive;
+pub use storage::ValueStorage;
+use sunny_memory::gc as mem;
+pub use value::Value;
+pub use vm::Vm;
+
+use crate::bytecode::CodePointer;
+
 mod activation;
 mod basic_block;
 pub mod bytecode;
 pub mod bytecode_loader;
 mod closure;
 pub mod optimizations;
+mod primitive;
 mod storage;
 mod table;
 mod value;
 pub mod vm;
-
-use sunny_memory::gc as mem;
-
-use crate::bytecode::CodePointer;
-pub use basic_block::{BasicBlock, BlockChain};
-pub use storage::ValueStorage;
-pub use value::{Primitive, Value};
-pub use vm::Vm;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;
