@@ -5,6 +5,7 @@ use sunny_vm::{ErrorKind, Primitive, Value, ValueStorage, Vm};
 
 use crate::backend::{ByteCodeBackend, GlobalTable};
 use crate::frontend::environment::{Env, EnvBinding};
+use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
 use std::rc::Rc;
@@ -128,6 +129,7 @@ impl std::fmt::Display for Error {
 pub struct LibDefiner<'c> {
     libname: String,
     context: &'c mut Context,
+    exports: Vec<Export>,
 }
 
 impl<'c> LibDefiner<'c> {
@@ -135,11 +137,19 @@ impl<'c> LibDefiner<'c> {
         LibDefiner {
             libname: libname.to_string(),
             context,
+            exports: vec![],
         }
+    }
+
+    pub fn build(self) {
+        self.context.env.define_library(self.libname, self.exports);
     }
 
     pub fn define_syntax(mut self, name: &str, syntax: impl SyntaxExpander + 'static) -> Self {
         self.env().add_global_binding(name, syntax);
+
+        //let binding = self.env().lookup_variable(name).unwrap();
+        //self.exports.push(Export::new(name, binding));
         self
     }
 
@@ -149,10 +159,15 @@ impl<'c> LibDefiner<'c> {
 
     pub fn define_value(mut self, name: &str, f: impl FnOnce(&mut ValueStorage) -> Value) -> Self {
         let fqn = self.fully_qualified_name(name);
-        self.env().add_global_binding(name, EnvBinding::global(fqn));
-        let idx = self.runtime_globals().determine_index(name);
+
+        let idx = self.runtime_globals().determine_index(&fqn);
         let value = f(self.storage());
         self.vm().assign_global(idx, value);
+
+        self.env().add_global_binding(name, EnvBinding::global(fqn));
+
+        let binding = self.env().lookup_variable(name).unwrap();
+        self.exports.push(Export::new(name, binding));
         self
     }
 

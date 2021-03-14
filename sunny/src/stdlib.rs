@@ -13,5 +13,6 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_value("foo", |storage| {
             storage.ensure(1);
             storage.cons(1, 2).unwrap()
-        });
+        })
+        .build();
 }
