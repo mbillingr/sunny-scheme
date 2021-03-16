@@ -1,10 +1,22 @@
 use crate::context::Context;
-use crate::frontend::syntax_forms::Begin;
+use crate::frontend::syntax_forms::{
+    Assignment, Begin, Branch, Cons, Definition, Import, Lambda, LibraryDefinition, Quotation,
+    SyntaxDefinition,
+};
 use sunny_vm::{ErrorKind, Result, Value, ValueStorage};
 
 pub fn define_standard_libraries(ctx: &mut Context) {
     ctx.define_library("(scheme base)")
         .define_syntax("begin", Begin)
+        .define_syntax("cons", Cons)
+        .define_syntax("define", Definition)
+        .define_syntax("define-library", LibraryDefinition)
+        .define_syntax("define-syntax", SyntaxDefinition)
+        .define_syntax("if", Branch)
+        .define_syntax("import", Import)
+        .define_syntax("lambda", Lambda)
+        .define_syntax("quote", Quotation)
+        .define_syntax("set!", Assignment)
         .define_primitive("car", car)
         .define_value("foo", |storage| {
             storage.ensure(1);

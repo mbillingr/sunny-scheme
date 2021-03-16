@@ -45,6 +45,7 @@ fn can_import_macros_from_library() {
 
 const SIMPLE_LIBRARY_DEFINITION: &str = "
 (define-library (foo bar)
+    (import (scheme base))
     (export baz get-private)
     (begin
         (define baz 42)
