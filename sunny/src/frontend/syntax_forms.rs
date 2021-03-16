@@ -151,7 +151,10 @@ define_form! {
                 }
                 Some(Global(full_name)) => Ok(Ast::fetch_global(context, full_name)),
                 Some(Syntax(_)) => Err(error_at(&context, Error::SyntaxAsValue)),
-                Some(Intrinsic(_, _)) => unimplemented!(),
+                Some(Intrinsic(name, n_params)) => {
+                    Ok(Ast::lambda(SourceLocation::new(()), n_params,
+                                   Ast::invoke_intrinsic(SourceLocation::new(()), name,
+                                                         (0..n_params).map(|n| Ast::fetch(SourceLocation::new(()), n)).collect())))}
                 None => {
                     env.ensure_global_variable(name);
                     Expression.expand(sexpr, env)
