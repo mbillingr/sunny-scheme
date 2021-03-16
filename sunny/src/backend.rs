@@ -192,9 +192,8 @@ impl Backend for ByteCodeBackend<'_> {
         }
 
         match name {
-            "cdr" => {
-                blocks.append_op_with_context(Op::Cdr, context);
-            }
+            "car" => blocks.append_op_with_context(Op::Car, context),
+            "cdr" => blocks.append_op_with_context(Op::Cdr, context),
             _ => unimplemented!("intrinsic {}", name),
         }
 

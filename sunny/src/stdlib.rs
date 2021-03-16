@@ -17,8 +17,9 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("lambda", Lambda)
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
-        .define_primitive("car", car)
+        .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
+        .define_primitive("dec", dec)
         .define_value("foo", |storage| {
             storage.ensure(1);
             storage.cons(1, 2).unwrap()
@@ -40,8 +41,8 @@ macro_rules! primitive {
 }
 
 primitive! {
-    fn car(pair: Value) -> Result<Value> {
-        let x = pair.car().cloned().ok_or(ErrorKind::TypeError)?;
-        Ok(x)
+    fn dec(num: Value) -> Result<Value> {
+        let x = num.as_int().ok_or(ErrorKind::TypeError)?;
+        Ok(Value::Int(x - 1))
     }
 }
