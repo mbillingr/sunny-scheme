@@ -12,7 +12,6 @@ pub enum Ast {
     Store(SourceLocation<()>, usize, AstNode),
     FetchGlobal(SourceLocation<()>, String),
     StoreGlobal(SourceLocation<()>, String, AstNode),
-    Cons(SourceLocation<()>, AstNode, AstNode),
     Sequence(AstNode, AstNode),
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
     Lambda(SourceLocation<()>, usize, AstNode),
@@ -48,10 +47,6 @@ impl Ast {
 
     pub fn store_global(context: SourceLocation<()>, name: impl ToString, val: AstNode) -> AstNode {
         Box::new(Ast::StoreGlobal(context, name.to_string(), val))
-    }
-
-    pub fn cons(context: SourceLocation<()>, first: AstNode, second: AstNode) -> AstNode {
-        Box::new(Ast::Cons(context, first, second))
     }
 
     pub fn sequence(first: AstNode, next: AstNode) -> AstNode {
@@ -97,11 +92,6 @@ impl Ast {
                 let value = value.build(backend);
                 backend.store_global(ctx.clone(), name, value)
             }
-            Ast::Cons(ctx, car, cdr) => {
-                let car = car.build(backend);
-                let cdr = cdr.build(backend);
-                backend.cons(ctx.clone(), car, cdr)
-            }
             Ast::Sequence(first, next) => {
                 let first = first.build(backend);
                 let next = next.build(backend);
@@ -145,11 +135,6 @@ impl Ast {
             Ast::StoreGlobal(_, idx, val) => {
                 writeln!(f, "{: <1$}global-store {2}", "", indent, idx)?;
                 val.pretty_fmt(f, indent + 4)
-            }
-            Ast::Cons(_, car, cdr) => {
-                writeln!(f, "{: <1$}cons", "", indent)?;
-                car.pretty_fmt(f, indent + 4)?;
-                cdr.pretty_fmt(f, indent + 4)
             }
             Ast::Sequence(first, next) => {
                 writeln!(f, "{: <1$}sequence", "", indent)?;
@@ -205,11 +190,11 @@ macro_rules! ast {
     (set $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $i, ast![$x])};
     (gref $i:tt) => {Ast::fetch_global(SourceLocation::new(()), $i)};
     (gset $i:tt $x:tt) => {Ast::store_global(SourceLocation::new(()), $i, ast![$x])};
-    (cons $a:tt $b:tt) => {Ast::cons(SourceLocation::new(()), ast![$a], ast![$b])};
     (begin $a:tt $b:tt) => {Ast::sequence(ast![$a], ast![$b])};
     (begin $a:tt $($b:tt)+) => {Ast::sequence(ast![$a], ast![begin $($b)+])};
     (if $a:tt $b:tt $c:tt) => {Ast::ifexpr(SourceLocation::new(()), ast![$a], ast![$b], ast![$c])};
     (lambda $p:tt $b:tt) => {Ast::lambda(SourceLocation::new(()), $p, ast![$b])};
     (invoke $($a:tt)*) => {Ast::invoke(SourceLocation::new(()), vec![$(ast![$a]),*])};
+    (intrinsic $x:tt $($a:tt)*) => {Ast::invoke_intrinsic(SourceLocation::new(()), stringify!($x), vec![$(ast![$a]),*])};
     (module $n:tt $x:tt $(($v:tt $e:tt))*) => {Ast::module($n, ast![$x], vec![$(crate::frontend::library::Export::new($v, crate::frontend::environment::EnvBinding::global($e))),*])};
 }

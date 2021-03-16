@@ -279,15 +279,6 @@ define_form! {
 }
 
 define_form! {
-    Cons(sexpr, env):
-       [(_, car, cdr) => {
-            let car = Expression.expand(car, env)?;
-            let cdr = Expression.expand(cdr, env)?;
-            Ok(Ast::cons(sexpr.map_value(()), car, cdr))
-       }]
-}
-
-define_form! {
     SyntaxDefinition(sexpr, env):
        [(_, keyword: Symbol, transformer_spec) => {
             let transformer = SyntaxTransformer.build(transformer_spec, env)?;

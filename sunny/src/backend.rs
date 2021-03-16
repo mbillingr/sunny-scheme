@@ -18,8 +18,6 @@ pub trait Backend {
     fn fetch_global(&mut self, context: SourceLocation<()>, name: &str) -> Self::Ir;
     fn store_global(&mut self, context: SourceLocation<()>, name: &str, val: Self::Ir) -> Self::Ir;
 
-    fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir;
-
     fn ifexpr(
         &mut self,
         context: SourceLocation<()>,
@@ -138,11 +136,6 @@ impl Backend for ByteCodeBackend<'_> {
         val.chain(BlockChain::singleton(block))
     }
 
-    fn cons(&mut self, context: SourceLocation<()>, first: Self::Ir, second: Self::Ir) -> Self::Ir {
-        second.append_op_with_context(Op::Cons, context);
-        first.chain(second)
-    }
-
     fn ifexpr(
         &mut self,
         context: SourceLocation<()>,
@@ -187,11 +180,12 @@ impl Backend for ByteCodeBackend<'_> {
         args: Vec<Self::Ir>,
     ) -> Self::Ir {
         let mut blocks = BlockChain::empty();
-        for a in args.into_iter().rev() {
+        for a in args.into_iter() {
             blocks.append(a)
         }
 
         match name {
+            "cons" => blocks.append_op_with_context(Op::Cons, context),
             "car" => blocks.append_op_with_context(Op::Car, context),
             "cdr" => blocks.append_op_with_context(Op::Cdr, context),
             _ => unimplemented!("intrinsic {}", name),
@@ -271,53 +265,6 @@ mod tests {
         let cs = code.build_segment();
         assert_eq!(cs.code_slice(), &[Op::Const(0), Op::Halt]);
         assert_eq!(cs.constant_slice(), &[Value::Nil]);
-    }
-
-    #[test]
-    fn build_bytecode_cons() {
-        let mut storage = ValueStorage::new(100);
-        let mut global_table = GlobalTable::new();
-        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
-        let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
-
-        let c = bcb.cons(SourceLocation::new(()), a, b);
-
-        let cs = c.build_segment();
-        assert_eq!(
-            cs.code_slice(),
-            &[Op::Const(0), Op::Const(1), Op::Cons, Op::Halt]
-        );
-        assert_eq!(cs.constant_slice(), &[Value::Int(1), Value::Int(2)]);
-    }
-
-    #[test]
-    fn build_bytecode_multiple_cons() {
-        let mut storage = ValueStorage::new(100);
-        let mut global_table = GlobalTable::new();
-        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
-        let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
-        let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
-        let d = bcb.cons(SourceLocation::new(()), b, a);
-        let e = bcb.cons(SourceLocation::new(()), c, d);
-
-        let cs = e.build_segment();
-        assert_eq!(
-            cs.code_slice(),
-            &[
-                Op::Const(0),
-                Op::Const(1),
-                Op::Const(2),
-                Op::Cons,
-                Op::Cons,
-                Op::Halt
-            ]
-        );
-        assert_eq!(
-            cs.constant_slice(),
-            &[Value::Int(3), Value::Int(2), Value::Int(1)]
-        );
     }
 
     #[test]

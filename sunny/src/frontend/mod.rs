@@ -32,10 +32,11 @@ pub fn base_environment(name: impl ToString) -> Env {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::frontend::environment::EnvBinding;
     use crate::frontend::error::Error;
     use crate::frontend::syntax_forms::{
-        Assignment, Begin, Branch, Cons, Definition, Expression, Lambda, LibraryDefinition,
-        Quotation, SyntaxDefinition,
+        Assignment, Begin, Branch, Definition, Expression, Lambda, LibraryDefinition, Quotation,
+        SyntaxDefinition,
     };
     use ast::Ast;
     use sunny_sexpr_parser::Sexpr;
@@ -44,7 +45,6 @@ mod tests {
     fn minimal_syntax_environment(name: impl ToString) -> Env {
         let global = Environment::Empty
             .add_binding("begin", Begin)
-            .add_binding("cons", Cons)
             .add_binding("define", Definition)
             .add_binding("define-library", LibraryDefinition)
             .add_binding("define-syntax", SyntaxDefinition)
@@ -126,8 +126,13 @@ mod tests {
     }
 
     #[test]
-    fn meaning_of_cons() {
-        assert_eq!(meaning_of![(cons 1 2)], Ok(ast!(cons (const 1) (const 2))));
+    fn meaning_of_an_intrinsic() {
+        let env = minimal_syntax_environment("test");
+        env.add_global_binding("cons", EnvBinding::Intrinsic("cons", 2));
+        assert_eq!(
+            meaning_of![env @ (cons 1 2)],
+            Ok(ast!(intrinsic cons (const 1) (const 2)))
+        );
     }
 
     #[test]
