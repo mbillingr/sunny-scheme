@@ -129,10 +129,10 @@ macro_rules! define_form {
 define_form! {
     Expression(sexpr, env):
         [(f: Symbol . _) => {
-            if let Some(sx) = env.lookup_syntax(f) {
-                sx.expand(sexpr, env)
-            } else {
-                Expression.expand_application(sexpr, env)
+            match env.lookup_variable(f) {
+                Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, env),
+                Some(EnvBinding::Intrinsic(name, n_params)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env),
+                _ => Expression.expand_application(sexpr, env),
             }
         }]
         [() => {
@@ -151,6 +151,7 @@ define_form! {
                 }
                 Some(Global(full_name)) => Ok(Ast::fetch_global(context, full_name)),
                 Some(Syntax(_)) => Err(error_at(&context, Error::SyntaxAsValue)),
+                Some(Intrinsic(_, _)) => unimplemented!(),
                 None => {
                     env.ensure_global_variable(name);
                     Expression.expand(sexpr, env)
@@ -172,6 +173,23 @@ impl Expression {
             args.push(self.expand(a, env)?);
         }
         Ok(Ast::invoke(sexpr.map_value(()), args))
+    }
+
+    fn expand_intrinsic_application(
+        &self,
+        name: &'static str,
+        n_params: usize,
+        sexpr: RefExpr,
+        env: &Env,
+    ) -> Result<AstNode> {
+        let mut args = vec![];
+        for a in sexpr.iter().skip(1) {
+            args.push(self.expand(a, env)?);
+        }
+        if args.len() != n_params {
+            return Err(error_at(sexpr, Error::WrongNrArgs(args.len(), n_params)));
+        }
+        Ok(Ast::invoke_intrinsic(sexpr.map_value(()), name, args))
     }
 }
 

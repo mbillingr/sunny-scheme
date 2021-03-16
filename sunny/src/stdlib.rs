@@ -18,6 +18,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
         .define_primitive("car", car)
+        .define_intrinsic("cdr", 1)
         .define_value("foo", |storage| {
             storage.ensure(1);
             storage.cons(1, 2).unwrap()

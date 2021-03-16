@@ -34,6 +34,13 @@ pub trait Backend {
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir;
 
+    fn intrinsic(
+        &mut self,
+        context: SourceLocation<()>,
+        name: &'static str,
+        args: Vec<Self::Ir>,
+    ) -> Self::Ir;
+
     fn module(&mut self, name: &str, body: Self::Ir, exports: &[Export]) -> Self::Ir;
 }
 
@@ -170,6 +177,27 @@ impl Backend for ByteCodeBackend<'_> {
             blocks.append(a)
         }
         blocks.append_ops_with_context(Op::extended(|n_args| Op::Call { n_args }, n_args), context);
+        blocks
+    }
+
+    fn intrinsic(
+        &mut self,
+        context: SourceLocation<()>,
+        name: &'static str,
+        args: Vec<Self::Ir>,
+    ) -> Self::Ir {
+        let mut blocks = BlockChain::empty();
+        for a in args.into_iter().rev() {
+            blocks.append(a)
+        }
+
+        match name {
+            "cdr" => {
+                blocks.append_op_with_context(Op::Cdr, context);
+            }
+            _ => unimplemented!("intrinsic {}", name),
+        }
+
         blocks
     }
 

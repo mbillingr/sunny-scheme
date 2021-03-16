@@ -17,6 +17,7 @@ pub enum Ast {
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
     Lambda(SourceLocation<()>, usize, AstNode),
     Invoke(SourceLocation<()>, Vec<AstNode>),
+    Intrinsic(SourceLocation<()>, &'static str, Vec<AstNode>),
     Module(String, AstNode, Vec<Export>),
 }
 
@@ -74,6 +75,14 @@ impl Ast {
         Box::new(Ast::Invoke(context, args))
     }
 
+    pub fn invoke_intrinsic(
+        context: SourceLocation<()>,
+        name: &'static str,
+        args: Vec<AstNode>,
+    ) -> AstNode {
+        Box::new(Ast::Intrinsic(context, name, args))
+    }
+
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
             Ast::Void => backend.void(),
@@ -111,6 +120,10 @@ impl Ast {
             Ast::Invoke(ctx, args) => {
                 let args = args.iter().map(|arg| arg.build(backend)).collect();
                 backend.invoke(ctx.clone(), args)
+            }
+            Ast::Intrinsic(ctx, name, args) => {
+                let args = args.iter().map(|arg| arg.build(backend)).collect();
+                backend.intrinsic(ctx.clone(), name, args)
             }
             Ast::Module(name, body, exports) => {
                 let body = body.build(backend);
@@ -157,6 +170,13 @@ impl Ast {
             }
             Ast::Invoke(_, args) => {
                 writeln!(f, "{: <1$}invoke", "", indent)?;
+                for arg in args {
+                    arg.pretty_fmt(f, indent + 4)?;
+                }
+                Ok(())
+            }
+            Ast::Intrinsic(_, name, args) => {
+                writeln!(f, "{: <1$}intrinsic {2}", "", indent, name)?;
                 for arg in args {
                     arg.pretty_fmt(f, indent + 4)?;
                 }

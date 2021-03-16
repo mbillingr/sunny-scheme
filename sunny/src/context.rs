@@ -155,6 +155,15 @@ impl<'c> LibDefiner<'c> {
         self
     }
 
+    pub fn define_intrinsic(mut self, name: &'static str, n_params: usize) -> Self {
+        self.env()
+            .add_global_binding(name, EnvBinding::Intrinsic(name, n_params));
+
+        let binding = self.env().lookup_variable(name).unwrap();
+        self.exports.push(Export::new(name, binding));
+        self
+    }
+
     pub fn define_primitive(self, name: &str, proc: Primitive) -> Self {
         self.define_value(name, |_| Value::Primitive(proc))
     }

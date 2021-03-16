@@ -14,6 +14,7 @@ pub enum Error {
     UnknownSyntaxTransformer,
     UndefinedExport,
     UnknownLibrary,
+    WrongNrArgs(usize, usize),
 }
 
 impl std::fmt::Display for Error {
@@ -29,6 +30,11 @@ impl std::fmt::Display for Error {
             Error::UnknownSyntaxTransformer => write!(f, "Unknown syntax transformer"),
             Error::UndefinedExport => write!(f, "Undefined export"),
             Error::UnknownLibrary => write!(f, "Unknown library"),
+            Error::WrongNrArgs(actual, expect) => write!(
+                f,
+                "Wrong number of arguments {}, expected {}",
+                actual, expect
+            ),
         }
     }
 }

@@ -13,6 +13,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub enum EnvBinding {
     Variable,
+    Intrinsic(&'static str, usize),
     Global(Rc<str>),
     Syntax(Rc<dyn SyntaxExpander>),
 }
@@ -30,7 +31,21 @@ impl EnvBinding {
         match self {
             EnvBinding::Variable => true,
             EnvBinding::Global(_) => true,
+            EnvBinding::Intrinsic(_, _) => false,
             EnvBinding::Syntax(_) => false,
+        }
+    }
+
+    pub fn is_intrinsic(&self) -> bool {
+        self.as_intrinsic().is_some()
+    }
+
+    pub fn as_intrinsic(&self) -> Option<(&str, usize)> {
+        match self {
+            EnvBinding::Variable => None,
+            EnvBinding::Intrinsic(name, n_params) => Some((name, *n_params)),
+            EnvBinding::Global(_) => None,
+            EnvBinding::Syntax(_) => None,
         }
     }
 
@@ -41,6 +56,7 @@ impl EnvBinding {
     pub fn as_global(&self) -> Option<&str> {
         match self {
             EnvBinding::Variable => None,
+            EnvBinding::Intrinsic(_, _) => None,
             EnvBinding::Global(name) => Some(name),
             EnvBinding::Syntax(_) => None,
         }
@@ -49,6 +65,7 @@ impl EnvBinding {
     pub fn is_syntax(&self) -> bool {
         match self {
             EnvBinding::Variable => false,
+            EnvBinding::Intrinsic(_, _) => false,
             EnvBinding::Global(_) => false,
             EnvBinding::Syntax(_) => true,
         }
@@ -57,6 +74,7 @@ impl EnvBinding {
     pub fn as_syntax(&self) -> Option<&Rc<dyn SyntaxExpander>> {
         match self {
             EnvBinding::Variable => None,
+            EnvBinding::Intrinsic(_, _) => None,
             EnvBinding::Global(_) => None,
             EnvBinding::Syntax(x) => Some(x),
         }
@@ -79,6 +97,7 @@ impl std::fmt::Debug for EnvBinding {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             EnvBinding::Variable => write!(f, "var"),
+            EnvBinding::Intrinsic(name, n_params) => write!(f, "{}/{}", name, n_params),
             EnvBinding::Global(fqn) => write!(f, "@{}", fqn),
             EnvBinding::Syntax(exp) => write!(f, "{}", exp.description()),
         }
@@ -291,6 +310,9 @@ impl std::fmt::Debug for Environment {
             Environment::Empty => write!(f, "--"),
             Environment::Entry(entry) if entry.1.is_variable() => {
                 write!(f, "{}, {:?}", entry.0, entry.2)
+            }
+            Environment::Entry(entry) if entry.1.is_intrinsic() => {
+                write!(f, "#{}, {:?}", entry.0, entry.2)
             }
             Environment::Entry(entry) if entry.1.is_syntax() => {
                 write!(f, "<{}>, {:?}", entry.0, entry.2)
