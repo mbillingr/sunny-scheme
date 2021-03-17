@@ -489,21 +489,21 @@ mod tests {
 
     #[test]
     fn convert_basic_block_to_code_segment_copies_used_constants() {
-        let block = BasicBlock::new(vec![Op::Const(0)], vec![Value::Int(1), Value::Int(2)]);
+        let block = BasicBlock::new(vec![Op::Const(0)], vec![Value::Number(1), Value::Number(2)]);
 
         let segment = block.build_segment();
 
-        assert_eq!(segment.constant_slice(), &[Value::Int(1)]);
+        assert_eq!(segment.constant_slice(), &[Value::Number(1)]);
     }
 
     #[test]
     fn convert_basic_block_to_code_segment_adjusts_constant_indices() {
-        let block = BasicBlock::new(vec![Op::Const(1)], vec![Value::Int(1), Value::Int(2)]);
+        let block = BasicBlock::new(vec![Op::Const(1)], vec![Value::Number(1), Value::Number(2)]);
 
         let segment = block.build_segment();
 
         assert_eq!(segment.code_slice()[0], Op::Const(0));
-        assert_eq!(segment.constant_slice(), &[Value::Int(2)]);
+        assert_eq!(segment.constant_slice(), &[Value::Number(2)]);
     }
 
     #[test]
@@ -522,8 +522,8 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_shares_constants_between_blocks() {
-        let block1 = BasicBlock::new(vec![Op::Const(0)], vec![Value::Int(42)]);
-        let block2 = BasicBlock::new(vec![Op::Const(1)], vec![Value::Nil, Value::Int(42)]);
+        let block1 = BasicBlock::new(vec![Op::Const(0)], vec![Value::Number(42)]);
+        let block2 = BasicBlock::new(vec![Op::Const(1)], vec![Value::Nil, Value::Number(42)]);
         block1.jump_to(block2);
 
         let segment = block1.build_segment();
@@ -532,7 +532,7 @@ mod tests {
             segment.code_slice(),
             &[Op::Const(0), Op::Const(0), Op::Halt]
         );
-        assert_eq!(segment.constant_slice(), &[Value::Int(42)]);
+        assert_eq!(segment.constant_slice(), &[Value::Number(42)]);
     }
 
     #[test]
@@ -652,7 +652,7 @@ mod tests {
         let mut consts = vec![];
         for i in 0..=255 {
             ops.push(Op::Const(i));
-            consts.push(Value::Int(i as i64));
+            consts.push(Value::Number(i as i64));
         }
         let block1 = BasicBlock::new(ops, consts);
         let block2 = BasicBlock::new(vec![Op::Const(0)], vec![Value::Nil]);
@@ -668,7 +668,7 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_correctly_removes_extargs_for_constants() {
-        let block = BasicBlock::new(vec![Op::ExtArg(0), Op::Const(0)], vec![Value::Int(1)]);
+        let block = BasicBlock::new(vec![Op::ExtArg(0), Op::Const(0)], vec![Value::Number(1)]);
 
         let segment = block.build_segment();
 

@@ -31,7 +31,7 @@ impl ValueStorage {
             Sexpr::Nil => Value::Nil,
             Sexpr::Bool(false) => Value::False,
             Sexpr::Bool(true) => Value::True,
-            Sexpr::Integer(x) => Value::Int(*x),
+            Sexpr::Integer(x) => Value::Number(*x),
             Sexpr::Symbol(s) => self.interned_symbol(s)?,
             Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
             Sexpr::Pair(p) => {
@@ -159,7 +159,7 @@ impl ValueStorage {
             Value::Nil => true,
             Value::False => true,
             Value::True => true,
-            Value::Int(_) => true,
+            Value::Number(_) => true,
             Value::Symbol(p) => self.storage.is_valid(p),
             Value::Pair(p) => self.storage.is_valid(p),
             Value::Table(p) => self.storage.is_valid(p),
@@ -224,9 +224,9 @@ mod tests {
     #[test]
     fn gc_preserves_nested_conses() {
         let mut storage = ValueStorage::new(5);
-        let a = storage.cons(Value::Int(1), Value::Int(2)).unwrap();
-        let b = storage.cons(Value::Int(3), Value::Int(4)).unwrap();
-        let c = storage.cons(Value::Int(5), Value::Int(6)).unwrap();
+        let a = storage.cons(Value::Number(1), Value::Number(2)).unwrap();
+        let b = storage.cons(Value::Number(3), Value::Number(4)).unwrap();
+        let c = storage.cons(Value::Number(5), Value::Number(6)).unwrap();
         let ab = storage.cons(a.clone(), b.clone()).unwrap();
         let abc = storage.cons(ab.clone(), c.clone()).unwrap();
 

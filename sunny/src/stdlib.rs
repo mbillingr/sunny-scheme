@@ -43,6 +43,6 @@ macro_rules! primitive {
 primitive! {
     fn dec(num: Value) -> Result<Value> {
         let x = num.as_int().ok_or(ErrorKind::TypeError)?;
-        Ok(Value::Int(x - 1))
+        Ok(Value::Number(x - 1))
     }
 }

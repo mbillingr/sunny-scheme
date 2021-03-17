@@ -31,7 +31,7 @@ impl EvaluatesTo {
     }
 
     pub fn the_integer(i: i64) -> EvaluationMatcher<Has<Value>> {
-        EvaluationMatcher::new(has(Value::Int(i)))
+        EvaluationMatcher::new(has(Value::Number(i)))
     }
 
     pub fn the_boolean(b: bool) -> EvaluationMatcher<Has<Value>> {

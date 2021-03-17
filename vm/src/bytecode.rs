@@ -566,18 +566,18 @@ mod tests {
 
     #[test]
     fn chaining_code_segments_relocates_constant_references() {
-        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
-        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(2)]);
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Number(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Number(2)]);
         let both = CodeSegment::chain(&[first, second]);
         assert_eq!(both.code_slice(), &[Op::Const(0), Op::Const(1)]);
     }
 
     #[test]
     fn chaining_code_segments_appends_different_constants() {
-        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(1)]);
-        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Int(2)]);
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::Number(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::Number(2)]);
         let both = CodeSegment::chain(&[first, second]);
-        assert_eq!(both.constant_slice(), &[Value::Int(1), Value::Int(2)]);
+        assert_eq!(both.constant_slice(), &[Value::Number(1), Value::Number(2)]);
     }
 
     #[test]
@@ -669,27 +669,27 @@ mod tests {
     #[test]
     fn build_different_constants() {
         let segment = CodeBuilder::new()
-            .constant(Value::Int(1))
-            .constant(Value::Int(2))
+            .constant(Value::Number(1))
+            .constant(Value::Number(2))
             .build()
             .unwrap();
         assert_eq!(segment.code_slice(), &[Op::Const(0), Op::Const(1)]);
-        assert_eq!(segment.constant_slice(), &[Value::Int(1), Value::Int(2)]);
+        assert_eq!(segment.constant_slice(), &[Value::Number(1), Value::Number(2)]);
     }
 
     #[test]
     fn build_reuse_same_constants() {
         let segment = CodeBuilder::new()
-            .constant(Value::Int(1))
-            .constant(Value::Int(2))
-            .constant(Value::Int(1))
+            .constant(Value::Number(1))
+            .constant(Value::Number(2))
+            .constant(Value::Number(1))
             .build()
             .unwrap();
         assert_eq!(
             segment.code_slice(),
             &[Op::Const(0), Op::Const(1), Op::Const(0)]
         );
-        assert_eq!(segment.constant_slice(), &[Value::Int(1), Value::Int(2)]);
+        assert_eq!(segment.constant_slice(), &[Value::Number(1), Value::Number(2)]);
     }
 
     #[test]
