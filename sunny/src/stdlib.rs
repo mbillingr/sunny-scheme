@@ -20,6 +20,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive("-", sub)
         .define_primitive("*", mul)
         .define_primitive("/", div)
+        .define_primitive("<", lt)
+        .define_primitive(">", gt)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
@@ -74,5 +76,13 @@ primitive! {
 
     fn div(a: Value, b: Value) -> Result<Value> {
         Value::try_div(&a, &b).ok_or(ErrorKind::TypeError)
+    }
+
+    fn lt(a: Value, b: Value) -> Result<Value> {
+        Value::try_is_less(&a, &b).ok_or(ErrorKind::TypeError)
+    }
+
+    fn gt(a: Value, b: Value) -> Result<Value> {
+        Value::try_is_greater(&a, &b).ok_or(ErrorKind::TypeError)
     }
 }
