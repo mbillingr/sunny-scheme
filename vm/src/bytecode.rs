@@ -674,7 +674,10 @@ mod tests {
             .build()
             .unwrap();
         assert_eq!(segment.code_slice(), &[Op::Const(0), Op::Const(1)]);
-        assert_eq!(segment.constant_slice(), &[Value::Number(1), Value::Number(2)]);
+        assert_eq!(
+            segment.constant_slice(),
+            &[Value::Number(1), Value::Number(2)]
+        );
     }
 
     #[test]
@@ -689,7 +692,10 @@ mod tests {
             segment.code_slice(),
             &[Op::Const(0), Op::Const(1), Op::Const(0)]
         );
-        assert_eq!(segment.constant_slice(), &[Value::Number(1), Value::Number(2)]);
+        assert_eq!(
+            segment.constant_slice(),
+            &[Value::Number(1), Value::Number(2)]
+        );
     }
 
     #[test]

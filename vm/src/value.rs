@@ -318,8 +318,14 @@ mod tests {
 
     #[test]
     fn compound_values_are_compared_by_pointer() {
-        let pair1 = Value::Pair(Ref::from_leaked_static((Value::Number(1), Value::Number(2))));
-        let pair2 = Value::Pair(Ref::from_leaked_static((Value::Number(1), Value::Number(2))));
+        let pair1 = Value::Pair(Ref::from_leaked_static((
+            Value::Number(1),
+            Value::Number(2),
+        )));
+        let pair2 = Value::Pair(Ref::from_leaked_static((
+            Value::Number(1),
+            Value::Number(2),
+        )));
 
         assert_eq!(pair1, pair1);
         assert_eq!(pair2, pair2);

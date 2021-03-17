@@ -680,7 +680,10 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(vm.value_stack, vec![Value::Void, Value::Nil, Value::Number(0)]);
+        assert_eq!(
+            vm.value_stack,
+            vec![Value::Void, Value::Nil, Value::Number(0)]
+        );
     }
 
     #[test]
@@ -689,7 +692,10 @@ mod tests {
             .with_value_stack(vec![Value::Number(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
-        assert_eq!(vm.value_stack.last().unwrap(), &(Value::Number(0), Value::Nil));
+        assert_eq!(
+            vm.value_stack.last().unwrap(),
+            &(Value::Number(0), Value::Nil)
+        );
     }
 
     #[test]
@@ -699,7 +705,10 @@ mod tests {
             .with_value_stack(vec![Value::Number(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
-        assert_eq!(vm.value_stack.last().unwrap(), &(Value::Number(0), Value::Nil));
+        assert_eq!(
+            vm.value_stack.last().unwrap(),
+            &(Value::Number(0), Value::Nil)
+        );
     }
 
     #[test]
@@ -802,9 +811,18 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(cell_clone(&vm.current_activation.locals[0]), Value::Number(12));
-        assert_eq!(cell_clone(&vm.current_activation.locals[1]), Value::Number(11));
-        assert_eq!(cell_clone(&vm.current_activation.locals[2]), Value::Number(10));
+        assert_eq!(
+            cell_clone(&vm.current_activation.locals[0]),
+            Value::Number(12)
+        );
+        assert_eq!(
+            cell_clone(&vm.current_activation.locals[1]),
+            Value::Number(11)
+        );
+        assert_eq!(
+            cell_clone(&vm.current_activation.locals[2]),
+            Value::Number(10)
+        );
     }
 
     #[test]
