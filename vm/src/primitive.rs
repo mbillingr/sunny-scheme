@@ -1,3 +1,3 @@
 use crate::{Result, Value, ValueStorage};
 
-pub type Primitive = fn(&mut Vec<Value>, &mut ValueStorage) -> Result<()>;
+pub type Primitive = fn(usize, &mut Vec<Value>, &mut ValueStorage) -> Result<()>;

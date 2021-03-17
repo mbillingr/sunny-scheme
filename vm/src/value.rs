@@ -289,6 +289,44 @@ impl From<i64> for Value {
     }
 }
 
+pub mod arithmetic {
+    use super::*;
+
+    impl Value {
+        pub fn try_add(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Number(a + b)),
+                _ => None,
+            }
+        }
+
+        pub fn try_sub(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Number(a - b)),
+                _ => None,
+            }
+        }
+
+        pub fn try_mul(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Number(a * b)),
+                _ => None,
+            }
+        }
+
+        pub fn try_div(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Number(a / b)),
+                _ => None,
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

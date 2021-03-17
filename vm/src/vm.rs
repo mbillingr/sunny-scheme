@@ -374,7 +374,7 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.call_closure(cls, n_args),
-            Value::Primitive(f) => f(&mut self.value_stack, &mut self.storage),
+            Value::Primitive(f) => f(n_args, &mut self.value_stack, &mut self.storage),
             _ => Err(ErrorKind::TypeError),
         }
     }
@@ -383,7 +383,7 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.tail_call_closure(cls, n_args),
-            Value::Primitive(f) => f(&mut self.value_stack, &mut self.storage),
+            Value::Primitive(f) => f(n_args, &mut self.value_stack, &mut self.storage),
             _ => Err(ErrorKind::TypeError),
         }
     }
@@ -1010,7 +1010,7 @@ mod tests {
         use std::sync::atomic::{AtomicBool, Ordering};
 
         static PRIM_CALLED: AtomicBool = AtomicBool::new(false);
-        fn prim(_stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+        fn prim(_: usize, _stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
             PRIM_CALLED.store(true, Ordering::SeqCst);
             Ok(())
         }
