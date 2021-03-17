@@ -185,9 +185,10 @@ impl Backend for ByteCodeBackend<'_> {
         }
 
         match name {
-            "cons" => blocks.append_op_with_context(Op::Cons, context),
             "car" => blocks.append_op_with_context(Op::Car, context),
             "cdr" => blocks.append_op_with_context(Op::Cdr, context),
+            "cons" => blocks.append_op_with_context(Op::Cons, context),
+            "eq?" => blocks.append_op_with_context(Op::Eq, context),
             _ => unimplemented!("intrinsic {}", name),
         }
 

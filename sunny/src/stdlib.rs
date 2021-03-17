@@ -19,6 +19,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
+        .define_intrinsic("eq?", 2)
         .define_primitive("dec", dec)
         .define_value("foo", |storage| {
             storage.ensure(1);
