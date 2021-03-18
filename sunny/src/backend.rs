@@ -28,7 +28,13 @@ pub trait Backend {
 
     fn sequence(&mut self, first: Self::Ir, next: Self::Ir) -> Self::Ir;
 
-    fn lambda(&mut self, context: SourceLocation<()>, n_args: usize, body: Self::Ir) -> Self::Ir;
+    fn lambda(
+        &mut self,
+        context: SourceLocation<()>,
+        n_args: usize,
+        accept_vararg: bool,
+        body: Self::Ir,
+    ) -> Self::Ir;
 
     fn invoke(&mut self, context: SourceLocation<()>, args: Vec<Self::Ir>) -> Self::Ir;
 
@@ -152,10 +158,23 @@ impl Backend for ByteCodeBackend<'_> {
         first.chain(next)
     }
 
-    fn lambda(&mut self, context: SourceLocation<()>, n_args: usize, body: Self::Ir) -> Self::Ir {
+    fn lambda(
+        &mut self,
+        context: SourceLocation<()>,
+        n_args: usize,
+        accept_vararg: bool,
+        body: Self::Ir,
+    ) -> Self::Ir {
         body.return_from_with_context(context.clone());
         let mut preamble = BlockChain::empty();
-        preamble.append_ops(Op::extended(Op::PrepareArgs, n_args));
+
+        let argop = if accept_vararg {
+            Op::PrepareVarArgs
+        } else {
+            Op::PrepareArgs
+        };
+
+        preamble.append_ops(Op::extended(argop, n_args));
         preamble.append(body);
 
         let prologue = BlockChain::empty();
@@ -330,7 +349,7 @@ mod tests {
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.lambda(SourceLocation::new(()), 0, val);
+        let expr = bcb.lambda(SourceLocation::new(()), 0, false, val);
 
         let cs = expr.build_segment();
 
@@ -348,12 +367,35 @@ mod tests {
     }
 
     #[test]
+    fn build_bytecode_vararg_lambda() {
+        let mut storage = ValueStorage::new(100);
+        let mut global_table = GlobalTable::new();
+        let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
+        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
+        let expr = bcb.lambda(SourceLocation::new(()), 0, true, val);
+
+        let cs = expr.build_segment();
+
+        assert_eq!(
+            cs.code_slice(),
+            &[
+                Op::MakeClosure { offset: 1 },
+                Op::Jump { forward: 3 },
+                Op::PrepareVarArgs(0),
+                Op::Const(0),
+                Op::Return,
+                Op::Halt
+            ]
+        );
+    }
+
+    #[test]
     fn build_bytecode_can_return_from_lambda_definition() {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.lambda(SourceLocation::new(()), 0, val);
+        let expr = bcb.lambda(SourceLocation::new(()), 0, false, val);
         expr.return_from();
 
         let cs = expr.build_segment();
@@ -377,7 +419,7 @@ mod tests {
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
         let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
-        let expr = bcb.lambda(SourceLocation::new(()), 0, val);
+        let expr = bcb.lambda(SourceLocation::new(()), 0, false, val);
         let invoke = bcb.invoke(SourceLocation::new(()), vec![expr]);
 
         let cs = invoke.build_segment();

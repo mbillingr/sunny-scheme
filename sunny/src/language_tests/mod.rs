@@ -59,6 +59,20 @@ impl EvaluatesTo {
         }
     }
 
+    pub fn the_list(items: Vec<impl Into<Value>>) -> EvaluationMatcher<ValueEqualTo> {
+        let mut context = Context::new();
+
+        let mut list = Value::Nil;
+        for x in items.into_iter().rev() {
+            list = context.cons(x, list);
+        }
+        context.preserve(&list);
+        EvaluationMatcher {
+            context: RefCell::new(context),
+            result_matcher: equals(list),
+        }
+    }
+
     pub fn nil() -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
         EvaluationMatcher::new(equal_to(Ok(Value::Nil)))
     }

@@ -159,6 +159,13 @@ impl Sexpr {
         }
     }
 
+    pub fn last_cdr(&self) -> &Sexpr {
+        match self {
+            Sexpr::Pair(p) => p.1.last_cdr(),
+            _ => self,
+        }
+    }
+
     pub fn substitute(
         template: &SourceLocation<Self>,
         mapping: &HashMap<&str, SrcExpr>,

@@ -174,7 +174,9 @@ impl Vm {
                 Op::StoreGlobal(a) => self.set_global(Op::extend_arg(a, arg))?,
                 Op::Peek(i) => self.peek_closure(Op::extend_arg(i, arg))?,
                 Op::PushLocal => self.push_local()?,
-                Op::DropLocal => self.drop_local()?,
+                Op::DropLocal => {
+                    self.drop_local()?;
+                }
                 Op::Fetch(a) => self.get_local(Op::extend_arg(a, arg))?,
                 Op::Store(a) => {
                     let value = self.pop_value()?;
@@ -183,6 +185,7 @@ impl Vm {
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
                 Op::TailCall { n_args } => self.tail_call(Op::extend_arg(n_args, arg))?,
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
+                Op::PrepareVarArgs(n_args) => self.prepare_varargs(Op::extend_arg(n_args, arg))?,
                 Op::Void => self.push_value(Value::Void),
                 Op::Integer(a) => self.push_value(Value::Number(Op::extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
@@ -275,14 +278,18 @@ impl Vm {
     }
 
     fn push_local(&mut self) -> Result<()> {
-        let x = self.pop_value()?;
-        self.current_activation.locals.push(Cell::new(x));
+        let value = self.pop_value()?;
+        self.append_local(value);
         Ok(())
     }
 
-    fn drop_local(&mut self) -> Result<()> {
-        self.current_activation.locals.pop().unwrap();
-        Ok(())
+    fn append_local(&mut self, value: Value) {
+        self.current_activation.locals.push(Cell::new(value));
+    }
+
+    fn drop_local(&mut self) -> Result<Value> {
+        let value = self.current_activation.locals.pop().unwrap();
+        Ok(value.into_inner())
     }
 
     fn get_local(&mut self, mut idx: usize) -> Result<()> {
@@ -421,6 +428,25 @@ impl Vm {
         if self.current_activation.locals.len() > n_args {
             return Err(ErrorKind::TooManyArgs);
         }
+
+        Ok(())
+    }
+
+    fn prepare_varargs(&mut self, n_args: usize) -> Result<()> {
+        if self.current_activation.locals.len() < n_args {
+            return Err(ErrorKind::NotEnoughArgs);
+        }
+
+        let n_varargs = self.current_activation.locals.len() - n_args;
+        self.ensure_storage_space(n_varargs)?;
+
+        let mut vararg = Value::Nil;
+        for _ in 0..n_varargs {
+            let x = self.drop_local()?;
+            vararg = self.storage.cons(x, vararg).unwrap();
+        }
+
+        self.append_local(vararg);
 
         Ok(())
     }

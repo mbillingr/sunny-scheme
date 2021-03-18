@@ -183,14 +183,20 @@ impl<T> SourceLocation<T> {
 
 impl SourceLocation<Sexpr> {
     pub fn iter(&self) -> impl Iterator<Item = &SourceLocation<Sexpr>> {
+        let mut done = false;
         let mut cursor = self;
         (0..)
             .map(move |_| match cursor.get_value() {
+                Sexpr::Nil => None,
                 Sexpr::Pair(pair) => {
                     cursor = &pair.1;
                     Some(&pair.0)
                 }
-                _ => None,
+                _ if done => None,
+                _ => {
+                    done = true;
+                    Some(cursor)
+                }
             })
             .take_while(Option::is_some)
             .map(Option::unwrap)

@@ -15,6 +15,7 @@ pub enum Ast {
     Sequence(AstNode, AstNode),
     If(SourceLocation<()>, AstNode, AstNode, AstNode),
     Lambda(SourceLocation<()>, usize, AstNode),
+    LambdaVararg(SourceLocation<()>, usize, AstNode),
     Invoke(SourceLocation<()>, Vec<AstNode>),
     Intrinsic(SourceLocation<()>, &'static str, Vec<AstNode>),
     Module(String, AstNode, Vec<Export>),
@@ -66,6 +67,10 @@ impl Ast {
         Box::new(Ast::Lambda(context, n_args, body))
     }
 
+    pub fn lambda_vararg(context: SourceLocation<()>, n_args: usize, body: AstNode) -> AstNode {
+        Box::new(Ast::LambdaVararg(context, n_args, body))
+    }
+
     pub fn invoke(context: SourceLocation<()>, args: Vec<AstNode>) -> AstNode {
         Box::new(Ast::Invoke(context, args))
     }
@@ -105,7 +110,11 @@ impl Ast {
             }
             Ast::Lambda(ctx, nparams, body) => {
                 let body = body.build(backend);
-                backend.lambda(ctx.clone(), *nparams, body)
+                backend.lambda(ctx.clone(), *nparams, false, body)
+            }
+            Ast::LambdaVararg(ctx, nparams, body) => {
+                let body = body.build(backend);
+                backend.lambda(ctx.clone(), *nparams, true, body)
             }
             Ast::Invoke(ctx, args) => {
                 let args = args.iter().map(|arg| arg.build(backend)).collect();
@@ -153,6 +162,10 @@ impl Ast {
                 writeln!(f, "{: <1$}lambda {2}", "", indent, n)?;
                 body.pretty_fmt(f, indent + 4)
             }
+            Ast::LambdaVararg(_, n, body) => {
+                writeln!(f, "{: <1$}lambda {2}+n", "", indent, n)?;
+                body.pretty_fmt(f, indent + 4)
+            }
             Ast::Invoke(_, args) => {
                 writeln!(f, "{: <1$}invoke", "", indent)?;
                 for arg in args {
@@ -194,6 +207,7 @@ macro_rules! ast {
     (begin $a:tt $($b:tt)+) => {Ast::sequence(ast![$a], ast![begin $($b)+])};
     (if $a:tt $b:tt $c:tt) => {Ast::ifexpr(SourceLocation::new(()), ast![$a], ast![$b], ast![$c])};
     (lambda $p:tt $b:tt) => {Ast::lambda(SourceLocation::new(()), $p, ast![$b])};
+    (lambda-var $p:tt $b:tt) => {Ast::lambda_vararg(SourceLocation::new(()), $p, ast![$b])};
     (invoke $($a:tt)*) => {Ast::invoke(SourceLocation::new(()), vec![$(ast![$a]),*])};
     (intrinsic $x:tt $($a:tt)*) => {Ast::invoke_intrinsic(SourceLocation::new(()), stringify!($x), vec![$(ast![$a]),*])};
     (module $n:tt $x:tt $(($v:tt $e:tt))*) => {Ast::module($n, ast![$x], vec![$(crate::frontend::library::Export::new($v, crate::frontend::environment::EnvBinding::global($e))),*])};

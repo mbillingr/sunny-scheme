@@ -60,6 +60,13 @@ mod tests {
     macro_rules! sexpr {
         ($t:ty:()) => { <$t>::nil() };
 
+        ($t:ty:($x:tt . $y:tt)) => {
+            <$t>::cons(
+                sexpr![$t:$x],
+                sexpr![$t:$y],
+            )
+        };
+
         ($t:ty:($x:tt $($rest:tt)*)) => {
             <$t>::cons(
                 sexpr![$t:$x],
@@ -183,6 +190,19 @@ mod tests {
     fn meaning_of_lambda_with_multiple_arguments() {
         assert_eq!(meaning_of![(lambda (x y) x)], Ok(ast!(lambda 2 (ref 0))));
         assert_eq!(meaning_of![(lambda (x y) y)], Ok(ast!(lambda 2 (ref 1))));
+    }
+
+    #[test]
+    fn meaning_of_lambda_with_variable_arguments() {
+        assert_eq!(meaning_of![(lambda x x)], Ok(ast!(lambda-var 0 (ref 0))));
+        assert_eq!(
+            meaning_of![(lambda (x . y) x)],
+            Ok(ast!(lambda-var 1 (ref 0)))
+        );
+        assert_eq!(
+            meaning_of![(lambda (x . y) y)],
+            Ok(ast!(lambda-var 1 (ref 1)))
+        );
     }
 
     #[test]

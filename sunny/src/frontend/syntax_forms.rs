@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use sunny_sexpr_parser::CxR;
+use sunny_sexpr_parser::{CxR, SrcExpr};
 use sunny_sexpr_parser::{RefExpr, Sexpr, SourceLocation};
 
 use crate::frontend::{
@@ -231,11 +231,10 @@ define_form! {
             Ok(Ast::store_global(sexpr.map_value(()), full_name, value))
         }]
         [(_, (name: Symbol . args) . body) => {
-            let body_env = env.extend(args)?;
-            let body = Sequence.expand(body, &body_env)?;
-            let function = Ast::lambda(sexpr.map_value(()), args.len(), body);
-
             env.ensure_global_variable(name);
+
+            let function = Lambda::build_ast(sexpr.map_value(()), args, body, env)?;
+
             let binding = env.lookup_global_variable(name).unwrap();
             let full_name = binding.as_global().unwrap();
             Ok(Ast::store_global(sexpr.map_value(()), full_name, function))
@@ -271,11 +270,26 @@ define_form! {
 define_form! {
     Lambda(sexpr, env):
         [(_, params . body) => {
-            let body_env = env.extend(params)?;
-            let body = Sequence.expand(body, &body_env)?;
-
-            Ok(Ast::lambda(sexpr.map_value(()), params.len(), body))
+            Self::build_ast(sexpr.map_value(()), params, body, env)
         }]
+}
+
+impl Lambda {
+    fn build_ast(
+        context: SourceLocation<()>,
+        params: &SrcExpr,
+        body: &SrcExpr,
+        env: &Env,
+    ) -> Result<AstNode> {
+        let body_env = env.extend(params)?;
+        let body = Sequence.expand(body, &body_env)?;
+
+        if params.last_cdr().is_null() {
+            Ok(Ast::lambda(context, params.len(), body))
+        } else {
+            Ok(Ast::lambda_vararg(context, params.len(), body))
+        }
+    }
 }
 
 define_form! {
