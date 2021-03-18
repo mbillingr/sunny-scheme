@@ -35,25 +35,55 @@ pub fn define_standard_libraries(ctx: &mut Context) {
 }
 
 macro_rules! primitive {
-    ($(fn $name:ident($($a:ident: Value),*) -> Result<Value> $body:block)*) => {
+    ($($kind:tt $name:ident($($args:tt)*) -> Result<Value> $body:block)*) => {
         $(
-            fn $name(n_args: usize, _stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
-                let n_expect = 0;
-                $(let $a; let n_expect = n_expect + 1;)*
-
-                match n_args.cmp(&n_expect) {
-                    std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::NotEnoughArgs),
-                    std::cmp::Ordering::Greater => return Err(sunny_vm::ErrorKind::TooManyArgs),
-                    std::cmp::Ordering::Equal => {}
-                }
-
-                $($a = _stack.pop().unwrap();)*
-                let ret = $body;
-                _stack.push(ret?);
-                Ok(())
-            }
+            primitive!{def $kind $name($($args)*) -> Result<Value> $body}
         )*
-    }
+    };
+
+    (def fn $name:ident($($a:ident: Value),*) -> Result<Value> $body:block) => {
+        fn $name(n_args: usize, _stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+            let n_expect = 0;
+            $(let $a; let n_expect = n_expect + 1;)*
+
+            match n_args.cmp(&n_expect) {
+                std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::NotEnoughArgs),
+                std::cmp::Ordering::Greater => return Err(sunny_vm::ErrorKind::TooManyArgs),
+                std::cmp::Ordering::Equal => {}
+            }
+
+            $($a = _stack.pop().unwrap();)*
+            // wrap body in closure, so `return`ing from the body works as expected
+            let ret = (||$body)();
+            _stack.push(ret?);
+            Ok(())
+        }
+    };
+
+    (def varfn $name:ident($($a:ident: Value,)* [$vararg:ident]) -> Result<Value> $body:block) => {
+        fn $name(n_args: usize, _stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+            let n_expect = 0;
+            $(let $a; let n_expect = n_expect + 1;)*
+
+            match n_args.cmp(&n_expect) {
+                std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::NotEnoughArgs),
+                _ => {}
+            }
+
+            $($a = _stack.pop().unwrap();)*
+
+            let n_varargs = n_args - n_expect;
+            let mut $vararg = vec![];
+            for _ in 0..n_varargs {
+                $vararg.push(_stack.pop().unwrap());
+            }
+
+            // wrap body in closure, so `return`ing from the body works as expected
+            let ret = (||$body)();
+            _stack.push(ret?);
+            Ok(())
+        }
+    };
 }
 
 primitive! {
@@ -62,8 +92,18 @@ primitive! {
         Ok(Value::Number(x - 1))
     }
 
-    fn add(a: Value, b: Value) -> Result<Value> {
-        Value::try_add(&a, &b).ok_or(ErrorKind::TypeError)
+    varfn add([args]) -> Result<Value> {
+        let mut acc = match args.as_slice() {
+            [] => return Ok(Value::Number(0)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+        };
+
+        for x in &args[1..] {
+            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            acc += x;
+        }
+
+        Ok(Value::Number(acc))
     }
 
     fn sub(a: Value, b: Value) -> Result<Value> {

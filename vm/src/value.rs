@@ -79,6 +79,7 @@ impl Value {
     impl_accessor!(is_void, Value::Void);
     impl_accessor!(is_nil, Value::Nil);
     impl_accessor!(is_int, as_int, Value::Number, i64);
+    impl_accessor!(is_number, as_number, Value::Number, i64);
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, as_mut_pair, Value::Pair, ref (Value, Value));
     impl_accessor!(is_table, as_table, as_mut_table, Value::Table, ref Table);
