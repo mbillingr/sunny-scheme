@@ -123,4 +123,12 @@ mod tests {
         assert_eq!(sexpr.caddr().unwrap(), &Sexpr::int(4));
         assert_eq!(sexpr.cdddr().unwrap(), &Sexpr::nil());
     }
+
+    #[test]
+    fn can_parse_improper_list() {
+        let sexpr = parse_str("(1 2 . 3)").unwrap();
+        assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
+        assert_eq!(sexpr.cadr().unwrap(), &Sexpr::int(2));
+        assert_eq!(sexpr.cddr().unwrap(), &Sexpr::int(3));
+    }
 }

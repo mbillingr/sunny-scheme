@@ -13,7 +13,6 @@ pub RawSexpr: Sexpr = {
     <n:Num> => Sexpr::int(n),
     <s:Sym> => Sexpr::symbol(s),
     <s:Str> => Sexpr::string(s),
-    <p:Pair> => Sexpr::cons(p.0, p.1),
     <l:List> => <>,
     <q:Quotation> => <>,
 };
@@ -29,10 +28,6 @@ Sym: &'input str = <s:r"[a-zA-Z:!?*/+<>-]([^\s\(\)])*"> => s;
 
 Str: &'input str = {
     <s:r#""[^"]*""#> => &s[1..s.len()-1],
- };
-
-Pair: (SourceLocation<Sexpr>, SourceLocation<Sexpr>) = {
-    "(" <car:Datum> "." <cdr:Datum> ")" => (car, cdr)
 };
 
 List: Sexpr = {
@@ -42,6 +37,7 @@ List: Sexpr = {
 
 Sequence: Sexpr = {
     <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_span(l..r).map_value(cdr)),
+    <car:Datum> "." <cdr:Datum> => Sexpr::cons(car, cdr),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
 };
 
