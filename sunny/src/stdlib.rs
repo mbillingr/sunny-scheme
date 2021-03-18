@@ -106,16 +106,48 @@ primitive! {
         Ok(Value::Number(acc))
     }
 
-    fn sub(a: Value, b: Value) -> Result<Value> {
-        Value::try_sub(&a, &b).ok_or(ErrorKind::TypeError)
+    varfn sub([args]) -> Result<Value> {
+        let mut acc = match args.as_slice() {
+            [] => return Ok(Value::Number(0)),
+            [x] => return Ok(Value::Number(-x.as_number().ok_or(ErrorKind::TypeError)?)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+        };
+
+        for x in &args[1..] {
+            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            acc -= x;
+        }
+
+        Ok(Value::Number(acc))
     }
 
-    fn mul(a: Value, b: Value) -> Result<Value> {
-        Value::try_mul(&a, &b).ok_or(ErrorKind::TypeError)
+    varfn mul([args]) -> Result<Value> {
+        let mut acc = match args.as_slice() {
+            [] => return Ok(Value::Number(1)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+        };
+
+        for x in &args[1..] {
+            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            acc *= x;
+        }
+
+        Ok(Value::Number(acc))
     }
 
-    fn div(a: Value, b: Value) -> Result<Value> {
-        Value::try_div(&a, &b).ok_or(ErrorKind::TypeError)
+    varfn div([args]) -> Result<Value> {
+        let mut acc = match args.as_slice() {
+            [] => return Ok(Value::Number(0)),
+            [x] => return Ok(Value::Number(1/x.as_number().ok_or(ErrorKind::TypeError)?)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+        };
+
+        for x in &args[1..] {
+            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            acc /= x;
+        }
+
+        Ok(Value::Number(acc))
     }
 
     fn lt(a: Value, b: Value) -> Result<Value> {
