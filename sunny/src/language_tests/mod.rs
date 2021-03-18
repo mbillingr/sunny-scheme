@@ -3,6 +3,7 @@ mod control_flow;
 mod global_variables;
 mod libraries;
 mod macros;
+mod procedures;
 mod scoping;
 
 use crate::context::{Context, Error};
