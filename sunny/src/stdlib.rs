@@ -3,7 +3,7 @@ use crate::frontend::syntax_forms::{
     Assignment, Begin, Branch, Definition, Import, Lambda, LibraryDefinition, Quotation,
     SyntaxDefinition,
 };
-use sunny_vm::{ErrorKind, Result, Value, ValueStorage};
+use sunny_vm::{ErrorKind, Result, Value};
 
 pub fn define_standard_libraries(ctx: &mut Context) {
     ctx.define_library("(scheme base)")
@@ -42,7 +42,7 @@ macro_rules! primitive {
     };
 
     (def fn $name:ident($($a:ident: Value),*) -> Result<Value> $body:block) => {
-        fn $name(n_args: usize, _stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+        fn $name(n_args: usize, vm: &mut sunny_vm::Vm) -> Result<()> {
             let n_expect = 0;
             $(let $a; let n_expect = n_expect + 1;)*
 
@@ -52,16 +52,16 @@ macro_rules! primitive {
                 std::cmp::Ordering::Equal => {}
             }
 
-            $($a = _stack.pop().unwrap();)*
+            $($a = vm.pop_value().unwrap();)*
             // wrap body in closure, so `return`ing from the body works as expected
             let ret = (||$body)();
-            _stack.push(ret?);
+            vm.push_value(ret?);
             Ok(())
         }
     };
 
     (def varfn $name:ident($($a:ident: Value,)* [$vararg:ident]) -> Result<Value> $body:block) => {
-        fn $name(n_args: usize, _stack: &mut Vec<Value>, _storage: &mut ValueStorage) -> Result<()> {
+        fn $name(n_args: usize, vm: &mut sunny_vm::Vm) -> Result<()> {
             let n_expect = 0;
             $(let $a; let n_expect = n_expect + 1;)*
 
@@ -70,17 +70,17 @@ macro_rules! primitive {
                 _ => {}
             }
 
-            $($a = _stack.pop().unwrap();)*
+            $($a = vm.pop_value().unwrap();)*
 
             let n_varargs = n_args - n_expect;
             let mut $vararg = vec![];
             for _ in 0..n_varargs {
-                $vararg.push(_stack.pop().unwrap());
+                $vararg.push(vm.pop_value().unwrap());
             }
 
             // wrap body in closure, so `return`ing from the body works as expected
             let ret = (||$body)();
-            _stack.push(ret?);
+            vm.push_value(ret?);
             Ok(())
         }
     };

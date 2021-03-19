@@ -1,6 +1,6 @@
 use crate::activation::Activation;
-use crate::Value;
 use crate::mem::{Ref, Traceable, Tracer};
+use crate::Value;
 
 pub struct Continuation {
     pub(crate) activation: Ref<Activation>,
