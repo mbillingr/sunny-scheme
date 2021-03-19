@@ -151,7 +151,7 @@ impl Value {
 
     pub fn is_procedure(&self) -> bool {
         match self {
-            Value::Closure(_) | Value::Primitive(_) => true,
+            Value::Closure(_) | Value::Primitive(_) | Value::Continuation(_) => true,
             _ => false,
         }
     }

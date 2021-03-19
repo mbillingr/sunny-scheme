@@ -16,6 +16,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("lambda", Lambda)
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
+        .define_intrinsic("call/cc", 1)
         .define_primitive("+", add)
         .define_primitive("-", sub)
         .define_primitive("*", mul)

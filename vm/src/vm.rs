@@ -1,5 +1,6 @@
 use crate::activation::Activation;
 use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
+use crate::continuation::Continuation;
 use crate::{
     bytecode::Op,
     closure::Closure,
@@ -203,6 +204,9 @@ impl Vm {
                 Op::TableSet => self.table_set()?,
                 Op::TableGet => self.table_get()?,
                 Op::MakeClosure { offset } => self.make_closure(Op::extend_arg(offset, arg))?,
+                Op::CaptureContinuation { offset } => {
+                    self.capture_continuation(Op::extend_arg(offset, arg))?
+                }
             }
             arg = 0;
         }
@@ -550,6 +554,23 @@ impl Vm {
         let closure = self.storage.insert(closure).unwrap();
 
         self.push_value(Value::Closure(closure));
+        Ok(())
+    }
+
+    fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
+        self.ensure_storage_space(2)?;
+
+        let mut activation = self.current_activation.duplicate();
+        activation.code = activation.code.offset(code_offset as isize);
+        let activation = self.storage.insert(activation).unwrap();
+
+        let continuation = Continuation {
+            activation,
+            value_stack: self.value_stack.clone(),
+        };
+        let continuation = self.storage.insert(continuation).unwrap();
+        self.push_value(Value::Continuation(continuation));
+
         Ok(())
     }
 

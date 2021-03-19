@@ -39,7 +39,7 @@ impl Context {
     pub fn eval(&mut self, src: &str) -> Result<Value, Error> {
         let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
 
-        println!("{:#?}", self.env);
+        //println!("{:#?}", self.env);
 
         let ast = Expression
             .expand(&sexpr, &mut self.env)

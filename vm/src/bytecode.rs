@@ -55,6 +55,7 @@ pub enum Op {
     TableGet,
 
     MakeClosure { offset: u8 },
+    CaptureContinuation { offset: u8 },
 }
 
 impl Op {
@@ -134,6 +135,9 @@ impl std::fmt::Display for Op {
             Op::TableSet => write!(f, "{}", repr::TABLESET),
             Op::TableGet => write!(f, "{}", repr::TABLEGET),
             Op::MakeClosure { offset } => write!(f, "{} {}", repr::MAKECLOSURE, offset),
+            Op::CaptureContinuation { offset } => {
+                write!(f, "{} {}", repr::CAPTURECONTINUATION, offset)
+            }
         }
     }
 }
@@ -178,6 +182,7 @@ pub mod repr {
     pub const TABLESET: &'static str = "TABLESET";
     pub const TABLEGET: &'static str = "TABLEGET";
     pub const MAKECLOSURE: &'static str = "MAKECLOSURE";
+    pub const CAPTURECONTINUATION: &'static str = "CAPTURECONTINUATION";
 }
 
 #[derive(Debug, Clone)]

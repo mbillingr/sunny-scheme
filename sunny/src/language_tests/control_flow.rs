@@ -68,5 +68,5 @@ fn if_without_alternative_is_void_on_false() {
 
 #[test]
 fn call_cc_passes_a_continuation_to_its_argument_function() {
-    assert_that!("(call/cc (lambda (c) c))", EvaluatesTo::void());
+    assert_that!("(call/cc (lambda (c) c))", EvaluatesTo::a_procedure());
 }

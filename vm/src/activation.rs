@@ -40,4 +40,21 @@ impl Activation {
             locals: args.into(),
         }
     }
+
+    pub fn duplicate(&self) -> Self {
+        Activation {
+            caller: self.caller.clone(),
+            parent: self.parent.clone(),
+            code: self.code.clone(),
+            locals: self
+                .locals
+                .iter()
+                .map(|cv| {
+                    let val = cv.take();
+                    cv.set(val.clone());
+                    Cell::new(val)
+                })
+                .collect(),
+        }
+    }
 }
