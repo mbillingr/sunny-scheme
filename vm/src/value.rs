@@ -5,6 +5,7 @@ use crate::closure::Closure;
 use crate::mem::{Ref, Traceable, Tracer};
 use crate::primitive::Primitive;
 use crate::table::Table;
+use crate::continuation::Continuation;
 
 pub type Symbol = Box<str>;
 
@@ -22,6 +23,7 @@ pub enum Value {
 
     Closure(Ref<Closure>),
     Primitive(Primitive),
+    Continuation(Ref<Continuation>),
 }
 
 impl Default for Value {
@@ -104,6 +106,7 @@ impl Value {
             Value::Table(_) => 7,
             Value::Closure(_) => 8,
             Value::Primitive(_) => 9,
+            Value::Continuation(_) => 10,
         }
     }
 
@@ -166,6 +169,7 @@ impl Value {
             (Table(a), Table(b)) => ***a == ***b,
             (Closure(a), Closure(b)) => **a == **b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
+            (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
             _ => false,
         }
     }
@@ -178,6 +182,7 @@ impl Value {
             Value::Table(t) => Some(t.as_dyn_traceable()),
             Value::Closure(c) => Some(c.as_dyn_traceable()),
             Value::Primitive(_) => None,
+            Value::Continuation(c) => Some(c.as_dyn_traceable()),
         }
     }
 }
@@ -195,6 +200,7 @@ impl Traceable for Value {
             Value::Table(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
             Value::Primitive(_) => {}
+            Value::Continuation(p) => p.trace(gc),
         }
     }
 }
@@ -212,6 +218,7 @@ impl std::fmt::Debug for Value {
             Value::Table(p) => write!(f, "{:?}", p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}", p),
+            Value::Continuation(p) => write!(f, "{:?}", p),
         }
     }
 }
@@ -229,6 +236,7 @@ impl std::fmt::Display for Value {
             Value::Table(p) => write!(f, "{:?}", **p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}", p),
+            Value::Continuation(p) => write!(f, "{:?}", p),
         }
     }
 }
@@ -280,6 +288,7 @@ impl Hash for Value {
             Value::Table(p) => p.as_ptr().hash(state),
             Value::Closure(p) => p.as_ptr().hash(state),
             Value::Primitive(p) => (*p as *const u8).hash(state),
+            Value::Continuation(p) => p.as_ptr().hash(state),
         }
     }
 }

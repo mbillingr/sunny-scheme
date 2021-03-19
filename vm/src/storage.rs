@@ -165,6 +165,7 @@ impl ValueStorage {
             Value::Table(p) => self.storage.is_valid(p),
             Value::Closure(p) => self.storage.is_valid(p),
             Value::Primitive(_) => true,
+            Value::Continuation(p) => self.storage.is_valid(p),
         }
     }
 
