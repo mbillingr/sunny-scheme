@@ -65,14 +65,3 @@ fn if_alternative_is_optional() {
 fn if_without_alternative_is_void_on_false() {
     assert_that!("(if #f 1)", EvaluatesTo::void());
 }
-
-#[test]
-fn fibonacci() {
-    assert_that!(
-        vec![
-            "(define (fib n) (if (< n 2) 1 (+ (fib (- n 1)) (fib (- n 2)))))",
-            "(fib 5)"
-        ],
-        EvaluatesTo::the_integer(8)
-    );
-}

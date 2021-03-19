@@ -40,3 +40,14 @@ fn vararg_arguments_are_put_into_list() {
         EvaluatesTo::the_list(vec![2, 3])
     );
 }
+
+#[test]
+fn fibonacci() {
+    assert_that!(
+        vec![
+            "(define (fib n) (if (< n 2) 1 (+ (fib (- n 1)) (fib (- n 2)))))",
+            "(fib 5)"
+        ],
+        EvaluatesTo::the_integer(8)
+    );
+}
