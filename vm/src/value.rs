@@ -218,7 +218,7 @@ impl std::fmt::Debug for Value {
             Value::Table(p) => write!(f, "{:?}", p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}", p),
-            Value::Continuation(p) => write!(f, "{:?}", p),
+            Value::Continuation(p) => write!(f, "{:?}", **p),
         }
     }
 }
@@ -236,7 +236,7 @@ impl std::fmt::Display for Value {
             Value::Table(p) => write!(f, "{:?}", **p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}", p),
-            Value::Continuation(p) => write!(f, "{:?}", p),
+            Value::Continuation(p) => write!(f, "{:?}", **p),
         }
     }
 }

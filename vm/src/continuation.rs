@@ -16,6 +16,6 @@ impl Traceable for Continuation {
 
 impl std::fmt::Debug for Continuation {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "<continuation @ {:p}>", self)
+        write!(f, "<continuation @ {:p}> {:?}", self, self.activation.code)
     }
 }

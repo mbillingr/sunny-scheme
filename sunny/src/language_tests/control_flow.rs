@@ -78,3 +78,20 @@ fn can_use_callcc_as_exit_procedure() {
         EvaluatesTo::the_integer(1)
     );
 }
+
+#[test]
+fn can_use_callcc_to_return_repeatedly() {
+    assert_that!(
+        vec![
+            "(define x 0)",
+            "(define y 0)",
+            "(begin (call/cc (lambda (c)
+                               (set! x c)))
+                    (set! y (+ y 1)))",
+            "(x 0)",
+            "(x 0)",
+            "y",
+        ],
+        EvaluatesTo::the_integer(3)
+    );
+}

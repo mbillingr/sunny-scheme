@@ -432,10 +432,14 @@ impl Vm {
         if n_args > 1 {
             return Err(ErrorKind::TooManyArgs);
         }
+        self.storage.preserve(&cnt);
+        self.ensure_storage_space(1)?;
+        self.storage.release(&cnt);
+
         let args = self.pop_values(n_args)?;
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
-        self.current_activation = cnt.activation.clone();
+        self.current_activation = self.storage.insert(cnt.activation.duplicate()).unwrap();
         Ok(())
     }
 
