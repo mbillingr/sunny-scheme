@@ -48,7 +48,7 @@ macro_rules! primitive {
             $(let $a; let n_expect = n_expect + 1;)*
 
             match n_args.cmp(&n_expect) {
-                std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::NotEnoughArgs),
+                std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::TooFewArgs),
                 std::cmp::Ordering::Greater => return Err(sunny_vm::ErrorKind::TooManyArgs),
                 std::cmp::Ordering::Equal => {}
             }
@@ -67,7 +67,7 @@ macro_rules! primitive {
             $(let $a; let n_expect = n_expect + 1;)*
 
             match n_args.cmp(&n_expect) {
-                std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::NotEnoughArgs),
+                std::cmp::Ordering::Less => return Err(sunny_vm::ErrorKind::TooFewArgs),
                 _ => {}
             }
 

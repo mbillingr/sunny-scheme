@@ -30,7 +30,7 @@ pub enum ErrorKind {
     NotCallable,
     TypeError,
     UndefinedVariable,
-    NotEnoughArgs,
+    TooFewArgs,
     TooManyArgs,
 }
 
@@ -48,7 +48,7 @@ impl std::fmt::Display for ErrorKind {
             ErrorKind::NotCallable => write!(f, "Not callable"),
             ErrorKind::TypeError => write!(f, "Type Error"),
             ErrorKind::UndefinedVariable => write!(f, "Undefined Variable"),
-            ErrorKind::NotEnoughArgs => write!(f, "Not enough arguments"),
+            ErrorKind::TooFewArgs => write!(f, "Not enough arguments"),
             ErrorKind::TooManyArgs => write!(f, "Too many arguments"),
         }
     }

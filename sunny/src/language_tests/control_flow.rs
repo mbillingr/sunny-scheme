@@ -70,3 +70,11 @@ fn if_without_alternative_is_void_on_false() {
 fn call_cc_passes_a_continuation_to_its_argument_function() {
     assert_that!("(call/cc (lambda (c) c))", EvaluatesTo::a_procedure());
 }
+
+#[test]
+fn can_use_callcc_as_exit_procedure() {
+    assert_that!(
+        "(call/cc (lambda (c) (c 1) 2))",
+        EvaluatesTo::the_integer(1)
+    );
+}

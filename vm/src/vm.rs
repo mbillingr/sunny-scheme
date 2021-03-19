@@ -90,7 +90,6 @@ impl Vm {
 
         match self.run() {
             Ok(x) => {
-                assert_eq!(self.current_activation, root_activation);
                 if !self.value_stack.is_empty() {
                     panic!(
                         "Value stack should be empty but contains {:?}",
@@ -386,6 +385,7 @@ impl Vm {
         match func {
             Value::Closure(cls) => self.call_closure(cls, n_args),
             Value::Primitive(f) => f(n_args, self),
+            Value::Continuation(cnt) => self.call_continuation(cnt, n_args),
             _ => Err(ErrorKind::TypeError),
         }
     }
@@ -395,6 +395,7 @@ impl Vm {
         match func {
             Value::Closure(cls) => self.tail_call_closure(cls, n_args),
             Value::Primitive(f) => f(n_args, self),
+            Value::Continuation(cnt) => self.call_continuation(cnt, n_args),
             _ => Err(ErrorKind::TypeError),
         }
     }
@@ -424,9 +425,23 @@ impl Vm {
         Ok(())
     }
 
+    fn call_continuation(&mut self, cnt: Ref<Continuation>, n_args: usize) -> Result<()> {
+        if n_args < 1 {
+            return Err(ErrorKind::TooFewArgs);
+        }
+        if n_args > 1 {
+            return Err(ErrorKind::TooManyArgs);
+        }
+        let args = self.pop_values(n_args)?;
+        self.value_stack = cnt.value_stack.clone();
+        self.value_stack.extend(args);
+        self.current_activation = cnt.activation.clone();
+        Ok(())
+    }
+
     fn prepare_args(&mut self, n_args: usize) -> Result<()> {
         if self.current_activation.locals.len() < n_args {
-            return Err(ErrorKind::NotEnoughArgs);
+            return Err(ErrorKind::TooFewArgs);
         }
 
         if self.current_activation.locals.len() > n_args {
@@ -438,7 +453,7 @@ impl Vm {
 
     fn prepare_varargs(&mut self, n_args: usize) -> Result<()> {
         if self.current_activation.locals.len() < n_args {
-            return Err(ErrorKind::NotEnoughArgs);
+            return Err(ErrorKind::TooFewArgs);
         }
 
         let n_varargs = self.current_activation.locals.len() - n_args;
@@ -564,9 +579,12 @@ impl Vm {
         activation.code = activation.code.offset(code_offset as isize);
         let activation = self.storage.insert(activation).unwrap();
 
+        let mut value_stack = self.value_stack.clone();
+        value_stack.pop().unwrap(); // remove the function called by call/cc
+
         let continuation = Continuation {
             activation,
-            value_stack: self.value_stack.clone(),
+            value_stack,
         };
         let continuation = self.storage.insert(continuation).unwrap();
         self.push_value(Value::Continuation(continuation));
