@@ -17,6 +17,7 @@ pub mod context;
 pub mod frontend;
 #[cfg(test)]
 mod language_tests;
+mod library_filesystem;
 pub mod stdlib;
 
 #[derive(StructOpt)]

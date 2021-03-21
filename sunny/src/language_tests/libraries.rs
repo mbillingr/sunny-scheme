@@ -1,4 +1,6 @@
 use super::EvaluatesTo;
+use crate::frontend::error::Error as FrontendError;
+use crate::language_tests::given;
 use hamcrest2::assert_that;
 use hamcrest2::prelude::*;
 
@@ -40,6 +42,24 @@ fn can_import_macros_from_library() {
             "(get-private)"
         ],
         EvaluatesTo::the_integer(123)
+    );
+}
+
+#[test]
+fn importing_nonexisting_library_fails() {
+    assert_that!(
+        "(import (foo bar))",
+        EvaluatesTo::the_frontend_error(FrontendError::UnknownLibrary)
+    );
+}
+
+#[test]
+fn import_loads_library_from_file_system() {
+    assert_that!(
+        given()
+            .file_contains("foo/bar.sld", SIMPLE_LIBRARY_DEFINITION)
+            .then("(import (foo bar))"),
+        EvaluatesTo::void()
     );
 }
 
