@@ -57,7 +57,7 @@ fn importing_nonexisting_library_fails() {
 fn import_loads_library_from_file_system() {
     assert_that!(
         given()
-            .file_contains("foo/bar.sld", SIMPLE_LIBRARY_DEFINITION)
+            .file_contains("foo/bar.sld", SIMPLE_LIBRARY_DEFINITION.as_bytes())
             .then("(import (foo bar))"),
         EvaluatesTo::void()
     );

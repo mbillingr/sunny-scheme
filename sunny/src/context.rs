@@ -11,6 +11,7 @@ use crate::frontend::environment::{Env, EnvBinding};
 use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
+use crate::library_filesystem::LibraryFileSystem;
 
 pub struct Context {
     env: Env,
@@ -78,6 +79,10 @@ impl Context {
         let storage = self.vm.borrow_storage();
         storage.ensure(1);
         storage.cons(a, b).unwrap()
+    }
+
+    pub fn set_libfs(&mut self, lfs: LibraryFileSystem) {
+        self.env.set_libfs(lfs);
     }
 
     pub fn define_library(&mut self, libname: impl ToString) -> LibDefiner {

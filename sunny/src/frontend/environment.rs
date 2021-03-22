@@ -8,6 +8,7 @@ use crate::frontend::{
     error::{error_at, Error, Result},
     SyntaxExpander,
 };
+use crate::library_filesystem::LibraryFileSystem;
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -119,6 +120,7 @@ impl PartialEq for EnvBinding {
 #[derive(Debug, Clone)]
 pub struct Env {
     name: String,
+    library_filesystem: LibraryFileSystem,
     libraries: Rc<RefCell<HashMap<String, LibraryBinding>>>,
     global: RefCell<Environment>,
     lexical: Environment,
@@ -128,19 +130,15 @@ impl Env {
     pub fn new(name: String, global: Environment, lexical: Environment) -> Self {
         Env {
             name,
+            library_filesystem: LibraryFileSystem::default(),
             libraries: Rc::new(RefCell::new(HashMap::new())),
             global: RefCell::new(global),
             lexical,
         }
     }
 
-    pub fn empty(name: String) -> Self {
-        Env {
-            name,
-            libraries: Rc::new(RefCell::new(HashMap::new())),
-            global: RefCell::new(Environment::Empty),
-            lexical: Environment::Empty,
-        }
+    pub fn set_libfs(&mut self, libfs: LibraryFileSystem) {
+        self.library_filesystem = libfs;
     }
 
     pub fn use_libraries_from(&mut self, other: &Env) {

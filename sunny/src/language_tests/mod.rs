@@ -8,6 +8,7 @@ mod scoping;
 
 use crate::context::{Context, Error};
 use crate::frontend::error::Error as FrontendError;
+use crate::library_filesystem::LibraryFileSystem;
 use crate::stdlib::define_standard_libraries;
 use hamcrest2::core::{expect, success, MatchResult, Matcher};
 use hamcrest2::matchers::equal_to::EqualTo;
@@ -125,22 +126,28 @@ impl<T: Eval> Eval for Vec<T> {
 
 pub struct When {
     context: Context,
+    libfs: LibraryFileSystem,
 }
 
 pub fn given() -> When {
     let mut context = Context::new();
     define_standard_libraries(&mut context);
 
-    When { context }
+    When {
+        context,
+        libfs: LibraryFileSystem::default(),
+    }
 }
 
 impl When {
-    pub fn then<T: Eval>(self, x: T) -> EvalIn<T> {
+    pub fn then<T: Eval>(mut self, x: T) -> EvalIn<T> {
+        self.context.set_libfs(self.libfs);
         EvalIn::new(x, self.context)
     }
 
-    pub fn file_contains(self, _path: &str, _content: &str) -> Self {
-        unimplemented!()
+    pub fn file_contains(self, path: &str, content: &[u8]) -> Self {
+        self.libfs.add_virtual_file(path, content);
+        self
     }
 }
 
