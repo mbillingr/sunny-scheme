@@ -148,4 +148,22 @@ mod tests {
             assert_eq!(sexpr.unwrap(), Sexpr::symbol(&ch));
         }
     }
+
+    #[test]
+    fn can_parse_empty_verbatim_symbol() {
+        let sexpr = parse_str("||");
+        assert_eq!(sexpr.unwrap(), Sexpr::symbol(""));
+    }
+
+    #[test]
+    fn can_parse_whitespace_only_verbatim_symbol() {
+        let sexpr = parse_str("|  |");
+        assert_eq!(sexpr.unwrap(), Sexpr::symbol("  "));
+    }
+
+    #[test]
+    fn can_parse_arbitrary_verbatim_symbol() {
+        let sexpr = parse_str("|hello, world!|");
+        assert_eq!(sexpr.unwrap(), Sexpr::symbol("hello, world!"));
+    }
 }

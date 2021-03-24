@@ -29,3 +29,16 @@ fn using_extended_identifier_characters_is_not_an_error() {
         EvaluatesTo::void()
     );
 }
+
+#[test]
+fn pipes_escape_verbatim_identifiers() {
+    // R7RS section 2.1
+    assert_that!(
+        vec![
+            "(define || 0)",
+            "(define |.| 0)",
+            "(define |Hello World| 0)",
+        ],
+        EvaluatesTo::void()
+    );
+}
