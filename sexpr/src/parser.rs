@@ -166,4 +166,36 @@ mod tests {
         let sexpr = parse_str("|hello, world!|");
         assert_eq!(sexpr.unwrap(), Sexpr::symbol("hello, world!"));
     }
+
+    #[test]
+    fn can_parse_example_identifiers() {
+        // R7RS section 2.1
+        assert_eq!(parse_str("...").unwrap(), Sexpr::symbol("..."));
+        assert_eq!(parse_str("+").unwrap(), Sexpr::symbol("+"));
+        assert_eq!(parse_str("+soup+").unwrap(), Sexpr::symbol("+soup+"));
+        assert_eq!(parse_str("<=?").unwrap(), Sexpr::symbol("<=?"));
+        assert_eq!(parse_str("->string").unwrap(), Sexpr::symbol("->string"));
+        assert_eq!(parse_str("a34kTMNs").unwrap(), Sexpr::symbol("a34kTMNs"));
+        assert_eq!(parse_str("lambda").unwrap(), Sexpr::symbol("lambda"));
+        assert_eq!(
+            parse_str("list->vector").unwrap(),
+            Sexpr::symbol("list->vector")
+        );
+        assert_eq!(parse_str("q").unwrap(), Sexpr::symbol("q"));
+        assert_eq!(parse_str("V17a").unwrap(), Sexpr::symbol("V17a"));
+        assert_eq!(
+            parse_str("|two words|").unwrap(),
+            Sexpr::symbol("two words")
+        );
+        assert_eq!(
+            parse_str(r"|two\x20;words|").unwrap(),
+            Sexpr::symbol("two words")
+        );
+        assert_eq!(
+            parse_str("the-word-recursion-has-many-meanings").unwrap(),
+            Sexpr::symbol("the-word-recursion-has-many-meanings")
+        );
+        assert_eq!(parse_str(r"|\x3BB;|").unwrap(), Sexpr::symbol("\u{3bb}"));
+        assert_eq!(parse_str(r"|\t\t|").unwrap(), Sexpr::symbol("\x09\x09"));
+    }
 }
