@@ -1,4 +1,6 @@
+use std::borrow::Cow;
 use std::str::FromStr;
+use crate::parser::unescape;
 use crate::Sexpr;
 use crate::source_location::SourceLocation;
 
@@ -11,7 +13,7 @@ pub Datum: SourceLocation<Sexpr> = {
 pub RawSexpr: Sexpr = {
     <b:Bool> => Sexpr::bool(b),
     <n:Num> => Sexpr::int(n),
-    <s:Sym> => Sexpr::symbol(s),
+    <s:Sym> => Sexpr::symbol(&s),
     <s:Str> => Sexpr::string(s),
     <l:List> => <>,
     <q:Quotation> => <>,
@@ -24,9 +26,9 @@ Bool: bool = {
 
 Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
 
-Sym: &'input str = {
-    <s:r"[a-zA-Z!$%&*+./:<=>?@^_~-]([^\s\(\)])*"> => s,
-    <s:r"\|.*\|"> => &s[1..s.len()-1],
+Sym: Cow<'input, str> = {
+    <s:r"[a-zA-Z!$%&*+./:<=>?@^_~-]([^\s\(\)])*"> => Cow::Borrowed(s),
+    <s:r"\|(\\\||[^|])*\|"> =>? unescape(&s[1..s.len()-1]),
 }
 
 Str: &'input str = {

@@ -1,6 +1,8 @@
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
 use crate::{Sexpr, SourceLocation};
+use lalrpop_util::{lexer::Token, ParseError};
+use std::borrow::Cow;
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
@@ -15,6 +17,9 @@ pub enum Error {
         expected: Vec<String>,
     },
     ExtraToken,
+    User {
+        error: &'static str,
+    },
 }
 
 impl std::fmt::Display for Error {
@@ -33,6 +38,7 @@ impl std::fmt::Display for Error {
                 expected.join(", ")
             ),
             Error::ExtraToken => write!(f, "Extra token."),
+            Error::User { error } => write!(f, "{}", error),
         }
     }
 }
@@ -61,7 +67,7 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
             lalrpop_util::ParseError::ExtraToken { token: (l, _, r) } => {
                 SourceLocation::new(Error::ExtraToken).with_span(l..r)
             }
-            lalrpop_util::ParseError::User { .. } => unimplemented!(),
+            lalrpop_util::ParseError::User { error } => SourceLocation::new(Error::User { error }),
         }
     }
 }
@@ -69,6 +75,102 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
 pub fn parse_str(s: &str) -> Result<SourceLocation<Sexpr>> {
     let context = SourceLocation::new(()).in_string(s);
     Ok(sexpr_grammar::DatumParser::new().parse(&context, s)?)
+}
+
+fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &'static str>> {
+    let mut result = String::new();
+    let mut section_start = 0;
+    let mut escapes = s
+        .char_indices()
+        .filter(|(_, ch)| *ch == '\\')
+        .map(|(i, _)| i);
+    while let Some(escape_start) = escapes.next() {
+        if result.is_empty() {
+            result.reserve(s.len());
+        }
+        result.push_str(&s[section_start..escape_start]);
+
+        match &s.as_bytes().get(escape_start + 1) {
+            Some(b'a') => {
+                result.push_str("\u{0007}");
+                section_start = escape_start + 2;
+            }
+            Some(b'b') => {
+                result.push_str("\u{0008}");
+                section_start = escape_start + 2;
+            }
+            Some(b't') => {
+                result.push_str("\u{0009}");
+                section_start = escape_start + 2;
+            }
+            Some(b'n') => {
+                result.push_str("\u{000A}");
+                section_start = escape_start + 2;
+            }
+            Some(b'r') => {
+                result.push_str("\u{000D}");
+                section_start = escape_start + 2;
+            }
+            Some(b'"') => {
+                result.push('"');
+                section_start = escape_start + 2;
+            }
+            Some(b'\\') => {
+                result.push_str(r"\");
+                section_start = escape_start + 2;
+                escapes.next().unwrap();
+            }
+            Some(b'|') => {
+                result.push('|');
+                section_start = escape_start + 2;
+            }
+            Some(b'x') => {
+                let substring = &s[escape_start..];
+                let end = substring
+                    .bytes()
+                    .position(|ch| ch == b';')
+                    .ok_or(ParseError::User {
+                        error: "invalid escape sequence",
+                    })?;
+                let utf8_ch = u32::from_str_radix(&substring[2..end], 16)
+                    .ok()
+                    .and_then(std::char::from_u32)
+                    .ok_or(ParseError::User {
+                        error: "invalid escape sequence",
+                    })?;
+                result.push(utf8_ch);
+                section_start = escape_start + end + 1;
+            }
+            _ => {
+                let mut i = escape_start + 1;
+                while let Some(&ch) = s.as_bytes().get(i) {
+                    if ch == b'\n' || !ch.is_ascii_whitespace() {
+                        break;
+                    }
+                    i += 1;
+                }
+                if s.as_bytes().get(i) != Some(&b'\n') {
+                    return Err(ParseError::User {
+                        error: "invalid escape sequence",
+                    });
+                }
+                while let Some(ch) = s.as_bytes().get(i) {
+                    if !ch.is_ascii_whitespace() {
+                        break;
+                    }
+                    i += 1;
+                }
+                section_start = i;
+            }
+        }
+    }
+
+    if section_start == 0 {
+        Ok(Cow::Borrowed(s))
+    } else {
+        result.push_str(&s[section_start..]);
+        Ok(Cow::Owned(result))
+    }
 }
 
 #[cfg(test)]
@@ -197,5 +299,11 @@ mod tests {
         );
         assert_eq!(parse_str(r"|\x3BB;|").unwrap(), Sexpr::symbol("\u{3bb}"));
         assert_eq!(parse_str(r"|\t\t|").unwrap(), Sexpr::symbol("\x09\x09"));
+    }
+
+    #[test]
+    fn can_parse_newline_in_verbatim_symbol() {
+        let sexpr = parse_str("|hello\\    \n     world|");
+        assert_eq!(sexpr.unwrap(), Sexpr::symbol("helloworld"));
     }
 }
