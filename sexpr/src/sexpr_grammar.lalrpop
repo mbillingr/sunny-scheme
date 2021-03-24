@@ -24,7 +24,7 @@ Bool: bool = {
 
 Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
 
-Sym: &'input str = <s:r"[a-zA-Z:!?*/+<>-]([^\s\(\)])*"> => s;
+Sym: &'input str = <s:r"[a-zA-Z!$%&*+./:<=>?@^_~-]([^\s\(\)])*"> => s;
 
 Str: &'input str = {
     <s:r#""[^"]*""#> => &s[1..s.len()-1],

@@ -1,6 +1,7 @@
 mod constant_expressions;
 mod control_flow;
 mod global_variables;
+mod lexical_conventions;
 mod libraries;
 mod macros;
 mod procedures;

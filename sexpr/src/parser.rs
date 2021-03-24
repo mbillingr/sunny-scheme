@@ -131,4 +131,21 @@ mod tests {
         assert_eq!(sexpr.cadr().unwrap(), &Sexpr::int(2));
         assert_eq!(sexpr.cddr().unwrap(), &Sexpr::int(3));
     }
+
+    #[test]
+    fn can_parse_special_character_symbols() {
+        // note that a single '.' can't be parsed as an identifier
+        for ch in "!$%&*+-/:<=>?@^_~".chars().map(|ch| ch.to_string()) {
+            let sexpr = parse_str(&ch).map_err(|e| e.in_string(&ch));
+            assert_eq!(sexpr.unwrap(), Sexpr::symbol(&ch));
+        }
+    }
+
+    #[test]
+    fn can_parse_special_character_symbols_infix() {
+        for ch in "!$%&*+-./:<=>?@^_~".chars().map(|ch| format!("x{}y", ch)) {
+            let sexpr = parse_str(&ch).map_err(|e| e.in_string(&ch));
+            assert_eq!(sexpr.unwrap(), Sexpr::symbol(&ch));
+        }
+    }
 }
