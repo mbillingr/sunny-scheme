@@ -42,3 +42,29 @@ fn pipes_escape_verbatim_identifiers() {
         EvaluatesTo::void()
     );
 }
+
+#[test]
+fn line_comments_are_ignored() {
+    // R7RS section 2.2
+    assert_that!("1 ; 2 3", EvaluatesTo::the_integer(2));
+}
+
+#[test]
+fn commented_data_are_ignored() {
+    // R7RS section 2.2
+    assert_that!("1 #;2 3", EvaluatesTo::the_integer(3));
+    assert_that!("1 #; 2 3", EvaluatesTo::the_integer(3));
+}
+
+#[test]
+fn block_comments_are_ignored() {
+    // R7RS section 2.2
+    assert_that!("1 #| 2 |# 3", EvaluatesTo::the_integer(3));
+}
+
+#[test]
+fn block_comments_must_be_properly_nested() {
+    // R7RS section 2.2
+    assert_that!("1 #| 2 #| 3 |# 4", EvaluatesTo::an_error());
+    assert_that!("1 #| 2 |# 3 |# 4", EvaluatesTo::an_error());
+}
