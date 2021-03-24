@@ -1,7 +1,7 @@
 use std::io::Write;
 use std::path::PathBuf;
 use vfs::impls::overlay::OverlayFS;
-use vfs::{FileSystem, MemoryFS, PhysicalFS, VfsPath};
+use vfs::{MemoryFS, PhysicalFS, VfsPath};
 
 #[derive(Debug, Clone)]
 pub struct LibraryFileSystem {
@@ -35,6 +35,27 @@ impl LibraryFileSystem {
         assert!(!full_path.exists().unwrap());
         full_path.parent().unwrap().create_dir_all().unwrap();
         full_path.create_file().unwrap().write_all(content).unwrap();
+    }
+
+    pub fn map_libname_to_path(&self, libname: &str) -> String {
+        let parts: Vec<&str> = libname
+            .trim_start_matches('(')
+            .trim_end_matches(')')
+            .split_whitespace()
+            .collect();
+
+        parts.join("/") + ".sld"
+    }
+
+    pub fn load_string(&self, path: &str) -> Option<String> {
+        let mut buf = String::new();
+
+        self.root
+            .join(path)
+            .ok()
+            .and_then(|path| path.open_file().ok())
+            .and_then(|mut file| file.read_to_string(&mut buf).ok())
+            .map(|_| buf)
     }
 }
 

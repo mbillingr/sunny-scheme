@@ -309,10 +309,14 @@ define_form! {
                 for export in lib.exports() {
                     env.add_global_binding(export.export_name.to_string(), export.binding.clone());
                 }
-                Ok(Ast::void())
-            } else {
-                Err(error_at(libname, Error::UnknownLibrary))
+                return Ok(Ast::void())
             }
+
+            let libexpr = env
+                .parse_library(&libstr)?
+                .ok_or_else(||error_at(libname, Error::UnknownLibrary))?;
+            let libast = LibraryDefinition.expand(&libexpr, env)?;
+            Ok(Ast::sequence(libast, Import.expand(sexpr, env)?))
        }]
 }
 

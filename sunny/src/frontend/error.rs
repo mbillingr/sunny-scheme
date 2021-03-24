@@ -1,9 +1,11 @@
+use sunny_sexpr_parser::parser::Error as ParseError;
 use sunny_sexpr_parser::SourceLocation;
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
+    ParseError(ParseError),
     MissingArgument,
     ExpectedSymbol,
     ExpectedList,
@@ -20,6 +22,7 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            Error::ParseError(pe) => write!(f, "{}", pe),
             Error::MissingArgument => write!(f, "Missing argument"),
             Error::ExpectedSymbol => write!(f, "Expected symbol"),
             Error::ExpectedList => write!(f, "Expected list"),

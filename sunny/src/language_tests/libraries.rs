@@ -63,6 +63,16 @@ fn import_loads_library_from_file_system() {
     );
 }
 
+#[test]
+fn import_loads_library_and_imports_values() {
+    assert_that!(
+        given()
+            .file_contains("foo/bar.sld", SIMPLE_LIBRARY_DEFINITION.as_bytes())
+            .then(vec!["(import (foo bar))", "baz"]),
+        EvaluatesTo::the_integer(42)
+    );
+}
+
 const SIMPLE_LIBRARY_DEFINITION: &str = "
 (define-library (foo bar)
     (import (scheme base))

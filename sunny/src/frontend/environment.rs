@@ -10,6 +10,7 @@ use crate::frontend::{
 };
 use crate::library_filesystem::LibraryFileSystem;
 use std::collections::HashMap;
+use sunny_sexpr_parser::parser::parse_str;
 
 #[derive(Clone)]
 pub enum EnvBinding {
@@ -233,6 +234,21 @@ impl Env {
 
     pub fn find_library(&self, name: &str) -> Option<LibraryBinding> {
         self.libraries.borrow().get(name).cloned()
+    }
+
+    pub fn parse_library(&self, name: &str) -> Result<Option<SourceLocation<Sexpr>>> {
+        let path = self.library_filesystem.map_libname_to_path(name);
+        let src = self.library_filesystem.load_string(&path);
+        if src.is_none() {
+            return Ok(None);
+        }
+        let src = src.unwrap();
+
+        let sexpr = parse_str(&src)
+            .map_err(|e| e.in_file(path))
+            .map_err(|e| e.map(|pe| Error::ParseError(pe.clone())))?;
+
+        Ok(Some(sexpr))
     }
 }
 

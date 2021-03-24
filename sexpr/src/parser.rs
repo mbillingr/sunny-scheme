@@ -4,7 +4,7 @@ use crate::{Sexpr, SourceLocation};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Error {
     InvalidToken,
     UnexpectedEof {
