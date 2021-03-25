@@ -72,9 +72,9 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
     }
 }
 
-pub fn parse_str(s: &str) -> Result<SourceLocation<Sexpr>> {
+pub fn parse_str(s: &str) -> Result<Vec<SourceLocation<Sexpr>>> {
     let context = SourceLocation::new(()).in_string(s);
-    Ok(sexpr_grammar::DatumParser::new().parse(&context, s)?)
+    Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(&context, s)?)
 }
 
 fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &'static str>> {
@@ -179,45 +179,51 @@ mod tests {
     use crate::*;
 
     #[test]
+    fn can_parse_empty_string() {
+        let sexpr = parse_str("");
+        assert!(sexpr.unwrap().is_empty());
+    }
+
+    #[test]
     fn can_parse_true() {
         let sexpr = parse_str("#t");
-        assert_eq!(sexpr.unwrap(), Sexpr::bool(true));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::bool(true)]);
     }
 
     #[test]
     fn can_parse_false() {
         let sexpr = parse_str("#f");
-        assert_eq!(sexpr.unwrap(), Sexpr::bool(false));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::bool(false)]);
     }
 
     #[test]
     fn can_parse_integer() {
         let sexpr = parse_str("0");
-        assert_eq!(sexpr.unwrap(), Sexpr::int(0));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::int(0)]);
     }
 
     #[test]
     fn can_parse_symbol() {
         let sexpr = parse_str("foo");
-        assert_eq!(sexpr.unwrap(), Sexpr::symbol("foo"));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("foo")]);
     }
 
     #[test]
     fn can_parse_string() {
         let sexpr = parse_str("\"foo\"");
-        assert_eq!(sexpr.unwrap(), Sexpr::string("foo"));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::string("foo")]);
     }
 
     #[test]
     fn can_parse_pair() {
-        let sexpr = parse_str("(1 . 2)").unwrap();
+        let sexpr = &parse_str("(1 . 2)").unwrap()[0];
         assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
         assert_eq!(sexpr.cdr().unwrap(), &Sexpr::int(2));
     }
 
     #[test]
     fn can_parse_list() {
-        let sexpr = parse_str("(1 (2 3) 4)").unwrap();
+        let sexpr = &parse_str("(1 (2 3) 4)").unwrap()[0];
         assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
         assert_eq!(sexpr.caadr().unwrap(), &Sexpr::int(2));
         assert_eq!(sexpr.cadadr().unwrap(), &Sexpr::int(3));
@@ -228,7 +234,7 @@ mod tests {
 
     #[test]
     fn can_parse_improper_list() {
-        let sexpr = parse_str("(1 2 . 3)").unwrap();
+        let sexpr = &parse_str("(1 2 . 3)").unwrap()[0];
         assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
         assert_eq!(sexpr.cadr().unwrap(), &Sexpr::int(2));
         assert_eq!(sexpr.cddr().unwrap(), &Sexpr::int(3));
@@ -239,7 +245,7 @@ mod tests {
         // note that a single '.' can't be parsed as an identifier
         for ch in "!$%&*+-/:<=>?@^_~".chars().map(|ch| ch.to_string()) {
             let sexpr = parse_str(&ch).map_err(|e| e.in_string(&ch));
-            assert_eq!(sexpr.unwrap(), Sexpr::symbol(&ch));
+            assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol(&ch)]);
         }
     }
 
@@ -247,63 +253,75 @@ mod tests {
     fn can_parse_special_character_symbols_infix() {
         for ch in "!$%&*+-./:<=>?@^_~".chars().map(|ch| format!("x{}y", ch)) {
             let sexpr = parse_str(&ch).map_err(|e| e.in_string(&ch));
-            assert_eq!(sexpr.unwrap(), Sexpr::symbol(&ch));
+            assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol(&ch)]);
         }
     }
 
     #[test]
     fn can_parse_empty_verbatim_symbol() {
         let sexpr = parse_str("||");
-        assert_eq!(sexpr.unwrap(), Sexpr::symbol(""));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("")]);
     }
 
     #[test]
     fn can_parse_whitespace_only_verbatim_symbol() {
         let sexpr = parse_str("|  |");
-        assert_eq!(sexpr.unwrap(), Sexpr::symbol("  "));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("  ")]);
     }
 
     #[test]
     fn can_parse_arbitrary_verbatim_symbol() {
         let sexpr = parse_str("|hello, world!|");
-        assert_eq!(sexpr.unwrap(), Sexpr::symbol("hello, world!"));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("hello, world!")]);
     }
 
     #[test]
     fn can_parse_example_identifiers() {
         // R7RS section 2.1
-        assert_eq!(parse_str("...").unwrap(), Sexpr::symbol("..."));
-        assert_eq!(parse_str("+").unwrap(), Sexpr::symbol("+"));
-        assert_eq!(parse_str("+soup+").unwrap(), Sexpr::symbol("+soup+"));
-        assert_eq!(parse_str("<=?").unwrap(), Sexpr::symbol("<=?"));
-        assert_eq!(parse_str("->string").unwrap(), Sexpr::symbol("->string"));
-        assert_eq!(parse_str("a34kTMNs").unwrap(), Sexpr::symbol("a34kTMNs"));
-        assert_eq!(parse_str("lambda").unwrap(), Sexpr::symbol("lambda"));
+        assert_eq!(parse_str("...").unwrap(), vec![Sexpr::symbol("...")]);
+        assert_eq!(parse_str("+").unwrap(), vec![Sexpr::symbol("+")]);
+        assert_eq!(parse_str("+soup+").unwrap(), vec![Sexpr::symbol("+soup+")]);
+        assert_eq!(parse_str("<=?").unwrap(), vec![Sexpr::symbol("<=?")]);
+        assert_eq!(
+            parse_str("->string").unwrap(),
+            vec![Sexpr::symbol("->string")]
+        );
+        assert_eq!(
+            parse_str("a34kTMNs").unwrap(),
+            vec![Sexpr::symbol("a34kTMNs")]
+        );
+        assert_eq!(parse_str("lambda").unwrap(), vec![Sexpr::symbol("lambda")]);
         assert_eq!(
             parse_str("list->vector").unwrap(),
-            Sexpr::symbol("list->vector")
+            vec![Sexpr::symbol("list->vector")]
         );
-        assert_eq!(parse_str("q").unwrap(), Sexpr::symbol("q"));
-        assert_eq!(parse_str("V17a").unwrap(), Sexpr::symbol("V17a"));
+        assert_eq!(parse_str("q").unwrap(), vec![Sexpr::symbol("q")]);
+        assert_eq!(parse_str("V17a").unwrap(), vec![Sexpr::symbol("V17a")]);
         assert_eq!(
             parse_str("|two words|").unwrap(),
-            Sexpr::symbol("two words")
+            vec![Sexpr::symbol("two words")]
         );
         assert_eq!(
             parse_str(r"|two\x20;words|").unwrap(),
-            Sexpr::symbol("two words")
+            vec![Sexpr::symbol("two words")]
         );
         assert_eq!(
             parse_str("the-word-recursion-has-many-meanings").unwrap(),
-            Sexpr::symbol("the-word-recursion-has-many-meanings")
+            vec![Sexpr::symbol("the-word-recursion-has-many-meanings")]
         );
-        assert_eq!(parse_str(r"|\x3BB;|").unwrap(), Sexpr::symbol("\u{3bb}"));
-        assert_eq!(parse_str(r"|\t\t|").unwrap(), Sexpr::symbol("\x09\x09"));
+        assert_eq!(
+            parse_str(r"|\x3BB;|").unwrap(),
+            vec![Sexpr::symbol("\u{3bb}")]
+        );
+        assert_eq!(
+            parse_str(r"|\t\t|").unwrap(),
+            vec![Sexpr::symbol("\x09\x09")]
+        );
     }
 
     #[test]
     fn can_parse_newline_in_verbatim_symbol() {
         let sexpr = parse_str("|hello\\    \n     world|");
-        assert_eq!(sexpr.unwrap(), Sexpr::symbol("helloworld"));
+        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("helloworld")]);
     }
 }

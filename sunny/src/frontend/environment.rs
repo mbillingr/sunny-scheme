@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
+use crate::frontend::error::error_after;
 use crate::frontend::library::{Export, LibraryBinding};
 use crate::frontend::{
     error::{error_at, Error, Result},
@@ -244,11 +245,14 @@ impl Env {
         }
         let src = src.unwrap();
 
-        let sexpr = parse_str(&src)
+        parse_str(&src)
+            .map_err(|e| e.map(|pe| Error::ParseError(pe.clone())))
+            .and_then(|mut sexprs| match sexprs.len() {
+                0 => Err(SourceLocation::new(Error::InvalidForm)),
+                1 => Ok(Some(sexprs.pop().unwrap())),
+                _ => Err(error_after(&sexprs[0], Error::InvalidForm)),
+            })
             .map_err(|e| e.in_file(path))
-            .map_err(|e| e.map(|pe| Error::ParseError(pe.clone())))?;
-
-        Ok(Some(sexpr))
     }
 }
 

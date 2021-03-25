@@ -3,11 +3,6 @@ use hamcrest2::assert_that;
 use hamcrest2::prelude::*;
 
 #[test]
-fn empty_input_is_error() {
-    assert_that!("", EvaluatesTo::an_error());
-}
-
-#[test]
 fn an_empty_list_is_an_error() {
     assert_that!("()", EvaluatesTo::an_error());
 }

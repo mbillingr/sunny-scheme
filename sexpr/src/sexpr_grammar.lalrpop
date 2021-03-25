@@ -12,11 +12,20 @@ match {
     _
 }
 
-pub Datum: SourceLocation<Sexpr> = {
+pub ExplicitSequence: Vec<SourceLocation<Sexpr>> = {
+    <cd:CommentedDatum*> => cd.into_iter().filter_map(|x|x).collect(),
+};
+
+CommentedDatum: Option<SourceLocation<Sexpr>> = {
+    "#!" <c:Datum> => None,
+    <d:Datum> => Some(d),
+};
+
+Datum: SourceLocation<Sexpr> = {
     <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_span(l..r).map_value(x),
 };
 
-pub RawSexpr: Sexpr = {
+RawSexpr: Sexpr = {
     <b:Bool> => Sexpr::bool(b),
     <n:Num> => Sexpr::int(n),
     <s:Sym> => Sexpr::symbol(&s),

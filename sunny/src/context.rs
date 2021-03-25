@@ -7,6 +7,7 @@ use sunny_vm::Primitive;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 
 use crate::backend::{ByteCodeBackend, GlobalTable};
+use crate::frontend::ast::Ast;
 use crate::frontend::environment::{Env, EnvBinding};
 use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
@@ -38,13 +39,26 @@ impl Context {
     }
 
     pub fn eval(&mut self, src: &str) -> Result<Value, Error> {
-        let sexpr = parse_str(src).map_err(|e| e.in_string(src))?;
+        let sexprs = parse_str(src).map_err(|e| e.in_string(src))?;
+
+        if sexprs.is_empty() {
+            return Ok(Value::Void);
+        }
 
         //println!("{:#?}", self.env);
 
-        let ast = Expression
-            .expand(&sexpr, &mut self.env)
-            .map_err(|e| e.in_string(src))?;
+        let mut ast_parts = vec![];
+        for sx in sexprs {
+            let part = Expression
+                .expand(&sx, &mut self.env)
+                .map_err(|e| e.in_string(src))?;
+            ast_parts.push(part)
+        }
+        let last_part = ast_parts.pop().unwrap();
+        let ast = ast_parts
+            .into_iter()
+            .rfold(last_part, |ast, part| Ast::sequence(part, ast));
+
         println!("{}", ast);
 
         let mut backend = ByteCodeBackend::new(self.vm.borrow_storage(), &mut self.globals);

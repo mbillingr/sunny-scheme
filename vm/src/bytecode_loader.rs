@@ -235,7 +235,7 @@ mod tests {
     #[test]
     fn bytecode_loader() {
         let source = "
-((constants:
+(constants:
     42 foo (1 2 3))
 
 (code:
@@ -244,7 +244,7 @@ mod tests {
     jump the-end
     const 1
 the-end:
-    return))
+    return)
         ";
         let mut storage = ValueStorage::new(1024);
         let code = match user_load(source, &mut storage) {
