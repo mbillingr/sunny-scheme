@@ -19,6 +19,7 @@ mod storage;
 mod table;
 mod value;
 pub mod vm;
+pub mod number;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;

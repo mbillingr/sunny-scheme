@@ -90,65 +90,65 @@ macro_rules! primitive {
 primitive! {
     fn dec(num: Value) -> Result<Value> {
         let x = num.as_int().ok_or(ErrorKind::TypeError)?;
-        Ok(Value::Number(x - 1))
+        Ok(Value::number(x - 1))
     }
 
     varfn add([args]) -> Result<Value> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::Number(0)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+            [] => return Ok(Value::number(0)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
             let x = x.as_number().ok_or(ErrorKind::TypeError)?;
-            acc += x;
+            acc = &acc + x;
         }
 
-        Ok(Value::Number(acc))
+        Ok(Value::number(acc))
     }
 
     varfn sub([args]) -> Result<Value> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::Number(0)),
-            [x] => return Ok(Value::Number(-x.as_number().ok_or(ErrorKind::TypeError)?)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+            [] => return Ok(Value::number(0)),
+            [x] => return Ok(Value::number(-x.as_number().ok_or(ErrorKind::TypeError)?)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
             let x = x.as_number().ok_or(ErrorKind::TypeError)?;
-            acc -= x;
+            acc = &acc - x;
         }
 
-        Ok(Value::Number(acc))
+        Ok(Value::number(acc))
     }
 
     varfn mul([args]) -> Result<Value> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::Number(1)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+            [] => return Ok(Value::number(1)),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
             let x = x.as_number().ok_or(ErrorKind::TypeError)?;
-            acc *= x;
+            acc = &acc * x;
         }
 
-        Ok(Value::Number(acc))
+        Ok(Value::number(acc))
     }
 
     varfn div([args]) -> Result<Value> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::Number(0)),
-            [x] => return Ok(Value::Number(1/x.as_number().ok_or(ErrorKind::TypeError)?)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?,
+            [] => return Ok(Value::number(0)),
+            [x] => return Ok(Value::number(x.as_number().ok_or(ErrorKind::TypeError)?.inv())),
+            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
             let x = x.as_number().ok_or(ErrorKind::TypeError)?;
-            acc /= x;
+            acc = &acc / x;
         }
 
-        Ok(Value::Number(acc))
+        Ok(Value::number(acc))
     }
 
     fn lt(a: Value, b: Value) -> Result<Value> {

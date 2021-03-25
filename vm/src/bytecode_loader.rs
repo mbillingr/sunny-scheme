@@ -265,7 +265,7 @@ the-end:
             ]
         );
 
-        assert!(code.constant_slice()[0].equals(&Value::Number(42)));
+        assert!(code.constant_slice()[0].equals(&Value::number(42)));
         assert!(code.constant_slice()[1].equals(&storage.interned_symbol("foo").unwrap()));
         assert!(code.constant_slice()[2].equals(&storage.list(vec![1, 2, 3]).unwrap()));
     }

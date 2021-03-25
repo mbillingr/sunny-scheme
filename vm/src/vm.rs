@@ -187,7 +187,7 @@ impl Vm {
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
                 Op::PrepareVarArgs(n_args) => self.prepare_varargs(Op::extend_arg(n_args, arg))?,
                 Op::Void => self.push_value(Value::Void),
-                Op::Integer(a) => self.push_value(Value::Number(Op::extend_arg(a, arg) as i64)),
+                Op::Integer(a) => self.push_value(Value::number(Op::extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
                 Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg))?,
                 Op::Dup => self.dup()?,
@@ -503,13 +503,13 @@ impl Vm {
 
     fn inc(&mut self) -> Result<()> {
         let x = self.pop_int()?;
-        self.push_value(Value::Number(x + 1));
+        self.push_value(Value::number(x + 1));
         Ok(())
     }
 
     fn dec(&mut self) -> Result<()> {
         let x = self.pop_int()?;
-        self.push_value(Value::Number(x - 1));
+        self.push_value(Value::number(x - 1));
         Ok(())
     }
 
@@ -706,11 +706,11 @@ mod tests {
     #[test]
     fn op_return_from_toplevel_pops_value_stack() {
         let (ret, vm) = VmRunner::new()
-            .with_value_stack(vec![Value::Number(0), Value::Number(1)])
+            .with_value_stack(vec![Value::number(0), Value::number(1)])
             .run_code(CodeBuilder::new().op(Op::Return));
 
-        assert_eq!(ret, Ok(Value::Number(1)));
-        assert_eq!(vm.value_stack, vec![Value::Number(0)]);
+        assert_eq!(ret, Ok(Value::number(1)));
+        assert_eq!(vm.value_stack, vec![Value::number(0)]);
     }
 
     #[test]
@@ -728,7 +728,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(vm.value_stack, vec![Value::Number(0x0123456789abcdef)]);
+        assert_eq!(vm.value_stack, vec![Value::number(0x0123456789abcdef)]);
     }
 
     #[test]
@@ -736,7 +736,7 @@ mod tests {
         let (_, vm) =
             VmRunner::new().run_code(CodeBuilder::new().op(Op::Integer(123)).op(Op::Halt));
 
-        assert_eq!(vm.value_stack, vec![Value::Number(123)]);
+        assert_eq!(vm.value_stack, vec![Value::number(123)]);
     }
 
     #[test]
@@ -745,25 +745,25 @@ mod tests {
             CodeBuilder::new()
                 .constant(Value::Void)
                 .constant(Value::Nil)
-                .constant(Value::Number(0))
+                .constant(Value::number(0))
                 .op(Op::Halt),
         );
 
         assert_eq!(
             vm.value_stack,
-            vec![Value::Void, Value::Nil, Value::Number(0)]
+            vec![Value::Void, Value::Nil, Value::number(0)]
         );
     }
 
     #[test]
     fn op_cons_pops_two_values_and_pushes_pair() {
         let (_, vm) = VmRunner::new()
-            .with_value_stack(vec![Value::Number(0), Value::Nil])
+            .with_value_stack(vec![Value::number(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
         assert_eq!(
             vm.value_stack.last().unwrap(),
-            &(Value::Number(0), Value::Nil)
+            &(Value::number(0), Value::Nil)
         );
     }
 
@@ -771,12 +771,12 @@ mod tests {
     fn op_cons_succeeds_even_when_storage_is_full() {
         let (_, vm) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::Number(0), Value::Nil])
+            .with_value_stack(vec![Value::number(0), Value::Nil])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
         assert_eq!(
             vm.value_stack.last().unwrap(),
-            &(Value::Number(0), Value::Nil)
+            &(Value::number(0), Value::Nil)
         );
     }
 
@@ -819,7 +819,7 @@ mod tests {
     fn op_call_expects_callable_on_top_of_stack() {
         let (ret, _) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::Number(0)])
+            .with_value_stack(vec![Value::number(0)])
             .run_code(CodeBuilder::new().op(Op::Call { n_args: 0 }));
 
         assert_eq!(ret, Err(ErrorKind::TypeError));
@@ -860,7 +860,7 @@ mod tests {
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(vm.value_stack, vec![Value::Number(1)]);
+        assert_eq!(vm.value_stack, vec![Value::number(1)]);
     }
 
     #[test]
@@ -882,15 +882,15 @@ mod tests {
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(
             cell_clone(&vm.current_activation.locals[0]),
-            Value::Number(12)
+            Value::number(12)
         );
         assert_eq!(
             cell_clone(&vm.current_activation.locals[1]),
-            Value::Number(11)
+            Value::number(11)
         );
         assert_eq!(
             cell_clone(&vm.current_activation.locals[2]),
-            Value::Number(10)
+            Value::number(10)
         );
     }
 
@@ -916,10 +916,10 @@ mod tests {
         assert_eq!(
             &*vm.value_stack,
             vec![
-                Value::Number(12),
-                Value::Number(10),
-                Value::Number(10),
-                Value::Number(11)
+                Value::number(12),
+                Value::number(10),
+                Value::number(10),
+                Value::number(11)
             ]
         )
     }
@@ -949,10 +949,10 @@ mod tests {
         assert_eq!(
             &*vm.value_stack,
             vec![
-                Value::Number(10),
-                Value::Number(12),
-                Value::Number(12),
-                Value::Number(11)
+                Value::number(10),
+                Value::number(12),
+                Value::number(12),
+                Value::number(11)
             ]
         )
     }
@@ -972,7 +972,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(12), Value::Number(34)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(12), Value::number(34)])
     }
 
     #[test]
@@ -985,7 +985,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(0)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(0)])
     }
 
     #[test]
@@ -1001,7 +1001,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(2), Value::Number(3)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(2), Value::number(3)])
     }
 
     #[test]
@@ -1019,7 +1019,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(0)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(0)])
     }
 
     #[test]
@@ -1037,14 +1037,14 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(1)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(1)])
     }
 
     #[test]
     fn op_jump_void_falls_through_and_leaves_condition_on_stack() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::Number(2))
+                .constant(Value::number(2))
                 .branch_void("is void")
                 .op(Op::Integer(0))
                 .op(Op::Halt)
@@ -1054,7 +1054,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(2), Value::Number(0)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(2), Value::number(0)])
     }
 
     #[test]
@@ -1071,7 +1071,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::Number(1)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(1)])
     }
 
     #[test]
@@ -1126,7 +1126,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::Number(1)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(1)])
     }
 
     #[test]
@@ -1140,7 +1140,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::Number(2)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(2)])
     }
 
     #[test]
@@ -1188,7 +1188,7 @@ mod tests {
 
         assert_eq!(
             vm.value_stack.last().unwrap(),
-            &hashmap! {Value::Number(1) => Value::Number(2)}
+            &hashmap! {Value::number(1) => Value::number(2)}
         );
     }
 
@@ -1231,7 +1231,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::Number(2)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(2)])
     }
 
     #[test]
@@ -1250,12 +1250,12 @@ mod tests {
         assert_eq!(
             &*vm.value_stack,
             vec![
-                Value::Number(1),
-                Value::Number(2),
-                Value::Number(3),
-                Value::Number(1),
-                Value::Number(3),
-                Value::Number(3)
+                Value::number(1),
+                Value::number(2),
+                Value::number(3),
+                Value::number(1),
+                Value::number(3),
+                Value::number(3)
             ]
         )
     }
@@ -1273,7 +1273,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::Number(1), Value::Number(2)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(1), Value::number(2)])
     }
 
     #[test]
@@ -1290,7 +1290,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::Number(1), Value::Number(2)])
+        assert_eq!(&*vm.value_stack, vec![Value::number(1), Value::number(2)])
     }
 
     #[test]
@@ -1316,7 +1316,7 @@ mod tests {
             caller: None,
             parent: None,
             code: CodePointer::new(code_segment.clone()).at(999),
-            locals: vec![Cell::new(Value::Number(1)), Cell::new(Value::Number(2))],
+            locals: vec![Cell::new(Value::number(1)), Cell::new(Value::number(2))],
         };
         let act = storage.insert(act).unwrap();
 
@@ -1335,7 +1335,7 @@ mod tests {
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(vm.value_stack, vec![Value::Number(2)]);
+        assert_eq!(vm.value_stack, vec![Value::number(2)]);
     }
 
     #[test]

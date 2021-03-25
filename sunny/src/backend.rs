@@ -316,7 +316,7 @@ mod tests {
         );
         assert_eq!(
             cs.constant_slice(),
-            &[Value::Number(1), Value::Number(3), Value::Number(2)]
+            &[Value::number(1), Value::number(3), Value::number(2)]
         );
     }
 
@@ -479,7 +479,7 @@ mod tests {
 
         assert_eq!(
             cs.constant_slice(),
-            &[Value::Number(3), Value::Number(2), Value::Number(1)]
+            &[Value::number(3), Value::number(2), Value::number(1)]
         )
     }
 
@@ -546,6 +546,6 @@ mod tests {
                 Op::Halt
             ]
         );
-        assert_eq!(cs.constant_slice(), &[mod_symbol, Value::Number(42)]);
+        assert_eq!(cs.constant_slice(), &[mod_symbol, Value::number(42)]);
     }
 }

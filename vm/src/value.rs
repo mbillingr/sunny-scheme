@@ -6,6 +6,7 @@ use crate::continuation::Continuation;
 use crate::mem::{Ref, Traceable, Tracer};
 use crate::primitive::Primitive;
 use crate::table::Table;
+use crate::number::Number;
 
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;
@@ -17,7 +18,7 @@ pub enum Value {
     Nil,
     False,
     True,
-    Number(i64),
+    Number(Number),
     Symbol(Ref<Symbol>),
     String(Ref<ConstString>),
     Pair(Ref<(Value, Value)>),
@@ -82,8 +83,7 @@ macro_rules! impl_accessor {
 impl Value {
     impl_accessor!(is_void, Value::Void);
     impl_accessor!(is_nil, Value::Nil);
-    impl_accessor!(is_int, as_int, Value::Number, i64);
-    impl_accessor!(is_number, as_number, Value::Number, i64);
+    impl_accessor!(is_number, as_number, Value::Number, ref Number);
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, as_mut_pair, Value::Pair, ref (Value, Value));
     impl_accessor!(is_table, as_table, as_mut_table, Value::Table, ref Table);
@@ -94,6 +94,10 @@ impl Value {
             true => Self::True,
             false => Self::False,
         }
+    }
+
+    pub fn number(x: impl Into<Number>) -> Self {
+        Value::Number(x.into())
     }
 
     pub fn get_tag(&self) -> u8 {
@@ -133,6 +137,17 @@ impl Value {
         }
     }
 
+    pub fn is_int(&self) -> bool {
+        self.as_int().is_some()
+    }
+
+    pub fn as_int(&self) -> Option<i64> {
+        match self {
+            Value::Number(num) => num.as_int(),
+            _ => None,
+        }
+    }
+
     pub fn car(&self) -> Option<&Value> {
         self.as_pair().map(|(car, _)| car)
     }
@@ -166,7 +181,7 @@ impl Value {
             (Nil, Nil) => true,
             (False, False) => true,
             (True, True) => true,
-            (Number(a), Number(b)) => a == b,
+            (Number(a), Number(b)) => a.equals(b),
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0.equals(&b.0) && a.1.equals(&b.1),
@@ -305,7 +320,7 @@ impl Hash for Value {
 
 impl From<i64> for Value {
     fn from(i: i64) -> Self {
-        Value::Number(i)
+        Value::Number(Number::from(i))
     }
 }
 
@@ -377,28 +392,28 @@ mod tests {
     #[test]
     fn can_insert_entries_in_table() {
         let mut table = Table::new();
-        table.insert(Value::Void, Value::Number(1));
-        table.insert(Value::Nil, Value::Number(2));
-        table.insert(Value::False, Value::Number(3));
-        table.insert(Value::True, Value::Number(4));
-        table.insert(Value::Number(0), Value::Number(5));
+        table.insert(Value::Void, Value::number(1));
+        table.insert(Value::Nil, Value::number(2));
+        table.insert(Value::False, Value::number(3));
+        table.insert(Value::True, Value::number(4));
+        table.insert(Value::number(0), Value::number(5));
 
-        assert_eq!(table[&Value::Void], Value::Number(1));
-        assert_eq!(table[&Value::Nil], Value::Number(2));
-        assert_eq!(table[&Value::False], Value::Number(3));
-        assert_eq!(table[&Value::True], Value::Number(4));
-        assert_eq!(table[&Value::Number(0)], Value::Number(5));
+        assert_eq!(table[&Value::Void], Value::number(1));
+        assert_eq!(table[&Value::Nil], Value::number(2));
+        assert_eq!(table[&Value::False], Value::number(3));
+        assert_eq!(table[&Value::True], Value::number(4));
+        assert_eq!(table[&Value::number(0)], Value::number(5));
     }
 
     #[test]
     fn compound_values_are_compared_by_pointer() {
         let pair1 = Value::Pair(Ref::from_leaked_static((
-            Value::Number(1),
-            Value::Number(2),
+            Value::number(1),
+            Value::number(2),
         )));
         let pair2 = Value::Pair(Ref::from_leaked_static((
-            Value::Number(1),
-            Value::Number(2),
+            Value::number(1),
+            Value::number(2),
         )));
 
         assert_eq!(pair1, pair1);
