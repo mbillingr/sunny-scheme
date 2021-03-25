@@ -13,12 +13,16 @@ match {
 }
 
 pub ExplicitSequence: Vec<SourceLocation<Sexpr>> = {
-    <cd:CommentedDatum*> => cd.into_iter().filter_map(|x|x).collect(),
+    <cd:OptionalDatum*> => cd.into_iter().filter_map(|x|x).collect(),
 };
 
-CommentedDatum: Option<SourceLocation<Sexpr>> = {
-    "#!" <c:Datum> => None,
+OptionalDatum: Option<SourceLocation<Sexpr>> = {
+    CommentedDatum => None,
     <d:Datum> => Some(d),
+};
+
+CommentedDatum: () = {
+    "#;" Datum => (),
 };
 
 Datum: SourceLocation<Sexpr> = {
@@ -56,6 +60,7 @@ List: Sexpr = {
 };
 
 Sequence: Sexpr = {
+    <car:CommentedDatum> <seq:Sequence> => seq,
     <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_span(l..r).map_value(cdr)),
     <car:Datum> "." <cdr:Datum> => Sexpr::cons(car, cdr),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),

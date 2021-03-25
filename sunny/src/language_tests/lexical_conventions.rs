@@ -54,6 +54,7 @@ fn commented_data_are_ignored() {
     // R7RS section 2.2
     assert_that!("1 #;2 3", EvaluatesTo::the_integer(3));
     assert_that!("1 #; 2 3", EvaluatesTo::the_integer(3));
+    assert_that!("'(1 #; 2 3)", EvaluatesTo::the_list(vec![1, 3]));
 }
 
 #[test]
