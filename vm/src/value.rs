@@ -8,6 +8,7 @@ use crate::primitive::Primitive;
 use crate::table::Table;
 
 pub type Symbol = Box<str>;
+pub type ConstString = Box<str>;
 
 #[derive(Clone)]
 #[repr(u8)]
@@ -18,6 +19,7 @@ pub enum Value {
     True,
     Number(i64),
     Symbol(Ref<Symbol>),
+    String(Ref<ConstString>),
     Pair(Ref<(Value, Value)>),
     Table(Ref<Table>),
 
@@ -102,11 +104,12 @@ impl Value {
             Value::True => 3,
             Value::Number(_) => 4,
             Value::Symbol(_) => 5,
-            Value::Pair(_) => 6,
-            Value::Table(_) => 7,
-            Value::Closure(_) => 8,
-            Value::Primitive(_) => 9,
-            Value::Continuation(_) => 10,
+            Value::String(_) => 6,
+            Value::Pair(_) => 7,
+            Value::Table(_) => 8,
+            Value::Closure(_) => 9,
+            Value::Primitive(_) => 10,
+            Value::Continuation(_) => 11,
         }
     }
 
@@ -165,6 +168,7 @@ impl Value {
             (True, True) => true,
             (Number(a), Number(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
+            (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0.equals(&b.0) && a.1.equals(&b.1),
             (Table(a), Table(b)) => ***a == ***b,
             (Closure(a), Closure(b)) => **a == **b,
@@ -178,6 +182,7 @@ impl Value {
         match self {
             Value::Void | Value::Nil | Value::False | Value::True | Value::Number(_) => None,
             Value::Symbol(s) => Some(s.as_dyn_traceable()),
+            Value::String(s) => Some(s.as_dyn_traceable()),
             Value::Pair(p) => Some(p.as_dyn_traceable()),
             Value::Table(t) => Some(t.as_dyn_traceable()),
             Value::Closure(c) => Some(c.as_dyn_traceable()),
@@ -196,6 +201,7 @@ impl Traceable for Value {
             Value::True => {}
             Value::Number(_) => {}
             Value::Symbol(p) => p.trace(gc),
+            Value::String(p) => p.trace(gc),
             Value::Pair(p) => p.trace(gc),
             Value::Table(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
@@ -214,6 +220,7 @@ impl std::fmt::Debug for Value {
             Value::True => write!(f, "#t"),
             Value::Number(i) => write!(f, "{}", i),
             Value::Symbol(p) => write!(f, "'{}", **p),
+            Value::String(p) => write!(f, "{:?}", **p),
             Value::Pair(p) => write!(f, "{:?}", p),
             Value::Table(p) => write!(f, "{:?}", p),
             Value::Closure(p) => write!(f, "{:?}", p),
@@ -232,6 +239,7 @@ impl std::fmt::Display for Value {
             Value::True => write!(f, "#t"),
             Value::Number(i) => write!(f, "{}", i),
             Value::Symbol(p) => write!(f, "'{}", **p),
+            Value::String(p) => write!(f, "{}", **p),
             Value::Pair(p) => write!(f, "({} . {})", p.0, p.1),
             Value::Table(p) => write!(f, "{:?}", **p),
             Value::Closure(p) => write!(f, "{:?}", p),
@@ -251,6 +259,7 @@ impl PartialEq for Value {
             (True, True) => true,
             (Number(a), Number(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
+            (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a == b,
             (Table(a), Table(b)) => a == b,
             (Closure(a), Closure(b)) => a == b,
@@ -284,6 +293,7 @@ impl Hash for Value {
             Value::True => {}
             Value::Number(_) => {}
             Value::Symbol(p) => p.as_ptr().hash(state),
+            Value::String(p) => p.hash(state),
             Value::Pair(p) => p.as_ptr().hash(state),
             Value::Table(p) => p.as_ptr().hash(state),
             Value::Closure(p) => p.as_ptr().hash(state),

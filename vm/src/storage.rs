@@ -1,7 +1,7 @@
 use crate::closure::Closure;
 use crate::mem::{Ref, Storage, Traceable, Tracer};
 use crate::table::Table;
-use crate::value::Symbol;
+use crate::value::{ConstString, Symbol};
 use crate::Value;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -33,7 +33,7 @@ impl ValueStorage {
             Sexpr::Bool(true) => Value::True,
             Sexpr::Integer(x) => Value::Number(*x),
             Sexpr::Symbol(s) => self.interned_symbol(s)?,
-            Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
+            Sexpr::String(s) => self.interned_string(s)?,
             Sexpr::Pair(p) => {
                 let car = self.sexpr_to_value(p.0.get_value())?;
                 let cdr = self.sexpr_to_value(p.1.get_value())?;
@@ -47,7 +47,7 @@ impl ValueStorage {
         match sexpr {
             Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) => 0,
             Sexpr::Symbol(_) => 1,
-            Sexpr::String(_) => unimplemented!("no runtime string representation yet"),
+            Sexpr::String(_) => 1,
             Sexpr::Pair(p) => {
                 let n_car = self.count_allocations(p.0.get_value());
                 let n_cdr = self.count_allocations(p.1.get_value());
@@ -55,6 +55,19 @@ impl ValueStorage {
             }
             Sexpr::Object(_) => 0,
         }
+    }
+
+    pub fn interned_string(&mut self, content: &str) -> Result<Value, ()> {
+        let string_ref = if let Some(s) = self
+            .storage
+            .find_interned(|s: &ConstString| &**s == content)
+        {
+            s
+        } else {
+            let s = content.to_string().into_boxed_str();
+            self.storage.insert_interned(s).map_err(|_| ())?
+        };
+        Ok(Value::String(string_ref))
     }
 
     pub fn interned_symbol(&mut self, name: &str) -> Result<Value, ()> {
@@ -161,6 +174,7 @@ impl ValueStorage {
             Value::True => true,
             Value::Number(_) => true,
             Value::Symbol(p) => self.storage.is_valid(p),
+            Value::String(p) => self.storage.is_valid(p),
             Value::Pair(p) => self.storage.is_valid(p),
             Value::Table(p) => self.storage.is_valid(p),
             Value::Closure(p) => self.storage.is_valid(p),
