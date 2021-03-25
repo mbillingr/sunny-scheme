@@ -8,7 +8,12 @@ grammar<'a>(context: &'a SourceLocation<()>);
 
 match {
     r"\s*" => { }, // The default whitespace skipping is disabled an `ignore pattern` is specified
-    r";[^\n\r]*[\n\r]*" => { }, // Skip line comments starting with `;`
+    r";[^\n\r]*[\n\r]*" => LINE_COMMENT,
+    r"#\|[^|]*\|+([^|#][^|]*\|+)*#" => BLOCK_COMMENT,
+    ".",
+    r"\|(\\\||[^|])*\|" => VERBATIM_SYMBOL,
+    r"[a-zA-Z!$%&*+./:<=>?@^_~-]([^\s\(\)])*" => IDENTIFIER,
+} else {
     _
 }
 
@@ -17,12 +22,14 @@ pub ExplicitSequence: Vec<SourceLocation<Sexpr>> = {
 };
 
 OptionalDatum: Option<SourceLocation<Sexpr>> = {
-    CommentedDatum => None,
+    Comment => None,
     <d:Datum> => Some(d),
 };
 
-CommentedDatum: () = {
-    "#;" Datum => (),
+Comment: () = {
+    "#;" Datum,
+    LINE_COMMENT,
+    BLOCK_COMMENT,
 };
 
 Datum: SourceLocation<Sexpr> = {
@@ -46,8 +53,8 @@ Bool: bool = {
 Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
 
 Sym: Cow<'input, str> = {
-    <s:r"[a-zA-Z!$%&*+./:<=>?@^_~-]([^\s\(\)])*"> => Cow::Borrowed(s),
-    <s:r"\|(\\\||[^|])*\|"> =>? unescape(&s[1..s.len()-1]),
+    <s:IDENTIFIER> => Cow::Borrowed(s),
+    <s:VERBATIM_SYMBOL> =>? unescape(&s[1..s.len()-1]),
 }
 
 Str: &'input str = {
@@ -60,7 +67,7 @@ List: Sexpr = {
 };
 
 Sequence: Sexpr = {
-    <car:CommentedDatum> <seq:Sequence> => seq,
+    <car:Comment> <seq:Sequence> => seq,
     <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_span(l..r).map_value(cdr)),
     <car:Datum> "." <cdr:Datum> => Sexpr::cons(car, cdr),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
