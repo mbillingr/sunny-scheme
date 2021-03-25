@@ -46,7 +46,7 @@ fn pipes_escape_verbatim_identifiers() {
 #[test]
 fn line_comments_are_ignored() {
     // R7RS section 2.2
-    assert_that!("1 ; 2 3", EvaluatesTo::the_integer(2));
+    assert_that!("1 ; 2 3", EvaluatesTo::the_integer(1));
 }
 
 #[test]

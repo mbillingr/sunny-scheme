@@ -6,6 +6,12 @@ use crate::source_location::SourceLocation;
 
 grammar<'a>(context: &'a SourceLocation<()>);
 
+match {
+    r"\s*" => { }, // The default whitespace skipping is disabled an `ignore pattern` is specified
+    r";[^\n\r]*[\n\r]*" => { }, // Skip line comments starting with `;`
+    _
+}
+
 pub Datum: SourceLocation<Sexpr> = {
     <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_span(l..r).map_value(x),
 };
