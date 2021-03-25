@@ -69,10 +69,3 @@ fn block_comments_match_shortest_possibility() {
     // R7RS section 2.2
     assert_that!("#| 1 |# 2 #| 3 |#", EvaluatesTo::the_integer(2));
 }
-
-#[test]
-fn block_comments_must_be_properly_nested() {
-    // R7RS section 2.2
-    assert_that!("1 #| 2 #| 3 |# 4", EvaluatesTo::an_error());
-    assert_that!("1 #| 2 |# 3 |# 4", EvaluatesTo::an_error());
-}
