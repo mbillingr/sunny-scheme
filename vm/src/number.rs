@@ -1,9 +1,9 @@
-use std::ops::{Add, Sub, Mul, Div, Neg};
 use std::cmp::Ordering;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Clone)]
 pub enum Number {
-    Int(i64)
+    Int(i64),
 }
 
 impl From<i64> for Number {
@@ -16,13 +16,12 @@ impl Number {
     pub fn as_int(&self) -> Option<i64> {
         match self {
             Number::Int(x) => Some(*x),
-            _ => None,
         }
     }
 
     pub fn inv(&self) -> Self {
         match self {
-            Number::Int(x) => Number::Int(1/ *x),
+            Number::Int(x) => Number::Int(1 / *x),
         }
     }
 

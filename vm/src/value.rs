@@ -4,9 +4,9 @@ use std::hash::{Hash, Hasher};
 use crate::closure::Closure;
 use crate::continuation::Continuation;
 use crate::mem::{Ref, Traceable, Tracer};
+use crate::number::Number;
 use crate::primitive::Primitive;
 use crate::table::Table;
-use crate::number::Number;
 
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;

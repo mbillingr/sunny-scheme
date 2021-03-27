@@ -3,6 +3,7 @@ lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 use crate::{Sexpr, SourceLocation};
 use lalrpop_util::{lexer::Token, ParseError};
 use std::borrow::Cow;
+use std::collections::HashMap;
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
@@ -74,7 +75,7 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
 
 pub fn parse_str(s: &str) -> Result<Vec<SourceLocation<Sexpr>>> {
     let context = SourceLocation::new(()).in_string(s);
-    Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(&context, s)?)
+    Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(&context, &mut HashMap::new(), s)?)
 }
 
 fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &'static str>> {

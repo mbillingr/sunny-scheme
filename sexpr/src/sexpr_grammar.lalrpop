@@ -1,10 +1,12 @@
+use lalrpop_util::ParseError;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::str::FromStr;
 use crate::parser::unescape;
 use crate::Sexpr;
 use crate::source_location::SourceLocation;
 
-grammar<'a>(context: &'a SourceLocation<()>);
+grammar<'a>(context: &'a SourceLocation<()>, datum_labels: &mut HashMap<&'input str, Sexpr>);
 
 match {
     r"\s*" => { }, // The default whitespace skipping is disabled an `ignore pattern` is specified
@@ -33,6 +35,15 @@ Comment: () = {
 };
 
 Datum: SourceLocation<Sexpr> = {
+    <i:r"#([0-9]+)="> <d:Datum> => { datum_labels.insert(&i[1..i.len()-1], d.get_value().clone()); d },
+    <l:@L> <i:r"#([0-9]+)#"> <r:@R> =>? {
+        datum_labels.get(&i[1..i.len()-1])
+                    .cloned()
+                    .map(|d| context.clone().with_span(l..r).map_value(d))
+                    .ok_or(ParseError::User {
+                        error: "undefined datum label"
+                    })
+    },
     <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_span(l..r).map_value(x),
 };
 

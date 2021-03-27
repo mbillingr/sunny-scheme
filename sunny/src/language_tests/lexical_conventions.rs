@@ -69,3 +69,15 @@ fn block_comments_match_shortest_possibility() {
     // R7RS section 2.2
     assert_that!("#| 1 |# 2 #| 3 |#", EvaluatesTo::the_integer(2));
 }
+
+#[test]
+fn can_label_data() {
+    // R7RS section 2.4
+    assert_that!("#42=0", EvaluatesTo::the_integer(0));
+}
+
+#[test]
+fn can_reference_datum_labels() {
+    // R7RS section 2.4
+    assert_that!("'(#42=0 #42#)", EvaluatesTo::the_list(vec![0, 0]));
+}

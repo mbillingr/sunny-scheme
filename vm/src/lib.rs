@@ -13,13 +13,13 @@ pub mod bytecode;
 pub mod bytecode_loader;
 mod closure;
 mod continuation;
+pub mod number;
 pub mod optimizations;
 mod primitive;
 mod storage;
 mod table;
 mod value;
 pub mod vm;
-pub mod number;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;
