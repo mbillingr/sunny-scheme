@@ -233,8 +233,9 @@ impl Vm {
         if list.is_nil() {
             Ok(0)
         } else if let Some(x) = list.car() {
+            let n = self.push_list_items(list.cdr().unwrap())?;
             self.push_value(x.clone());
-            self.push_list_items(list.cdr().unwrap()).map(|n| n + 1)
+            Ok(n + 1)
         } else {
             Err(ErrorKind::TypeError)
         }

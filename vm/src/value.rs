@@ -228,20 +228,7 @@ impl Traceable for Value {
 
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Value::Void => write!(f, "<void>"),
-            Value::Nil => write!(f, "<nil>"),
-            Value::False => write!(f, "#f"),
-            Value::True => write!(f, "#t"),
-            Value::Number(i) => write!(f, "{}", i),
-            Value::Symbol(p) => write!(f, "'{}", **p),
-            Value::String(p) => write!(f, "{:?}", **p),
-            Value::Pair(p) => write!(f, "{:?}", p),
-            Value::Table(p) => write!(f, "{:?}", p),
-            Value::Closure(p) => write!(f, "{:?}", p),
-            Value::Primitive(p) => write!(f, "<primitive {:p}", p),
-            Value::Continuation(p) => write!(f, "{:?}", **p),
-        }
+        write!(f, "{}", self)
     }
 }
 

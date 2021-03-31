@@ -5,6 +5,11 @@ use crate::frontend::syntax_forms::{
 };
 use sunny_vm::{ErrorKind, Result, Value};
 
+/*  ===== R7RS compliant apply using our intrinsic function =====
+(define (full-apply f x . args) (if (null? args) (apply f x) (apply f (cons x (build-list args)))))
+(define (build-list lst) (if (null? (cdr lst)) (car lst) (cons (car lst) (build-list (cdr lst)))))
+*/
+
 pub fn define_standard_libraries(ctx: &mut Context) {
     ctx.define_library("(scheme base)")
         .define_syntax("begin", Begin)
@@ -23,6 +28,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive("/", div)
         .define_primitive("<", lt)
         .define_primitive(">", gt)
+        .define_primitive("null?", is_null)
         .define_intrinsic("apply", 2)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
@@ -158,5 +164,9 @@ primitive! {
 
     fn gt(a: Value, b: Value) -> Result<Value> {
         Value::try_is_greater(&a, &b).ok_or(ErrorKind::TypeError)
+    }
+
+    fn is_null(obj: Value) -> Result<Value> {
+        Ok(Value::bool(obj.is_nil()))
     }
 }
