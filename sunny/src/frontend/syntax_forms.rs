@@ -242,6 +242,20 @@ define_form! {
 }
 
 define_form! {
+    LocalDefinition(sexpr, env):
+        [(_, name: Symbol, value) => {
+            let value = Expression.expand(value, env)?;
+            let idx = env.lookup_variable_index(name).unwrap();
+            Ok(Ast::store(sexpr.map_value(()), idx, value))
+        }]
+        [(_, (name: Symbol . args) . body) => {
+            let function = Lambda::build_ast(sexpr.map_value(()), args, body, env)?;
+            let idx = env.lookup_variable_index(name).unwrap();
+            Ok(Ast::store(sexpr.map_value(()), idx, function))
+        }]
+}
+
+define_form! {
     Sequence(sexpr, env):
         [(expr) => { Expression.expand(expr, env) }]
         [(expr . rest) => {
@@ -281,8 +295,8 @@ impl Lambda {
         body: &SrcExpr,
         env: &Env,
     ) -> Result<AstNode> {
-        let body_env = env.extend(params)?;
-        let body = Sequence.expand(body, &body_env)?;
+        let body_env = env.extend_from_sexpr(params)?;
+        let body = Body.expand(body, &body_env)?;
 
         if params.last_cdr().is_null() {
             Ok(Ast::lambda(context, params.len(), body))
@@ -290,6 +304,55 @@ impl Lambda {
             Ok(Ast::lambda_vararg(context, params.len(), body))
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Body;
+
+impl SyntaxExpander for Body {
+    fn expand(&self, sexpr: RefExpr, env: &Env) -> Result<AstNode> {
+        let mut body = vec![];
+        let mut definition_names = vec![];
+        let mut definition_exprs = vec![];
+        for exp in sexpr.iter() {
+            if is_definition(exp) {
+                definition_names.push(definition_name(exp).unwrap());
+                definition_exprs.push(exp);
+            } else {
+                body.push(exp.clone());
+            }
+        }
+
+        let body_env = env.extend_vars(definition_names.into_iter());
+
+        let body = body
+            .into_iter()
+            .rfold(Sexpr::nil(), |acc, stmt| Sexpr::cons(stmt, acc));
+
+        let mut body_ast = Sequence.expand(&body.into(), &body_env)?;
+
+        for exp in definition_exprs.into_iter().rev() {
+            let def = LocalDefinition.expand(exp, &body_env)?;
+            body_ast = Ast::sequence(def, body_ast);
+        }
+
+        Ok(body_ast)
+    }
+}
+
+fn is_definition(expr: &impl std::ops::Deref<Target = Sexpr>) -> bool {
+    match_sexpr![
+        [expr: ("define" . _) => { true }]
+        [expr: _ => { false }]
+    ]
+    .unwrap()
+}
+
+fn definition_name(expr: &impl std::ops::Deref<Target = Sexpr>) -> Option<&str> {
+    match_sexpr![
+        [expr: (_, name: Symbol, _) => { name }]
+        [expr: (_, (name: Symbol . _) . _) => { name }]
+    ]
 }
 
 define_form! {

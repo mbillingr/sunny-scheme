@@ -6,6 +6,7 @@ mod lexical_conventions;
 mod libraries;
 mod macros;
 mod procedures;
+mod program_structure;
 mod scoping;
 
 use crate::context::{Context, Error};

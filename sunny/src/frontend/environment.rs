@@ -153,7 +153,12 @@ impl Env {
         *globals = globals.add_binding(name, binding);
     }
 
-    pub fn extend(&self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
+    pub fn add_binding(&self, name: impl ToString, binding: impl Into<EnvBinding>) {
+        let mut globals = self.global.borrow_mut();
+        *globals = globals.add_binding(name, binding);
+    }
+
+    pub fn extend_from_sexpr(&self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
         let mut names = vec![];
         for v in vars.iter() {
             let name = v
@@ -164,12 +169,16 @@ impl Env {
             names.push(name);
         }
 
+        Ok(self.extend_vars(names.into_iter()))
+    }
+
+    pub fn extend_vars<T: ToString>(&self, names: impl DoubleEndedIterator<Item = T>) -> Env {
         let mut env = self.clone();
-        for name in names.into_iter().rev() {
+        for name in names.rev() {
             env.lexical = env.lexical.add_binding(name, EnvBinding::Variable);
         }
 
-        Ok(env)
+        env
     }
 
     pub fn ensure_variable(&self, name: &str) {
