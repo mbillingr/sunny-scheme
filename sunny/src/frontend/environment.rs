@@ -112,6 +112,7 @@ impl PartialEq for EnvBinding {
         use EnvBinding::*;
         match (self, other) {
             (Variable, Variable) => true,
+            (Intrinsic(name1, _), Intrinsic(name2, _)) => name1 == name2,
             (Global(fqn1), Global(fqn2)) => fqn1 == fqn2,
             (Syntax(exp1), Syntax(exp2)) => Rc::ptr_eq(exp1, exp2),
             _ => false,

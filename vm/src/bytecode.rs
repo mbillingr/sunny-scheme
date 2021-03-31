@@ -21,6 +21,7 @@ pub enum Op {
     Return,
     Call { n_args: u8 },
     TailCall { n_args: u8 },
+    Apply,
     PrepareArgs(u8),
     PrepareVarArgs(u8),
 
@@ -107,6 +108,7 @@ impl std::fmt::Display for Op {
             Op::RJumpIfTrue { backward } => write!(f, "{} {}", repr::RJUMPIFTRUE, backward),
             Op::RJumpIfVoid { backward } => write!(f, "{} {}", repr::RJUMPIFVOID, backward),
             Op::Return => write!(f, "{}", repr::RETURN),
+            Op::Apply => write!(f, "{}", repr::APPLY),
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
             Op::TailCall { n_args } => write!(f, "{} {}", repr::TAILCALL, n_args),
             Op::PrepareArgs(n) => write!(f, "{} {}", repr::PREPARGS, n),
@@ -154,6 +156,7 @@ pub mod repr {
     pub const RJUMPIFTRUE: &'static str = "RJUMPIFTRUE";
     pub const RJUMPIFVOID: &'static str = "RJUMPIFVOID";
     pub const RETURN: &'static str = "RETURN";
+    pub const APPLY: &'static str = "APPLY";
     pub const CALL: &'static str = "CALL";
     pub const TAILCALL: &'static str = "TAILCALL";
     pub const PREPARGS: &'static str = "PREPARGS";

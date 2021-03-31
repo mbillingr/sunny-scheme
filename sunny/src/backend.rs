@@ -204,6 +204,7 @@ impl Backend for ByteCodeBackend<'_> {
         }
 
         match name {
+            "apply" => blocks.append_op_with_context(Op::Apply, context),
             "call/cc" => blocks.append_ops(vec![
                 Op::CaptureContinuation { offset: 2 },
                 Op::Swap,

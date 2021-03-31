@@ -182,6 +182,7 @@ impl Vm {
                     let value = self.pop_value()?;
                     self.set_local(Op::extend_arg(a, arg), value)?
                 }
+                Op::Apply => self.apply()?,
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
                 Op::TailCall { n_args } => self.tail_call(Op::extend_arg(n_args, arg))?,
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
@@ -226,6 +227,17 @@ impl Vm {
         //println!("popping");
         self.value_stack.pop().ok_or(ErrorKind::StackUnderflow)
         //self.value_stack.pop().ok_or_else(||panic!())
+    }
+
+    pub fn push_list_items(&mut self, list: &Value) -> Result<usize> {
+        if list.is_nil() {
+            Ok(0)
+        } else if let Some(x) = list.car() {
+            self.push_value(x.clone());
+            self.push_list_items(list.cdr().unwrap()).map(|n| n + 1)
+        } else {
+            Err(ErrorKind::TypeError)
+        }
     }
 
     fn pop_int(&mut self) -> Result<i64> {
@@ -378,6 +390,16 @@ impl Vm {
             self.push_value(condition)
         }
         Ok(())
+    }
+
+    fn apply(&mut self) -> Result<()> {
+        let args = self.pop_value()?;
+        let func = self.pop_value()?;
+
+        let n_args = self.push_list_items(&args)?;
+
+        self.push_value(func);
+        self.call(n_args)
     }
 
     fn call(&mut self, n_args: usize) -> Result<()> {

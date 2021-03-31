@@ -23,6 +23,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive("/", div)
         .define_primitive("<", lt)
         .define_primitive(">", gt)
+        .define_intrinsic("apply", 2)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
