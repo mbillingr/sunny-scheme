@@ -77,13 +77,12 @@ impl Storage {
             .map(|x| Ref::new(x))
     }
 
-    pub fn is_valid<T>(&self, obj: &Ref<T>) -> bool {
+    pub fn is_valid<T: ?Sized>(&self, obj: &Ref<T>) -> bool {
         self.objects
             .iter()
             .map(Box::as_ref)
-            .map(|o| o as *const dyn Any)
-            .map(|o| o as *const T)
-            .any(|ptr| ptr == obj.as_ptr())
+            .map(|o| o as *const _ as *const u8)
+            .any(|ptr| ptr == obj.as_ptr() as *const u8)
     }
 
     /// Make sure the storage is at most half full

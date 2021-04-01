@@ -7,9 +7,27 @@ use crate::mem::{Ref, Traceable, Tracer};
 use crate::number::Number;
 use crate::primitive::Primitive;
 use crate::table::Table;
+use std::any::Any;
 
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;
+
+pub trait Object: 'static + Traceable {
+    fn as_any(&self) -> &dyn Any;
+
+    fn equals(&self, other: &dyn Object) -> bool {
+        std::ptr::eq(
+            self as *const _ as *const u8,
+            other as *const _ as *const u8,
+        )
+    }
+}
+
+impl dyn Object {
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.as_any().downcast_ref()
+    }
+}
 
 #[derive(Clone)]
 #[repr(u8)]
@@ -27,6 +45,8 @@ pub enum Value {
     Closure(Ref<Closure>),
     Primitive(Primitive),
     Continuation(Ref<Continuation>),
+
+    Object(Ref<Box<dyn Object>>),
 }
 
 impl Default for Value {
@@ -114,6 +134,7 @@ impl Value {
             Value::Closure(_) => 9,
             Value::Primitive(_) => 10,
             Value::Continuation(_) => 11,
+            Value::Object(_) => 255,
         }
     }
 
@@ -174,6 +195,13 @@ impl Value {
         }
     }
 
+    pub fn as_obj<T: Any>(&self) -> Option<&T> {
+        match self {
+            Value::Object(obj) => obj.downcast_ref(),
+            _ => None,
+        }
+    }
+
     pub fn equals(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
@@ -189,6 +217,7 @@ impl Value {
             (Closure(a), Closure(b)) => **a == **b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
+            (Object(a), Object(b)) => a.equals(&***b),
             _ => false,
         }
     }
@@ -203,6 +232,7 @@ impl Value {
             Value::Closure(c) => Some(c.as_dyn_traceable()),
             Value::Primitive(_) => None,
             Value::Continuation(c) => Some(c.as_dyn_traceable()),
+            Value::Object(o) => Some(o.as_dyn_traceable()),
         }
     }
 }
@@ -222,6 +252,7 @@ impl Traceable for Value {
             Value::Closure(p) => p.trace(gc),
             Value::Primitive(_) => {}
             Value::Continuation(p) => p.trace(gc),
+            Value::Object(p) => p.trace(gc),
         }
     }
 }
@@ -245,8 +276,9 @@ impl std::fmt::Display for Value {
             Value::Pair(p) => write!(f, "({} . {})", p.0, p.1),
             Value::Table(p) => write!(f, "{:?}", **p),
             Value::Closure(p) => write!(f, "{:?}", p),
-            Value::Primitive(p) => write!(f, "<primitive {:p}", p),
+            Value::Primitive(p) => write!(f, "<primitive {:p}>", p),
             Value::Continuation(p) => write!(f, "{:?}", **p),
+            Value::Object(p) => write!(f, "<object {:p}>", p),
         }
     }
 }
@@ -266,6 +298,7 @@ impl PartialEq for Value {
             (Table(a), Table(b)) => a == b,
             (Closure(a), Closure(b)) => a == b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
+            (Object(a), Object(b)) => a == b,
             _ => false,
         }
     }
@@ -301,6 +334,7 @@ impl Hash for Value {
             Value::Closure(p) => p.as_ptr().hash(state),
             Value::Primitive(p) => (*p as *const u8).hash(state),
             Value::Continuation(p) => p.as_ptr().hash(state),
+            Value::Object(p) => p.as_ptr().hash(state),
         }
     }
 }

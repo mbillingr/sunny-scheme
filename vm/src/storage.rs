@@ -180,6 +180,7 @@ impl ValueStorage {
             Value::Closure(p) => self.storage.is_valid(p),
             Value::Primitive(_) => true,
             Value::Continuation(p) => self.storage.is_valid(p),
+            Value::Object(p) => self.storage.is_valid(p),
         }
     }
 
