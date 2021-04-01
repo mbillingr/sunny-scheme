@@ -1,8 +1,8 @@
 pub use basic_block::{BasicBlock, BlockChain};
 pub use primitive::Primitive;
 pub use storage::ValueStorage;
-use sunny_memory::gc as mem;
-pub use value::Value;
+pub use sunny_memory::gc as mem;
+pub use value::{Object, Value};
 pub use vm::Vm;
 
 use crate::bytecode::CodePointer;

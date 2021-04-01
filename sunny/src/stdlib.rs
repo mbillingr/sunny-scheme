@@ -3,7 +3,8 @@ use crate::frontend::syntax_forms::{
     Assignment, Begin, Branch, Definition, Import, Lambda, LibraryDefinition, Quotation,
     SyntaxDefinition,
 };
-use sunny_vm::{ErrorKind, Result, Value};
+use sunny_vm::{ErrorKind, Object, Result, Value, Vm};
+use table::Table;
 
 /*  ===== R7RS compliant apply using our intrinsic function =====
 (define (full-apply f x . args) (if (null? args) (apply f x) (apply f (cons x (build-list args)))))
@@ -39,6 +40,11 @@ pub fn define_standard_libraries(ctx: &mut Context) {
             storage.ensure(1);
             storage.cons(1, 2).unwrap()
         })
+        .build();
+
+    ctx.define_library("(sunny hashmap)")
+        .define_primitive("make-hashmap", make_hashmap)
+        .define_primitive("hashmap?", is_hashmap)
         .build();
 }
 
@@ -168,5 +174,75 @@ primitive! {
 
     fn is_null(obj: Value) -> Result<Value> {
         Ok(Value::bool(obj.is_nil()))
+    }
+
+    fn is_hashmap(obj: Value) -> Result<Value> {
+        Ok(Value::bool(obj.as_obj::<Table>().is_some()))
+    }
+}
+
+fn make_hashmap(n_args: usize, vm: &mut Vm) -> Result<()> {
+    if n_args != 0 {
+        return Err(ErrorKind::TooManyArgs);
+    }
+
+    vm.borrow_storage().ensure(1);
+
+    let table: Box<dyn Object> = Box::new(Table::new());
+    let obj = vm.borrow_storage().insert(table).unwrap();
+
+    vm.push_value(Value::Object(obj));
+    Ok(())
+}
+
+mod table {
+    use std::any::Any;
+    use std::collections::HashMap;
+    use std::ops::{Deref, DerefMut};
+    use sunny_vm::mem::{Traceable, Tracer};
+    use sunny_vm::{Object, Value};
+
+    #[derive(Debug)]
+    pub struct Table(HashMap<Value, Value>);
+
+    impl Table {
+        pub fn new() -> Self {
+            Table(HashMap::new())
+        }
+    }
+
+    impl Traceable for Table {
+        fn trace(&self, gc: &mut Tracer) {
+            for (k, v) in &self.0 {
+                k.trace(gc);
+                v.trace(gc);
+            }
+        }
+    }
+
+    impl Object for Table {
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+        fn equals(&self, other: &dyn Object) -> bool {
+            other
+                .downcast_ref::<Self>()
+                .map(|other| other.0 == self.0)
+                .unwrap_or(false)
+        }
+    }
+
+    impl Deref for Table {
+        type Target = HashMap<Value, Value>;
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl DerefMut for Table {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.0
+        }
     }
 }

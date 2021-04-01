@@ -8,11 +8,12 @@ use crate::number::Number;
 use crate::primitive::Primitive;
 use crate::table::Table;
 use std::any::Any;
+use std::fmt::Debug;
 
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;
 
-pub trait Object: 'static + Traceable {
+pub trait Object: 'static + Traceable + Debug {
     fn as_any(&self) -> &dyn Any;
 
     fn equals(&self, other: &dyn Object) -> bool {
