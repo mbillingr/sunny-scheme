@@ -28,7 +28,11 @@ macro_rules! match_sexpr {
 }
 
 macro_rules! _match_sexpr {
-    ($expr:tt; _ => $action:block) => {{ let _ = $expr; Some($action) }};
+    ($expr:tt; _ => $action:block) => {{
+        let _ = $expr;
+        #[allow(unreachable_code)]
+        Some($action)
+    }};
 
     ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; Some($action) }};
 
@@ -317,26 +321,23 @@ impl SyntaxExpander for Body {
         for exp in sexpr.iter() {
             if is_definition(exp) {
                 definition_names.push(definition_name(exp).unwrap());
-                definition_exprs.push(exp);
+                definition_exprs.push(definition_value_expr(exp).unwrap());
             } else {
                 body.push(exp.clone());
             }
         }
 
-        let body_env = env.extend_vars(definition_names.into_iter());
-
-        let body = body
-            .into_iter()
-            .rfold(Sexpr::nil(), |acc, stmt| Sexpr::cons(stmt, acc));
-
-        let mut body_ast = Sequence.expand(&body.into(), &body_env)?;
-
-        for exp in definition_exprs.into_iter().rev() {
-            let def = LocalDefinition.expand(exp, &body_env)?;
-            body_ast = Ast::sequence(def, body_ast);
+        if definition_names.is_empty() {
+            Sequence.expand(sexpr, env)
+        } else {
+            LetRec::build_ast(
+                sexpr.map_value(()),
+                &definition_names,
+                definition_exprs.into_iter(),
+                body.into_iter(),
+                env,
+            )
         }
-
-        Ok(body_ast)
     }
 }
 
@@ -353,6 +354,59 @@ fn definition_name(expr: &impl std::ops::Deref<Target = Sexpr>) -> Option<&str> 
         [expr: (_, name: Symbol, _) => { name }]
         [expr: (_, (name: Symbol . _) . _) => { name }]
     ]
+}
+
+fn definition_value_expr(expr: &impl std::ops::Deref<Target = Sexpr>) -> Option<SrcExpr> {
+    match_sexpr![
+        [expr: (_, _name: Symbol, value) => {
+            value.clone()
+        }]
+        [expr: (_, (_ . args) . body) => {
+            Sexpr::cons(Sexpr::symbol("lambda"),
+                        Sexpr::cons(args.clone(),
+                                    body.clone())).into()
+        }]
+    ]
+}
+
+define_form! {
+    LetRec(sexpr, _env):
+        [_ => { unimplemented!() }]
+}
+
+impl LetRec {
+    fn build_ast<'a>(
+        context: SourceLocation<()>,
+        names: &[&str],
+        defs: impl DoubleEndedIterator<Item = SrcExpr>,
+        body: impl DoubleEndedIterator<Item = SrcExpr>,
+        env: &Env,
+    ) -> Result<AstNode> {
+        let n_vars = names.len();
+        let body_env = env.extend_vars(names.into_iter());
+
+        let body = body.rfold(Sexpr::nil(), |acc, stmt| Sexpr::cons(stmt, acc));
+
+        let mut body_ast = Sequence.expand(&body.into(), &body_env)?;
+
+        for (name, exp) in names.into_iter().zip(defs) {
+            let idx = body_env.lookup_variable_index(name).unwrap();
+            let def = Expression.expand(&exp, &body_env)?;
+            let store = Ast::store(context.clone(), idx, def);
+            body_ast = Ast::sequence(store, body_ast);
+        }
+
+        let lambda = Ast::lambda(context.clone(), n_vars, body_ast);
+
+        let mut args = vec![lambda];
+        for _ in 0..n_vars {
+            args.push(Ast::void());
+        }
+
+        let call = Ast::invoke(context, args);
+
+        Ok(call)
+    }
 }
 
 define_form! {

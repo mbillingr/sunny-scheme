@@ -82,3 +82,31 @@ fn can_capture_value_of_outer_scope() {
         EvaluatesTo::the_integer(1)
     );
 }
+
+#[test]
+fn can_access_values_of_various_nested_scopes() {
+    assert_that!(
+        "((lambda (a)
+            ((lambda (b)
+                ((lambda (c)
+                    ((lambda x x) a b c))
+                 3))
+             2))
+          1)",
+        EvaluatesTo::the_list(vec![1, 2, 3])
+    );
+}
+
+#[test]
+fn can_access_values_through_empty_scopes() {
+    assert_that!(
+        "((lambda ()
+            ((lambda (a b)
+                ((lambda (c)
+                    ((lambda x x) a b c))
+                 3))
+             1 2))
+          )",
+        EvaluatesTo::the_list(vec![1, 2, 3])
+    );
+}

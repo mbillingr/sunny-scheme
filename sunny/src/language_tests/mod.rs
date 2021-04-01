@@ -119,11 +119,12 @@ impl Eval for &str {
 
 impl<T: Eval> Eval for Vec<T> {
     fn eval(&self, context: &mut Context) -> Result<Value, Error> {
-        let mut result = None;
-        for expr in self {
-            result = Some(expr.eval(context));
+        if self.len() >= 2 {
+            for expr in &self[..self.len() - 1] {
+                expr.eval(context)?;
+            }
         }
-        result.unwrap()
+        self.last().unwrap().eval(context)
     }
 }
 
