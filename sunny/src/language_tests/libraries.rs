@@ -22,7 +22,7 @@ fn reexports_target_same_variable() {
     assert_that!(
         vec![
             // todo: use renaming import or export when they are implemented
-            "(define-library (foo) (export x) (begin (define x 1)))",
+            "(define-library (foo) (import (scheme base)) (export x) (begin (define x 1)))",
             "(define-library (bar) (export x) (import (foo)))",
             "(import (bar))",
             "(set! x 42)",
