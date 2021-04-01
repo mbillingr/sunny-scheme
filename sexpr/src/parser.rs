@@ -44,6 +44,15 @@ impl std::fmt::Display for Error {
     }
 }
 
+impl Error {
+    pub fn is_eof(&self) -> bool {
+        match self {
+            Error::UnexpectedEof { .. } => true,
+            _ => false,
+        }
+    }
+}
+
 impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'static str>>
     for SourceLocation<Error>
 {

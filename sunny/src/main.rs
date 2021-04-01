@@ -20,6 +20,9 @@ mod language_tests;
 mod library_filesystem;
 pub mod stdlib;
 
+const LINE_PROMPT: &str = ">> ";
+const MULTI_PROMPT: &str = " ... ";
+
 #[derive(StructOpt)]
 enum Cli {
     Bytecode {
@@ -72,28 +75,39 @@ fn run_repl() {
     let mut context = Context::new();
     define_standard_libraries(&mut context);
 
-    loop {
-        match rl.readline(">> ") {
-            Ok(line) => {
-                rl.add_history_entry(line.as_str());
+    'repl: loop {
+        let mut src = String::new();
+        let mut prompt = LINE_PROMPT;
+        'multiline: loop {
+            match rl.readline(prompt) {
+                Ok(line) => {
+                    src.push_str(&line);
+                    src.push('\n');
 
-                let line = line.trim();
-                if line.is_empty() {
-                    continue;
-                }
+                    if line.trim().is_empty() {
+                        continue;
+                    }
 
-                match context.eval(line) {
-                    Ok(result) => println!("{}", result),
-                    Err(e) => report_error(e),
+                    rl.add_history_entry(line);
+
+                    match context.eval(&src) {
+                        Ok(result) => println!("{}", result),
+                        Err(Error::ParseError(e)) if e.is_eof() => {
+                            prompt = MULTI_PROMPT;
+                            continue 'multiline;
+                        }
+                        Err(e) => report_error(e),
+                    }
+                    break 'multiline;
                 }
-            }
-            Err(ReadlineError::Eof) => {
-                println!("CTRL-D");
-                break;
-            }
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break;
+                Err(ReadlineError::Eof) => {
+                    println!("CTRL-D");
+                    break 'repl;
+                }
+                Err(err) => {
+                    println!("Error: {:?}", err);
+                    break 'repl;
+                }
             }
         }
     }
