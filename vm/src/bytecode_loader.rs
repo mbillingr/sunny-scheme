@@ -157,9 +157,6 @@ fn build_code_section(mut cb: CodeBuilder, code: &SourceLocation<Sexpr>) -> Resu
             repr::CONS => cb = cb.op(Op::Cons),
             repr::CAR => cb = cb.op(Op::Car),
             repr::CDR => cb = cb.op(Op::Cdr),
-            repr::TABLE => cb = cb.op(Op::Table),
-            repr::TABLEGET => cb = cb.op(Op::TableGet),
-            repr::TABLESET => cb = cb.op(Op::TableSet),
             repr::MAKECLOSURE => {
                 let i = read_index(&mut code_parts, statement)?;
                 cb = cb.with(|offset| Op::MakeClosure { offset }, i)

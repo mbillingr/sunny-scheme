@@ -51,10 +51,6 @@ pub enum Op {
     Car,
     Cdr,
 
-    Table,
-    TableSet,
-    TableGet,
-
     MakeClosure { offset: u8 },
     CaptureContinuation { offset: u8 },
 }
@@ -133,9 +129,6 @@ impl std::fmt::Display for Op {
             Op::Cons => write!(f, "{}", repr::CONS),
             Op::Car => write!(f, "{}", repr::CAR),
             Op::Cdr => write!(f, "{}", repr::CDR),
-            Op::Table => write!(f, "{}", repr::TABLE),
-            Op::TableSet => write!(f, "{}", repr::TABLESET),
-            Op::TableGet => write!(f, "{}", repr::TABLEGET),
             Op::MakeClosure { offset } => write!(f, "{} {}", repr::MAKECLOSURE, offset),
             Op::CaptureContinuation { offset } => {
                 write!(f, "{} {}", repr::CAPTURECONTINUATION, offset)
@@ -181,9 +174,6 @@ pub mod repr {
     pub const CONS: &'static str = "CONS";
     pub const CAR: &'static str = "CAR";
     pub const CDR: &'static str = "CDR";
-    pub const TABLE: &'static str = "TABLE";
-    pub const TABLESET: &'static str = "TABLESET";
-    pub const TABLEGET: &'static str = "TABLEGET";
     pub const MAKECLOSURE: &'static str = "MAKECLOSURE";
     pub const CAPTURECONTINUATION: &'static str = "CAPTURECONTINUATION";
 }

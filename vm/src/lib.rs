@@ -17,7 +17,6 @@ pub mod number;
 pub mod optimizations;
 mod primitive;
 mod storage;
-mod table;
 mod value;
 pub mod vm;
 

@@ -1,6 +1,5 @@
 use crate::closure::Closure;
 use crate::mem::{Ref, Storage, Traceable, Tracer};
-use crate::table::Table;
 use crate::value::{ConstString, Symbol};
 use crate::Value;
 use std::collections::HashMap;
@@ -117,12 +116,6 @@ impl ValueStorage {
         Ok(list)
     }
 
-    pub fn new_table(&mut self) -> Result<Value, ()> {
-        let table = Table::new();
-        let obj = self.insert(table).map_err(|_| ())?;
-        Ok(Value::Table(obj))
-    }
-
     pub fn store_closure(&mut self, cls: Closure) -> Result<Value, Closure> {
         let obj = self.insert(cls)?;
         Ok(Value::Closure(obj))
@@ -176,7 +169,6 @@ impl ValueStorage {
             Value::Symbol(p) => self.storage.is_valid(p),
             Value::String(p) => self.storage.is_valid(p),
             Value::Pair(p) => self.storage.is_valid(p),
-            Value::Table(p) => self.storage.is_valid(p),
             Value::Closure(p) => self.storage.is_valid(p),
             Value::Primitive(_) => true,
             Value::Continuation(p) => self.storage.is_valid(p),

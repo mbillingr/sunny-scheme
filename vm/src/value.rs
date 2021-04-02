@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 use crate::closure::Closure;
@@ -6,7 +5,6 @@ use crate::continuation::Continuation;
 use crate::mem::{Ref, Traceable, Tracer};
 use crate::number::Number;
 use crate::primitive::Primitive;
-use crate::table::Table;
 use std::any::Any;
 use std::fmt::Debug;
 
@@ -41,7 +39,6 @@ pub enum Value {
     Symbol(Ref<Symbol>),
     String(Ref<ConstString>),
     Pair(Ref<(Value, Value)>),
-    Table(Ref<Table>),
 
     Closure(Ref<Closure>),
     Primitive(Primitive),
@@ -107,7 +104,6 @@ impl Value {
     impl_accessor!(is_number, as_number, Value::Number, ref Number);
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, as_mut_pair, Value::Pair, ref (Value, Value));
-    impl_accessor!(is_table, as_table, as_mut_table, Value::Table, ref Table);
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
 
     pub fn bool(b: bool) -> Self {
@@ -131,10 +127,9 @@ impl Value {
             Value::Symbol(_) => 5,
             Value::String(_) => 6,
             Value::Pair(_) => 7,
-            Value::Table(_) => 8,
-            Value::Closure(_) => 9,
-            Value::Primitive(_) => 10,
-            Value::Continuation(_) => 11,
+            Value::Closure(_) => 8,
+            Value::Primitive(_) => 9,
+            Value::Continuation(_) => 10,
             Value::Object(_) => 255,
         }
     }
@@ -178,17 +173,6 @@ impl Value {
         self.as_pair().map(|(_, cdr)| cdr)
     }
 
-    pub fn table_set(&mut self, key: Value, value: Value) -> Option<()> {
-        self.as_mut_table().map(|table| {
-            table.insert(key, value);
-        })
-    }
-
-    pub fn table_get(&self, key: &Value) -> Option<&Value> {
-        self.as_table()
-            .map(|table| table.get(key).unwrap_or(&Value::Void))
-    }
-
     pub fn is_procedure(&self) -> bool {
         match self {
             Value::Closure(_) | Value::Primitive(_) | Value::Continuation(_) => true,
@@ -214,7 +198,6 @@ impl Value {
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0.equals(&b.0) && a.1.equals(&b.1),
-            (Table(a), Table(b)) => ***a == ***b,
             (Closure(a), Closure(b)) => **a == **b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
@@ -229,7 +212,6 @@ impl Value {
             Value::Symbol(s) => Some(s.as_dyn_traceable()),
             Value::String(s) => Some(s.as_dyn_traceable()),
             Value::Pair(p) => Some(p.as_dyn_traceable()),
-            Value::Table(t) => Some(t.as_dyn_traceable()),
             Value::Closure(c) => Some(c.as_dyn_traceable()),
             Value::Primitive(_) => None,
             Value::Continuation(c) => Some(c.as_dyn_traceable()),
@@ -249,7 +231,6 @@ impl Traceable for Value {
             Value::Symbol(p) => p.trace(gc),
             Value::String(p) => p.trace(gc),
             Value::Pair(p) => p.trace(gc),
-            Value::Table(p) => p.trace(gc),
             Value::Closure(p) => p.trace(gc),
             Value::Primitive(_) => {}
             Value::Continuation(p) => p.trace(gc),
@@ -275,7 +256,6 @@ impl std::fmt::Display for Value {
             Value::Symbol(p) => write!(f, "'{}", **p),
             Value::String(p) => write!(f, "{}", **p),
             Value::Pair(p) => write!(f, "({} . {})", p.0, p.1),
-            Value::Table(p) => write!(f, "{:?}", **p),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}>", p),
             Value::Continuation(p) => write!(f, "{:?}", **p),
@@ -296,7 +276,6 @@ impl PartialEq for Value {
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a == b,
-            (Table(a), Table(b)) => a == b,
             (Closure(a), Closure(b)) => a == b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Object(a), Object(b)) => a == b,
@@ -308,12 +287,6 @@ impl PartialEq for Value {
 impl PartialEq<(Value, Value)> for Value {
     fn eq(&self, rhs: &(Value, Value)) -> bool {
         self.as_pair().map(|lhs| lhs == rhs).unwrap_or(false)
-    }
-}
-
-impl PartialEq<HashMap<Value, Value>> for Value {
-    fn eq(&self, rhs: &HashMap<Value, Value>) -> bool {
-        self.as_table().map(|lhs| lhs == rhs).unwrap_or(false)
     }
 }
 
@@ -331,7 +304,6 @@ impl Hash for Value {
             Value::Symbol(p) => p.as_ptr().hash(state),
             Value::String(p) => p.hash(state),
             Value::Pair(p) => p.as_ptr().hash(state),
-            Value::Table(p) => p.as_ptr().hash(state),
             Value::Closure(p) => p.as_ptr().hash(state),
             Value::Primitive(p) => (*p as *const u8).hash(state),
             Value::Continuation(p) => p.as_ptr().hash(state),
@@ -409,22 +381,6 @@ mod tests {
         let value_size = std::mem::size_of::<Value>();
         let pointer_size = std::mem::size_of::<usize>();
         assert_eq!(value_size, 2 * pointer_size);
-    }
-
-    #[test]
-    fn can_insert_entries_in_table() {
-        let mut table = Table::new();
-        table.insert(Value::Void, Value::number(1));
-        table.insert(Value::Nil, Value::number(2));
-        table.insert(Value::False, Value::number(3));
-        table.insert(Value::True, Value::number(4));
-        table.insert(Value::number(0), Value::number(5));
-
-        assert_eq!(table[&Value::Void], Value::number(1));
-        assert_eq!(table[&Value::Nil], Value::number(2));
-        assert_eq!(table[&Value::False], Value::number(3));
-        assert_eq!(table[&Value::True], Value::number(4));
-        assert_eq!(table[&Value::number(0)], Value::number(5));
     }
 
     #[test]
