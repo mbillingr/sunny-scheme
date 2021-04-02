@@ -186,7 +186,9 @@ fn make_hashmap(n_args: usize, vm: &mut Vm) -> Result<()> {
         return Err(ErrorKind::TooManyArgs);
     }
 
-    vm.borrow_storage().ensure(1);
+    unsafe {
+        vm.ensure_storage_space(1)?;
+    }
 
     let table: Box<dyn Object> = Box::new(Table::new());
     let obj = vm.borrow_storage().insert(table).unwrap();

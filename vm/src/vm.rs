@@ -70,7 +70,9 @@ impl Vm {
 
     pub fn build_value(&mut self, sexpr: &Sexpr) -> Result<Value> {
         let storage_required = self.storage.count_allocations(sexpr);
-        self.ensure_storage_space(storage_required)?;
+        unsafe {
+            self.ensure_storage_space(storage_required)?;
+        }
         Ok(self.storage.sexpr_to_value(sexpr).unwrap())
     }
 
@@ -80,9 +82,11 @@ impl Vm {
             // the reference must be popped while it is still alive.
             let code = &*(&code as *const _);
             self.gc_preserve.push(code);
+
+            self.ensure_storage_space(2).unwrap();
+
+            self.gc_preserve.pop().unwrap();
         }
-        self.ensure_storage_space(2).unwrap();
-        self.gc_preserve.pop().unwrap();
 
         let mut root_activation = self.current_activation.clone();
         let code = self.storage.insert(code).unwrap();
@@ -118,7 +122,16 @@ impl Vm {
     }
 
     fn load_closure(&mut self, closure: &Closure) -> Result<()> {
-        self.ensure_storage_space(1)?;
+        unsafe {
+            // We pretend code has static lifetime. This is not the case, so
+            // the reference must be popped while it is still alive.
+            let closure = &*(closure as *const _);
+            self.gc_preserve.push(closure);
+
+            self.ensure_storage_space(1)?;
+
+            self.gc_preserve.pop().unwrap();
+        }
         let activation = Activation {
             caller: None,
             parent: closure.parent.clone(),
@@ -424,9 +437,11 @@ impl Vm {
     }
 
     fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
-        self.storage.preserve(&cls);
-        self.ensure_storage_space(1)?;
-        self.storage.release(&cls);
+        unsafe {
+            self.storage.preserve(&cls);
+            self.ensure_storage_space(1)?;
+            self.storage.release(&cls);
+        }
         let args = self.pop_values(n_args)?;
         let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
         self.current_activation = self.storage.insert(act).unwrap();
@@ -434,9 +449,11 @@ impl Vm {
     }
 
     fn tail_call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
-        self.storage.preserve(&cls);
-        self.ensure_storage_space(1)?;
-        self.storage.release(&cls);
+        unsafe {
+            self.storage.preserve(&cls);
+            self.ensure_storage_space(1)?;
+            self.storage.release(&cls);
+        }
         let args = self.pop_values(n_args)?;
         let caller = self
             .current_activation
@@ -455,9 +472,12 @@ impl Vm {
         if n_args > 1 {
             return Err(ErrorKind::TooManyArgs);
         }
-        self.storage.preserve(&cnt);
-        self.ensure_storage_space(1)?;
-        self.storage.release(&cnt);
+
+        unsafe {
+            self.storage.preserve(&cnt);
+            self.ensure_storage_space(1)?;
+            self.storage.release(&cnt);
+        }
 
         let args = self.pop_values(n_args)?;
         self.value_stack = cnt.value_stack.clone();
@@ -484,7 +504,10 @@ impl Vm {
         }
 
         let n_varargs = self.current_activation.locals.len() - n_args;
-        self.ensure_storage_space(n_varargs)?;
+
+        unsafe {
+            self.ensure_storage_space(n_varargs)?;
+        }
 
         let mut vararg = Value::Nil;
         for _ in 0..n_varargs {
@@ -537,7 +560,9 @@ impl Vm {
     }
 
     fn cons(&mut self) -> Result<()> {
-        self.ensure_storage_space(1)?;
+        unsafe {
+            self.ensure_storage_space(1)?;
+        }
         let cdr = self.pop_value()?;
         let car = self.pop_value()?;
         let pair = self.storage.cons(car, cdr).unwrap();
@@ -560,7 +585,9 @@ impl Vm {
     }
 
     fn table(&mut self) -> Result<()> {
-        self.ensure_storage_space(1)?;
+        unsafe {
+            self.ensure_storage_space(1)?;
+        }
         let table = self.storage.new_table().unwrap();
         self.push_value(table);
         Ok(())
@@ -585,7 +612,9 @@ impl Vm {
     }
 
     fn make_closure(&mut self, code_offset: usize) -> Result<()> {
-        self.ensure_storage_space(2)?;
+        unsafe {
+            self.ensure_storage_space(2)?;
+        }
 
         let code = self.current_activation.code.offset(code_offset as isize);
 
@@ -600,7 +629,9 @@ impl Vm {
     }
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
-        self.ensure_storage_space(2)?;
+        unsafe {
+            self.ensure_storage_space(2)?;
+        }
 
         let mut activation = self.current_activation.duplicate();
         activation.code = activation.code.offset(code_offset as isize);
@@ -619,7 +650,7 @@ impl Vm {
         Ok(())
     }
 
-    fn ensure_storage_space(&mut self, n_objects: usize) -> Result<()> {
+    pub unsafe fn ensure_storage_space(&mut self, n_objects: usize) -> Result<()> {
         if self.storage.free() < n_objects {
             self.collect_garbage();
             self.storage.ensure(n_objects);
@@ -627,12 +658,10 @@ impl Vm {
         Ok(())
     }
 
-    fn collect_garbage(&mut self) {
-        unsafe {
-            // This is safe if all state values (registers, etc.) are marked as roots
-            let gc = self.storage.begin_garbage_collection().mark(self);
-            self.storage.finish_garbage_collection(gc);
-        }
+    unsafe fn collect_garbage(&mut self) {
+        // This is only safe if all live references are reachable from the vm structure
+        let gc = self.storage.begin_garbage_collection().mark(self);
+        self.storage.finish_garbage_collection(gc);
     }
 }
 
