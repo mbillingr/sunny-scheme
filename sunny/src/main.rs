@@ -6,8 +6,11 @@ use rustyline::{error::ReadlineError, Editor};
 use simple_logger::SimpleLogger;
 use structopt::StructOpt;
 
+use crate::frontend::syntax_forms::Import;
+use crate::library_filesystem::LibraryFileSystem;
 use crate::stdlib::define_standard_libraries;
 use context::{Context, Error};
+use std::path::{Path, PathBuf};
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{ValueStorage, Vm};
@@ -31,6 +34,21 @@ enum Cli {
     },
 
     Repl,
+
+    Run {
+        #[structopt(parse(from_os_str))]
+        file: std::path::PathBuf,
+    },
+
+    Compile {
+        /// Scheme program to compile
+        #[structopt(parse(from_os_str))]
+        _input: std::path::PathBuf,
+
+        /// Bytecode output file. Default: name of input file with extension '.sbc'
+        #[structopt(parse(from_os_str))]
+        _output: Option<std::path::PathBuf>,
+    },
 }
 
 fn main() {
@@ -43,7 +61,9 @@ fn main() {
 
     match args {
         Cli::Bytecode { file } => run_bytecode(&file),
-        Cli::Repl => run_repl(),
+        Cli::Repl => main_repl(),
+        Cli::Run { file } => main_program(file),
+        Cli::Compile { .. } => unimplemented!(),
     }
 }
 
@@ -69,12 +89,73 @@ fn run_bytecode(path: &std::path::Path) {
     println!("Result: {}", result);
 }
 
-fn run_repl() {
-    let mut rl = Editor::<()>::new();
+fn main_program(path: PathBuf) {
+    let context = Context::new();
+    let context = prepare_program(context, &path);
+    run_program(context, &path);
+}
 
-    let mut context = Context::new();
+fn main_repl() {
+    let context = Context::new();
+    let context = prepare_repl(context);
+    run_repl(context);
+}
+
+fn prepare_program(mut context: Context, file: &Path) -> Context {
     define_standard_libraries(&mut context);
 
+    let libfs = LibraryFileSystem::new(vec![
+        file.parent().unwrap().to_str().unwrap(),
+        std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_str()
+            .unwrap(),
+    ]);
+    context.set_libfs(libfs);
+
+    context
+}
+
+fn prepare_repl(mut context: Context) -> Context {
+    define_standard_libraries(&mut context);
+    Import::import_all("(scheme base)", context.env());
+
+    let libfs = LibraryFileSystem::new(vec![
+        std::env::current_dir()
+            .unwrap()
+            .as_os_str()
+            .to_str()
+            .unwrap(),
+        std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_str()
+            .unwrap(),
+    ]);
+    println!("{:?}", libfs);
+    context.set_libfs(libfs);
+
+    context
+}
+
+fn run_program(mut context: Context, path: &Path) {
+    let mut src = String::new();
+    File::open(path)
+        .unwrap_or_else(|e| panic!("Error opening {:?}: {}", path, e))
+        .read_to_string(&mut src)
+        .unwrap_or_else(|e| panic!("Error reading {:?}: {}", path, e));
+
+    match context.eval(&src) {
+        Ok(_) => {}
+        Err(e) => report_error(e),
+    }
+}
+
+fn run_repl(mut context: Context) {
+    let mut rl = Editor::<()>::new();
     'repl: loop {
         let mut src = String::new();
         let mut prompt = LINE_PROMPT;

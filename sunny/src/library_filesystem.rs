@@ -1,5 +1,4 @@
 use std::io::Write;
-use std::path::PathBuf;
 use vfs::impls::overlay::OverlayFS;
 use vfs::{MemoryFS, PhysicalFS, VfsPath};
 
@@ -10,18 +9,18 @@ pub struct LibraryFileSystem {
 
 impl Default for LibraryFileSystem {
     fn default() -> Self {
-        Self::new::<&str>(vec![])
+        Self::new(vec![])
     }
 }
 
 impl LibraryFileSystem {
-    pub fn new<T: Into<PathBuf>>(lib_paths: Vec<T>) -> Self {
+    pub fn new(lib_paths: Vec<&str>) -> Self {
+        let pyhsical_fs = VfsPath::new(PhysicalFS::new("".into()));
         let mut layers = vec![MemoryFS::new().into()];
         layers.extend(
             lib_paths
                 .into_iter()
-                .map(Into::into)
-                .map(PhysicalFS::new)
+                .map(|path| pyhsical_fs.join(path).unwrap())
                 .map(Into::into),
         );
         LibraryFileSystem {
