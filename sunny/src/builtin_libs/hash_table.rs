@@ -7,14 +7,33 @@ use sunny_vm::{ErrorKind, Object, Result, Value, Vm};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
     ctx.define_library("(sunny hash-table)")
-        .define_primitive("make-hash-table", make_hashtable)
         .define_primitive("hash-table?", is_hashtable)
+        .define_primitive("make-hash-table", make_hashtable)
+        .define_primitive("hash-table-set!", hashtable_set)
+        .define_primitive("hash-table-ref/default", hashtable_ref_default)
         .build();
 }
 
 primitive! {
     fn is_hashtable(obj: Value) -> Result<Value> {
         Ok(Value::bool(obj.as_obj::<Table>().is_some()))
+    }
+
+    fn hashtable_set(obj: Value, key: Value, value: Value) -> Result<Value> {
+        let table = obj.as_obj_mut::<Table>().ok_or(ErrorKind::TypeError)?;
+
+        table.insert(key, value);
+        Ok(Value::Void)
+    }
+
+    fn hashtable_ref_default(obj: Value, key: Value, default: Value) -> Result<Value> {
+        let table = obj.as_obj::<Table>().ok_or(ErrorKind::TypeError)?;
+
+        if let Some(value) = table.get(&key) {
+            Ok(value.clone())
+        } else {
+            Ok(default)
+        }
     }
 }
 

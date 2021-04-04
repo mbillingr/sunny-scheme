@@ -26,6 +26,13 @@ impl dyn Object {
     pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
         self.as_any().downcast_ref()
     }
+
+    pub unsafe fn downcast_mut<T: Any>(&self) -> Option<&mut T> {
+        let ptr = self.as_any() as *const dyn Any;
+        let ptr = ptr as *mut dyn Any;
+        let any = &mut *ptr;
+        any.downcast_mut()
+    }
 }
 
 #[derive(Clone)]
@@ -183,6 +190,13 @@ impl Value {
     pub fn as_obj<T: Any>(&self) -> Option<&T> {
         match self {
             Value::Object(obj) => obj.downcast_ref(),
+            _ => None,
+        }
+    }
+
+    pub fn as_obj_mut<T: Any>(&self) -> Option<&mut T> {
+        match self {
+            Value::Object(obj) => unsafe { obj.downcast_mut() },
             _ => None,
         }
     }
