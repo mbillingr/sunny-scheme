@@ -9,11 +9,11 @@ mod procedures;
 mod program_structure;
 mod scoping;
 
+use crate::builtin_libs::define_standard_libraries;
 use crate::context::{Context, Error};
 use crate::frontend::error::Error as FrontendError;
 use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
-use crate::stdlib::define_standard_libraries;
 use hamcrest2::core::{expect, success, MatchResult, Matcher};
 use hamcrest2::matchers::equal_to::EqualTo;
 use hamcrest2::matchers::err::IsErr;

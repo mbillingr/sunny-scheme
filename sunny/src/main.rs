@@ -6,9 +6,9 @@ use rustyline::{error::ReadlineError, Editor};
 use simple_logger::SimpleLogger;
 use structopt::StructOpt;
 
+use crate::builtin_libs::define_standard_libraries;
 use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
-use crate::stdlib::define_standard_libraries;
 use context::{Context, Error};
 use std::path::{Path, PathBuf};
 use sunny_vm::bytecode::CodePointer;
@@ -16,12 +16,12 @@ use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{ValueStorage, Vm};
 
 pub mod backend;
+pub mod builtin_libs;
 pub mod context;
 pub mod frontend;
 #[cfg(test)]
 mod language_tests;
 mod library_filesystem;
-pub mod stdlib;
 
 const LINE_PROMPT: &str = ">> ";
 const MULTI_PROMPT: &str = " ... ";
