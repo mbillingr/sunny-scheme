@@ -220,6 +220,10 @@ impl Value {
         }
     }
 
+    pub fn eqv(&self, rhs: &Self) -> bool {
+        self.eq(rhs)
+    }
+
     pub fn as_traceable(&self) -> Option<Ref<dyn Traceable>> {
         match self {
             Value::Void | Value::Nil | Value::False | Value::True | Value::Number(_) => None,

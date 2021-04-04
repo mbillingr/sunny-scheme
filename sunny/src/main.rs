@@ -56,6 +56,7 @@ fn main() {
 
     SimpleLogger::new()
         .with_module_level("rustyline", LevelFilter::Warn)
+        .with_level(LevelFilter::Warn)
         .init()
         .unwrap();
 
@@ -135,7 +136,6 @@ fn prepare_repl(mut context: Context) -> Context {
             .to_str()
             .unwrap(),
     ]);
-    println!("{:?}", libfs);
     context.set_libfs(libfs);
 
     context
