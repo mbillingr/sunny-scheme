@@ -1,5 +1,6 @@
 pub mod gc;
 pub mod rc;
+pub mod rc_arena;
 
 #[cfg(test)]
 mod tests {
