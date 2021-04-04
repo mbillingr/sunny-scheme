@@ -421,20 +421,31 @@ define_form! {
 define_form! {
     Import(sexpr, env):
        [(_, libname) => {
-            let libstr = libname_to_string(libname);
-            if let Some(lib) = env.find_library(&libstr) {
-                for export in lib.exports() {
-                    env.add_global_binding(export.export_name.to_string(), export.binding.clone());
-                }
-                return Ok(Ast::void())
-            }
+           let libstr = libname_to_string(libname);
 
-            let libexpr = env
-                .parse_library(&libstr)?
-                .ok_or_else(||error_at(libname, Error::UnknownLibrary))?;
-            let libast = LibraryDefinition.expand(&libexpr, env)?;
-            Ok(Ast::sequence(libast, Import.expand(sexpr, env)?))
+           if Self::import_all(&libstr, env) {
+               return Ok(Ast::void())
+           }
+
+           let libexpr = env
+               .parse_library(&libstr)?
+               .ok_or_else(||error_at(libname, Error::UnknownLibrary))?;
+           let libast = LibraryDefinition.expand(&libexpr, env)?;
+           Ok(Ast::sequence(libast, Import.expand(sexpr, env)?))
        }]
+}
+
+impl Import {
+    pub fn import_all(libname: &str, env: &Env) -> bool {
+        if let Some(lib) = env.find_library(&libname) {
+            for export in lib.exports() {
+                env.add_global_binding(export.export_name.to_string(), export.binding.clone());
+            }
+            true
+        } else {
+            false
+        }
+    }
 }
 
 pub struct SyntaxTransformer;

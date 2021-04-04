@@ -11,6 +11,7 @@ mod scoping;
 
 use crate::context::{Context, Error};
 use crate::frontend::error::Error as FrontendError;
+use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
 use crate::stdlib::define_standard_libraries;
 use hamcrest2::core::{expect, success, MatchResult, Matcher};
@@ -107,6 +108,7 @@ pub trait Eval {
     fn make_context(&self) -> Context {
         let mut context = Context::new();
         define_standard_libraries(&mut context);
+        Import::import_all("(scheme base)", context.env());
         context
     }
 }
@@ -136,6 +138,7 @@ pub struct When {
 pub fn given() -> When {
     let mut context = Context::new();
     define_standard_libraries(&mut context);
+    Import::import_all("(scheme base)", context.env());
 
     When {
         context,

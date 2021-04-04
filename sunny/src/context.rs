@@ -97,6 +97,10 @@ impl Context {
     pub fn define_library(&mut self, libname: impl ToString) -> LibDefiner {
         LibDefiner::new(libname, self)
     }
+
+    pub fn env(&self) -> &Env {
+        &self.env
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -162,18 +166,13 @@ impl<'c> LibDefiner<'c> {
     }
 
     pub fn define_syntax(mut self, name: &str, syntax: impl SyntaxExpander + 'static) -> Self {
-        self.env().add_global_binding(name, syntax);
-
-        let binding = self.env().lookup_variable(name).unwrap();
+        let binding = EnvBinding::from(syntax);
         self.exports.push(Export::new(name, binding));
         self
     }
 
     pub fn define_intrinsic(mut self, name: &'static str, n_params: usize) -> Self {
-        self.env()
-            .add_global_binding(name, EnvBinding::Intrinsic(name, n_params));
-
-        let binding = self.env().lookup_variable(name).unwrap();
+        let binding = EnvBinding::Intrinsic(name, n_params);
         self.exports.push(Export::new(name, binding));
         self
     }
@@ -189,19 +188,13 @@ impl<'c> LibDefiner<'c> {
         let value = f(self.storage());
         self.vm().assign_global(idx, value);
 
-        self.env().add_global_binding(name, EnvBinding::global(fqn));
-
-        let binding = self.env().lookup_variable(name).unwrap();
+        let binding = EnvBinding::global(fqn.clone());
         self.exports.push(Export::new(name, binding));
         self
     }
 
     pub fn fully_qualified_name(&self, name: &str) -> Rc<str> {
         format!("{}.{}", self.libname, name).into()
-    }
-
-    fn env(&mut self) -> &mut Env {
-        &mut self.context.env
     }
 
     fn runtime_globals(&mut self) -> &mut GlobalTable {
