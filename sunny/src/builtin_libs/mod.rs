@@ -9,6 +9,7 @@ use crate::frontend::syntax_forms::{
 };
 use hash_table::define_lib_sunny_hash_table;
 use sunny_vm::{ErrorKind, Result, Value};
+use lazy_static::lazy_static;
 
 /*  ===== R7RS compliant apply using our intrinsic function =====
 (define (full-apply f x . args) (if (null? args) (apply f x) (apply f (cons x (build-list args)))))
@@ -44,6 +45,10 @@ pub fn define_standard_libraries(ctx: &mut Context) {
             storage.ensure(1);
             storage.cons(1, 2).unwrap()
         })
+        .build();
+
+    ctx.define_library("(sunny extra)")
+        .define_primitive("now", now)
         .build();
 
     define_lib_sunny_hash_table(ctx);
@@ -124,4 +129,15 @@ primitive! {
     fn is_null(obj: Value) -> Result<Value> {
         Ok(Value::bool(obj.is_nil()))
     }
+
+    fn now() -> Result<Value> {
+        let begin = *BEGINNING_OF_TIME;
+        let duration = std::time::Instant::now() - begin;
+        let micros = duration.as_micros() as i64;
+        Ok(micros.into())
+    }
+}
+
+lazy_static! {
+    static ref BEGINNING_OF_TIME: std::time::Instant = std::time::Instant::now();
 }
