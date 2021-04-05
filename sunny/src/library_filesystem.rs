@@ -20,6 +20,7 @@ impl LibraryFileSystem {
         layers.extend(
             lib_paths
                 .into_iter()
+                .map(|path| path.trim_start_matches('/'))
                 .map(|path| pyhsical_fs.join(path).unwrap())
                 .map(Into::into),
         );
