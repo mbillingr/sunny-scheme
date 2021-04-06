@@ -198,6 +198,8 @@ impl Vm {
                 Op::Apply => self.apply()?,
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
                 Op::TailCall { n_args } => self.tail_call(Op::extend_arg(n_args, arg))?,
+                Op::CallDynamic => self.call_dynamic(Self::call)?,
+                Op::TailCallDynamic => self.call_dynamic(Self::tail_call)?,
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
                 Op::PrepareVarArgs(n_args) => self.prepare_varargs(Op::extend_arg(n_args, arg))?,
                 Op::Void => self.push_value(Value::Void),
@@ -480,6 +482,29 @@ impl Vm {
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
         self.current_activation = self.storage.insert(cnt.activation.duplicate()).unwrap();
+        Ok(())
+    }
+
+    fn call_dynamic(&mut self, actual_call: fn(&mut Self, usize) -> Result<()>) -> Result<()> {
+        let top = self.pop_value()?;
+        let n_args = match top {
+            Value::Values(n) => n,
+            _ => {
+                self.push_value(top);
+                1
+            }
+        };
+        self.get_callee_with_values(n_args)?;
+        actual_call(self, n_args)
+    }
+
+    fn get_callee_with_values(&mut self, n_values: usize) -> Result<()> {
+        if n_values >= self.value_stack.len() {
+            return Err(ErrorKind::StackUnderflow);
+        }
+        let callee_idx = self.value_stack.len() - 1 - n_values;
+        let callee = self.value_stack.remove(callee_idx);
+        self.push_value(callee);
         Ok(())
     }
 

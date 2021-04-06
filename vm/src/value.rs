@@ -51,6 +51,7 @@ pub enum Value {
     Primitive(Primitive),
     Continuation(Ref<Continuation>),
 
+    Values(usize), // mark multiple return values on stack
     Object(Ref<Box<dyn Object>>),
 }
 
@@ -137,6 +138,7 @@ impl Value {
             Value::Closure(_) => 8,
             Value::Primitive(_) => 9,
             Value::Continuation(_) => 10,
+            Value::Values(_) => 254,
             Value::Object(_) => 255,
         }
     }
@@ -233,6 +235,7 @@ impl Value {
             Value::Closure(c) => Some(c.as_dyn_traceable()),
             Value::Primitive(_) => None,
             Value::Continuation(c) => Some(c.as_dyn_traceable()),
+            Value::Values(_) => None,
             Value::Object(o) => Some(o.as_dyn_traceable()),
         }
     }
@@ -252,6 +255,7 @@ impl Traceable for Value {
             Value::Closure(p) => p.trace(gc),
             Value::Primitive(_) => {}
             Value::Continuation(p) => p.trace(gc),
+            Value::Values(_) => {}
             Value::Object(p) => p.trace(gc),
         }
     }
@@ -277,6 +281,7 @@ impl std::fmt::Display for Value {
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}>", p),
             Value::Continuation(p) => write!(f, "{:?}", **p),
+            Value::Values(n) => write!(f, "<{} values>", n),
             Value::Object(p) => write!(f, "<object {:p}>", p),
         }
     }
@@ -296,6 +301,7 @@ impl PartialEq for Value {
             (Pair(a), Pair(b)) => a == b,
             (Closure(a), Closure(b)) => a == b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
+            (Values(a), Values(b)) => a == b,
             (Object(a), Object(b)) => a == b,
             _ => false,
         }
@@ -318,13 +324,14 @@ impl Hash for Value {
             Value::Nil => {}
             Value::False => {}
             Value::True => {}
-            Value::Number(_) => {}
+            Value::Number(n) => n.hash(state),
             Value::Symbol(p) => p.as_ptr().hash(state),
             Value::String(p) => p.hash(state),
             Value::Pair(p) => p.as_ptr().hash(state),
             Value::Closure(p) => p.as_ptr().hash(state),
             Value::Primitive(p) => (*p as *const u8).hash(state),
             Value::Continuation(p) => p.as_ptr().hash(state),
+            Value::Values(n) => n.hash(state),
             Value::Object(p) => p.as_ptr().hash(state),
         }
     }

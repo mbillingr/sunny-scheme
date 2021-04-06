@@ -22,3 +22,32 @@ fn apply_function_to_list_makes_nary_call() {
         EvaluatesTo::the_integer(2)
     );
 }
+
+#[test]
+fn call_with_zero_values() {
+    assert_that!("(call-with-values values (lambda x x))", EvaluatesTo::nil());
+}
+
+#[test]
+fn call_with_one_value() {
+    assert_that!(
+        "(call-with-values (lambda () (values 1)) (lambda x x))",
+        EvaluatesTo::the_list(vec![1])
+    );
+}
+
+#[test]
+fn call_with_three_value() {
+    assert_that!(
+        "(call-with-values (lambda () (values 1 2 3)) (lambda x x))",
+        EvaluatesTo::the_list(vec![1, 2, 3])
+    );
+}
+
+#[test]
+fn call_with_one_normal_value() {
+    assert_that!(
+        "(call-with-values (lambda () 1) (lambda x x))",
+        EvaluatesTo::the_list(vec![1])
+    );
+}

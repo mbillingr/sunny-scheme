@@ -20,7 +20,9 @@ pub enum Op {
     RJumpIfVoid { backward: u8 },
     Return,
     Call { n_args: u8 },
+    CallDynamic,
     TailCall { n_args: u8 },
+    TailCallDynamic,
     Apply,
     PrepareArgs(u8),
     PrepareVarArgs(u8),
@@ -106,7 +108,9 @@ impl std::fmt::Display for Op {
             Op::Return => write!(f, "{}", repr::RETURN),
             Op::Apply => write!(f, "{}", repr::APPLY),
             Op::Call { n_args } => write!(f, "{} {}", repr::CALL, n_args),
+            Op::CallDynamic => write!(f, "{}", repr::CALLDYNAMIC),
             Op::TailCall { n_args } => write!(f, "{} {}", repr::TAILCALL, n_args),
+            Op::TailCallDynamic => write!(f, "{}", repr::TAILCALLDYNAMIC),
             Op::PrepareArgs(n) => write!(f, "{} {}", repr::PREPARGS, n),
             Op::PrepareVarArgs(n) => write!(f, "{} {}", repr::PREPVARARGS, n),
             Op::FetchGlobal(x) => write!(f, "{} {}", repr::FETCHGLOBAL, x),
@@ -151,7 +155,9 @@ pub mod repr {
     pub const RETURN: &'static str = "RETURN";
     pub const APPLY: &'static str = "APPLY";
     pub const CALL: &'static str = "CALL";
+    pub const CALLDYNAMIC: &'static str = "CALLDYNAMIC";
     pub const TAILCALL: &'static str = "TAILCALL";
+    pub const TAILCALLDYNAMIC: &'static str = "TAILCALLDYNAMIC";
     pub const PREPARGS: &'static str = "PREPARGS";
     pub const PREPVARARGS: &'static str = "PREPVARARGS";
     pub const FETCHGLOBAL: &'static str = "FETCHGLOBAL";

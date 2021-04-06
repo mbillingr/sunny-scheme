@@ -188,6 +188,9 @@ impl Backend for ByteCodeBackend<'_> {
                 Op::Swap,
                 Op::Call { n_args: 1 },
             ]),
+            "call-with-values" => {
+                blocks.append_ops(vec![Op::Swap, Op::Call { n_args: 0 }, Op::CallDynamic])
+            }
             "car" => blocks.append_op_with_context(Op::Car, context),
             "cdr" => blocks.append_op_with_context(Op::Cdr, context),
             "cons" => blocks.append_op_with_context(Op::Cons, context),

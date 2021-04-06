@@ -8,8 +8,8 @@ use crate::frontend::syntax_forms::{
     SyntaxDefinition,
 };
 use hash_table::define_lib_sunny_hash_table;
-use sunny_vm::{ErrorKind, Result, Value};
 use lazy_static::lazy_static;
+use sunny_vm::{ErrorKind, Result, Value, Vm};
 
 /*  ===== R7RS compliant apply using our intrinsic function =====
 (define (full-apply f x . args) (if (null? args) (apply f x) (apply f (cons x (build-list args)))))
@@ -28,6 +28,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
         .define_intrinsic("call/cc", 1)
+        .define_intrinsic("call-with-values", 2)
         .define_primitive("+", add)
         .define_primitive("-", sub)
         .define_primitive("*", mul)
@@ -41,6 +42,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_intrinsic("cdr", 1)
         .define_intrinsic("eq?", 2)
         .define_primitive("dec", dec)
+        .define_primitive("values", values)
         .define_value("foo", |storage| {
             storage.ensure(1);
             storage.cons(1, 2).unwrap()
@@ -136,6 +138,11 @@ primitive! {
         let micros = duration.as_micros() as i64;
         Ok(micros.into())
     }
+}
+
+fn values(n_args: usize, vm: &mut Vm) -> Result<()> {
+    vm.push_value(Value::Values(n_args));
+    Ok(())
 }
 
 lazy_static! {
