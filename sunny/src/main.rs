@@ -111,6 +111,7 @@ fn prepare_program(mut context: Context, file: &Path) -> Context {
             .unwrap()
             .parent()
             .unwrap()
+            .join("sunny-libs")
             .to_str()
             .unwrap(),
     ]);
@@ -126,6 +127,12 @@ fn prepare_repl(mut context: Context) -> Context {
     let libfs = LibraryFileSystem::new(vec![
         std::env::current_dir()
             .unwrap()
+            .join("sunny-libs")
+            .as_os_str()
+            .to_str()
+            .unwrap(),
+        std::env::current_dir()
+            .unwrap()
             .as_os_str()
             .to_str()
             .unwrap(),
@@ -133,6 +140,7 @@ fn prepare_repl(mut context: Context) -> Context {
             .unwrap()
             .parent()
             .unwrap()
+            .join("sunny-libs")
             .to_str()
             .unwrap(),
     ]);

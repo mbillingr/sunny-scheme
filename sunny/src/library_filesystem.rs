@@ -15,7 +15,7 @@ impl Default for LibraryFileSystem {
 
 impl LibraryFileSystem {
     pub fn new(lib_paths: Vec<&str>) -> Self {
-        let pyhsical_fs = VfsPath::new(PhysicalFS::new("".into()));
+        let pyhsical_fs = VfsPath::new(PhysicalFS::new("/".into()));
         let mut layers = vec![MemoryFS::new().into()];
         layers.extend(
             lib_paths

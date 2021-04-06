@@ -107,6 +107,15 @@ pub trait Eval {
 
     fn make_context(&self) -> Context {
         let mut context = Context::new();
+
+        let libfs = LibraryFileSystem::new(vec![std::env::current_dir()
+            .unwrap()
+            .join("../sunny-libs")
+            .as_os_str()
+            .to_str()
+            .unwrap()]);
+        context.set_libfs(libfs);
+
         define_standard_libraries(&mut context);
         Import::import_all("(scheme base)", context.env());
         context
@@ -140,10 +149,14 @@ pub fn given() -> When {
     define_standard_libraries(&mut context);
     Import::import_all("(scheme base)", context.env());
 
-    When {
-        context,
-        libfs: LibraryFileSystem::default(),
-    }
+    let libfs = LibraryFileSystem::new(vec![std::env::current_dir()
+        .unwrap()
+        .join("../sunny-libs")
+        .as_os_str()
+        .to_str()
+        .unwrap()]);
+
+    When { context, libfs }
 }
 
 impl When {

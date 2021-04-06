@@ -73,6 +73,11 @@ fn import_loads_library_and_imports_values() {
     );
 }
 
+#[test]
+fn can_import_standard_libraries() {
+    assert_that!("(import (sunny time))", EvaluatesTo::void());
+}
+
 const SIMPLE_LIBRARY_DEFINITION: &str = "
 (define-library (foo bar)
     (import (scheme base))
