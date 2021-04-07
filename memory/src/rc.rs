@@ -1,5 +1,4 @@
 use std::any::Any;
-use std::cell::Cell;
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
 use std::rc::{Rc, Weak};
@@ -15,12 +14,6 @@ impl<T> Ref<T> {
 impl<T: ?Sized> Ref<T> {
     pub fn as_ptr(&self) -> *const T {
         Rc::as_ptr(&self.0)
-    }
-}
-
-impl<T: 'static + Traceable> Ref<T> {
-    pub fn as_dyn_traceable(&self) -> Ref<dyn Traceable> {
-        Ref(self.0.clone())
     }
 }
 
@@ -76,19 +69,19 @@ impl Storage {
         Storage { interned: vec![] }
     }
 
-    pub fn free(&self) -> usize {
-        usize::max_value()
-    }
-
-    pub fn insert_interned<T: 'static>(&mut self, obj: T) -> Result<Ref<T>, T> {
+    pub fn insert_interned<T: 'static>(&mut self, obj: T) -> Ref<T> {
         let rc = Rc::new(obj);
         let wc = Rc::downgrade(&rc);
         self.interned.push(wc);
-        Ok(Ref(rc))
+        Ref(rc)
     }
 
-    pub fn insert<T>(&mut self, obj: T) -> Result<Ref<T>, T> {
-        Ok(Ref(Rc::new(obj)))
+    pub fn insert<T>(&mut self, obj: T) -> Ref<T> {
+        Ref(Rc::new(obj))
+    }
+
+    pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Ref<T> {
+        self.insert(*obj)
     }
 
     pub fn find_interned<T: 'static>(&mut self, predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
@@ -106,55 +99,5 @@ impl Storage {
             }
         }
         None
-    }
-
-    pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Result<Ref<T>, Box<T>> {
-        self.insert(*obj).map_err(Box::new)
-    }
-
-    pub fn is_valid<T>(&self, _: &Ref<T>) -> bool {
-        true
-    }
-
-    pub fn grow(&mut self) {}
-
-    pub fn auto_grow(&mut self) {}
-
-    pub fn ensure(&mut self, _: usize) {}
-
-    pub unsafe fn collect_garbage<T>(&mut self, _root: T) {}
-
-    pub fn begin_garbage_collection(&mut self) -> Tracer {
-        Tracer
-    }
-
-    pub unsafe fn finish_garbage_collection(&mut self, _: Tracer) {}
-}
-
-pub trait Traceable {
-    fn trace(&self, _: &mut Tracer) {}
-}
-
-impl Traceable for () {}
-
-impl<T: ?Sized> Traceable for Ref<T> {}
-
-impl<T> Traceable for Option<T> {}
-
-impl<T, U: ?Sized> Traceable for (T, U) {}
-
-impl<T> Traceable for Vec<T> {}
-
-impl<T: ?Sized> Traceable for Box<T> {}
-
-impl<T> Traceable for &[T] {}
-
-impl<T: Traceable + Default + ?Sized> Traceable for Cell<T> {}
-
-pub struct Tracer;
-
-impl Tracer {
-    pub fn mark(self, _: &impl Traceable) -> Self {
-        self
     }
 }

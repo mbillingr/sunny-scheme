@@ -70,9 +70,7 @@ impl Backend for ByteCodeBackend<'_> {
     }
 
     fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir {
-        let allocs = self.storage.count_allocations(c);
-        self.storage.ensure(allocs);
-        let value = self.storage.sexpr_to_value(c).unwrap();
+        let value = self.storage.sexpr_to_value(c);
         let block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
         block.map_source(0, context);
         BlockChain::singleton(block)

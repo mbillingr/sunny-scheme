@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::closure::Closure;
 use crate::continuation::Continuation;
-use crate::mem::{Ref, Traceable, Tracer};
+use crate::mem::Ref;
 use crate::number::Number;
 use crate::primitive::Primitive;
 use std::any::Any;
@@ -11,7 +11,7 @@ use std::fmt::Debug;
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;
 
-pub trait Object: 'static + Traceable + Debug {
+pub trait Object: 'static + Debug {
     fn as_any(&self) -> &dyn Any;
 
     fn equals(&self, other: &dyn Object) -> bool {
@@ -224,40 +224,6 @@ impl Value {
 
     pub fn eqv(&self, rhs: &Self) -> bool {
         self.eq(rhs)
-    }
-
-    pub fn as_traceable(&self) -> Option<Ref<dyn Traceable>> {
-        match self {
-            Value::Void | Value::Nil | Value::False | Value::True | Value::Number(_) => None,
-            Value::Symbol(s) => Some(s.as_dyn_traceable()),
-            Value::String(s) => Some(s.as_dyn_traceable()),
-            Value::Pair(p) => Some(p.as_dyn_traceable()),
-            Value::Closure(c) => Some(c.as_dyn_traceable()),
-            Value::Primitive(_) => None,
-            Value::Continuation(c) => Some(c.as_dyn_traceable()),
-            Value::Values(_) => None,
-            Value::Object(o) => Some(o.as_dyn_traceable()),
-        }
-    }
-}
-
-impl Traceable for Value {
-    fn trace(&self, gc: &mut Tracer) {
-        match self {
-            Value::Void => {}
-            Value::Nil => {}
-            Value::False => {}
-            Value::True => {}
-            Value::Number(_) => {}
-            Value::Symbol(p) => p.trace(gc),
-            Value::String(p) => p.trace(gc),
-            Value::Pair(p) => p.trace(gc),
-            Value::Closure(p) => p.trace(gc),
-            Value::Primitive(_) => {}
-            Value::Continuation(p) => p.trace(gc),
-            Value::Values(_) => {}
-            Value::Object(p) => p.trace(gc),
-        }
     }
 }
 

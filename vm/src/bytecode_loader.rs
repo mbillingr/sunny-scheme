@@ -78,9 +78,7 @@ fn build_constant_section(
     storage: &mut ValueStorage,
 ) -> Result<CodeBuilder> {
     for value in constants_section.iter() {
-        let c = storage
-            .sexpr_to_value(value)
-            .map_err(|_| Error::AllocationError)?;
+        let c = storage.sexpr_to_value(value);
         cb.add_constant(c);
     }
     Ok(cb)
@@ -263,7 +261,7 @@ the-end:
         );
 
         assert!(code.constant_slice()[0].equals(&Value::number(42)));
-        assert!(code.constant_slice()[1].equals(&storage.interned_symbol("foo").unwrap()));
-        assert!(code.constant_slice()[2].equals(&storage.list(vec![1, 2, 3]).unwrap()));
+        assert!(code.constant_slice()[1].equals(&storage.interned_symbol("foo")));
+        assert!(code.constant_slice()[2].equals(&storage.list(vec![1, 2, 3])));
     }
 }

@@ -70,24 +70,14 @@ impl Context {
         Ok(result)
     }
 
-    pub fn preserve(&mut self, value: &Value) {
-        self.vm.borrow_storage().preserve_value(value);
-    }
-
-    pub fn release(&mut self, value: &Value) {
-        self.vm.borrow_storage().release_value(value);
-    }
-
     pub fn symbol(&mut self, name: &str) -> Value {
         let storage = self.vm.borrow_storage();
-        storage.ensure(1);
-        storage.interned_symbol(name).unwrap()
+        storage.interned_symbol(name)
     }
 
     pub fn cons(&mut self, a: impl Into<Value>, b: impl Into<Value>) -> Value {
         let storage = self.vm.borrow_storage();
-        storage.ensure(1);
-        storage.cons(a, b).unwrap()
+        storage.cons(a, b)
     }
 
     pub fn set_libfs(&mut self, lfs: LibraryFileSystem) {

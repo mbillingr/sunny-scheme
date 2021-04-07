@@ -2,7 +2,6 @@ use crate::context::Context;
 use std::any::Any;
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
-use sunny_vm::mem::{Traceable, Tracer};
 use sunny_vm::{ErrorKind, Object, Result, Value, Vm};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
@@ -42,12 +41,8 @@ fn make_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
         return Err(ErrorKind::TooManyArgs);
     }
 
-    unsafe {
-        vm.ensure_storage_space(1)?;
-    }
-
     let table: Box<dyn Object> = Box::new(Table::new());
-    let obj = vm.borrow_storage().insert(table).unwrap();
+    let obj = vm.borrow_storage().insert(table);
 
     vm.push_value(Value::Object(obj));
     Ok(())
@@ -59,15 +54,6 @@ pub struct Table(HashMap<Value, Value>);
 impl Table {
     pub fn new() -> Self {
         Table(HashMap::new())
-    }
-}
-
-impl Traceable for Table {
-    fn trace(&self, gc: &mut Tracer) {
-        for (k, v) in &self.0 {
-            k.trace(gc);
-            v.trace(gc);
-        }
     }
 }
 

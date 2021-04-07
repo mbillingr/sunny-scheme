@@ -1,6 +1,6 @@
 use crate::bytecode::CodePointer;
 use crate::closure::Closure;
-use crate::mem::{Ref, Traceable, Tracer};
+use crate::mem::Ref;
 use crate::Value;
 use std::cell::Cell;
 
@@ -9,17 +9,6 @@ pub struct Activation {
     pub(crate) parent: Option<Ref<Activation>>,
     pub(crate) code: CodePointer,
     pub(crate) locals: Vec<Cell<Value>>,
-}
-
-impl Traceable for Activation {
-    fn trace(&self, gc: &mut Tracer) {
-        self.caller.trace(gc);
-        self.parent.trace(gc);
-        self.code.trace(gc);
-        for x in &self.locals {
-            x.trace(gc);
-        }
-    }
 }
 
 impl std::fmt::Debug for Activation {

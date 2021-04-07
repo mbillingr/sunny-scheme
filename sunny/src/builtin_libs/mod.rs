@@ -43,10 +43,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_intrinsic("eq?", 2)
         .define_primitive("dec", dec)
         .define_primitive("values", values)
-        .define_value("foo", |storage| {
-            storage.ensure(1);
-            storage.cons(1, 2).unwrap()
-        })
+        .define_value("foo", |storage| storage.cons(1, 2))
         .build();
 
     ctx.define_library("(sunny extra)")

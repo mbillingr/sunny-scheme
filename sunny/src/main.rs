@@ -81,7 +81,7 @@ fn run_bytecode(path: &std::path::Path) {
         Ok(code) => code,
         Err(e) => panic!("{}", e),
     };
-    let code = storage.insert(code).unwrap();
+    let code = storage.insert(code);
 
     let cp = CodePointer::new(code);
 

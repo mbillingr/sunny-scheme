@@ -2,11 +2,8 @@ use crate::activation::Activation;
 use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
 use crate::continuation::Continuation;
 use crate::{
-    bytecode::Op,
-    closure::Closure,
-    mem::{Ref, Traceable, Tracer},
-    storage::ValueStorage,
-    Error, ErrorKind, Result, RuntimeResult, Value,
+    bytecode::Op, closure::Closure, mem::Ref, storage::ValueStorage, Error, ErrorKind, Result,
+    RuntimeResult, Value,
 };
 use std::cell::Cell;
 use sunny_sexpr_parser::Sexpr;
@@ -17,35 +14,12 @@ pub struct Vm {
     globals: Vec<Value>,
 
     current_activation: Ref<Activation>,
-
-    gc_preserve: Vec<&'static dyn Traceable>,
-}
-
-impl Traceable for Vm {
-    fn trace(&self, gc: &mut Tracer) {
-        self.value_stack.trace(gc);
-        self.globals.trace(gc);
-        self.current_activation.trace(gc);
-        self.gc_preserve.trace(gc);
-    }
-}
-
-impl Drop for Vm {
-    fn drop(&mut self) {
-        unsafe {
-            // I think it's safe to invalidate all
-            // contained references at this point
-            self.storage.collect_garbage(&());
-        }
-    }
 }
 
 impl Vm {
     pub fn new(mut storage: ValueStorage) -> Result<Self> {
-        storage.ensure(2);
-
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
-        let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
+        let code_ptr = CodePointer::new(storage.insert(code_segment));
 
         let root_activation = Activation {
             caller: None,
@@ -53,14 +27,13 @@ impl Vm {
             code: code_ptr,
             locals: vec![],
         };
-        let root_activation = storage.insert(root_activation).unwrap();
+        let root_activation = storage.insert(root_activation);
 
         Ok(Vm {
             storage,
             value_stack: vec![],
             globals: vec![],
             current_activation: root_activation,
-            gc_preserve: vec![],
         })
     }
 
@@ -68,28 +41,13 @@ impl Vm {
         &mut self.storage
     }
 
-    pub fn build_value(&mut self, sexpr: &Sexpr) -> Result<Value> {
-        let storage_required = self.storage.count_allocations(sexpr);
-        unsafe {
-            self.ensure_storage_space(storage_required)?;
-        }
-        Ok(self.storage.sexpr_to_value(sexpr).unwrap())
+    pub fn build_value(&mut self, sexpr: &Sexpr) -> Value {
+        self.storage.sexpr_to_value(sexpr)
     }
 
     pub fn eval_repl(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
-        unsafe {
-            // We pretend code has static lifetime. This is not the case, so
-            // the reference must be popped while it is still alive.
-            let code = &*(&code as *const _);
-            self.gc_preserve.push(code);
-
-            self.ensure_storage_space(2).unwrap();
-
-            self.gc_preserve.pop().unwrap();
-        }
-
         let mut root_activation = self.current_activation.clone();
-        let code = self.storage.insert(code).unwrap();
+        let code = self.storage.insert(code);
         root_activation.code = CodePointer::new(code);
 
         match self.run() {
@@ -122,23 +80,13 @@ impl Vm {
     }
 
     fn load_closure(&mut self, closure: &Closure) -> Result<()> {
-        unsafe {
-            // We pretend code has static lifetime. This is not the case, so
-            // the reference must be popped while it is still alive.
-            let closure = &*(closure as *const _);
-            self.gc_preserve.push(closure);
-
-            self.ensure_storage_space(1)?;
-
-            self.gc_preserve.pop().unwrap();
-        }
         let activation = Activation {
             caller: None,
             parent: closure.parent.clone(),
             code: closure.code.clone(),
             locals: vec![],
         };
-        self.current_activation = self.storage.insert(activation).unwrap();
+        self.current_activation = self.storage.insert(activation);
         Ok(())
     }
 
@@ -436,23 +384,13 @@ impl Vm {
     }
 
     fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
-        unsafe {
-            self.storage.preserve(&cls);
-            self.ensure_storage_space(1)?;
-            self.storage.release(&cls);
-        }
         let args = self.pop_values(n_args)?;
         let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
-        self.current_activation = self.storage.insert(act).unwrap();
+        self.current_activation = self.storage.insert(act);
         Ok(())
     }
 
     fn tail_call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
-        unsafe {
-            self.storage.preserve(&cls);
-            self.ensure_storage_space(1)?;
-            self.storage.release(&cls);
-        }
         let args = self.pop_values(n_args)?;
         let caller = self
             .current_activation
@@ -460,7 +398,7 @@ impl Vm {
             .as_ref()
             .unwrap_or(&self.current_activation);
         let act = Activation::from_closure(caller.clone(), &*cls, args);
-        self.current_activation = self.storage.insert(act).unwrap();
+        self.current_activation = self.storage.insert(act);
         Ok(())
     }
 
@@ -472,16 +410,10 @@ impl Vm {
             return Err(ErrorKind::TooManyArgs);
         }
 
-        unsafe {
-            self.storage.preserve(&cnt);
-            self.ensure_storage_space(1)?;
-            self.storage.release(&cnt);
-        }
-
         let args = self.pop_values(n_args)?;
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
-        self.current_activation = self.storage.insert(cnt.activation.duplicate()).unwrap();
+        self.current_activation = self.storage.insert(cnt.activation.duplicate());
         Ok(())
     }
 
@@ -527,14 +459,10 @@ impl Vm {
 
         let n_varargs = self.current_activation.locals.len() - n_args;
 
-        unsafe {
-            self.ensure_storage_space(n_varargs)?;
-        }
-
         let mut vararg = Value::Nil;
         for _ in 0..n_varargs {
             let x = self.drop_local()?;
-            vararg = self.storage.cons(x, vararg).unwrap();
+            vararg = self.storage.cons(x, vararg);
         }
 
         self.append_local(vararg);
@@ -582,12 +510,9 @@ impl Vm {
     }
 
     fn cons(&mut self) -> Result<()> {
-        unsafe {
-            self.ensure_storage_space(1)?;
-        }
         let cdr = self.pop_value()?;
         let car = self.pop_value()?;
-        let pair = self.storage.cons(car, cdr).unwrap();
+        let pair = self.storage.cons(car, cdr);
         self.push_value(pair);
         Ok(())
     }
@@ -607,30 +532,22 @@ impl Vm {
     }
 
     fn make_closure(&mut self, code_offset: usize) -> Result<()> {
-        unsafe {
-            self.ensure_storage_space(2)?;
-        }
-
         let code = self.current_activation.code.offset(code_offset as isize);
 
         let closure = Closure {
             code,
             parent: Some(self.current_activation.clone()),
         };
-        let closure = self.storage.insert(closure).unwrap();
+        let closure = self.storage.insert(closure);
 
         self.push_value(Value::Closure(closure));
         Ok(())
     }
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
-        unsafe {
-            self.ensure_storage_space(2)?;
-        }
-
         let mut activation = self.current_activation.duplicate();
         activation.code = activation.code.offset(code_offset as isize);
-        let activation = self.storage.insert(activation).unwrap();
+        let activation = self.storage.insert(activation);
 
         let mut value_stack = self.value_stack.clone();
         value_stack.pop().unwrap(); // remove the function called by call/cc
@@ -639,24 +556,10 @@ impl Vm {
             activation,
             value_stack,
         };
-        let continuation = self.storage.insert(continuation).unwrap();
+        let continuation = self.storage.insert(continuation);
         self.push_value(Value::Continuation(continuation));
 
         Ok(())
-    }
-
-    pub unsafe fn ensure_storage_space(&mut self, n_objects: usize) -> Result<()> {
-        if self.storage.free() < n_objects {
-            self.collect_garbage();
-            self.storage.ensure(n_objects);
-        }
-        Ok(())
-    }
-
-    unsafe fn collect_garbage(&mut self) {
-        // This is only safe if all live references are reachable from the vm structure
-        let gc = self.storage.begin_garbage_collection().mark(self);
-        self.storage.finish_garbage_collection(gc);
     }
 }
 
@@ -709,7 +612,7 @@ mod tests {
             let mut storage = ValueStorage::new(self.storage_capacity + additional_capacity);
 
             let code_segment = cb.build().unwrap();
-            let code_ptr = CodePointer::new(storage.insert(code_segment).unwrap());
+            let code_ptr = CodePointer::new(storage.insert(code_segment));
 
             let closure = Closure {
                 code: code_ptr,
@@ -884,7 +787,7 @@ mod tests {
             .op(Op::Halt)
             .build()
             .unwrap();
-        let code_segment = storage.insert(code).unwrap();
+        let code_segment = storage.insert(code);
 
         let main = Closure {
             code: CodePointer::new(code_segment.clone()).at(0),
@@ -1260,7 +1163,7 @@ mod tests {
             .op(Op::Halt)
             .build()
             .unwrap();
-        let code_segment = storage.insert(code).unwrap();
+        let code_segment = storage.insert(code);
 
         let main = Closure {
             code: CodePointer::new(code_segment.clone()).at(0),
@@ -1273,7 +1176,7 @@ mod tests {
             code: CodePointer::new(code_segment.clone()).at(999),
             locals: vec![Cell::new(Value::number(1)), Cell::new(Value::number(2))],
         };
-        let act = storage.insert(act).unwrap();
+        let act = storage.insert(act);
 
         let callee = Closure {
             code: CodePointer::new(code_segment.clone()).at(2),

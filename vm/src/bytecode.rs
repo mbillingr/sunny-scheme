@@ -1,4 +1,4 @@
-use crate::mem::{Ref, Traceable, Tracer};
+use crate::mem::Ref;
 use crate::Value;
 use std::collections::HashMap;
 use sunny_sexpr_parser::SourceLocation;
@@ -86,10 +86,6 @@ impl Op {
 
         ops
     }
-}
-
-impl Traceable for Op {
-    fn trace(&self, _: &mut Tracer) {}
 }
 
 impl std::fmt::Display for Op {
@@ -191,12 +187,6 @@ pub struct CodeSegment {
     source_map: Option<HashMap<usize, SourceLocation<()>>>,
 }
 
-impl Traceable for CodeSegment {
-    fn trace(&self, gc: &mut Tracer) {
-        self.constants.trace(gc);
-    }
-}
-
 impl CodeSegment {
     pub fn new(code: impl Into<Box<[Op]>>, constants: impl Into<Box<[Value]>>) -> Self {
         CodeSegment {
@@ -292,12 +282,6 @@ impl std::fmt::Display for CodeSegment {
 pub struct CodePointer {
     segment: Ref<CodeSegment>,
     position: usize,
-}
-
-impl Traceable for CodePointer {
-    fn trace(&self, gc: &mut Tracer) {
-        self.segment.trace(gc);
-    }
 }
 
 impl CodePointer {
