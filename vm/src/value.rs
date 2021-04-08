@@ -146,20 +146,21 @@ impl Value {
     }
 
     pub fn get_tag(&self) -> u8 {
+        use Value::*;
         match self {
-            Value::Void => 0,
-            Value::Nil => 1,
-            Value::False => 2,
-            Value::True => 3,
-            Value::Number(_) => 4,
-            Value::Symbol(_) => 5,
-            Value::String(_) => 6,
-            Value::Pair(_) => 7,
-            Value::Closure(_) => 8,
-            Value::Primitive(_) => 9,
-            Value::Continuation(_) => 10,
-            Value::Values(_) => 254,
-            Value::Object(_) => 255,
+            Void => 0,
+            Nil => 1,
+            False => 2,
+            True => 3,
+            Number(_) => 4,
+            Symbol(_) => 5,
+            String(_) => 6,
+            Pair(_) => 7,
+            Closure(_) => 8,
+            Primitive(_) => 9,
+            Continuation(_) => 10,
+            Values(_) => 254,
+            Object(_) => 255,
         }
     }
 
@@ -245,6 +246,56 @@ impl Value {
     pub fn eqv(&self, rhs: &Self) -> bool {
         self.eq(rhs)
     }
+
+    pub fn shallow_hash<H: Hasher>(&self, state: &mut H) {
+        self.get_tag().hash(state);
+        match self {
+            Value::Void => {}
+            Value::Nil => {}
+            Value::False => {}
+            Value::True => {}
+            Value::Number(n) => n.hash(state),
+            Value::Symbol(p) => p.as_ptr().hash(state),
+            Value::String(p) => p.as_ptr().hash(state),
+            Value::Pair(p) => p.as_ptr().hash(state),
+            Value::Closure(p) => p.as_ptr().hash(state),
+            Value::Primitive(p) => (*p as *const u8).hash(state),
+            Value::Continuation(p) => p.as_ptr().hash(state),
+            Value::Values(n) => n.hash(state),
+            Value::Object(p) => p.as_ptr().hash(state),
+        }
+    }
+
+    pub fn deep_hash<H: Hasher>(&self, state: &mut H) {
+        self.get_tag().hash(state);
+        match self {
+            Value::Void => {}
+            Value::Nil => {}
+            Value::False => {}
+            Value::True => {}
+            Value::Number(n) => n.hash(state),
+            Value::Symbol(p) => p.as_ptr().hash(state),
+            Value::String(p) => p.as_ptr().hash(state),
+            Value::Pair(p) => {
+                p.0.deep_hash(state);
+                p.1.deep_hash(state);
+            }
+            Value::Closure(_) => unimplemented!(),
+            Value::Primitive(p) => (*p as *const u8).hash(state),
+            Value::Continuation(_) => unimplemented!(),
+            Value::Values(n) => n.hash(state),
+            Value::Object(_) => unimplemented!(),
+        }
+    }
+}
+
+impl std::fmt::Debug for WeakValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self.upgrade() {
+            Some(value) => write!(f, "{}", value),
+            None => write!(f, "<dead value>"),
+        }
+    }
 }
 
 impl std::fmt::Debug for Value {
@@ -269,6 +320,29 @@ impl std::fmt::Display for Value {
             Value::Continuation(p) => write!(f, "{:?}", **p),
             Value::Values(n) => write!(f, "<{} values>", n),
             Value::Object(p) => write!(f, "<object {:p}>", p),
+        }
+    }
+}
+
+impl Eq for WeakValue {}
+
+impl PartialEq for WeakValue {
+    fn eq(&self, rhs: &Self) -> bool {
+        use WeakValue::*;
+        match (self, rhs) {
+            (Void, Void) => true,
+            (Nil, Nil) => true,
+            (False, False) => true,
+            (True, True) => true,
+            (Number(a), Number(b)) => a == b,
+            (Symbol(a), Symbol(b)) => a == b,
+            (String(a), String(b)) => a == b,
+            (Pair(a), Pair(b)) => a == b,
+            (Closure(a), Closure(b)) => a == b,
+            (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
+            (Values(a), Values(b)) => a == b,
+            (Object(a), Object(b)) => a == b,
+            _ => false,
         }
     }
 }
@@ -304,21 +378,27 @@ impl Eq for Value {}
 
 impl Hash for Value {
     fn hash<H: Hasher>(&self, state: &mut H) {
+        self.shallow_hash(state)
+    }
+}
+
+impl Hash for WeakValue {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Void => {}
-            Value::Nil => {}
-            Value::False => {}
-            Value::True => {}
-            Value::Number(n) => n.hash(state),
-            Value::Symbol(p) => p.as_ptr().hash(state),
-            Value::String(p) => p.hash(state),
-            Value::Pair(p) => p.as_ptr().hash(state),
-            Value::Closure(p) => p.as_ptr().hash(state),
-            Value::Primitive(p) => (*p as *const u8).hash(state),
-            Value::Continuation(p) => p.as_ptr().hash(state),
-            Value::Values(n) => n.hash(state),
-            Value::Object(p) => p.as_ptr().hash(state),
+            WeakValue::Void => {}
+            WeakValue::Nil => {}
+            WeakValue::False => {}
+            WeakValue::True => {}
+            WeakValue::Number(n) => n.hash(state),
+            WeakValue::Symbol(p) => p.as_ptr().hash(state),
+            WeakValue::String(p) => p.as_ptr().hash(state),
+            WeakValue::Pair(p) => p.as_ptr().hash(state),
+            WeakValue::Closure(p) => p.as_ptr().hash(state),
+            WeakValue::Primitive(p) => (*p as *const u8).hash(state),
+            WeakValue::Continuation(p) => p.as_ptr().hash(state),
+            WeakValue::Values(n) => n.hash(state),
+            WeakValue::Object(p) => p.as_ptr().hash(state),
         }
     }
 }
@@ -350,6 +430,10 @@ impl Value {
 }
 
 impl WeakValue {
+    pub fn is_dead(&self) -> bool {
+        self.upgrade().is_none()
+    }
+
     pub fn upgrade(&self) -> Option<Value> {
         match self {
             WeakValue::Void => Some(Value::Void),
@@ -365,6 +449,25 @@ impl WeakValue {
             WeakValue::Continuation(p) => p.upgrade().map(Value::Continuation),
             WeakValue::Values(n) => Some(Value::Values(*n)),
             WeakValue::Object(p) => p.upgrade().map(Value::Object),
+        }
+    }
+
+    pub fn get_tag(&self) -> u8 {
+        use WeakValue::*;
+        match self {
+            Void => 0,
+            Nil => 1,
+            False => 2,
+            True => 3,
+            Number(_) => 4,
+            Symbol(_) => 5,
+            String(_) => 6,
+            Pair(_) => 7,
+            Closure(_) => 8,
+            Primitive(_) => 9,
+            Continuation(_) => 10,
+            Values(_) => 254,
+            Object(_) => 255,
         }
     }
 }
@@ -472,5 +575,49 @@ mod tests {
         assert_eq!(pair1, pair1);
         assert_eq!(pair2, pair2);
         assert_ne!(pair1, pair2);
+    }
+
+    #[test]
+    fn shallow_hashes_of_similar_pairs_are_different() {
+        let pair1 = Value::Pair(Ref::from_leaked_static((
+            Value::number(1),
+            Value::number(2),
+        )));
+        let pair2 = Value::Pair(Ref::from_leaked_static((
+            Value::number(1),
+            Value::number(2),
+        )));
+
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        pair1.shallow_hash(&mut hasher);
+        let hash1 = hasher.finish();
+
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        pair2.shallow_hash(&mut hasher);
+        let hash2 = hasher.finish();
+
+        assert_ne!(hash1, hash2);
+    }
+
+    #[test]
+    fn deep_hashes_of_similar_pairs_are_different() {
+        let pair1 = Value::Pair(Ref::from_leaked_static((
+            Value::number(1),
+            Value::number(2),
+        )));
+        let pair2 = Value::Pair(Ref::from_leaked_static((
+            Value::number(1),
+            Value::number(2),
+        )));
+
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        pair1.deep_hash(&mut hasher);
+        let hash1 = hasher.finish();
+
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        pair2.deep_hash(&mut hasher);
+        let hash2 = hasher.finish();
+
+        assert_eq!(hash1, hash2);
     }
 }

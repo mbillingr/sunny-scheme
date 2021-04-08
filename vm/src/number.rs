@@ -7,7 +7,7 @@ pub enum Number {
     Int(i64),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum WeakNumber {
     Int(i64),
 }
@@ -62,6 +62,15 @@ impl PartialEq for Number {
     }
 }
 
+impl PartialEq for WeakNumber {
+    fn eq(&self, rhs: &Self) -> bool {
+        use WeakNumber::*;
+        match (self, rhs) {
+            (Int(a), Int(b)) => a == b,
+        }
+    }
+}
+
 impl PartialOrd for Number {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Number::*;
@@ -78,10 +87,19 @@ impl std::fmt::Display for Number {
         }
     }
 }
+
 impl Hash for Number {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
             Number::Int(i) => i.hash(state),
+        }
+    }
+}
+
+impl Hash for WeakNumber {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            WeakNumber::Int(i) => i.hash(state),
         }
     }
 }

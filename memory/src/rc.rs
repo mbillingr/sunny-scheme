@@ -4,6 +4,8 @@ use std::ops::{Deref, DerefMut};
 use std::rc;
 
 pub struct Ref<T: ?Sized>(rc::Rc<T>);
+
+#[derive(Debug)]
 pub struct Weak<T: ?Sized>(rc::Weak<T>);
 
 impl<T> Ref<T> {
@@ -23,6 +25,10 @@ impl<T: ?Sized> Ref<T> {
 }
 
 impl<T: ?Sized> Weak<T> {
+    pub fn as_ptr(&self) -> *const T {
+        rc::Weak::as_ptr(&self.0)
+    }
+
     pub fn upgrade(&self) -> Option<Ref<T>> {
         self.0.upgrade().map(Ref)
     }
@@ -62,6 +68,14 @@ impl<T: ?Sized> Eq for Ref<T> {}
 impl<T: ?Sized> PartialEq for Ref<T> {
     fn eq(&self, rhs: &Self) -> bool {
         rc::Rc::ptr_eq(&self.0, &rhs.0)
+    }
+}
+
+impl<T: ?Sized> Eq for Weak<T> {}
+
+impl<T: ?Sized> PartialEq for Weak<T> {
+    fn eq(&self, rhs: &Self) -> bool {
+        rc::Weak::ptr_eq(&self.0, &rhs.0)
     }
 }
 
