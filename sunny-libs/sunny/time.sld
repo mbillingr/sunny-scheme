@@ -1,5 +1,5 @@
 (define-library (sunny time)
-  (import (scheme base)
+  (import (sunny core)
           (sunny extra))
   (export timeit
           report-time)

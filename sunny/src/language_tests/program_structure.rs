@@ -5,8 +5,8 @@ use hamcrest2::prelude::*;
 #[test]
 fn import_statement_accepts_multiple_libraries() {
     assert_that!(
-        "(import (scheme base)
-                 (scheme base))",
+        "(import (sunny core)
+                 (sunny core))",
         EvaluatesTo::void()
     );
 }

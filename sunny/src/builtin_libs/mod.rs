@@ -17,7 +17,7 @@ use sunny_vm::{ErrorKind, Result, Value, Vm};
 */
 
 pub fn define_standard_libraries(ctx: &mut Context) {
-    ctx.define_library("(scheme base)")
+    ctx.define_library("(sunny core)")
         .define_syntax("begin", Begin)
         .define_syntax("define", Definition)
         .define_syntax("define-library", LibraryDefinition)

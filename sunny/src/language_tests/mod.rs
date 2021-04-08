@@ -117,7 +117,7 @@ pub trait Eval {
         context.set_libfs(libfs);
 
         define_standard_libraries(&mut context);
-        Import::import_all("(scheme base)", context.env());
+        Import::import_all("(sunny core)", context.env());
         context
     }
 }
@@ -147,7 +147,7 @@ pub struct When {
 pub fn given() -> When {
     let mut context = Context::new();
     define_standard_libraries(&mut context);
-    Import::import_all("(scheme base)", context.env());
+    Import::import_all("(sunny core)", context.env());
 
     let libfs = LibraryFileSystem::new(vec![std::env::current_dir()
         .unwrap()
