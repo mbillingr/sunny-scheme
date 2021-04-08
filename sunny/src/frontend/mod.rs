@@ -239,23 +239,21 @@ mod tests {
         );
     }
 
-    /*    #[test]
-    fn meaning_of_library_definition_with_exports() {
-        assert_eq!(
-            meaning_of![("define-library" (foo bar) (export baz) (begin (define baz 42)))],
-            Ok(ast!(module "(foo bar)" (gset "(foo bar).baz" (const 42)) ("baz" "(foo bar).baz")))
-        );
-    }*/
-
     #[test]
-    fn import_produces_no_code_but_extends_the_environment_with_existing_variables() {
+    fn import_produces_no_code() {
         let env = base_environment("test");
         meaning_of![env @ ("define-library" (foo bar) (export baz) (begin (define baz 42)))]
             .unwrap();
 
         assert_eq!(meaning_of![env @ (import (foo bar))], Ok(ast!(void)));
+    }
 
-        println!("{:?}", env);
+    #[test]
+    fn import_extends_the_environment_with_existing_variables() {
+        let env = base_environment("test");
+        meaning_of![env @ ("define-library" (foo bar) (export baz) (begin (define baz 42)))]
+            .unwrap();
+        meaning_of![env @ (import (foo bar))].unwrap();
 
         assert_eq!(
             env.lookup_global_variable("baz")

@@ -3,6 +3,15 @@ use hamcrest2::assert_that;
 use hamcrest2::prelude::*;
 
 #[test]
+fn import_statement_accepts_multiple_libraries() {
+    assert_that!(
+        "(import (scheme base)
+                 (scheme base))",
+        EvaluatesTo::void()
+    );
+}
+
+#[test]
 fn inner_defines_can_escape() {
     assert_that!(
         vec!["(define (foo) (define (bar) 0) bar)", "((foo))",],

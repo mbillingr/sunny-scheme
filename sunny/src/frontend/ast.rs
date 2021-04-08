@@ -51,6 +51,9 @@ impl Ast {
     }
 
     pub fn sequence(first: AstNode, next: AstNode) -> AstNode {
+        if *first == Ast::Void {
+            return next;
+        }
         Box::new(Ast::Sequence(first, next))
     }
 

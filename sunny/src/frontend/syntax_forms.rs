@@ -420,22 +420,35 @@ define_form! {
 
 define_form! {
     Import(sexpr, env):
-       [(_, libname) => {
-           let libstr = libname_to_string(libname);
-
-           if Self::import_all(&libstr, env) {
-               return Ok(Ast::void())
+       [(_ . import_sets) => {
+           let mut import_ast = Ast::void();
+           for import_set in import_sets.iter() {
+               let set_ast = Self::process_import_set(import_set, env)?;
+               import_ast = Ast::sequence(import_ast, set_ast)
            }
-
-           let libexpr = env
-               .parse_library(&libstr)?
-               .ok_or_else(||error_at(libname, Error::UnknownLibrary))?;
-           let libast = LibraryDefinition.expand(&libexpr, env)?;
-           Ok(Ast::sequence(libast, Import.expand(sexpr, env)?))
+           Ok(import_ast)
        }]
 }
 
 impl Import {
+    pub fn process_import_set(import_set: RefExpr, env: &Env) -> Result<AstNode> {
+        let libname = import_set;
+        let libstr = libname_to_string(libname);
+
+        if Self::import_all(&libstr, env) {
+            return Ok(Ast::void());
+        }
+
+        let libexpr = env
+            .parse_library(&libstr)?
+            .ok_or_else(|| error_at(libname, Error::UnknownLibrary))?;
+        let libast = LibraryDefinition.expand(&libexpr, env)?;
+
+        assert!(Self::import_all(&libstr, env));
+
+        Ok(libast)
+    }
+
     pub fn import_all(libname: &str, env: &Env) -> bool {
         if let Some(lib) = env.find_library(&libname) {
             for export in lib.exports() {
