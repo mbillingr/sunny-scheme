@@ -35,6 +35,9 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive("/", div)
         .define_primitive("<", lt)
         .define_primitive(">", gt)
+        .define_primitive("<=", le)
+        .define_primitive(">=", ge)
+        .define_primitive("=", ne)
         .define_primitive("null?", is_null)
         .define_intrinsic("apply", 2)
         .define_intrinsic("cons", 2)
@@ -125,6 +128,18 @@ primitive! {
 
     fn gt(a: Value, b: Value) -> Result<Value> {
         Value::try_is_greater(&a, &b).ok_or(ErrorKind::TypeError)
+    }
+
+    fn le(a: Value, b: Value) -> Result<Value> {
+        Value::try_is_less_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
+    }
+
+    fn ge(a: Value, b: Value) -> Result<Value> {
+        Value::try_is_greater_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
+    }
+
+    fn ne(a: Value, b: Value) -> Result<Value> {
+        Value::try_is_numeq(&a, &b).ok_or(ErrorKind::TypeError)
     }
 
     fn is_null(obj: Value) -> Result<Value> {

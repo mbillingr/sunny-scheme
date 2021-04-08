@@ -360,6 +360,30 @@ pub mod arithmetic {
                 _ => None,
             }
         }
+
+        pub fn try_is_less_or_equal(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Value::bool(a <= b)),
+                _ => None,
+            }
+        }
+
+        pub fn try_is_greater_or_equal(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Value::bool(a >= b)),
+                _ => None,
+            }
+        }
+
+        pub fn try_is_numeq(&self, other: &Self) -> Option<Self> {
+            use Value::*;
+            match (self, other) {
+                (Number(a), Number(b)) => Some(Value::bool(a == b)),
+                _ => None,
+            }
+        }
     }
 }
 
