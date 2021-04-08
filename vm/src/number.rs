@@ -7,10 +7,9 @@ pub enum Number {
     Int(i64),
 }
 
-impl From<i64> for Number {
-    fn from(x: i64) -> Self {
-        Number::Int(x)
-    }
+#[derive(Clone)]
+pub enum WeakNumber {
+    Int(i64),
 }
 
 impl Number {
@@ -31,6 +30,26 @@ impl Number {
         match (self, other) {
             (Int(a), Int(b)) => a == b,
         }
+    }
+
+    pub fn downgrade(&self) -> WeakNumber {
+        match self {
+            Number::Int(i) => WeakNumber::Int(*i),
+        }
+    }
+}
+
+impl WeakNumber {
+    pub fn upgrade(&self) -> Option<Number> {
+        match self {
+            WeakNumber::Int(i) => Some(Number::Int(*i)),
+        }
+    }
+}
+
+impl From<i64> for Number {
+    fn from(x: i64) -> Self {
+        Number::Int(x)
     }
 }
 

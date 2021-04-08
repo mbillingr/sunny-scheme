@@ -2,8 +2,8 @@ use std::hash::{Hash, Hasher};
 
 use crate::closure::Closure;
 use crate::continuation::Continuation;
-use crate::mem::Ref;
-use crate::number::Number;
+use crate::mem::{Ref, Weak};
+use crate::number::{Number, WeakNumber};
 use crate::primitive::Primitive;
 use std::any::Any;
 use std::fmt::Debug;
@@ -53,6 +53,26 @@ pub enum Value {
 
     Values(usize), // mark multiple return values on stack
     Object(Ref<Box<dyn Object>>),
+}
+
+#[derive(Clone)]
+#[repr(u8)]
+pub enum WeakValue {
+    Void,
+    Nil,
+    False,
+    True,
+    Number(WeakNumber),
+    Symbol(Weak<Symbol>),
+    String(Weak<ConstString>),
+    Pair(Weak<(Value, Value)>),
+
+    Closure(Weak<Closure>),
+    Primitive(Primitive),
+    Continuation(Weak<Continuation>),
+
+    Values(usize),
+    Object(Weak<Box<dyn Object>>),
 }
 
 impl Default for Value {
@@ -306,6 +326,46 @@ impl Hash for Value {
 impl From<i64> for Value {
     fn from(i: i64) -> Self {
         Value::Number(Number::from(i))
+    }
+}
+
+impl Value {
+    pub fn downgrade(&self) -> WeakValue {
+        match self {
+            Value::Void => WeakValue::Void,
+            Value::Nil => WeakValue::Nil,
+            Value::False => WeakValue::False,
+            Value::True => WeakValue::True,
+            Value::Number(n) => WeakValue::Number(n.downgrade()),
+            Value::Symbol(p) => WeakValue::Symbol(p.downgrade()),
+            Value::String(p) => WeakValue::String(p.downgrade()),
+            Value::Pair(p) => WeakValue::Pair(p.downgrade()),
+            Value::Closure(p) => WeakValue::Closure(p.downgrade()),
+            Value::Primitive(p) => WeakValue::Primitive(*p),
+            Value::Continuation(p) => WeakValue::Continuation(p.downgrade()),
+            Value::Values(n) => WeakValue::Values(*n),
+            Value::Object(p) => WeakValue::Object(p.downgrade()),
+        }
+    }
+}
+
+impl WeakValue {
+    pub fn upgrade(&self) -> Option<Value> {
+        match self {
+            WeakValue::Void => Some(Value::Void),
+            WeakValue::Nil => Some(Value::Nil),
+            WeakValue::False => Some(Value::False),
+            WeakValue::True => Some(Value::True),
+            WeakValue::Number(n) => n.upgrade().map(Value::Number),
+            WeakValue::Symbol(p) => p.upgrade().map(Value::Symbol),
+            WeakValue::String(p) => p.upgrade().map(Value::String),
+            WeakValue::Pair(p) => p.upgrade().map(Value::Pair),
+            WeakValue::Closure(p) => p.upgrade().map(Value::Closure),
+            WeakValue::Primitive(p) => Some(Value::Primitive(*p)),
+            WeakValue::Continuation(p) => p.upgrade().map(Value::Continuation),
+            WeakValue::Values(n) => Some(Value::Values(*n)),
+            WeakValue::Object(p) => p.upgrade().map(Value::Object),
+        }
     }
 }
 

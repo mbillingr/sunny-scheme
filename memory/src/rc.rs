@@ -1,19 +1,30 @@
 use std::any::Any;
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
-use std::rc::{Rc, Weak};
+use std::rc;
 
-pub struct Ref<T: ?Sized>(Rc<T>);
+pub struct Ref<T: ?Sized>(rc::Rc<T>);
+pub struct Weak<T: ?Sized>(rc::Weak<T>);
 
 impl<T> Ref<T> {
     pub fn from_leaked_static(obj: T) -> Self {
-        Ref(Rc::new(obj))
+        Ref(rc::Rc::new(obj))
     }
 }
 
 impl<T: ?Sized> Ref<T> {
     pub fn as_ptr(&self) -> *const T {
-        Rc::as_ptr(&self.0)
+        rc::Rc::as_ptr(&self.0)
+    }
+
+    pub fn downgrade(&self) -> Weak<T> {
+        Weak(rc::Rc::downgrade(&self.0))
+    }
+}
+
+impl<T: ?Sized> Weak<T> {
+    pub fn upgrade(&self) -> Option<Ref<T>> {
+        self.0.upgrade().map(Ref)
     }
 }
 
@@ -40,11 +51,17 @@ impl<T: ?Sized> Clone for Ref<T> {
     }
 }
 
+impl<T: ?Sized> Clone for Weak<T> {
+    fn clone(&self) -> Self {
+        Weak(self.0.clone())
+    }
+}
+
 impl<T: ?Sized> Eq for Ref<T> {}
 
 impl<T: ?Sized> PartialEq for Ref<T> {
     fn eq(&self, rhs: &Self) -> bool {
-        Rc::ptr_eq(&self.0, &rhs.0)
+        rc::Rc::ptr_eq(&self.0, &rhs.0)
     }
 }
 
@@ -56,12 +73,12 @@ impl<T: ?Sized> std::fmt::Debug for Ref<T> {
 
 impl<T: ?Sized> Hash for Ref<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        Rc::as_ptr(&self.0).hash(state)
+        rc::Rc::as_ptr(&self.0).hash(state)
     }
 }
 
 pub struct Storage {
-    interned: Vec<Weak<dyn Any>>,
+    interned: Vec<rc::Weak<dyn Any>>,
 }
 
 impl Storage {
@@ -70,14 +87,14 @@ impl Storage {
     }
 
     pub fn insert_interned<T: 'static>(&mut self, obj: T) -> Ref<T> {
-        let rc = Rc::new(obj);
-        let wc = Rc::downgrade(&rc);
+        let rc = rc::Rc::new(obj);
+        let wc = rc::Rc::downgrade(&rc);
         self.interned.push(wc);
         Ref(rc)
     }
 
     pub fn insert<T>(&mut self, obj: T) -> Ref<T> {
-        Ref(Rc::new(obj))
+        Ref(rc::Rc::new(obj))
     }
 
     pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Ref<T> {
