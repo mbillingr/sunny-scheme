@@ -1,12 +1,12 @@
 use crate::bytecode::CodePointer;
 use crate::closure::Closure;
+use crate::mem::Ref;
 use crate::Value;
 use std::cell::Cell;
-use sunny_memory::rc_arena::Ref as ARef;
 
 pub struct Activation {
-    pub(crate) caller: Option<ARef<Activation>>,
-    pub(crate) parent: Option<ARef<Activation>>,
+    pub(crate) caller: Option<Ref<Activation>>,
+    pub(crate) parent: Option<Ref<Activation>>,
     pub(crate) code: CodePointer,
     pub(crate) locals: Vec<Cell<Value>>,
 }
@@ -18,7 +18,7 @@ impl std::fmt::Debug for Activation {
 }
 
 impl Activation {
-    pub fn from_closure(caller: ARef<Activation>, cls: &Closure, args: Vec<Value>) -> Self {
+    pub fn from_closure(caller: Ref<Activation>, cls: &Closure, args: Vec<Value>) -> Self {
         let tmp = std::mem::ManuallyDrop::new(args);
         let args = unsafe { Vec::from_raw_parts(tmp.as_ptr() as _, tmp.len(), tmp.capacity()) };
 

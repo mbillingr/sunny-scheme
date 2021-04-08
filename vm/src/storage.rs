@@ -3,14 +3,10 @@ use crate::mem::{Ref, Storage};
 use crate::value::{ConstString, Symbol};
 use crate::Value;
 use std::fmt::Debug;
-use sunny_memory::rc_arena::RcArena;
 use sunny_sexpr_parser::Sexpr;
-
-const PAIR_CHUNK_SIZE: usize = 1024;
 
 pub struct ValueStorage {
     storage: Storage,
-    pair_arena: RcArena<(Value, Value), PAIR_CHUNK_SIZE>,
 }
 
 impl Default for ValueStorage {
@@ -23,7 +19,6 @@ impl ValueStorage {
     pub fn new(capacity: usize) -> Self {
         ValueStorage {
             storage: Storage::new(capacity),
-            pair_arena: RcArena::new(),
         }
     }
 
@@ -75,7 +70,7 @@ impl ValueStorage {
 
     pub fn cons(&mut self, car: impl Into<Value>, cdr: impl Into<Value>) -> Value {
         let pair = (car.into(), cdr.into());
-        let obj = self.pair_arena.alloc(pair);
+        let obj = self.insert(pair);
         Value::Pair(obj)
     }
 
