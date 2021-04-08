@@ -7,6 +7,7 @@ use crate::number::Number;
 use crate::primitive::Primitive;
 use std::any::Any;
 use std::fmt::Debug;
+use sunny_memory::rc_arena::Ref as ARef;
 
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;
@@ -45,7 +46,7 @@ pub enum Value {
     Number(Number),
     Symbol(Ref<Symbol>),
     String(Ref<ConstString>),
-    Pair(Ref<(Value, Value)>),
+    Pair(ARef<(Value, Value)>),
 
     Closure(Ref<Closure>),
     Primitive(Primitive),
@@ -390,6 +391,7 @@ pub mod arithmetic {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sunny_memory::rc_arena::RcArena;
 
     #[test]
     fn check_size_of_value_type() {
@@ -400,14 +402,9 @@ mod tests {
 
     #[test]
     fn compound_values_are_compared_by_pointer() {
-        let pair1 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
-        let pair2 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
+        let mut pa = RcArena::<_, 1>::new();
+        let pair1 = Value::Pair(pa.alloc((Value::number(1), Value::number(2))));
+        let pair2 = Value::Pair(pa.alloc((Value::number(1), Value::number(2))));
 
         assert_eq!(pair1, pair1);
         assert_eq!(pair2, pair2);

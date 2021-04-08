@@ -39,6 +39,10 @@ impl<T> Ref<T> {
             ptr: this.ptr,
         }
     }
+
+    pub fn as_ptr(&self) -> *const T {
+        self.ptr
+    }
 }
 
 impl<T> Clone for Ref<T> {
