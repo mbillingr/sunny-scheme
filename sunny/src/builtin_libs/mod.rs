@@ -40,8 +40,10 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
-        .define_intrinsic("eq?", 2)
+        .define_primitive("display", display)
         .define_primitive("dec", dec)
+        .define_intrinsic("eq?", 2)
+        .define_primitive("newline", newline)
         .define_primitive("values", values)
         .define_value("foo", |storage| storage.cons(1, 2))
         .build();
@@ -134,6 +136,16 @@ primitive! {
         let duration = std::time::Instant::now() - begin;
         let micros = duration.as_micros() as i64;
         Ok(micros.into())
+    }
+
+    fn display(x: Value) -> Result<Value> {
+        print!("{}", x);
+        Ok(Value::Void)
+    }
+
+    fn newline() -> Result<Value> {
+        println!();
+        Ok(Value::Void)
     }
 }
 
