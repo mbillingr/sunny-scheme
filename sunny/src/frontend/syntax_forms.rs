@@ -286,6 +286,36 @@ define_form! {
 }
 
 define_form! {
+    Let(sexpr, env):
+        [(_, bindings . body) => {
+            let mut vars = vec![];
+            let mut values = vec![];
+
+            for binding in bindings.iter() {
+                match_sexpr![
+                    [binding: (var: Symbol, val) => {
+                        vars.push(var);
+                        values.push(val);
+                    }]
+                ]
+                .ok_or_else(|| binding.map_value(Error::InvalidForm))?;
+            }
+
+            let body_env = env.extend_vars(vars.into_iter());
+            let body = Body.expand(body, &body_env)?;
+
+            let func = Ast::lambda(sexpr.map_value(()), values.len(), body);
+
+            let mut args = vec![func];
+            for val in values {
+                args.push(Expression.expand(val, env).unwrap());
+            }
+
+            Ok(Ast::invoke(sexpr.map_value(()), args))
+        }]
+}
+
+define_form! {
     Lambda(sexpr, env):
         [(_, params . body) => {
             Self::build_ast(sexpr.map_value(()), params, body, env)

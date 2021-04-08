@@ -4,7 +4,7 @@ mod hash_table;
 
 use crate::context::Context;
 use crate::frontend::syntax_forms::{
-    Assignment, Begin, Branch, Definition, Import, Lambda, LibraryDefinition, Quotation,
+    Assignment, Begin, Branch, Definition, Import, Lambda, Let, LibraryDefinition, Quotation,
     SyntaxDefinition,
 };
 use hash_table::define_lib_sunny_hash_table;
@@ -25,6 +25,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("if", Branch)
         .define_syntax("import", Import)
         .define_syntax("lambda", Lambda)
+        .define_syntax("let", Let)
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
         .define_intrinsic("call/cc", 1)

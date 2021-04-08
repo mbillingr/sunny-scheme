@@ -110,3 +110,28 @@ fn can_access_values_through_empty_scopes() {
         EvaluatesTo::the_list(vec![1, 2, 3])
     );
 }
+
+#[test]
+fn let_binds_new_values() {
+    assert_that!(
+        vec![
+            "(define x 42)",
+            "(let ((x 1) (y 2))
+               (+ x y))"
+        ],
+        EvaluatesTo::the_integer(3)
+    );
+}
+
+#[test]
+fn let_preserves_shadowed_values() {
+    assert_that!(
+        vec![
+            "(define x 42)",
+            "(let ((x 1) (y 2))
+               (+ x y))",
+            "x"
+        ],
+        EvaluatesTo::the_integer(42)
+    );
+}
