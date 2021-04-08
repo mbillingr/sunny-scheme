@@ -6,14 +6,18 @@ use crate::{
     RuntimeResult, Value,
 };
 use std::cell::Cell;
+use sunny_memory::rc_arena::{RcArena, Ref as ARef};
 use sunny_sexpr_parser::Sexpr;
+
+const ACTIVATION_CHUNK_SIZE: usize = 1024;
 
 pub struct Vm {
     storage: ValueStorage,
     value_stack: Vec<Value>,
     globals: Vec<Value>,
 
-    current_activation: Ref<Activation>,
+    current_activation: ARef<Activation>,
+    activation_arena: RcArena<Activation, ACTIVATION_CHUNK_SIZE>,
 }
 
 impl Vm {
@@ -21,19 +25,22 @@ impl Vm {
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let code_ptr = CodePointer::new(storage.insert(code_segment));
 
+        let mut activation_arena = RcArena::new();
+
         let root_activation = Activation {
             caller: None,
             parent: None,
             code: code_ptr,
             locals: vec![],
         };
-        let root_activation = storage.insert(root_activation);
+        let root_activation = activation_arena.alloc(root_activation);
 
         Ok(Vm {
             storage,
             value_stack: vec![],
             globals: vec![],
             current_activation: root_activation,
+            activation_arena,
         })
     }
 
@@ -86,7 +93,7 @@ impl Vm {
             code: closure.code.clone(),
             locals: vec![],
         };
-        self.current_activation = self.storage.insert(activation);
+        self.current_activation = self.activation_arena.alloc(activation);
         Ok(())
     }
 
@@ -386,7 +393,7 @@ impl Vm {
     fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
         let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
-        self.current_activation = self.storage.insert(act);
+        self.current_activation = self.activation_arena.alloc(act);
         Ok(())
     }
 
@@ -398,7 +405,7 @@ impl Vm {
             .as_ref()
             .unwrap_or(&self.current_activation);
         let act = Activation::from_closure(caller.clone(), &*cls, args);
-        self.current_activation = self.storage.insert(act);
+        self.current_activation = self.activation_arena.alloc(act);
         Ok(())
     }
 
@@ -413,7 +420,7 @@ impl Vm {
         let args = self.pop_values(n_args)?;
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
-        self.current_activation = self.storage.insert(cnt.activation.duplicate());
+        self.current_activation = self.activation_arena.alloc(cnt.activation.duplicate());
         Ok(())
     }
 
@@ -1170,13 +1177,15 @@ mod tests {
             parent: None,
         };
 
+        let mut activation_arena = RcArena::<_, 1>::new();
+
         let act = Activation {
             caller: None,
             parent: None,
             code: CodePointer::new(code_segment.clone()).at(999),
             locals: vec![Cell::new(Value::number(1)), Cell::new(Value::number(2))],
         };
-        let act = storage.insert(act);
+        let act = activation_arena.alloc(act);
 
         let callee = Closure {
             code: CodePointer::new(code_segment.clone()).at(2),

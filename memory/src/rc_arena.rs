@@ -29,7 +29,7 @@ impl<T, const CHUNK_SIZE: usize> RcArena<T, CHUNK_SIZE> {
 
 pub struct Ref<T> {
     chunk: RcChunk<T>,
-    ptr: *const T,
+    ptr: *mut T,
 }
 
 impl<T> Ref<T> {
@@ -37,6 +37,15 @@ impl<T> Ref<T> {
         Weak {
             chunk: this.chunk.downgrade(),
             ptr: this.ptr,
+        }
+    }
+}
+
+impl<T> Clone for Ref<T> {
+    fn clone(&self) -> Self {
+        Ref {
+            chunk: self.chunk.clone(),
+            ptr: self.ptr,
         }
     }
 }
@@ -49,6 +58,16 @@ impl<T> std::ops::Deref for Ref<T> {
             // safety: ptr points into the chunk, which is kept alive by
             // the reference we hold. So derefencing the pointer is safe.
             &*self.ptr
+        }
+    }
+}
+
+impl<T> std::ops::DerefMut for Ref<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        unsafe {
+            // safety: ptr points into the chunk, which is kept alive by
+            // the reference we hold. So derefencing the pointer is safe.
+            &mut *self.ptr
         }
     }
 }
@@ -71,9 +90,15 @@ impl<T: std::fmt::Pointer> std::fmt::Pointer for Ref<T> {
     }
 }
 
+impl<T> PartialEq for Ref<T> {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self.ptr, other.ptr)
+    }
+}
+
 pub struct Weak<T> {
     chunk: WeakChunk<T>,
-    ptr: *const T,
+    ptr: *mut T,
 }
 
 impl<T> Weak<T> {
@@ -135,10 +160,10 @@ impl<T> Chunk<T> {
         return data.len() >= data.capacity();
     }
 
-    fn push(&self, value: T) -> *const T {
+    fn push(&self, value: T) -> *mut T {
         let mut data = self.slots.borrow_mut();
         data.push(value);
-        data.last().unwrap()
+        data.last_mut().unwrap()
     }
 }
 

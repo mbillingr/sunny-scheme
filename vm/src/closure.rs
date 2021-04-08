@@ -1,9 +1,9 @@
 use crate::activation::Activation;
 use crate::bytecode::CodePointer;
-use crate::mem::Ref;
+use sunny_memory::rc_arena::Ref as ARef;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
-    pub(crate) parent: Option<Ref<Activation>>,
+    pub(crate) parent: Option<ARef<Activation>>,
     pub(crate) code: CodePointer,
 }
