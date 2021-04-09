@@ -33,7 +33,10 @@ enum Cli {
         file: std::path::PathBuf,
     },
 
-    Repl,
+    Repl {
+        #[structopt(parse(from_os_str))]
+        files: Vec<std::path::PathBuf>,
+    },
 
     Run {
         #[structopt(parse(from_os_str))]
@@ -62,7 +65,7 @@ fn main() {
 
     match args {
         Cli::Bytecode { file } => run_bytecode(&file),
-        Cli::Repl => main_repl(),
+        Cli::Repl { files } => main_repl(files),
         Cli::Run { file } => main_program(file),
         Cli::Compile { .. } => unimplemented!(),
     }
@@ -96,9 +99,20 @@ fn main_program(path: PathBuf) {
     run_program(context, &path);
 }
 
-fn main_repl() {
+fn main_repl(files: Vec<PathBuf>) {
     let context = Context::new();
-    let context = prepare_repl(context);
+    let mut context = prepare_repl(context);
+
+    for file in files {
+        match run_script(&mut context, &file) {
+            Ok(_) => {}
+            Err(e) => {
+                report_error(e);
+                return;
+            }
+        }
+    }
+
     run_repl(context);
 }
 
@@ -154,16 +168,20 @@ fn prepare_repl(mut context: Context) -> Context {
 }
 
 fn run_program(mut context: Context, path: &Path) {
+    match run_script(&mut context, path) {
+        Ok(_) => {}
+        Err(e) => report_error(e),
+    }
+}
+
+fn run_script(context: &mut Context, path: &Path) -> Result<(), Error> {
     let mut src = String::new();
     File::open(path)
         .unwrap_or_else(|e| panic!("Error opening {:?}: {}", path, e))
         .read_to_string(&mut src)
         .unwrap_or_else(|e| panic!("Error reading {:?}: {}", path, e));
 
-    match context.eval(&src) {
-        Ok(_) => {}
-        Err(e) => report_error(e),
-    }
+    context.eval(&src).map(|_| {})
 }
 
 fn run_repl(mut context: Context) {
