@@ -10,43 +10,74 @@ use sunny_vm::{ErrorKind, Object, Result, Value, Vm, WeakValue};
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
     ctx.define_library("(sunny hash-table)")
         .define_primitive("hash-table?", is_hashtable)
-        .define_primitive("make-hash-table", make_hashtable)
+        .define_primitive("make-strong-eq-hash-table", make_strong_eq_hashtable)
+        .define_primitive("make-key-weak-eq-hash-table", make_weak_eq_hashtable)
+        .define_primitive("make-equal-hash-table", make_strong_equals_hashtable)
         .define_primitive("hash-table-set!", hashtable_set)
         .define_primitive("hash-table-ref/default", hashtable_ref_default)
+        .define_primitive("hash-table-delete!", hashtable_delete)
+        .define_primitive("hash-table-clear!", hashtable_clear)
         .build();
 }
 
 primitive! {
     fn is_hashtable(obj: Value) -> Result<Value> {
-        Ok(Value::bool(obj.as_obj::<TableKeyStrongEquals>().is_some()))
+        Ok(Value::bool(obj.as_obj::<Box<dyn Table>>().is_some()))
     }
 
     fn hashtable_set(obj: Value, key: Value, value: Value) -> Result<Value> {
-        let table = obj.as_obj_mut::<TableKeyStrongEquals>().ok_or(ErrorKind::TypeError)?;
+        let table = obj.as_obj_mut::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
 
-        table.insert(key, value);
+        table.table_set(key, value);
         Ok(Value::Void)
     }
 
     fn hashtable_ref_default(obj: Value, key: Value, default: Value) -> Result<Value> {
-        let table = obj.as_obj_mut::<TableKeyStrongEquals>().ok_or(ErrorKind::TypeError)?;
+        let table = obj.as_obj_mut::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
 
-        if let Some(value) = table.get(&key) {
+        if let Some(value) = table.table_ref(key) {
             Ok(value.clone())
         } else {
             Ok(default)
         }
     }
+
+    fn hashtable_delete(obj: Value, key: Value) -> Result<Value> {
+        let table = obj.as_obj_mut::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
+        table.table_del(key);
+        Ok(Value::Void)
+    }
+
+    fn hashtable_clear(obj: Value) -> Result<Value> {
+        let table = obj.as_obj_mut::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
+        table.table_clear();
+        Ok(Value::Void)
+    }
 }
 
-fn make_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
+fn make_strong_equals_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
+    make_hashtable(n_args, vm, TableKeyStrongEquals::new)
+}
+
+fn make_strong_eq_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
+    make_hashtable(n_args, vm, TableKeyStrongEq::new)
+}
+
+fn make_weak_eq_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
+    make_hashtable(n_args, vm, TableKeyWeakEq::new)
+}
+
+fn make_hashtable<T: 'static + Table>(
+    n_args: usize,
+    vm: &mut Vm,
+    table_constructor: impl Fn() -> T,
+) -> Result<()> {
     if n_args != 0 {
         return Err(ErrorKind::TooManyArgs);
     }
-
-    let table: Box<dyn Object> = Box::new(TableKeyStrongEquals::new());
+    let table: Box<dyn Table> = Box::new(table_constructor());
+    let table: Box<dyn Object> = Box::new(table);
     let obj = vm.borrow_storage().insert(table);
-
     vm.push_value(Value::Object(obj));
     Ok(())
 }
@@ -55,12 +86,93 @@ type TableKeyStrongEquals = GenericTable<KeyStrongEquals, Value>;
 type TableKeyStrongEq = GenericTable<KeyStrongEq, Value>;
 type TableKeyWeakEq = GenericTable<KeyWeakEq, Value>;
 
+trait Table: Debug {
+    fn table_set(&mut self, key: Value, value: Value) -> Option<Value>;
+    fn table_ref(&mut self, key: Value) -> Option<&Value>;
+    fn table_del(&mut self, key: Value) -> Option<Value>;
+    fn table_clear(&mut self);
+
+    fn is_equal(&self, other: &dyn Any) -> bool {
+        std::ptr::eq(
+            self as *const Self as *const u8,
+            other as *const _ as *const u8,
+        )
+    }
+}
+
+impl Table for TableKeyStrongEquals {
+    fn table_set(&mut self, key: Value, value: Value) -> Option<Value> {
+        self.insert(key, value)
+    }
+
+    fn table_ref(&mut self, key: Value) -> Option<&Value> {
+        self.get(&key.into())
+    }
+
+    fn table_del(&mut self, key: Value) -> Option<Value> {
+        self.del(&KeyStrongEquals::from_value(key))
+    }
+
+    fn table_clear(&mut self) {
+        self.clear();
+    }
+}
+
+impl Table for TableKeyStrongEq {
+    fn table_set(&mut self, key: Value, value: Value) -> Option<Value> {
+        self.insert(key, value)
+    }
+
+    fn table_ref(&mut self, key: Value) -> Option<&Value> {
+        self.get(&key.into())
+    }
+
+    fn table_del(&mut self, key: Value) -> Option<Value> {
+        self.del(&KeyStrongEq::from_value(key))
+    }
+
+    fn table_clear(&mut self) {
+        self.clear();
+    }
+}
+
+impl Table for TableKeyWeakEq {
+    fn table_set(&mut self, key: Value, value: Value) -> Option<Value> {
+        self.insert(key, value)
+    }
+
+    fn table_ref(&mut self, key: Value) -> Option<&Value> {
+        self.get(&key.into())
+    }
+
+    fn table_del(&mut self, key: Value) -> Option<Value> {
+        self.del(&KeyWeakEq::from_value(key))
+    }
+
+    fn table_clear(&mut self) {
+        self.clear();
+    }
+}
+
+impl Object for Box<dyn Table> {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn equals(&self, other: &dyn Object) -> bool {
+        other
+            .downcast_ref::<Self>()
+            .map(|other| self.is_equal(other))
+            .unwrap_or(false)
+    }
+}
+
 #[derive(Debug)]
 struct GenericTable<K, V> {
     table: HashMap<K, V>,
 }
 
-impl<K: TableKey, V: From<Value>> GenericTable<K, V> {
+impl<K: TableKey, V> GenericTable<K, V> {
     pub fn new() -> Self {
         GenericTable {
             table: HashMap::new(),
@@ -71,11 +183,12 @@ impl<K: TableKey, V: From<Value>> GenericTable<K, V> {
         key.into().insert(value, &mut self.table)
     }
 
-    pub fn get<Q: Hash + Eq>(&mut self, key: &Q) -> Option<&V>
-    where
-        K: Borrow<Q>,
-    {
+    pub fn get(&mut self, key: &K) -> Option<&V> {
         K::get(key, &mut self.table)
+    }
+
+    pub fn del(&mut self, key: &K) -> Option<V> {
+        K::del(key, &mut self.table)
     }
 }
 
@@ -119,11 +232,17 @@ trait DropDeadKeys {
 trait TableKey: Sized + Eq + Hash {
     fn from_value(key: Value) -> Self;
 
-    fn insert<V>(self, value: V, table: &mut HashMap<Self, V>) -> Option<V>;
+    fn insert<V>(self, value: V, table: &mut HashMap<Self, V>) -> Option<V> {
+        table.insert(self, value)
+    }
 
-    fn get<'a, Q: Hash + Eq, V>(key: &Q, table: &'a mut HashMap<Self, V>) -> Option<&'a V>
-    where
-        Self: Borrow<Q>;
+    fn get<'a, V>(key: &Self, table: &'a mut HashMap<Self, V>) -> Option<&'a V> {
+        table.get(key)
+    }
+
+    fn del<V>(key: &Self, table: &mut HashMap<Self, V>) -> Option<V> {
+        table.remove(key)
+    }
 }
 
 pub struct KeyStrongEquals(Value);
@@ -143,17 +262,6 @@ impl Borrow<Value> for KeyStrongEquals {
 impl TableKey for KeyStrongEquals {
     fn from_value(key: Value) -> Self {
         Self::from(key)
-    }
-
-    fn insert<V>(self, value: V, table: &mut HashMap<Self, V>) -> Option<V> {
-        table.insert(self, value)
-    }
-
-    fn get<'a, Q: Hash + Eq, V>(key: &Q, table: &'a mut HashMap<Self, V>) -> Option<&'a V>
-    where
-        Self: Borrow<Q>,
-    {
-        table.get(key)
     }
 }
 
@@ -194,17 +302,6 @@ impl Borrow<Value> for KeyStrongEq {
 impl TableKey for KeyStrongEq {
     fn from_value(key: Value) -> Self {
         Self::from(key)
-    }
-
-    fn insert<V>(self, value: V, table: &mut HashMap<Self, V>) -> Option<V> {
-        table.insert(self, value)
-    }
-
-    fn get<'a, Q: Hash + Eq, V>(key: &Q, table: &'a mut HashMap<Self, V>) -> Option<&'a V>
-    where
-        Self: Borrow<Q>,
-    {
-        table.get(key)
     }
 }
 
@@ -259,14 +356,7 @@ impl TableKey for KeyWeakEq {
         Self::from(key)
     }
 
-    fn insert<V>(self, value: V, table: &mut HashMap<Self, V>) -> Option<V> {
-        table.insert(self, value)
-    }
-
-    fn get<'a, Q: Hash + Eq, V>(key: &Q, table: &'a mut HashMap<Self, V>) -> Option<&'a V>
-    where
-        Self: Borrow<Q>,
-    {
+    fn get<'a, V>(key: &Self, table: &'a mut HashMap<Self, V>) -> Option<&'a V> {
         if let Some((entry_key, _)) = table.get_key_value(key) {
             if entry_key.0.is_dead() {
                 table.remove(key);
@@ -306,7 +396,7 @@ mod tests {
     fn strong_table_keeps_keys_alive() {
         let mut storage = ValueStorage::new(1);
         let mut table = TableKeyStrongEquals::new();
-        table.insert(storage.cons(1, 2), Value::True);
+        table.table_set(storage.cons(1, 2), Value::True);
         assert_eq!(table.len(), 1);
     }
 
@@ -321,7 +411,7 @@ mod tests {
 
         assert_eq!(table.len(), 1);
 
-        assert!(table.get(&key).is_none());
+        assert!(table.get(&key.into()).is_none());
 
         assert_eq!(table.len(), 0);
     }
@@ -331,8 +421,8 @@ mod tests {
         let mut storage = ValueStorage::new(1);
         let mut table = TableKeyStrongEquals::new();
 
-        table.insert(storage.cons(1, 2), Value::True);
-        table.insert(storage.cons(1, 2), Value::False);
+        table.table_set(storage.cons(1, 2), Value::True);
+        table.table_set(storage.cons(1, 2), Value::False);
 
         assert_eq!(table.len(), 1);
     }
@@ -342,9 +432,98 @@ mod tests {
         let mut storage = ValueStorage::new(1);
         let mut table = TableKeyStrongEq::new();
 
-        table.insert(storage.cons(1, 2), Value::True);
-        table.insert(storage.cons(1, 2), Value::False);
+        table.table_set(storage.cons(1, 2), Value::True);
+        table.table_set(storage.cons(1, 2), Value::False);
 
         assert_eq!(table.len(), 2);
+    }
+
+    #[test]
+    fn can_remove_from_table() {
+        let mut storage = ValueStorage::new(1);
+        let mut table = TableKeyStrongEquals::new();
+
+        table.table_set(storage.cons(1, 2), Value::True);
+        table.table_set(storage.cons(1, 2), Value::True);
+
+        assert_eq!(table.len(), 1);
+
+        table.table_del(storage.cons(1, 2));
+
+        assert_eq!(table.len(), 0);
+    }
+
+    #[test]
+    fn can_get_value_from_strong_equals_table() {
+        let mut storage = ValueStorage::new(1);
+        let mut table = TableKeyStrongEquals::new();
+
+        let key = storage.cons(1, 2);
+        table.table_set(key.clone(), Value::True);
+        assert_eq!(table.table_ref(key), Some(&Value::True));
+    }
+
+    #[test]
+    fn can_get_value_from_strong_eq_table() {
+        let mut storage = ValueStorage::new(1);
+        let mut table = TableKeyStrongEq::new();
+
+        let key = storage.cons(1, 2);
+        table.table_set(key.clone(), Value::True);
+        assert_eq!(table.table_ref(key.clone()), Some(&Value::True));
+
+        table.table_set(storage.cons(1, 2), Value::False);
+        assert_eq!(table.table_ref(key), Some(&Value::True));
+    }
+
+    #[test]
+    fn can_get_value_from_weak_eq_table() {
+        let mut storage = ValueStorage::new(1);
+        let mut table = TableKeyWeakEq::new();
+
+        let key = storage.cons(1, 2);
+        table.table_set(key.clone(), Value::True);
+        assert_eq!(table.table_ref(key.clone()), Some(&Value::True));
+        drop(key); // make sure key stays alive so we don't lose the table entry
+    }
+
+    #[test]
+    fn key_strong_equals() {
+        let mut storage = ValueStorage::new(1);
+        let a_key = KeyStrongEquals(storage.cons(1, 2));
+        let copied_key = KeyStrongEquals(a_key.0.clone());
+        let a_similar_key = KeyStrongEquals(storage.cons(1, 2));
+        let another_key = KeyStrongEquals(storage.cons(2, 1));
+
+        assert_eq!(a_key, copied_key);
+        assert_eq!(a_key, a_similar_key);
+        assert_ne!(a_key, another_key);
+
+        assert_eq!(hash(&a_key), hash(&copied_key));
+        assert_eq!(hash(&a_key), hash(&a_similar_key));
+        assert_ne!(hash(&a_key), hash(&another_key));
+    }
+
+    #[test]
+    fn key_strong_eq() {
+        let mut storage = ValueStorage::new(1);
+        let a_key = KeyStrongEq(storage.cons(1, 2));
+        let copied_key = KeyStrongEq(a_key.0.clone());
+        let a_similar_key = KeyStrongEq(storage.cons(1, 2));
+        let another_key = KeyStrongEq(storage.cons(2, 1));
+
+        assert_eq!(a_key, copied_key);
+        assert_ne!(a_key, a_similar_key);
+        assert_ne!(a_key, another_key);
+
+        assert_eq!(hash(&a_key), hash(&copied_key));
+        assert_ne!(hash(&a_key), hash(&a_similar_key));
+        assert_ne!(hash(&a_key), hash(&another_key));
+    }
+
+    fn hash<T: Hash>(obj: &T) -> u64 {
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        obj.hash(&mut hasher);
+        hasher.finish()
     }
 }
