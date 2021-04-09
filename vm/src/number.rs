@@ -47,9 +47,24 @@ impl WeakNumber {
     }
 }
 
+impl From<i32> for Number {
+    fn from(x: i32) -> Self {
+        Number::Int(x as i64)
+    }
+}
+
 impl From<i64> for Number {
     fn from(x: i64) -> Self {
         Number::Int(x)
+    }
+}
+
+impl From<usize> for Number {
+    fn from(x: usize) -> Self {
+        if x > i64::MAX as usize {
+            unimplemented!("Big integers not yet supported.")
+        }
+        Number::Int(x as i64)
     }
 }
 

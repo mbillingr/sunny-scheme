@@ -308,9 +308,13 @@ impl CodePointer {
     }
 
     pub fn fetch(&mut self) -> Op {
-        let op = self.segment.get_op(self.position);
+        let op = self.peek();
         self.position += 1;
         op
+    }
+
+    pub fn peek(&self) -> Op {
+        self.segment.get_op(self.position)
     }
 
     pub fn jump_forward(&mut self, amount: usize) {

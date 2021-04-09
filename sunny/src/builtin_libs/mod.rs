@@ -48,6 +48,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("dec", 1, dec)
         .define_intrinsic("eq?", 2)
         .define_primitive_fixed_arity("newline", 0, newline)
+        .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
         .define_primitive_vararg("values", 0, values)
         .define_value("foo", |storage| storage.cons(1, 2))
         .build();
@@ -167,6 +168,25 @@ primitive! {
 
 fn values(n_args: usize, vm: &mut Vm) -> Result<()> {
     vm.push_value(Value::Values(n_args));
+    Ok(())
+}
+
+fn proc_arity(n_args: usize, vm: &mut Vm) -> Result<()> {
+    match n_args {
+        0 => return Err(ErrorKind::TooFewArgs),
+        1 => {}
+        _ => return Err(ErrorKind::TooManyArgs),
+    }
+    let proc = vm.pop_value()?;
+    let (min, max) = match proc {
+        Value::Primitive(pr) => (pr.min_arity, pr.max_arity),
+        Value::Closure(cls) => cls.arity(),
+        Value::Continuation(cnt) => cnt.arity(),
+        _ => return Err(ErrorKind::TypeError),
+    };
+    let max = max.map(|x| Value::from(x)).unwrap_or(Value::False);
+    let arity = vm.borrow_storage().cons(min, max);
+    vm.push_value(arity);
     Ok(())
 }
 

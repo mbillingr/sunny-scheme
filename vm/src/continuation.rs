@@ -12,3 +12,9 @@ impl std::fmt::Debug for Continuation {
         write!(f, "<continuation @ {:p}> {:?}", self, self.activation.code)
     }
 }
+
+impl Continuation {
+    pub fn arity(&self) -> (usize, Option<usize>) {
+        (1, Some(1))
+    }
+}

@@ -403,9 +403,9 @@ impl Hash for WeakValue {
     }
 }
 
-impl From<i64> for Value {
-    fn from(i: i64) -> Self {
-        Value::Number(Number::from(i))
+impl<T: Into<Number>> From<T> for Value {
+    fn from(i: T) -> Self {
+        Value::Number(i.into())
     }
 }
 

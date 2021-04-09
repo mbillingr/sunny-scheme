@@ -678,7 +678,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(vm.value_stack, vec![Value::number(0x0123456789abcdef)]);
+        assert_eq!(vm.value_stack, vec![Value::number(0x0123456789abcdef_i64)]);
     }
 
     #[test]
