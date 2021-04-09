@@ -23,8 +23,9 @@ pub mod vm;
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ErrorKind {
+    Generic(Value),
     Halted,
     StackUnderflow,
     NotCallable,
@@ -43,6 +44,7 @@ pub struct Error {
 impl std::fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            ErrorKind::Generic(value) => write!(f, "{}", value),
             ErrorKind::Halted => write!(f, "Halted"),
             ErrorKind::StackUnderflow => write!(f, "Stack underflow."),
             ErrorKind::NotCallable => write!(f, "Not callable"),
