@@ -127,7 +127,7 @@ fn prepare_program(mut context: Context, file: &Path) -> Context {
 
 fn prepare_repl(mut context: Context) -> Context {
     define_standard_libraries(&mut context);
-    Import::import_all("(scheme base)", context.env());
+    Import::import_all("(sunny core)", context.env());
 
     let libfs = LibraryFileSystem::new(vec![
         std::env::current_dir()
