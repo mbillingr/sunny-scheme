@@ -48,7 +48,7 @@ pub enum Value {
     Pair(Ref<(Value, Value)>),
 
     Closure(Ref<Closure>),
-    Primitive(Primitive),
+    Primitive(Ref<Primitive>),
     Continuation(Ref<Continuation>),
 
     Values(usize), // mark multiple return values on stack
@@ -68,7 +68,7 @@ pub enum WeakValue {
     Pair(Weak<(Value, Value)>),
 
     Closure(Weak<Closure>),
-    Primitive(Primitive),
+    Primitive(Weak<Primitive>),
     Continuation(Weak<Continuation>),
 
     Values(usize),
@@ -259,7 +259,7 @@ impl Value {
             Value::String(p) => p.as_ptr().hash(state),
             Value::Pair(p) => p.as_ptr().hash(state),
             Value::Closure(p) => p.as_ptr().hash(state),
-            Value::Primitive(p) => (*p as *const u8).hash(state),
+            Value::Primitive(p) => p.as_ptr().hash(state),
             Value::Continuation(p) => p.as_ptr().hash(state),
             Value::Values(n) => n.hash(state),
             Value::Object(p) => p.as_ptr().hash(state),
@@ -281,7 +281,7 @@ impl Value {
                 p.1.deep_hash(state);
             }
             Value::Closure(_) => unimplemented!(),
-            Value::Primitive(p) => (*p as *const u8).hash(state),
+            Value::Primitive(p) => p.as_ptr().hash(state),
             Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
             Value::Object(_) => unimplemented!(),
@@ -395,7 +395,7 @@ impl Hash for WeakValue {
             WeakValue::String(p) => p.as_ptr().hash(state),
             WeakValue::Pair(p) => p.as_ptr().hash(state),
             WeakValue::Closure(p) => p.as_ptr().hash(state),
-            WeakValue::Primitive(p) => (*p as *const u8).hash(state),
+            WeakValue::Primitive(p) => p.as_ptr().hash(state),
             WeakValue::Continuation(p) => p.as_ptr().hash(state),
             WeakValue::Values(n) => n.hash(state),
             WeakValue::Object(p) => p.as_ptr().hash(state),
@@ -421,7 +421,7 @@ impl Value {
             Value::String(p) => WeakValue::String(p.downgrade()),
             Value::Pair(p) => WeakValue::Pair(p.downgrade()),
             Value::Closure(p) => WeakValue::Closure(p.downgrade()),
-            Value::Primitive(p) => WeakValue::Primitive(*p),
+            Value::Primitive(p) => WeakValue::Primitive(p.downgrade()),
             Value::Continuation(p) => WeakValue::Continuation(p.downgrade()),
             Value::Values(n) => WeakValue::Values(*n),
             Value::Object(p) => WeakValue::Object(p.downgrade()),
@@ -445,7 +445,7 @@ impl WeakValue {
             WeakValue::String(p) => p.upgrade().map(Value::String),
             WeakValue::Pair(p) => p.upgrade().map(Value::Pair),
             WeakValue::Closure(p) => p.upgrade().map(Value::Closure),
-            WeakValue::Primitive(p) => Some(Value::Primitive(*p)),
+            WeakValue::Primitive(p) => p.upgrade().map(Value::Primitive),
             WeakValue::Continuation(p) => p.upgrade().map(Value::Continuation),
             WeakValue::Values(n) => Some(Value::Values(*n)),
             WeakValue::Object(p) => p.upgrade().map(Value::Object),
@@ -563,14 +563,8 @@ mod tests {
 
     #[test]
     fn compound_values_are_compared_by_pointer() {
-        let pair1 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
-        let pair2 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
+        let pair1 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
+        let pair2 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
 
         assert_eq!(pair1, pair1);
         assert_eq!(pair2, pair2);
@@ -579,14 +573,8 @@ mod tests {
 
     #[test]
     fn shallow_hashes_of_similar_pairs_are_different() {
-        let pair1 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
-        let pair2 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
+        let pair1 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
+        let pair2 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
 
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         pair1.shallow_hash(&mut hasher);
@@ -601,14 +589,8 @@ mod tests {
 
     #[test]
     fn deep_hashes_of_similar_pairs_are_different() {
-        let pair1 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
-        let pair2 = Value::Pair(Ref::from_leaked_static((
-            Value::number(1),
-            Value::number(2),
-        )));
+        let pair1 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
+        let pair2 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
 
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         pair1.deep_hash(&mut hasher);

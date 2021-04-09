@@ -9,7 +9,7 @@ pub struct Ref<T: ?Sized>(rc::Rc<T>);
 pub struct Weak<T: ?Sized>(rc::Weak<T>);
 
 impl<T> Ref<T> {
-    pub fn from_leaked_static(obj: T) -> Self {
+    pub fn new(obj: T) -> Self {
         Ref(rc::Rc::new(obj))
     }
 }

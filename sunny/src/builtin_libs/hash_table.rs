@@ -9,14 +9,14 @@ use sunny_vm::{ErrorKind, Object, Result, Value, Vm, WeakValue};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
     ctx.define_library("(sunny hash-table)")
-        .define_primitive("hash-table?", is_hashtable)
-        .define_primitive("make-strong-eq-hash-table", make_strong_eq_hashtable)
-        .define_primitive("make-key-weak-eq-hash-table", make_weak_eq_hashtable)
-        .define_primitive("make-equal-hash-table", make_strong_equals_hashtable)
-        .define_primitive("hash-table-set!", hashtable_set)
-        .define_primitive("hash-table-ref/default", hashtable_ref_default)
-        .define_primitive("hash-table-delete!", hashtable_delete)
-        .define_primitive("hash-table-clear!", hashtable_clear)
+        .define_primitive_fixed_arity("hash-table?", 1, is_hashtable)
+        .define_primitive_fixed_arity("make-strong-eq-hash-table", 0, make_strong_eq_hashtable)
+        .define_primitive_fixed_arity("make-key-weak-eq-hash-table", 0, make_weak_eq_hashtable)
+        .define_primitive_fixed_arity("make-equal-hash-table", 0, make_strong_equals_hashtable)
+        .define_primitive_fixed_arity("hash-table-set!", 3, hashtable_set)
+        .define_primitive_fixed_arity("hash-table-ref/default", 3, hashtable_ref_default)
+        .define_primitive_fixed_arity("hash-table-delete!", 2, hashtable_delete)
+        .define_primitive_fixed_arity("hash-table-clear!", 1, hashtable_clear)
         .build();
 }
 

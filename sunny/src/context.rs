@@ -3,8 +3,8 @@ use std::rc::Rc;
 use sunny_sexpr_parser::parser::{parse_str, Error as ParseError};
 use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::optimizations::tail_call_optimization;
-use sunny_vm::Primitive;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
+use sunny_vm::{Primitive, PrimitiveProc};
 
 use crate::backend::{ByteCodeBackend, GlobalTable};
 use crate::frontend::ast::Ast;
@@ -13,6 +13,7 @@ use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
+use sunny_vm::mem::Ref;
 
 pub struct Context {
     env: Env,
@@ -167,8 +168,35 @@ impl<'c> LibDefiner<'c> {
         self
     }
 
-    pub fn define_primitive(self, name: &str, proc: Primitive) -> Self {
-        self.define_value(name, |_| Value::Primitive(proc))
+    pub fn define_primitive_fixed_arity(
+        self,
+        name: &'static str,
+        arity: usize,
+        proc: PrimitiveProc,
+    ) -> Self {
+        let primitive = Primitive::fixed_arity(name, arity, proc);
+        self.define_value(name, |_| Value::Primitive(Ref::new(primitive)))
+    }
+
+    pub fn define_primitive_max_arity(
+        self,
+        name: &'static str,
+        min_arity: usize,
+        max_arity: usize,
+        proc: PrimitiveProc,
+    ) -> Self {
+        let primitive = Primitive::max_arity(name, min_arity, max_arity, proc);
+        self.define_value(name, |_| Value::Primitive(Ref::new(primitive)))
+    }
+
+    pub fn define_primitive_vararg(
+        self,
+        name: &'static str,
+        min_arity: usize,
+        proc: PrimitiveProc,
+    ) -> Self {
+        let primitive = Primitive::vararg(name, min_arity, proc);
+        self.define_value(name, |_| Value::Primitive(Ref::new(primitive)))
     }
 
     pub fn define_value(mut self, name: &str, f: impl FnOnce(&mut ValueStorage) -> Value) -> Self {

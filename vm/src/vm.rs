@@ -367,7 +367,7 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.call_closure(cls, n_args),
-            Value::Primitive(f) => f(n_args, self),
+            Value::Primitive(p) => (p.proc)(n_args, self),
             Value::Continuation(cnt) => self.call_continuation(cnt, n_args),
             _ => Err(ErrorKind::TypeError),
         }
@@ -377,7 +377,7 @@ impl Vm {
         let func = self.pop_value()?;
         match func {
             Value::Closure(cls) => self.tail_call_closure(cls, n_args),
-            Value::Primitive(f) => f(n_args, self),
+            Value::Primitive(p) => (p.proc)(n_args, self),
             Value::Continuation(cnt) => self.call_continuation(cnt, n_args),
             _ => Err(ErrorKind::TypeError),
         }
@@ -573,6 +573,7 @@ fn cell_clone<T: Clone + Default>(cell: &Cell<T>) -> T {
 mod tests {
     use super::*;
     use crate::bytecode::CodeBuilder;
+    use crate::Primitive;
 
     struct VmRunner {
         storage_capacity: usize,
@@ -1032,10 +1033,11 @@ mod tests {
             PRIM_CALLED.store(true, Ordering::SeqCst);
             Ok(())
         }
+        let prim_val = Value::Primitive(Ref::new(Primitive::fixed_arity("", 0, prim)));
 
         let (ret, _) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::Primitive(prim))
+                .constant(prim_val)
                 .op(Op::Call { n_args: 0 })
                 .op(Op::Halt),
         );
