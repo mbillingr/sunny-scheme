@@ -26,7 +26,7 @@ impl Activation {
             caller: Some(caller),
             parent: cls.parent.clone(),
             code: cls.code.clone(),
-            locals: args.into(),
+            locals: args,
         }
     }
 

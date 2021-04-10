@@ -27,6 +27,8 @@ impl dyn Object {
         self.as_any().downcast_ref()
     }
 
+    /// # Safety
+    /// It is unsafe and probably undefined behavior to cast a const reference to a mutable pointer.
     pub unsafe fn downcast_mut<T: Any>(&self) -> Option<&mut T> {
         let ptr = self.as_any() as *const dyn Any;
         let ptr = ptr as *mut dyn Any;
@@ -165,11 +167,7 @@ impl Value {
     }
 
     pub fn is_like_true(&self) -> bool {
-        match self {
-            Value::Void => false,
-            Value::False => false,
-            _ => true,
-        }
+        !matches!(self, Value::Void | Value::False)
     }
 
     pub fn is_bool(&self) -> bool {
@@ -204,10 +202,10 @@ impl Value {
     }
 
     pub fn is_procedure(&self) -> bool {
-        match self {
-            Value::Closure(_) | Value::Primitive(_) | Value::Continuation(_) => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Value::Closure(_) | Value::Primitive(_) | Value::Continuation(_)
+        )
     }
 
     pub fn as_obj<T: Any>(&self) -> Option<&T> {
@@ -565,9 +563,6 @@ mod tests {
     fn compound_values_are_compared_by_pointer() {
         let pair1 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
         let pair2 = Value::Pair(Ref::new((Value::number(1), Value::number(2))));
-
-        assert_eq!(pair1, pair1);
-        assert_eq!(pair2, pair2);
         assert_ne!(pair1, pair2);
     }
 

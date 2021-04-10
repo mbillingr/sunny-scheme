@@ -46,10 +46,7 @@ impl std::fmt::Display for Error {
 
 impl Error {
     pub fn is_eof(&self) -> bool {
-        match self {
-            Error::UnexpectedEof { .. } => true,
-            _ => false,
-        }
+        matches!(self, Error::UnexpectedEof { .. })
     }
 }
 
@@ -102,23 +99,23 @@ fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &
 
         match &s.as_bytes().get(escape_start + 1) {
             Some(b'a') => {
-                result.push_str("\u{0007}");
+                result.push('\u{0007}');
                 section_start = escape_start + 2;
             }
             Some(b'b') => {
-                result.push_str("\u{0008}");
+                result.push('\u{0008}');
                 section_start = escape_start + 2;
             }
             Some(b't') => {
-                result.push_str("\u{0009}");
+                result.push('\u{0009}');
                 section_start = escape_start + 2;
             }
             Some(b'n') => {
-                result.push_str("\u{000A}");
+                result.push('\u{000A}');
                 section_start = escape_start + 2;
             }
             Some(b'r') => {
-                result.push_str("\u{000D}");
+                result.push('\u{000D}');
                 section_start = escape_start + 2;
             }
             Some(b'"') => {
@@ -126,7 +123,7 @@ fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &
                 section_start = escape_start + 2;
             }
             Some(b'\\') => {
-                result.push_str(r"\");
+                result.push('\'');
                 section_start = escape_start + 2;
                 escapes.next().unwrap();
             }

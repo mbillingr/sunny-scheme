@@ -21,6 +21,12 @@ pub struct Context {
     globals: GlobalTable,
 }
 
+impl Default for Context {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Context {
     pub fn new() -> Self {
         let globals = GlobalTable::new();
@@ -46,7 +52,7 @@ impl Context {
         let mut ast_parts = vec![];
         for sx in sexprs {
             let part = Expression
-                .expand(&sx, &mut self.env)
+                .expand(&sx, &self.env)
                 .map_err(|e| e.in_string(src))?;
             ast_parts.push(part)
         }
@@ -206,7 +212,7 @@ impl<'c> LibDefiner<'c> {
         let value = f(self.storage());
         self.vm().assign_global(idx, value);
 
-        let binding = EnvBinding::global(fqn.clone());
+        let binding = EnvBinding::global(fqn);
         self.exports.push(Export::new(name, binding));
         self
     }

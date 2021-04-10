@@ -11,7 +11,7 @@ pub fn find_end_of_line(src: &str, offset: usize) -> usize {
     src[offset..]
         .find('\n')
         .map(|len| offset + len)
-        .unwrap_or(src.len())
+        .unwrap_or_else(|| src.len())
 }
 
 pub fn find_start_of_line(src: &str, offset: usize) -> usize {

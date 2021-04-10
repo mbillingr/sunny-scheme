@@ -111,10 +111,6 @@ impl Storage {
         Ref(rc::Rc::new(obj))
     }
 
-    pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Ref<T> {
-        self.insert(*obj)
-    }
-
     pub fn find_interned<T: 'static>(&mut self, predicate: impl Fn(&T) -> bool) -> Option<Ref<T>> {
         let mut i = 0;
         while i < self.interned.len() {

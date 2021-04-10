@@ -75,11 +75,11 @@ impl Vm {
     }
 
     pub fn eval_closure(&mut self, closure: &Closure) -> RuntimeResult<Value> {
-        self.load_closure(closure).unwrap();
+        self.load_closure(closure);
         self.run().map_err(|e| self.add_error_context(e))
     }
 
-    fn load_closure(&mut self, closure: &Closure) -> Result<()> {
+    fn load_closure(&mut self, closure: &Closure) {
         let activation = Activation {
             caller: None,
             parent: closure.parent.clone(),
@@ -87,7 +87,6 @@ impl Vm {
             locals: vec![],
         };
         self.current_activation = self.storage.insert(activation);
-        Ok(())
     }
 
     fn add_error_context(&mut self, kind: ErrorKind) -> Error {
@@ -141,7 +140,7 @@ impl Vm {
                 Op::Fetch(a) => self.get_local(Op::extend_arg(a, arg))?,
                 Op::Store(a) => {
                     let value = self.pop_value()?;
-                    self.set_local(Op::extend_arg(a, arg), value)?
+                    self.set_local(Op::extend_arg(a, arg), value);
                 }
                 Op::Apply => self.apply()?,
                 Op::Call { n_args } => self.call(Op::extend_arg(n_args, arg))?,
@@ -152,8 +151,8 @@ impl Vm {
                 Op::PrepareVarArgs(n_args) => self.prepare_varargs(Op::extend_arg(n_args, arg))?,
                 Op::Void => self.push_value(Value::Void),
                 Op::Integer(a) => self.push_value(Value::number(Op::extend_arg(a, arg) as i64)),
-                Op::Const(a) => self.push_const(Op::extend_arg(a, arg))?,
-                Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg))?,
+                Op::Const(a) => self.push_const(Op::extend_arg(a, arg)),
+                Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg)),
                 Op::Dup => self.dup()?,
                 Op::Drop => self.drop()?,
                 Op::Swap => self.swap()?,
@@ -163,7 +162,7 @@ impl Vm {
                 Op::Cons => self.cons()?,
                 Op::Car => self.car()?,
                 Op::Cdr => self.cdr()?,
-                Op::MakeClosure { offset } => self.make_closure(Op::extend_arg(offset, arg))?,
+                Op::MakeClosure { offset } => self.make_closure(Op::extend_arg(offset, arg)),
                 Op::CaptureContinuation { offset } => {
                     self.capture_continuation(Op::extend_arg(offset, arg))?
                 }
@@ -173,9 +172,7 @@ impl Vm {
     }
 
     fn fetch_op(&mut self) -> Op {
-        let op = self.current_activation.code.fetch();
-        //println!("{:?}", op);
-        op
+        self.current_activation.code.fetch()
     }
 
     pub fn push_value(&mut self, val: Value) {
@@ -213,16 +210,14 @@ impl Vm {
         Ok(values)
     }
 
-    fn push_const(&mut self, idx: usize) -> Result<()> {
+    fn push_const(&mut self, idx: usize) {
         let x = self.current_activation.code.get_constant(idx).clone();
         self.push_value(x);
-        Ok(())
     }
 
-    fn push_from_stack(&mut self, idx: usize) -> Result<()> {
+    fn push_from_stack(&mut self, idx: usize) {
         let x = self.value_stack[idx].clone();
         self.push_value(x);
-        Ok(())
     }
 
     fn get_global(&mut self, idx: usize) -> Result<()> {
@@ -264,7 +259,11 @@ impl Vm {
     }
 
     fn drop_local(&mut self) -> Result<Value> {
-        let value = self.current_activation.locals.pop().unwrap();
+        let value = self
+            .current_activation
+            .locals
+            .pop()
+            .ok_or(ErrorKind::StackUnderflow)?;
         Ok(value.into_inner())
     }
 
@@ -283,7 +282,7 @@ impl Vm {
         Ok(())
     }
 
-    fn set_local(&mut self, mut idx: usize, value: Value) -> Result<()> {
+    fn set_local(&mut self, mut idx: usize, value: Value) {
         let mut act = &mut self.current_activation;
         while idx >= act.locals.len() && act.parent.is_some() {
             idx -= act.locals.len();
@@ -295,7 +294,6 @@ impl Vm {
                 .resize_with((idx + 1).next_power_of_two(), || Cell::new(Value::Void));
         }
         act.locals[idx].set(value);
-        Ok(())
     }
 
     fn peek_closure(&mut self, idx: usize) -> Result<()> {
@@ -531,7 +529,7 @@ impl Vm {
             .map(|x| self.push_value(x.clone()))
     }
 
-    fn make_closure(&mut self, code_offset: usize) -> Result<()> {
+    fn make_closure(&mut self, code_offset: usize) {
         let code = self.current_activation.code.offset(code_offset as isize);
 
         let closure = Closure {
@@ -541,7 +539,6 @@ impl Vm {
         let closure = self.storage.insert(closure);
 
         self.push_value(Value::Closure(closure));
-        Ok(())
     }
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
@@ -550,7 +547,7 @@ impl Vm {
         let activation = self.storage.insert(activation);
 
         let mut value_stack = self.value_stack.clone();
-        value_stack.pop().unwrap(); // remove the function called by call/cc
+        value_stack.pop().ok_or(ErrorKind::StackUnderflow)?; // remove the function called by call/cc
 
         let continuation = Continuation {
             activation,
@@ -626,7 +623,7 @@ mod tests {
                 vm.value_stack = value_stack;
             }
 
-            vm.load_closure(&closure).unwrap();
+            vm.load_closure(&closure);
 
             vm
         }
@@ -796,7 +793,7 @@ mod tests {
         };
 
         let callee = Closure {
-            code: CodePointer::new(code_segment.clone()).at(2),
+            code: CodePointer::new(code_segment).at(2),
             parent: None,
         };
 
@@ -806,7 +803,7 @@ mod tests {
 
         vm.value_stack = value_stack;
 
-        vm.load_closure(&main).unwrap();
+        vm.load_closure(&main);
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
@@ -1181,7 +1178,7 @@ mod tests {
         let act = storage.insert(act);
 
         let callee = Closure {
-            code: CodePointer::new(code_segment.clone()).at(2),
+            code: CodePointer::new(code_segment).at(2),
             parent: Some(act),
         };
 
@@ -1191,7 +1188,7 @@ mod tests {
 
         vm.value_stack = value_stack;
 
-        vm.load_closure(&main).unwrap();
+        vm.load_closure(&main);
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));

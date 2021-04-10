@@ -114,7 +114,9 @@ impl PartialEq for EnvBinding {
             (Variable, Variable) => true,
             (Intrinsic(name1, _), Intrinsic(name2, _)) => name1 == name2,
             (Global(fqn1), Global(fqn2)) => fqn1 == fqn2,
-            (Syntax(exp1), Syntax(exp2)) => Rc::ptr_eq(exp1, exp2),
+            (Syntax(exp1), Syntax(exp2)) => {
+                std::ptr::eq(Rc::as_ptr(exp1) as *const u8, Rc::as_ptr(exp2) as *const u8)
+            }
             _ => false,
         }
     }
@@ -182,7 +184,7 @@ impl Env {
     }
 
     pub fn ensure_variable(&self, name: &str) {
-        if let Some(_) = self.lexical.find(name) {
+        if self.lexical.find(name).is_some() {
             return;
         }
 
@@ -190,11 +192,12 @@ impl Env {
     }
 
     pub fn ensure_global_variable(&self, name: &str) {
-        if let Some(_) = self
+        if self
             .global
             .borrow()
             .lookup(name)
             .filter(|binding| binding.is_variable())
+            .is_some()
         {
             return;
         }
@@ -289,6 +292,10 @@ impl Environment {
             Environment::Empty => None,
             Environment::Entry(entry) => Some(&entry.1),
         }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        matches!(self, Environment::Empty)
     }
 
     pub fn len(&self) -> usize {

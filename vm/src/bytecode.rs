@@ -138,46 +138,46 @@ impl std::fmt::Display for Op {
 }
 
 pub mod repr {
-    pub const NOP: &'static str = "NOP";
-    pub const EXTARG: &'static str = "EXTARG";
-    pub const INSPECT: &'static str = "INSPECT";
-    pub const HALT: &'static str = "HALT";
-    pub const JUMP: &'static str = "JUMP";
-    pub const JUMPIFTRUE: &'static str = "JUMPIFTRUE";
-    pub const JUMPIFVOID: &'static str = "JUMPIFVOID";
-    pub const RJUMP: &'static str = "RJUMP";
-    pub const RJUMPIFTRUE: &'static str = "RJUMPIFTRUE";
-    pub const RJUMPIFVOID: &'static str = "RJUMPIFVOID";
-    pub const RETURN: &'static str = "RETURN";
-    pub const APPLY: &'static str = "APPLY";
-    pub const CALL: &'static str = "CALL";
-    pub const CALLDYNAMIC: &'static str = "CALLDYNAMIC";
-    pub const TAILCALL: &'static str = "TAILCALL";
-    pub const TAILCALLDYNAMIC: &'static str = "TAILCALLDYNAMIC";
-    pub const PREPARGS: &'static str = "PREPARGS";
-    pub const PREPVARARGS: &'static str = "PREPVARARGS";
-    pub const FETCHGLOBAL: &'static str = "FETCHGLOBAL";
-    pub const STOREGLOBAL: &'static str = "STOREGLOBAL";
-    pub const PEEK: &'static str = "PEEK";
-    pub const PUSHLOCAL: &'static str = "PUSHLOCAL";
-    pub const DROPLOCAL: &'static str = "DROPLOCAL";
-    pub const FETCH: &'static str = "FETCH";
-    pub const STORE: &'static str = "STORE";
-    pub const VOID: &'static str = "VOID";
-    pub const INTEGER: &'static str = "INTEGER";
-    pub const CONST: &'static str = "CONST";
-    pub const GETSTACK: &'static str = "GETSTACK";
-    pub const DUP: &'static str = "DUP";
-    pub const DROP: &'static str = "DROP";
-    pub const SWAP: &'static str = "SWAP";
-    pub const EQ: &'static str = "EQ";
-    pub const INC: &'static str = "INC";
-    pub const DEC: &'static str = "DEC";
-    pub const CONS: &'static str = "CONS";
-    pub const CAR: &'static str = "CAR";
-    pub const CDR: &'static str = "CDR";
-    pub const MAKECLOSURE: &'static str = "MAKECLOSURE";
-    pub const CAPTURECONTINUATION: &'static str = "CAPTURECONTINUATION";
+    pub const NOP: &str = "NOP";
+    pub const EXTARG: &str = "EXTARG";
+    pub const INSPECT: &str = "INSPECT";
+    pub const HALT: &str = "HALT";
+    pub const JUMP: &str = "JUMP";
+    pub const JUMPIFTRUE: &str = "JUMPIFTRUE";
+    pub const JUMPIFVOID: &str = "JUMPIFVOID";
+    pub const RJUMP: &str = "RJUMP";
+    pub const RJUMPIFTRUE: &str = "RJUMPIFTRUE";
+    pub const RJUMPIFVOID: &str = "RJUMPIFVOID";
+    pub const RETURN: &str = "RETURN";
+    pub const APPLY: &str = "APPLY";
+    pub const CALL: &str = "CALL";
+    pub const CALLDYNAMIC: &str = "CALLDYNAMIC";
+    pub const TAILCALL: &str = "TAILCALL";
+    pub const TAILCALLDYNAMIC: &str = "TAILCALLDYNAMIC";
+    pub const PREPARGS: &str = "PREPARGS";
+    pub const PREPVARARGS: &str = "PREPVARARGS";
+    pub const FETCHGLOBAL: &str = "FETCHGLOBAL";
+    pub const STOREGLOBAL: &str = "STOREGLOBAL";
+    pub const PEEK: &str = "PEEK";
+    pub const PUSHLOCAL: &str = "PUSHLOCAL";
+    pub const DROPLOCAL: &str = "DROPLOCAL";
+    pub const FETCH: &str = "FETCH";
+    pub const STORE: &str = "STORE";
+    pub const VOID: &str = "VOID";
+    pub const INTEGER: &str = "INTEGER";
+    pub const CONST: &str = "CONST";
+    pub const GETSTACK: &str = "GETSTACK";
+    pub const DUP: &str = "DUP";
+    pub const DROP: &str = "DROP";
+    pub const SWAP: &str = "SWAP";
+    pub const EQ: &str = "EQ";
+    pub const INC: &str = "INC";
+    pub const DEC: &str = "DEC";
+    pub const CONS: &str = "CONS";
+    pub const CAR: &str = "CAR";
+    pub const CDR: &str = "CDR";
+    pub const MAKECLOSURE: &str = "MAKECLOSURE";
+    pub const CAPTURECONTINUATION: &str = "CAPTURECONTINUATION";
 }
 
 #[derive(Debug, Clone)]
@@ -361,6 +361,12 @@ pub struct CodeBuilder {
     labels: HashMap<String, usize>,
 }
 
+impl Default for CodeBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CodeBuilder {
     pub fn new() -> Self {
         CodeBuilder {
@@ -506,7 +512,7 @@ impl CodeBuilder {
 
         while arg > 0 {
             reverse_args.push((arg & 0xff) as u8);
-            arg = arg >> 8;
+            arg >>= 8;
         }
 
         while reverse_args.len() > 1 {

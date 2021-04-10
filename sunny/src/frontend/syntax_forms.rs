@@ -38,6 +38,7 @@ macro_rules! _match_sexpr {
 
     ($expr:tt; $x:ident: List => $action:block) => {
         if $expr.is_pair() || $expr.is_null() {
+            let $x = $expr;
             Some($action)
         } else {
             None
@@ -143,7 +144,7 @@ define_form! {
             Err(sexpr.map(|_|Error::InvalidForm))
         }]
         [list: List => {
-            Expression.expand_application(sexpr, env)
+            Expression.expand_application(list, env)
         }]
         [name: Symbol => {
             use EnvBinding::*;
@@ -333,9 +334,9 @@ impl Lambda {
         let body = Body.expand(body, &body_env)?;
 
         if params.last_cdr().is_null() {
-            Ok(Ast::lambda(context, params.len(), body))
+            Ok(Ast::lambda(context, params.list_length(), body))
         } else {
-            Ok(Ast::lambda_vararg(context, params.len(), body))
+            Ok(Ast::lambda_vararg(context, params.list_length(), body))
         }
     }
 }
@@ -405,7 +406,7 @@ define_form! {
 }
 
 impl LetRec {
-    fn build_ast<'a>(
+    fn build_ast(
         context: SourceLocation<()>,
         names: &[&str],
         defs: impl DoubleEndedIterator<Item = SrcExpr>,
@@ -413,13 +414,13 @@ impl LetRec {
         env: &Env,
     ) -> Result<AstNode> {
         let n_vars = names.len();
-        let body_env = env.extend_vars(names.into_iter());
+        let body_env = env.extend_vars(names.iter());
 
         let body = body.rfold(Sexpr::nil(), |acc, stmt| Sexpr::cons(stmt, acc));
 
         let mut body_ast = Sequence.expand(&body.into(), &body_env)?;
 
-        for (name, exp) in names.into_iter().zip(defs) {
+        for (name, exp) in names.iter().zip(defs) {
             let idx = body_env.lookup_variable_index(name).unwrap();
             let def = Expression.expand(&exp, &body_env)?;
             let store = Ast::store(context.clone(), idx, def);
@@ -496,7 +497,15 @@ pub struct SyntaxTransformer;
 impl SyntaxTransformer {
     fn build(&self, spec: RefExpr, env: &Env) -> Result<Rc<dyn SyntaxExpander>> {
         match_sexpr![
-            [spec: ("simple-macro", args, body) => { Ok(Rc::new(SimpleMacro::new(args, body, env)?) as Rc<dyn SyntaxExpander>) }]
+            [spec: ("simple-macro", args, body) => {
+                Ok(Rc::new(SimpleMacro::new(args, body, env)?) as Rc<dyn SyntaxExpander>)
+            }]
+            [spec: ("syntax-rules", ellipsis: Symbol, literals: List . rules) => {
+                Ok(Rc::new(SyntaxRules::new(ellipsis, literals, rules, env)?) as Rc<dyn SyntaxExpander>)
+            }]
+            [spec: ("syntax-rules", literals: List . rules) => {
+                Ok(Rc::new(SyntaxRules::new("...", literals, rules, env)?) as Rc<dyn SyntaxExpander>)
+            }]
         ].unwrap_or_else(|| Err(spec.map_value(Error::InvalidForm)))
     }
 }
@@ -519,7 +528,7 @@ impl SyntaxExpander for SimpleMacro {
                 .car()
                 .cloned()
                 .map(|a| SyntacticClosure::new(a, env.clone()))
-                .map(|sc| Sexpr::obj(sc))
+                .map(Sexpr::obj)
                 .map(SourceLocation::new)
                 .ok_or_else(|| more_args.map_value(Error::MissingArgument))?;
             more_args = more_args.cdr().unwrap();
@@ -553,6 +562,21 @@ impl SimpleMacro {
 }
 
 #[derive(Debug)]
+pub struct SyntaxRules {}
+
+impl SyntaxExpander for SyntaxRules {
+    fn expand(&self, _sexpr: RefExpr, _env: &Env) -> Result<AstNode> {
+        unimplemented!()
+    }
+}
+
+impl SyntaxRules {
+    pub fn new(_ellipsis: &str, _literals: RefExpr, _rules: RefExpr, _env: &Env) -> Result<Self> {
+        Ok(SyntaxRules {})
+    }
+}
+
+#[derive(Debug)]
 pub struct LibraryDefinition;
 
 impl SyntaxExpander for LibraryDefinition {
@@ -573,27 +597,21 @@ impl SyntaxExpander for LibraryDefinition {
 
                 let mut body_parts = vec![];
                 for stmt in statements.iter() {
-                    match stmt.car().and_then(|s| s.as_symbol()) {
-                        Some("begin") => {
-                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &lib_env)?)
-                        }
-                        _ => {}
+                    if let Some("begin") = stmt.car().and_then(|s| s.as_symbol()) {
+                        body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &lib_env)?)
                     }
                 }
 
                 let mut exports = vec![];
                 for stmt in statements.iter() {
-                    match stmt.car().and_then(|s| s.as_symbol()) {
-                        Some("export") => {
-                            for export_item in stmt.cdr().unwrap().iter() {
-                                let export_name = export_item
-                                    .as_symbol()
-                                    .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
-                                let binding = lib_env.lookup_global_variable(export_name).ok_or_else(||error_at(export_item, Error::UndefinedExport))?;
-                                exports.push(Export::new(export_name, binding));
-                            }
+                    if let Some("export") = stmt.car().and_then(|s| s.as_symbol()) {
+                        for export_item in stmt.cdr().unwrap().iter() {
+                            let export_name = export_item
+                                .as_symbol()
+                                .ok_or_else(|| error_at(export_item, Error::ExpectedSymbol))?;
+                            let binding = lib_env.lookup_global_variable(export_name).ok_or_else(||error_at(export_item, Error::UndefinedExport))?;
+                            exports.push(Export::new(export_name, binding));
                         }
-                        _ => {}
                     }
                 }
 
@@ -601,7 +619,7 @@ impl SyntaxExpander for LibraryDefinition {
 
                 env.define_library(libname, exports);
 
-                let mut body = body_parts.pop().unwrap_or_else(|| Ast::void());
+                let mut body = body_parts.pop().unwrap_or_else(Ast::void);
                 while let Some(prev_part) = body_parts.pop() {
                     body = Ast::sequence(prev_part, body);
                 }

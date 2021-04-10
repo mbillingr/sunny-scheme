@@ -30,7 +30,7 @@ impl LibraryFileSystem {
     }
 
     pub fn add_virtual_file(&self, path: &str, content: &[u8]) {
-        let path = path.trim_start_matches("/");
+        let path = path.trim_start_matches('/');
         let full_path = self.root.join(path).unwrap();
         assert!(!full_path.exists().unwrap());
         full_path.parent().unwrap().create_dir_all().unwrap();

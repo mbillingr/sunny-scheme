@@ -18,7 +18,8 @@ macro_rules! primitive {
 
             $($a = vm.pop_value().unwrap();)*
             // wrap body in closure, so `return`ing from the body works as expected
-            let ret = (||$body)();
+            let body_fn = ||$body;
+            let ret = body_fn();
             vm.push_value(ret?);
             Ok(())
         }

@@ -189,7 +189,7 @@ fn proc_arity(n_args: usize, vm: &mut Vm) -> Result<()> {
         Value::Continuation(cnt) => cnt.arity(),
         _ => return Err(ErrorKind::TypeError),
     };
-    let max = max.map(|x| Value::from(x)).unwrap_or(Value::False);
+    let max = max.map(Value::from).unwrap_or(Value::False);
     let arity = vm.borrow_storage().cons(min, max);
     vm.push_value(arity);
     Ok(())

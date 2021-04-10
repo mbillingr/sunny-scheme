@@ -63,7 +63,7 @@ pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
         let section_body = sexpr.cdr().unwrap();
 
         match section_name {
-            "constants:" => cb = build_constant_section(cb, section_body, storage)?,
+            "constants:" => cb = build_constant_section(cb, section_body, storage),
             "code:" => cb = build_code_section(cb, section_body)?,
             _ => return Err(error_at(sexpr.car().unwrap(), Error::UnknownSection)),
         }
@@ -76,12 +76,12 @@ fn build_constant_section(
     mut cb: CodeBuilder,
     constants_section: &SourceLocation<Sexpr>,
     storage: &mut ValueStorage,
-) -> Result<CodeBuilder> {
+) -> CodeBuilder {
     for value in constants_section.iter() {
         let c = storage.sexpr_to_value(value);
         cb.add_constant(c);
     }
-    Ok(cb)
+    cb
 }
 
 fn build_code_section(mut cb: CodeBuilder, code: &SourceLocation<Sexpr>) -> Result<CodeBuilder> {
@@ -196,7 +196,7 @@ fn read_u8<'a, 'b: 'a, T>(
         .as_usize()
         .ok_or_else(|| error_at(i, Error::ExpectedIndex))?;
     if value > u8::MAX as usize {
-        return Err(error_at(i, Error::ExpectedU8));
+        Err(error_at(i, Error::ExpectedU8))
     } else {
         Ok(value as u8)
     }

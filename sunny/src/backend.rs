@@ -208,6 +208,12 @@ pub struct GlobalTable {
     mappings: HashMap<String, usize>,
 }
 
+impl Default for GlobalTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GlobalTable {
     pub fn new() -> Self {
         GlobalTable {
@@ -217,7 +223,7 @@ impl GlobalTable {
 
     pub fn determine_index(&mut self, name: &str) -> usize {
         if let Some(idx) = self.mappings.get(name) {
-            return *idx;
+            *idx
         } else {
             self.add_variable(name)
         }

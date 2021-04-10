@@ -5,6 +5,7 @@ mod global_variables;
 mod lexical_conventions;
 mod libraries;
 mod macros;
+mod pattern_language;
 mod procedures;
 mod program_structure;
 mod scoping;

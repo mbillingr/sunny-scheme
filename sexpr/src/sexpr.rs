@@ -44,7 +44,9 @@ impl PartialEq for Sexpr {
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
-            (Object(a), Object(b)) => Rc::ptr_eq(a, b),
+            (Object(a), Object(b)) => {
+                std::ptr::eq(Rc::as_ptr(a) as *const u8, Rc::as_ptr(b) as *const u8)
+            }
             _ => false,
         }
     }
@@ -76,8 +78,7 @@ impl Sexpr {
     }
 
     pub fn list(items: impl DoubleEndedIterator<Item = SrcExpr>) -> Self {
-        let l = items.rfold(Self::nil(), |acc, x| Self::cons(x, acc));
-        l
+        items.rfold(Self::nil(), |acc, x| Self::cons(x, acc))
     }
 
     pub fn obj(obj: impl SexprObject) -> Self {
@@ -89,10 +90,7 @@ impl Sexpr {
     }
 
     pub fn is_pair(&self) -> bool {
-        match self {
-            Sexpr::Pair(_) => true,
-            _ => false,
-        }
+        matches!(self, Sexpr::Pair(_))
     }
 
     pub fn as_int(&self) -> Option<Int> {
@@ -121,10 +119,7 @@ impl Sexpr {
     }
 
     pub fn is_an_object(&self) -> bool {
-        match self {
-            Sexpr::Object(_) => true,
-            _ => false,
-        }
+        matches!(self, Sexpr::Object(_))
     }
 
     pub fn is_object<T: Any>(&self) -> bool {
@@ -151,9 +146,9 @@ impl Sexpr {
             .take_while(|x| x != &&Sexpr::Nil)
     }
 
-    pub fn len(&self) -> usize {
+    pub fn list_length(&self) -> usize {
         if self.is_pair() {
-            1 + self.cdr().unwrap().len()
+            1 + self.cdr().unwrap().list_length()
         } else {
             0
         }

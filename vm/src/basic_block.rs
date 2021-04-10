@@ -126,11 +126,18 @@ impl BasicBlock {
     }
 
     pub fn is_valid(&self) -> bool {
-        self.code.borrow().iter().all(|op| match op {
-            Op::Jump { .. } | Op::JumpIfTrue { .. } | Op::JumpIfVoid { .. } => false,
-            Op::RJump { .. } | Op::RJumpIfTrue { .. } | Op::RJumpIfVoid { .. } => false,
-            Op::Halt | Op::Return => false,
-            _ => true,
+        self.code.borrow().iter().all(|op| {
+            !matches!(
+                op,
+                Op::Jump { .. }
+                    | Op::JumpIfTrue { .. }
+                    | Op::JumpIfVoid { .. }
+                    | Op::RJump { .. }
+                    | Op::RJumpIfTrue { .. }
+                    | Op::RJumpIfVoid { .. }
+                    | Op::Halt
+                    | Op::Return
+            )
         })
     }
 

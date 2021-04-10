@@ -39,3 +39,16 @@ fn syntax_used_as_value_is_an_error() {
         EvaluatesTo::an_error()
     );
 }
+
+#[test]
+fn support_syntax_rules_transformers() {
+    assert_that!(
+        vec![
+            "(define-syntax kwote
+              (syntax-rules ()
+                ((kwote x) (quote x))))",
+            "(kwote 0)"
+        ],
+        EvaluatesTo::the_integer(0)
+    );
+}

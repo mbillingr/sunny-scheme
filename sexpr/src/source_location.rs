@@ -111,7 +111,7 @@ impl<T: std::fmt::Display> SourceLocation<T> {
     }
 
     fn pretty_fmt_in_source(&self, src: &str) -> String {
-        if self.span.len() == 0 {
+        if self.span.is_empty() {
             let pos = self.span.start;
             let line_start = find_start_of_line(src, pos);
             let line_end = find_end_of_line(src, pos);
@@ -163,17 +163,17 @@ impl<T> SourceLocation<T> {
             SourceKind::None => String::new(),
             SourceKind::Filename(_) => String::new(),
             SourceKind::String(src) => {
-                if self.span.len() == 0 {
+                if self.span.is_empty() {
                     let pos = self.span.start;
                     let line_start = find_start_of_line(src, pos);
                     let line_end = find_end_of_line(src, pos);
-                    format!("{}", &src[line_start..line_end])
+                    src[line_start..line_end].to_string()
                 } else {
                     let line_end = find_end_of_line(src, self.span.start);
                     if line_end < self.span.end {
                         format!("{} ...", &src[self.span.start..line_end])
                     } else {
-                        format!("{}", &src[self.span.clone()])
+                        src[self.span.clone()].to_string()
                     }
                 }
             }

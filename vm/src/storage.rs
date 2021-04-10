@@ -89,10 +89,6 @@ impl ValueStorage {
     pub fn insert<T: 'static>(&mut self, obj: T) -> Ref<T> {
         self.storage.insert(obj)
     }
-
-    pub fn insert_box<T: 'static>(&mut self, obj: Box<T>) -> Ref<T> {
-        self.storage.insert_box(obj)
-    }
 }
 
 #[cfg(test)]
