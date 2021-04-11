@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use sunny_sexpr_parser::{Sexpr, SourceLocation};
+use sunny_sexpr_parser::{Sexpr, SourceLocation, SourceMap};
 
 use crate::frontend::error::error_after;
 use crate::frontend::library::{Export, LibraryBinding};
@@ -11,7 +11,7 @@ use crate::frontend::{
 };
 use crate::library_filesystem::LibraryFileSystem;
 use std::collections::HashMap;
-use sunny_sexpr_parser::parser::parse_str;
+use sunny_sexpr_parser::parser::parse_with_map;
 
 #[derive(Clone)]
 pub enum EnvBinding {
@@ -160,12 +160,12 @@ impl Env {
         *globals = globals.add_binding(name, binding);
     }
 
-    pub fn extend_from_sexpr(&self, vars: &SourceLocation<Sexpr>) -> Result<Self> {
+    pub fn extend_from_sexpr(&self, vars: &Sexpr, src_map: &SourceMap) -> Result<Self> {
         let mut names = vec![];
         for v in vars.iter() {
             let name = v
                 .as_symbol()
-                .ok_or_else(|| error_at(v, Error::ExpectedSymbol))?
+                .ok_or_else(|| error_at(&src_map.get(v), Error::ExpectedSymbol))?
                 .to_string();
 
             names.push(name);
@@ -250,7 +250,7 @@ impl Env {
         self.libraries.borrow().get(name).cloned()
     }
 
-    pub fn parse_library(&self, name: &str) -> Result<Option<SourceLocation<Sexpr>>> {
+    pub fn parse_library(&self, name: &str, src_map: &SourceMap) -> Result<Option<Sexpr>> {
         let path = self.library_filesystem.map_libname_to_path(name);
         let src = self.library_filesystem.load_string(&path);
         if src.is_none() {
@@ -258,12 +258,12 @@ impl Env {
         }
         let src = src.unwrap();
 
-        parse_str(&src)
+        parse_with_map(&src, src_map)
             .map_err(|e| e.map(|pe| Error::ParseError(pe.clone())))
             .and_then(|mut sexprs| match sexprs.len() {
                 0 => Err(SourceLocation::new(Error::InvalidForm)),
                 1 => Ok(Some(sexprs.pop().unwrap())),
-                _ => Err(error_after(&sexprs[0], Error::InvalidForm)),
+                _ => Err(error_after(&src_map.get(&sexprs[0]), Error::InvalidForm)),
             })
             .map_err(|e| e.in_file(path))
     }

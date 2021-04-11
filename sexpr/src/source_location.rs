@@ -2,21 +2,14 @@ use std::ops::{Deref, Range};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::cxr::CxR;
+use crate::shared_string::SharedStr;
 use crate::str_utils::{find_end_of_line, find_start_of_line, line_number};
 use crate::Sexpr;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum SourceKind {
-    None,
-    String(Arc<String>),
-    Filename(Arc<PathBuf>),
-}
-
-impl Default for SourceKind {
-    fn default() -> Self {
-        SourceKind::None
-    }
+#[derive(Default, Debug, Clone, PartialEq)]
+pub struct SourceKind {
+    string: Option<SharedStr>,
+    file: Option<Arc<PathBuf>>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -31,22 +24,18 @@ impl<T> SourceLocation<T> {
         SourceLocation {
             inner_value: value,
             span: Range::default(),
-            source: SourceKind::None,
+            source: SourceKind::default(),
         }
     }
 
-    pub fn in_string(self, s: impl ToString) -> Self {
-        SourceLocation {
-            source: SourceKind::String(Arc::new(s.to_string())),
-            ..self
-        }
+    pub fn in_string(mut self, s: impl Into<SharedStr>) -> Self {
+        self.source.string = Some(s.into());
+        self
     }
 
-    pub fn in_file(self, path: impl Into<PathBuf>) -> Self {
-        SourceLocation {
-            source: SourceKind::Filename(Arc::new(path.into())),
-            ..self
-        }
+    pub fn in_file(mut self, path: impl Into<PathBuf>) -> Self {
+        self.source.file = Some(Arc::new(path.into()));
+        self
     }
 
     pub fn with_span(self, span: Range<usize>) -> Self {
@@ -103,11 +92,19 @@ impl<T> SourceLocation<T> {
 
 impl<T: std::fmt::Display> SourceLocation<T> {
     pub fn pretty_fmt(&self) -> String {
-        match &self.source {
-            SourceKind::None => format!("{}", self.inner_value),
-            SourceKind::Filename(f) => format!("{}\n{:?} in {:?}", self.inner_value, self.span, f),
-            SourceKind::String(s) => self.pretty_fmt_in_source(s),
+        let mut result = String::new();
+
+        if let Some(f) = &self.source.file {
+            result = format!("In {:?},\n", f);
         }
+
+        if let Some(src) = &self.source.string {
+            result.push_str(&self.pretty_fmt_in_source(&src));
+        } else {
+            result = format!("{}{}", result, self.inner_value);
+        }
+
+        result
     }
 
     fn pretty_fmt_in_source(&self, src: &str) -> String {
@@ -159,47 +156,23 @@ impl<T: std::fmt::Display> SourceLocation<T> {
 
 impl<T> SourceLocation<T> {
     pub fn pretty_fmt_inline(&self) -> String {
-        match &self.source {
-            SourceKind::None => String::new(),
-            SourceKind::Filename(_) => String::new(),
-            SourceKind::String(src) => {
-                if self.span.is_empty() {
-                    let pos = self.span.start;
-                    let line_start = find_start_of_line(src, pos);
-                    let line_end = find_end_of_line(src, pos);
-                    src[line_start..line_end].to_string()
+        if let Some(src) = &self.source.string {
+            if self.span.is_empty() {
+                let pos = self.span.start;
+                let line_start = find_start_of_line(src, pos);
+                let line_end = find_end_of_line(src, pos);
+                src[line_start..line_end].to_string()
+            } else {
+                let line_end = find_end_of_line(src, self.span.start);
+                if line_end < self.span.end {
+                    format!("{} ...", &src[self.span.start..line_end])
                 } else {
-                    let line_end = find_end_of_line(src, self.span.start);
-                    if line_end < self.span.end {
-                        format!("{} ...", &src[self.span.start..line_end])
-                    } else {
-                        src[self.span.clone()].to_string()
-                    }
+                    src[self.span.clone()].to_string()
                 }
             }
+        } else {
+            String::new()
         }
-    }
-}
-
-impl SourceLocation<Sexpr> {
-    pub fn iter(&self) -> impl Iterator<Item = &SourceLocation<Sexpr>> {
-        let mut done = false;
-        let mut cursor = self;
-        (0..)
-            .map(move |_| match cursor.get_value() {
-                Sexpr::Nil => None,
-                Sexpr::Pair(pair) => {
-                    cursor = &pair.1;
-                    Some(&pair.0)
-                }
-                _ if done => None,
-                _ => {
-                    done = true;
-                    Some(cursor)
-                }
-            })
-            .take_while(Option::is_some)
-            .map(Option::unwrap)
     }
 }
 
@@ -213,18 +186,6 @@ impl<T> Deref for SourceLocation<T> {
     type Target = T;
     fn deref(&self) -> &T {
         self.get_value()
-    }
-}
-
-impl CxR for SourceLocation<Sexpr> {
-    type Result = Self;
-
-    fn car(&self) -> Option<&Self> {
-        self.get_value().car()
-    }
-
-    fn cdr(&self) -> Option<&Self> {
-        self.get_value().cdr()
     }
 }
 

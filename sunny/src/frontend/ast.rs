@@ -1,13 +1,13 @@
 use crate::backend::Backend;
 use crate::frontend::library::Export;
-use sunny_sexpr_parser::{SourceLocation, SrcExpr};
+use sunny_sexpr_parser::{Sexpr, SourceLocation};
 
 pub type AstNode = Box<Ast>;
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
     Void,
-    Const(SrcExpr),
+    Const(SourceLocation<()>, Sexpr),
     Fetch(SourceLocation<()>, usize),
     Store(SourceLocation<()>, usize, AstNode),
     FetchGlobal(SourceLocation<()>, String),
@@ -30,8 +30,8 @@ impl Ast {
         Box::new(Ast::Void)
     }
 
-    pub fn constant(sexpr: SrcExpr) -> AstNode {
-        Box::new(Ast::Const(sexpr))
+    pub fn constant(context: SourceLocation<()>, sexpr: Sexpr) -> AstNode {
+        Box::new(Ast::Const(context, sexpr))
     }
 
     pub fn fetch(context: SourceLocation<()>, idx: usize) -> AstNode {
@@ -89,7 +89,7 @@ impl Ast {
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
             Ast::Void => backend.void(),
-            Ast::Const(sexpr) => backend.constant(sexpr.map_value(()), sexpr.get_value()),
+            Ast::Const(ctx, sexpr) => backend.constant(ctx.clone(), sexpr),
             Ast::Fetch(ctx, idx) => backend.fetch(ctx.clone(), *idx),
             Ast::Store(ctx, idx, value) => {
                 let value = value.build(backend);
@@ -137,7 +137,7 @@ impl Ast {
     fn pretty_fmt(&self, f: &mut std::fmt::Formatter, indent: usize) -> std::fmt::Result {
         match self {
             Ast::Void => writeln!(f, "{: <1$}void", "", indent),
-            Ast::Const(c) => writeln!(f, "{: <1$}const {2}", "", indent, c),
+            Ast::Const(_, c) => writeln!(f, "{: <1$}const {2}", "", indent, c),
             Ast::Fetch(_, idx) => writeln!(f, "{: <1$}fetch {2}", "", indent, idx),
             Ast::Store(_, idx, val) => {
                 writeln!(f, "{: <1$}store {2}", "", indent, idx)?;
@@ -201,7 +201,7 @@ impl std::fmt::Display for Ast {
 macro_rules! ast {
     (($($parts:tt)*)) => {ast![$($parts)*]};
     (void) => {Ast::void()};
-    (const $x:expr) => {Ast::constant(SourceLocation::new(Sexpr::from($x)))};
+    (const $x:expr) => {Ast::constant(SourceLocation::new(()), Sexpr::from($x))};
     (ref $i:tt) => {Ast::fetch(SourceLocation::new(()), $i)};
     (set $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $i, ast![$x])};
     (gref $i:tt) => {Ast::fetch_global(SourceLocation::new(()), $i)};

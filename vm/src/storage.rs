@@ -31,8 +31,8 @@ impl ValueStorage {
             Sexpr::Symbol(s) => self.interned_symbol(s),
             Sexpr::String(s) => self.interned_string(s),
             Sexpr::Pair(p) => {
-                let car = self.sexpr_to_value(p.0.get_value());
-                let cdr = self.sexpr_to_value(p.1.get_value());
+                let car = self.sexpr_to_value(&p.0);
+                let cdr = self.sexpr_to_value(&p.1);
                 self.cons(car, cdr)
             }
             Sexpr::Object(_) => panic!("Attempt to convert Sexpr::Object to Value"),

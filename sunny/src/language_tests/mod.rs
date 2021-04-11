@@ -125,7 +125,7 @@ pub trait Eval {
 
 impl Eval for &str {
     fn eval(&self, context: &mut Context) -> Result<Value, Error> {
-        context.eval(self)
+        context.eval((*self).into())
     }
 }
 

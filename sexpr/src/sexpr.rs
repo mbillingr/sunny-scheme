@@ -3,14 +3,12 @@ use std::fmt::{Debug, Display};
 use std::rc::Rc;
 
 use crate::cxr::CxR;
-use crate::{Int, SourceLocation};
+use crate::Int;
 use std::any::Any;
-
-pub type SrcExpr = SourceLocation<Sexpr>;
-pub type RefExpr<'a> = &'a SrcExpr;
+use std::hash::{Hash, Hasher};
 
 pub trait SexprObject: Any + Display + Debug {
-    fn substitute(&self, mapping: &HashMap<&str, SrcExpr>) -> Rc<dyn AnySexprObject>;
+    fn substitute(&self, mapping: &HashMap<&str, Sexpr>) -> Rc<dyn AnySexprObject>;
 }
 
 pub trait AnySexprObject: Any + SexprObject {
@@ -30,7 +28,7 @@ pub enum Sexpr {
     Integer(Int),
     Symbol(String),
     String(String),
-    Pair(Rc<(SrcExpr, SrcExpr)>),
+    Pair(Rc<(Sexpr, Sexpr)>),
     Object(Rc<dyn AnySexprObject>),
 }
 
@@ -73,11 +71,11 @@ impl Sexpr {
         Sexpr::String(name.to_string())
     }
 
-    pub fn cons(car: impl Into<SrcExpr>, cdr: impl Into<SrcExpr>) -> Self {
+    pub fn cons(car: impl Into<Sexpr>, cdr: impl Into<Sexpr>) -> Self {
         Sexpr::Pair(Rc::new((car.into(), cdr.into())))
     }
 
-    pub fn list(items: impl DoubleEndedIterator<Item = SrcExpr>) -> Self {
+    pub fn list(items: impl DoubleEndedIterator<Item = Sexpr>) -> Self {
         items.rfold(Self::nil(), |acc, x| Self::cons(x, acc))
     }
 
@@ -138,8 +136,8 @@ impl Sexpr {
         (0..)
             .map(move |_| match cursor {
                 Sexpr::Pair(pair) => {
-                    cursor = pair.1.get_value();
-                    pair.0.get_value()
+                    cursor = &pair.1;
+                    &pair.0
                 }
                 _ => std::mem::replace(&mut cursor, &Sexpr::Nil),
             })
@@ -161,16 +159,13 @@ impl Sexpr {
         }
     }
 
-    pub fn substitute(
-        template: &SourceLocation<Self>,
-        mapping: &HashMap<&str, SrcExpr>,
-    ) -> SourceLocation<Self> {
-        match template.get_value() {
+    pub fn substitute(template: &Self, mapping: &HashMap<&str, Sexpr>) -> Self {
+        match template {
             Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => template.clone(),
-            Sexpr::Pair(p) => template.map_value(Sexpr::Pair(Rc::new((
+            Sexpr::Pair(p) => Sexpr::Pair(Rc::new((
                 Sexpr::substitute(&p.0, mapping),
                 Sexpr::substitute(&p.1, mapping),
-            )))),
+            ))),
             Sexpr::Symbol(s) => {
                 if let Some(replacement) = mapping.get(s.as_str()) {
                     replacement.clone()
@@ -178,7 +173,7 @@ impl Sexpr {
                     template.clone()
                 }
             }
-            Sexpr::Object(obj) => template.map_value(Sexpr::Object(obj.substitute(mapping))),
+            Sexpr::Object(obj) => Sexpr::Object(obj.substitute(mapping)),
         }
     }
 }
@@ -197,7 +192,7 @@ impl Display for Sexpr {
                     write!(f, "({:#})", self)
                 } else {
                     write!(f, "{}", p.0)?;
-                    match p.1.get_value() {
+                    match p.1 {
                         Sexpr::Nil => Ok(()),
                         Sexpr::Pair(_) => write!(f, " {:#}", p.1),
                         _ => write!(f, " . {}", p.1),
@@ -210,16 +205,16 @@ impl Display for Sexpr {
 }
 
 impl CxR for Sexpr {
-    type Result = SourceLocation<Self>;
+    type Result = Self;
 
-    fn car(&self) -> Option<&SourceLocation<Self>> {
+    fn car(&self) -> Option<&Self> {
         match self {
             Sexpr::Pair(p) => Some(&p.0),
             _ => None,
         }
     }
 
-    fn cdr(&self) -> Option<&SourceLocation<Self>> {
+    fn cdr(&self) -> Option<&Self> {
         match self {
             Sexpr::Pair(p) => Some(&p.1),
             _ => None,
@@ -239,8 +234,36 @@ impl<'s> From<&'s str> for Sexpr {
     }
 }
 
-impl From<SrcExpr> for Sexpr {
-    fn from(c: SourceLocation<Sexpr>) -> Sexpr {
-        c.into_value()
+impl Eq for Sexpr {}
+
+impl Hash for Sexpr {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Sexpr::Nil => 0u8.hash(state),
+            Sexpr::Bool(b) => {
+                1u8.hash(state);
+                b.hash(state)
+            }
+            Sexpr::Integer(i) => {
+                2u8.hash(state);
+                i.hash(state)
+            }
+            Sexpr::Symbol(s) => {
+                3u8.hash(state);
+                s.hash(state)
+            }
+            Sexpr::String(s) => {
+                4u8.hash(state);
+                s.hash(state)
+            }
+            Sexpr::Pair(p) => {
+                5u8.hash(state);
+                Rc::as_ptr(p).hash(state)
+            }
+            Sexpr::Object(obj) => {
+                6u8.hash(state);
+                Rc::as_ptr(obj).hash(state)
+            }
+        }
     }
 }

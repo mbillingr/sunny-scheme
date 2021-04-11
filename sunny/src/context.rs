@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use sunny_sexpr_parser::parser::{parse_str, Error as ParseError};
-use sunny_sexpr_parser::SourceLocation;
+use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
+use sunny_sexpr_parser::{SharedStr, SourceLocation, SourceMap};
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
 use sunny_vm::{Primitive, PrimitiveProc};
@@ -19,6 +19,7 @@ pub struct Context {
     env: Env,
     vm: Vm,
     globals: GlobalTable,
+    src_map: SourceMap,
 }
 
 impl Default for Context {
@@ -37,11 +38,13 @@ impl Context {
             env: base_environment("main"),
             vm,
             globals,
+            src_map: SourceMap::default(),
         }
     }
 
-    pub fn eval(&mut self, src: &str) -> Result<Value, Error> {
-        let sexprs = parse_str(src).map_err(|e| e.in_string(src))?;
+    pub fn eval(&mut self, src: SharedStr) -> Result<Value, Error> {
+        let sexprs =
+            parse_with_map(src.clone(), &mut self.src_map).map_err(|e| e.in_string(src.clone()))?;
 
         if sexprs.is_empty() {
             return Ok(Value::Void);
@@ -52,8 +55,8 @@ impl Context {
         let mut ast_parts = vec![];
         for sx in sexprs {
             let part = Expression
-                .expand(&sx, &self.env)
-                .map_err(|e| e.in_string(src))?;
+                .expand(&sx, &self.src_map, &self.env)
+                .map_err(|e| e.in_string(src.clone()))?;
             ast_parts.push(part)
         }
         let last_part = ast_parts.pop().unwrap();

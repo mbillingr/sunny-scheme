@@ -11,10 +11,10 @@ use crate::frontend::syntax_forms::Import;
 use crate::frontend::{
     ast::AstNode, environment::Env, error::Result, syntax_forms::LibraryDefinition,
 };
-use sunny_sexpr_parser::SrcExpr;
+use sunny_sexpr_parser::{Sexpr, SourceMap};
 
 pub trait SyntaxExpander: std::fmt::Debug {
-    fn expand(&self, sexpr: &SrcExpr, env: &Env) -> Result<AstNode>;
+    fn expand(&self, sexpr: &Sexpr, src_map: &SourceMap, env: &Env) -> Result<AstNode>;
 
     fn description(&self) -> String {
         format!("<native syntax {:p}>", self)
@@ -89,7 +89,7 @@ mod tests {
 
         ($env:tt @ $expr:tt) => {{
             let sexpr = sexpr![Sexpr: $expr];
-            Expression.expand(&sexpr.into(), &$env)
+            Expression.expand(&sexpr.into(), &SourceMap::new(), &$env)
         }};
     }
 

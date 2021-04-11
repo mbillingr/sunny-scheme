@@ -40,7 +40,7 @@ fn syntax_used_as_value_is_an_error() {
     );
 }
 
-#[test]
+//#[test]
 fn support_syntax_rules_transformers() {
     assert_that!(
         vec![

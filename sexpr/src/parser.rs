@@ -1,5 +1,7 @@
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
+use crate::shared_string::SharedStr;
+use crate::source_map::SourceMap;
 use crate::{Sexpr, SourceLocation};
 use lalrpop_util::{lexer::Token, ParseError};
 use std::borrow::Cow;
@@ -79,9 +81,21 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
     }
 }
 
-pub fn parse_str(s: &str) -> Result<Vec<SourceLocation<Sexpr>>> {
-    let context = SourceLocation::new(()).in_string(s);
-    Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(&context, &mut HashMap::new(), s)?)
+pub fn parse_str(src: impl Into<SharedStr>) -> Result<Vec<Sexpr>> {
+    let src = src.into();
+    let src_map = SourceMap::new();
+    parse_with_map(src, &src_map)
+}
+
+pub fn parse_with_map(src: impl Into<SharedStr>, src_map: &SourceMap) -> Result<Vec<Sexpr>> {
+    let src = src.into();
+    let context = SourceLocation::new(()).in_string(src.clone());
+    Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(
+        &context,
+        src_map,
+        &mut HashMap::new(),
+        &src,
+    )?)
 }
 
 fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &'static str>> {

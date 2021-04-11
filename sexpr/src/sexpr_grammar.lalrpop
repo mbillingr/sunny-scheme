@@ -5,8 +5,9 @@ use std::str::FromStr;
 use crate::parser::unescape;
 use crate::Sexpr;
 use crate::source_location::SourceLocation;
+use crate::source_map::SourceMap;
 
-grammar<'a>(context: &'a SourceLocation<()>, datum_labels: &mut HashMap<&'input str, Sexpr>);
+grammar<'a>(context: &'a SourceLocation<()>, source_map: &SourceMap, datum_labels: &mut HashMap<&'input str, Sexpr>);
 
 match {
     r"\s*" => { }, // The default whitespace skipping is disabled an `ignore pattern` is specified
@@ -19,11 +20,11 @@ match {
     _
 }
 
-pub ExplicitSequence: Vec<SourceLocation<Sexpr>> = {
+pub ExplicitSequence: Vec<Sexpr> = {
     <cd:OptionalDatum*> => cd.into_iter().filter_map(|x|x).collect(),
 };
 
-OptionalDatum: Option<SourceLocation<Sexpr>> = {
+OptionalDatum: Option<Sexpr> = {
     Comment => None,
     <d:Datum> => Some(d),
 };
@@ -34,17 +35,22 @@ Comment: () = {
     BLOCK_COMMENT,
 };
 
-Datum: SourceLocation<Sexpr> = {
-    <i:r"#([0-9]+)="> <d:Datum> => { datum_labels.insert(&i[1..i.len()-1], d.get_value().clone()); d },
+Datum: Sexpr = {
+    <i:r"#([0-9]+)="> <d:Datum> => { datum_labels.insert(&i[1..i.len()-1], d.clone()); d },
     <l:@L> <i:r"#([0-9]+)#"> <r:@R> =>? {
-        datum_labels.get(&i[1..i.len()-1])
-                    .cloned()
-                    .map(|d| context.clone().with_span(l..r).map_value(d))
-                    .ok_or(ParseError::User {
-                        error: "undefined datum label"
-                    })
+        let src = context.clone().with_span(l..r);
+        let sexpr = datum_labels
+            .get(&i[1..i.len()-1])
+            .cloned()
+            .ok_or(ParseError::User { error: "undefined datum label" })?;
+        source_map.insert(sexpr.clone(), src);
+        Ok(sexpr)
     },
-    <l:@L> <x:RawSexpr> <r:@R> => context.clone().with_span(l..r).map_value(x),
+    <l:@L> <x:RawSexpr> <r:@R> => {
+        let src = context.clone().with_span(l..r);
+        source_map.insert(x.clone(), src);
+        x
+    },
 };
 
 RawSexpr: Sexpr = {
@@ -79,11 +85,20 @@ List: Sexpr = {
 
 Sequence: Sexpr = {
     <car:Comment> <seq:Sequence> => seq,
-    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => Sexpr::cons(car, context.clone().with_span(l..r).map_value(cdr)),
+    <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => {
+        let src = context.clone().with_span(l..r);
+        source_map.insert(cdr.clone(), src);
+        Sexpr::cons(car, cdr)
+    },
     <car:Datum> "." <cdr:Datum> => Sexpr::cons(car, cdr),
     <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
 };
 
 Quotation: Sexpr = {
-    <l:@L> "'" <r:@R> <x:Datum> => Sexpr::list(vec![context.clone().with_span(l..r).map_value(Sexpr::symbol("quote")), x].into_iter())
+    <l:@L> "'" <r:@R> <x:Datum> => {
+        let quote = Sexpr::symbol("quote");
+        let src = context.clone().with_span(l..r);
+        source_map.insert(quote.clone(), src);
+        Sexpr::list(vec![quote, x].into_iter())
+    }
 };

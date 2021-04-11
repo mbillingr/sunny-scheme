@@ -11,6 +11,7 @@ use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
 use context::{Context, Error};
 use std::path::{Path, PathBuf};
+use sunny_sexpr_parser::SharedStr;
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::{ValueStorage, Vm};
@@ -181,19 +182,19 @@ fn run_script(context: &mut Context, path: &Path) -> Result<(), Error> {
         .read_to_string(&mut src)
         .unwrap_or_else(|e| panic!("Error reading {:?}: {}", path, e));
 
-    context.eval(&src).map(|_| {})
+    context.eval(src.into()).map(|_| {})
 }
 
 fn run_repl(mut context: Context) {
     let mut rl = Editor::<()>::new();
     'repl: loop {
-        let mut src = String::new();
+        let mut src = SharedStr::new();
         let mut prompt = LINE_PROMPT;
         'multiline: loop {
             match rl.readline(prompt) {
-                Ok(line) => {
-                    src.push_str(&line);
-                    src.push('\n');
+                Ok(mut line) => {
+                    line.push('\n');
+                    src = src + line.as_str();
 
                     if line.trim().is_empty() {
                         continue;
@@ -201,7 +202,7 @@ fn run_repl(mut context: Context) {
 
                     rl.add_history_entry(line);
 
-                    match context.eval(&src) {
+                    match context.eval(src.clone()) {
                         Ok(result) => println!("{}", result),
                         Err(Error::ParseError(e)) if e.is_eof() => {
                             prompt = MULTI_PROMPT;
