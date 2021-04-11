@@ -4,19 +4,19 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Debug, Copy, Clone)]
-pub struct Bool(bool);
+pub struct Int(i64);
 
-impl Bool {
-    pub fn new(b: bool) -> Self {
-        Bool(b)
+impl Int {
+    pub fn new(x: i64) -> Self {
+        Int(x)
     }
 
-    pub fn as_bool(&self) -> bool {
+    pub fn as_int(&self) -> i64 {
         self.0
     }
 }
 
-impl ScmObject for Bool {
+impl ScmObject for Int {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -33,12 +33,8 @@ impl ScmObject for Bool {
     }
 }
 
-impl Display for Bool {
+impl Display for Int {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        if self.0 {
-            write!(f, "#t")
-        } else {
-            write!(f, "#f")
-        }
+        write!(f, "{}", self.0)
     }
 }

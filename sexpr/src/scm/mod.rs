@@ -1,5 +1,7 @@
 mod bool;
+mod int;
 mod null;
+
 use crate::cxr::CxR;
 use crate::Int;
 use std::any::Any;
@@ -21,7 +23,7 @@ impl Scm {
     }
 
     pub fn int(i: Int) -> Self {
-        Sexpr::int(i).into()
+        int::Int::new(i).into()
     }
 
     pub fn symbol(name: &str) -> Self {
@@ -61,7 +63,7 @@ impl Scm {
     }
 
     pub fn as_int(&self) -> Option<Int> {
-        self.0.downcast_ref::<Sexpr>().and_then(Sexpr::as_int)
+        self.as_type::<int::Int>().map(int::Int::as_int)
     }
 
     pub fn as_usize(&self) -> Option<usize> {
@@ -163,7 +165,6 @@ impl<T: Any + SexprObject> AnySexprObject for T {
 
 #[derive(Debug, Clone)]
 pub enum Sexpr {
-    Integer(Int),
     Symbol(String),
     String(String),
     Pair((Scm, Scm)),
@@ -191,7 +192,7 @@ impl ScmObject for Sexpr {
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
         match self {
-            Sexpr::Integer(_) | Sexpr::String(_) => self.clone().into(),
+            Sexpr::String(_) => self.clone().into(),
             Sexpr::Pair(p) => Scm::cons(p.0.substitute(mapping), p.1.substitute(mapping)),
             Sexpr::Symbol(s) => {
                 if let Some(replacement) = mapping.get(s.as_str()) {
@@ -209,7 +210,6 @@ impl PartialEq for Sexpr {
     fn eq(&self, other: &Self) -> bool {
         use Sexpr::*;
         match (self, other) {
-            (Integer(a), Integer(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
@@ -220,10 +220,6 @@ impl PartialEq for Sexpr {
 }
 
 impl Sexpr {
-    pub fn int(i: Int) -> Self {
-        Sexpr::Integer(i)
-    }
-
     pub fn symbol(name: &str) -> Self {
         Sexpr::Symbol(name.to_string())
     }
@@ -243,20 +239,6 @@ impl Sexpr {
     pub fn as_pair(&self) -> Option<(&Scm, &Scm)> {
         match self {
             Sexpr::Pair(x) => Some((&x.0, &x.1)),
-            _ => None,
-        }
-    }
-
-    pub fn as_int(&self) -> Option<Int> {
-        match self {
-            Sexpr::Integer(x) => Some(*x),
-            _ => None,
-        }
-    }
-
-    pub fn as_usize(&self) -> Option<usize> {
-        match self {
-            Sexpr::Integer(x) if *x >= 0 => Some(*x as usize),
             _ => None,
         }
     }
@@ -283,7 +265,6 @@ impl Sexpr {
 impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Sexpr::Integer(i) => write!(f, "{}", i),
             Sexpr::Symbol(s) => write!(f, "{}", s),
             Sexpr::String(s) => write!(f, "{:?}", s),
             Sexpr::Pair(p) => {
