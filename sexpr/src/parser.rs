@@ -1,6 +1,6 @@
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
-use crate::sexpr::Scm;
+use crate::scm::Scm;
 use crate::shared_string::SharedStr;
 use crate::source_map::SourceMap;
 use crate::SourceLocation;

@@ -1,3 +1,4 @@
+mod null;
 use crate::cxr::CxR;
 use crate::Int;
 use std::any::Any;
@@ -11,7 +12,7 @@ pub struct Scm(Rc<dyn ScmObject>);
 
 impl Scm {
     pub fn null() -> Self {
-        Sexpr::nil().into()
+        null::Null.into()
     }
 
     pub fn bool(b: bool) -> Self {
@@ -42,15 +43,16 @@ impl Scm {
         Scm(Rc::new(obj))
     }
 
+    pub fn is<T: 'static>(&self) -> bool {
+        self.as_type::<T>().is_some()
+    }
+
     pub fn as_type<T: 'static>(&self) -> Option<&T> {
         self.0.downcast_ref()
     }
 
     pub fn is_null(&self) -> bool {
-        self.0
-            .downcast_ref::<Sexpr>()
-            .map(Sexpr::is_null)
-            .unwrap_or(false)
+        self.is::<null::Null>()
     }
 
     pub fn as_bool(&self) -> Option<bool> {
@@ -160,7 +162,6 @@ impl<T: Any + SexprObject> AnySexprObject for T {
 
 #[derive(Debug, Clone)]
 pub enum Sexpr {
-    Nil,
     Bool(bool),
     Integer(Int),
     Symbol(String),
@@ -190,9 +191,7 @@ impl ScmObject for Sexpr {
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
         match self {
-            Sexpr::Nil | Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => {
-                self.clone().into()
-            }
+            Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => self.clone().into(),
             Sexpr::Pair(p) => Scm::cons(p.0.substitute(mapping), p.1.substitute(mapping)),
             Sexpr::Symbol(s) => {
                 if let Some(replacement) = mapping.get(s.as_str()) {
@@ -210,7 +209,6 @@ impl PartialEq for Sexpr {
     fn eq(&self, other: &Self) -> bool {
         use Sexpr::*;
         match (self, other) {
-            (Nil, Nil) => true,
             (Bool(a), Bool(b)) => a == b,
             (Integer(a), Integer(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
@@ -223,10 +221,6 @@ impl PartialEq for Sexpr {
 }
 
 impl Sexpr {
-    pub fn nil() -> Self {
-        Sexpr::Nil
-    }
-
     pub fn bool(b: bool) -> Self {
         Self::Bool(b)
     }
@@ -245,14 +239,6 @@ impl Sexpr {
 
     pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
         Sexpr::Pair((car.into(), cdr.into()))
-    }
-
-    pub fn list(items: impl DoubleEndedIterator<Item = Sexpr>) -> Self {
-        items.rfold(Self::nil(), |acc, x| Self::cons(x, acc))
-    }
-
-    pub fn is_null(&self) -> bool {
-        self == &Sexpr::Nil
     }
 
     pub fn is_pair(&self) -> bool {
@@ -304,16 +290,11 @@ impl Sexpr {
             _ => None,
         }
     }
-
-    pub fn is_an_object(&self) -> bool {
-        matches!(self, Sexpr::Object(_))
-    }
 }
 
 impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Sexpr::Nil => write!(f, "()"),
             Sexpr::Bool(true) => write!(f, "#t"),
             Sexpr::Bool(false) => write!(f, "#f"),
             Sexpr::Integer(i) => write!(f, "{}", i),
