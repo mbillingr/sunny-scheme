@@ -1,10 +1,9 @@
-use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
-use sunny_sexpr_parser::Sexpr;
-use sunny_sexpr_parser::SourceLocation;
-use sunny_sexpr_parser::{CxR, SourceMap};
-
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
+use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
+use sunny_sexpr_parser::Scm;
+use sunny_sexpr_parser::SourceLocation;
+use sunny_sexpr_parser::{CxR, SourceMap};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
@@ -80,80 +79,76 @@ pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
 
 fn build_constant_section(
     mut cb: CodeBuilder,
-    constants_section: &Sexpr,
+    constants_section: &Scm,
     storage: &mut ValueStorage,
 ) -> CodeBuilder {
     for value in constants_section.iter() {
-        let c = storage.sexpr_to_value(value);
+        let c = storage.scm_to_value(&value);
         cb.add_constant(c);
     }
     cb
 }
 
-fn build_code_section(
-    mut cb: CodeBuilder,
-    code: &Sexpr,
-    src_map: &SourceMap,
-) -> Result<CodeBuilder> {
+fn build_code_section(mut cb: CodeBuilder, code: &Scm, src_map: &SourceMap) -> Result<CodeBuilder> {
     let mut code_parts = code.iter();
     while let Some(statement) = code_parts.next() {
         let stmt = statement
             .as_symbol()
-            .ok_or_else(|| error_at(&src_map.get(statement), Error::ExpectedSymbol))?;
+            .ok_or_else(|| error_at(&src_map.get(&statement), Error::ExpectedSymbol))?;
         match stmt.to_uppercase().as_str() {
             repr::NOP => cb = cb.op(Op::Nop),
             repr::EXTARG => {
-                let i = read_u8(&mut code_parts, statement, src_map)?;
+                let i = read_u8(&mut code_parts, &statement, src_map)?;
                 cb = cb.op(Op::ExtArg(i))
             }
             repr::INSPECT => {
-                let i = read_u8(&mut code_parts, statement, src_map)?;
+                let i = read_u8(&mut code_parts, &statement, src_map)?;
                 cb = cb.op(Op::Inspect(i))
             }
             repr::HALT => cb = cb.op(Op::Halt),
             repr::JUMP => {
-                let label = read_symbol(&mut code_parts, statement, src_map)?;
+                let label = read_symbol(&mut code_parts, &statement, src_map)?;
                 cb = cb.jump_to(label);
             }
             repr::JUMPIFTRUE => {
-                let label = read_symbol(&mut code_parts, statement, src_map)?;
+                let label = read_symbol(&mut code_parts, &statement, src_map)?;
                 cb = cb.branch_if(label);
             }
             repr::JUMPIFVOID => {
-                let label = read_symbol(&mut code_parts, statement, src_map)?;
+                let label = read_symbol(&mut code_parts, &statement, src_map)?;
                 cb = cb.branch_void(label);
             }
             repr::RJUMP => {
-                let label = read_symbol(&mut code_parts, statement, src_map)?;
+                let label = read_symbol(&mut code_parts, &statement, src_map)?;
                 cb = cb.jump_to(label);
             }
             repr::RJUMPIFTRUE => {
-                let label = read_symbol(&mut code_parts, statement, src_map)?;
+                let label = read_symbol(&mut code_parts, &statement, src_map)?;
                 cb = cb.branch_if(label);
             }
             repr::RJUMPIFVOID => {
-                let label = read_symbol(&mut code_parts, statement, src_map)?;
+                let label = read_symbol(&mut code_parts, &statement, src_map)?;
                 cb = cb.branch_void(label);
             }
             repr::RETURN => cb = cb.op(Op::Return),
             repr::CALL => {
-                let i = read_index(&mut code_parts, statement, src_map)?;
+                let i = read_index(&mut code_parts, &statement, src_map)?;
                 cb = cb.with(|n_args| Op::Call { n_args }, i)
             }
             repr::INTEGER => {
-                let i = read_index(&mut code_parts, statement, src_map)?;
+                let i = read_index(&mut code_parts, &statement, src_map)?;
                 cb = cb.with(Op::Integer, i)
             }
             repr::CONST => {
-                let i = read_index(&mut code_parts, statement, src_map)?;
+                let i = read_index(&mut code_parts, &statement, src_map)?;
                 cb = cb.with(Op::Const, i)
             }
             repr::FETCH => {
-                let i = read_index(&mut code_parts, statement, src_map)?;
+                let i = read_index(&mut code_parts, &statement, src_map)?;
                 cb = cb.with(Op::Fetch, i)
             }
             repr::GETSTACK => {
-                let i = read_index(&mut code_parts, statement, src_map)?;
+                let i = read_index(&mut code_parts, &statement, src_map)?;
                 cb = cb.with(Op::GetStack, i)
             }
             repr::DUP => cb = cb.op(Op::Dup),
@@ -166,11 +161,11 @@ fn build_code_section(
             repr::CAR => cb = cb.op(Op::Car),
             repr::CDR => cb = cb.op(Op::Cdr),
             repr::MAKECLOSURE => {
-                let i = read_index(&mut code_parts, statement, src_map)?;
+                let i = read_index(&mut code_parts, &statement, src_map)?;
                 cb = cb.with(|offset| Op::MakeClosure { offset }, i)
             }
             _ if is_label(stmt) => cb = cb.label(label_name(stmt).unwrap()),
-            _ => return Err(error_at(&src_map.get(statement), Error::UnknownOpcode)),
+            _ => return Err(error_at(&src_map.get(&statement), Error::UnknownOpcode)),
         }
     }
     Ok(cb)
@@ -185,20 +180,20 @@ fn label_name(stmt: &str) -> Option<&str> {
 }
 
 fn read_index<'a, 'b: 'a>(
-    sexpr_iter: &mut impl Iterator<Item = &'a Sexpr>,
-    previous: &Sexpr,
+    sexpr_iter: &mut impl Iterator<Item = &'a Scm>,
+    previous: &Scm,
     src_map: &SourceMap,
 ) -> Result<usize> {
     let i = sexpr_iter
         .next()
         .ok_or_else(|| error_after(&src_map.get(previous), Error::ExpectedIndex))?;
     i.as_usize()
-        .ok_or_else(|| error_at(&src_map.get(i), Error::ExpectedIndex))
+        .ok_or_else(|| error_at(&src_map.get(&i), Error::ExpectedIndex))
 }
 
 fn read_u8<'a, 'b: 'a>(
-    sexpr_iter: &mut impl Iterator<Item = &'a Sexpr>,
-    previous: &Sexpr,
+    sexpr_iter: &mut impl Iterator<Item = &'a Scm>,
+    previous: &Scm,
     src_map: &SourceMap,
 ) -> Result<u8> {
     let i = sexpr_iter
@@ -206,24 +201,24 @@ fn read_u8<'a, 'b: 'a>(
         .ok_or_else(|| error_after(&src_map.get(previous), Error::ExpectedIndex))?;
     let value = i
         .as_usize()
-        .ok_or_else(|| error_at(&src_map.get(i), Error::ExpectedIndex))?;
+        .ok_or_else(|| error_at(&src_map.get(&i), Error::ExpectedIndex))?;
     if value > u8::MAX as usize {
-        Err(error_at(&src_map.get(i), Error::ExpectedU8))
+        Err(error_at(&src_map.get(&i), Error::ExpectedU8))
     } else {
         Ok(value as u8)
     }
 }
 
 fn read_symbol<'a, 'b: 'a>(
-    sexpr_iter: &mut impl Iterator<Item = &'a Sexpr>,
-    previous: &Sexpr,
+    sexpr_iter: &mut impl Iterator<Item = &'a Scm>,
+    previous: &Scm,
     src_map: &SourceMap,
 ) -> Result<&'a str> {
     let i = sexpr_iter
         .next()
         .ok_or_else(|| error_after(&src_map.get(previous), Error::ExpectedSymbol))?;
     i.as_symbol()
-        .ok_or_else(|| error_at(&src_map.get(i), Error::ExpectedSymbol))
+        .ok_or_else(|| error_at(&src_map.get(&i), Error::ExpectedSymbol))
 }
 
 fn error_at<T>(sexpr: &SourceLocation<T>, error: impl Into<Error>) -> SourceLocation<Error> {

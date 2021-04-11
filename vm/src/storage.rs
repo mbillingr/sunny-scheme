@@ -3,7 +3,7 @@ use crate::mem::{Ref, Storage};
 use crate::value::{ConstString, Symbol};
 use crate::Value;
 use std::fmt::Debug;
-use sunny_sexpr_parser::Sexpr;
+use sunny_sexpr_parser::Scm;
 
 pub struct ValueStorage {
     storage: Storage,
@@ -22,20 +22,25 @@ impl ValueStorage {
         }
     }
 
-    pub fn sexpr_to_value(&mut self, sexpr: &Sexpr) -> Value {
-        match sexpr {
-            Sexpr::Nil => Value::Nil,
-            Sexpr::Bool(false) => Value::False,
-            Sexpr::Bool(true) => Value::True,
-            Sexpr::Integer(x) => Value::Number((*x).into()),
-            Sexpr::Symbol(s) => self.interned_symbol(s),
-            Sexpr::String(s) => self.interned_string(s),
-            Sexpr::Pair(p) => {
-                let car = self.sexpr_to_value(&p.0);
-                let cdr = self.sexpr_to_value(&p.1);
-                self.cons(car, cdr)
-            }
-            Sexpr::Object(_) => panic!("Attempt to convert Sexpr::Object to Value"),
+    pub fn scm_to_value(&mut self, scm: &Scm) -> Value {
+        if scm.is_null() {
+            Value::Nil
+        } else if let Some(false) = scm.as_bool() {
+            Value::False
+        } else if let Some(true) = scm.as_bool() {
+            Value::True
+        } else if let Some(i) = scm.as_int() {
+            Value::Number(i.into())
+        } else if let Some(s) = scm.as_symbol() {
+            self.interned_symbol(s)
+        } else if let Some(s) = scm.as_string() {
+            self.interned_string(s)
+        } else if let Some(p) = scm.as_pair() {
+            let car = self.scm_to_value(&p.0);
+            let cdr = self.scm_to_value(&p.1);
+            self.cons(car, cdr)
+        } else {
+            panic!("Don't know how to build Value from {:?}", scm)
         }
     }
 

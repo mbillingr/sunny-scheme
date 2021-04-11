@@ -11,10 +11,10 @@ use crate::frontend::syntax_forms::Import;
 use crate::frontend::{
     ast::AstNode, environment::Env, error::Result, syntax_forms::LibraryDefinition,
 };
-use sunny_sexpr_parser::{Sexpr, SourceMap};
+use sunny_sexpr_parser::{Scm, SourceMap};
 
 pub trait SyntaxExpander: std::fmt::Debug {
-    fn expand(&self, sexpr: &Sexpr, src_map: &SourceMap, env: &Env) -> Result<AstNode>;
+    fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode>;
 
     fn description(&self) -> String {
         format!("<native syntax {:p}>", self)
@@ -39,7 +39,6 @@ mod tests {
         SyntaxDefinition,
     };
     use ast::Ast;
-    use sunny_sexpr_parser::Sexpr;
     use sunny_sexpr_parser::SourceLocation;
 
     fn minimal_syntax_environment(name: impl ToString) -> Env {
@@ -58,7 +57,7 @@ mod tests {
     }
 
     macro_rules! sexpr {
-        ($t:ty:()) => { <$t>::nil() };
+        ($t:ty:()) => { <$t>::null() };
 
         ($t:ty:($x:tt . $y:tt)) => {
             <$t>::cons(
@@ -88,7 +87,7 @@ mod tests {
         }};
 
         ($env:tt @ $expr:tt) => {{
-            let sexpr = sexpr![Sexpr: $expr];
+            let sexpr = sexpr![Scm: $expr];
             Expression.expand(&sexpr.into(), &SourceMap::new(), &$env)
         }};
     }
@@ -233,10 +232,9 @@ mod tests {
 
     #[test]
     fn meaning_of_library_definition_without_exports() {
-        assert_eq!(
-            meaning_of![("define-library" (foo bar) (begin 0))],
-            Ok(ast!(module "(foo bar)" (const 0)))
-        );
+        let meaning = meaning_of![("define-library" (foo bar) (begin 0))];
+        let expected = Ok(ast!(module "(foo bar)" (const 0)));
+        assert_eq!(meaning, expected);
     }
 
     #[test]

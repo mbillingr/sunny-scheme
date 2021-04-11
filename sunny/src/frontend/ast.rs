@@ -1,13 +1,13 @@
 use crate::backend::Backend;
 use crate::frontend::library::Export;
-use sunny_sexpr_parser::{Sexpr, SourceLocation};
+use sunny_sexpr_parser::{Scm, SourceLocation};
 
 pub type AstNode = Box<Ast>;
 
 #[derive(Debug, PartialEq)]
 pub enum Ast {
     Void,
-    Const(SourceLocation<()>, Sexpr),
+    Const(SourceLocation<()>, Scm),
     Fetch(SourceLocation<()>, usize),
     Store(SourceLocation<()>, usize, AstNode),
     FetchGlobal(SourceLocation<()>, String),
@@ -30,7 +30,7 @@ impl Ast {
         Box::new(Ast::Void)
     }
 
-    pub fn constant(context: SourceLocation<()>, sexpr: Sexpr) -> AstNode {
+    pub fn constant(context: SourceLocation<()>, sexpr: Scm) -> AstNode {
         Box::new(Ast::Const(context, sexpr))
     }
 
@@ -201,7 +201,7 @@ impl std::fmt::Display for Ast {
 macro_rules! ast {
     (($($parts:tt)*)) => {ast![$($parts)*]};
     (void) => {Ast::void()};
-    (const $x:expr) => {Ast::constant(SourceLocation::new(()), Sexpr::from($x))};
+    (const $x:expr) => {Ast::constant(SourceLocation::new(()), Scm::from($x))};
     (ref $i:tt) => {Ast::fetch(SourceLocation::new(()), $i)};
     (set $i:tt $x:tt) => {Ast::store(SourceLocation::new(()), $i, ast![$x])};
     (gref $i:tt) => {Ast::fetch_global(SourceLocation::new(()), $i)};

@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use sunny_sexpr_parser::{Sexpr, SourceLocation, SourceMap};
+use sunny_sexpr_parser::{Scm, SourceLocation, SourceMap};
 
 use crate::frontend::error::error_after;
 use crate::frontend::library::{Export, LibraryBinding};
@@ -160,12 +160,12 @@ impl Env {
         *globals = globals.add_binding(name, binding);
     }
 
-    pub fn extend_from_sexpr(&self, vars: &Sexpr, src_map: &SourceMap) -> Result<Self> {
+    pub fn extend_from_sexpr(&self, vars: &Scm, src_map: &SourceMap) -> Result<Self> {
         let mut names = vec![];
         for v in vars.iter() {
             let name = v
                 .as_symbol()
-                .ok_or_else(|| error_at(&src_map.get(v), Error::ExpectedSymbol))?
+                .ok_or_else(|| error_at(&src_map.get(&v), Error::ExpectedSymbol))?
                 .to_string();
 
             names.push(name);
@@ -250,7 +250,7 @@ impl Env {
         self.libraries.borrow().get(name).cloned()
     }
 
-    pub fn parse_library(&self, name: &str, src_map: &SourceMap) -> Result<Option<Sexpr>> {
+    pub fn parse_library(&self, name: &str, src_map: &SourceMap) -> Result<Option<Scm>> {
         let path = self.library_filesystem.map_libname_to_path(name);
         let src = self.library_filesystem.load_string(&path);
         if src.is_none() {

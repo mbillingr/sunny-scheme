@@ -1,15 +1,15 @@
 use crate::frontend::{ast::AstNode, environment::Env, error::Result, SyntaxExpander};
+use std::any::Any;
 use std::collections::HashMap;
-use std::rc::Rc;
-use sunny_sexpr_parser::{AnySexprObject, Sexpr, SexprObject, SourceMap};
+use sunny_sexpr_parser::{Scm, ScmObject, SourceMap};
 
 pub struct SyntacticClosure {
-    sexpr: Sexpr,
+    sexpr: Scm,
     env: Env,
 }
 
 impl SyntacticClosure {
-    pub fn new(expr: Sexpr, env: Env) -> Self {
+    pub fn new(expr: Scm, env: Env) -> Self {
         SyntacticClosure { sexpr: expr, env }
     }
 
@@ -18,13 +18,22 @@ impl SyntacticClosure {
     }
 }
 
-impl SexprObject for SyntacticClosure {
-    fn substitute(&self, mapping: &HashMap<&str, Sexpr>) -> Rc<dyn AnySexprObject> {
-        let sexpr = Sexpr::substitute(&self.sexpr, mapping);
-        Rc::new(SyntacticClosure {
+impl ScmObject for SyntacticClosure {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn eq(&self, _other: &dyn ScmObject) -> bool {
+        false
+    }
+
+    fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
+        let sexpr = self.sexpr.substitute(mapping);
+        SyntacticClosure {
             sexpr,
             env: self.env.clone(),
-        })
+        }
+        .into()
     }
 }
 

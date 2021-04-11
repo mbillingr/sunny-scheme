@@ -1,8 +1,9 @@
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
+use crate::sexpr::Scm;
 use crate::shared_string::SharedStr;
 use crate::source_map::SourceMap;
-use crate::{Sexpr, SourceLocation};
+use crate::SourceLocation;
 use lalrpop_util::{lexer::Token, ParseError};
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -81,13 +82,13 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
     }
 }
 
-pub fn parse_str(src: impl Into<SharedStr>) -> Result<Vec<Sexpr>> {
+pub fn parse_str(src: impl Into<SharedStr>) -> Result<Vec<Scm>> {
     let src = src.into();
     let src_map = SourceMap::new();
     parse_with_map(src, &src_map)
 }
 
-pub fn parse_with_map(src: impl Into<SharedStr>, src_map: &SourceMap) -> Result<Vec<Sexpr>> {
+pub fn parse_with_map(src: impl Into<SharedStr>, src_map: &SourceMap) -> Result<Vec<Scm>> {
     let src = src.into();
     let context = SourceLocation::new(()).in_string(src.clone());
     Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(
@@ -208,57 +209,57 @@ mod tests {
     #[test]
     fn can_parse_true() {
         let sexpr = parse_str("#t");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::bool(true)]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::bool(true)]);
     }
 
     #[test]
     fn can_parse_false() {
         let sexpr = parse_str("#f");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::bool(false)]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::bool(false)]);
     }
 
     #[test]
     fn can_parse_integer() {
         let sexpr = parse_str("0");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::int(0)]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::int(0)]);
     }
 
     #[test]
     fn can_parse_symbol() {
         let sexpr = parse_str("foo");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("foo")]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("foo")]);
     }
 
     #[test]
     fn can_parse_string() {
         let sexpr = parse_str("\"foo\"");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::string("foo")]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::string("foo")]);
     }
 
     #[test]
     fn can_parse_pair() {
         let sexpr = &parse_str("(1 . 2)").unwrap()[0];
-        assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
-        assert_eq!(sexpr.cdr().unwrap(), &Sexpr::int(2));
+        assert_eq!(sexpr.car().unwrap(), &Scm::int(1));
+        assert_eq!(sexpr.cdr().unwrap(), &Scm::int(2));
     }
 
     #[test]
     fn can_parse_list() {
         let sexpr = &parse_str("(1 (2 3) 4)").unwrap()[0];
-        assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
-        assert_eq!(sexpr.caadr().unwrap(), &Sexpr::int(2));
-        assert_eq!(sexpr.cadadr().unwrap(), &Sexpr::int(3));
-        assert_eq!(sexpr.cddadr().unwrap(), &Sexpr::nil());
-        assert_eq!(sexpr.caddr().unwrap(), &Sexpr::int(4));
-        assert_eq!(sexpr.cdddr().unwrap(), &Sexpr::nil());
+        assert_eq!(sexpr.car().unwrap(), &Scm::int(1));
+        assert_eq!(sexpr.caadr().unwrap(), &Scm::int(2));
+        assert_eq!(sexpr.cadadr().unwrap(), &Scm::int(3));
+        assert_eq!(sexpr.cddadr().unwrap(), &Scm::null());
+        assert_eq!(sexpr.caddr().unwrap(), &Scm::int(4));
+        assert_eq!(sexpr.cdddr().unwrap(), &Scm::null());
     }
 
     #[test]
     fn can_parse_improper_list() {
         let sexpr = &parse_str("(1 2 . 3)").unwrap()[0];
-        assert_eq!(sexpr.car().unwrap(), &Sexpr::int(1));
-        assert_eq!(sexpr.cadr().unwrap(), &Sexpr::int(2));
-        assert_eq!(sexpr.cddr().unwrap(), &Sexpr::int(3));
+        assert_eq!(sexpr.car().unwrap(), &Scm::int(1));
+        assert_eq!(sexpr.cadr().unwrap(), &Scm::int(2));
+        assert_eq!(sexpr.cddr().unwrap(), &Scm::int(3));
     }
 
     #[test]
@@ -266,7 +267,7 @@ mod tests {
         // note that a single '.' can't be parsed as an identifier
         for ch in "!$%&*+-/:<=>?@^_~".chars().map(|ch| ch.to_string()) {
             let sexpr = parse_str(&ch).map_err(|e| e.in_string(&ch));
-            assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol(&ch)]);
+            assert_eq!(sexpr.unwrap(), vec![Scm::symbol(&ch)]);
         }
     }
 
@@ -274,75 +275,72 @@ mod tests {
     fn can_parse_special_character_symbols_infix() {
         for ch in "!$%&*+-./:<=>?@^_~".chars().map(|ch| format!("x{}y", ch)) {
             let sexpr = parse_str(&ch).map_err(|e| e.in_string(&ch));
-            assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol(&ch)]);
+            assert_eq!(sexpr.unwrap(), vec![Scm::symbol(&ch)]);
         }
     }
 
     #[test]
     fn can_parse_empty_verbatim_symbol() {
         let sexpr = parse_str("||");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("")]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("")]);
     }
 
     #[test]
     fn can_parse_whitespace_only_verbatim_symbol() {
         let sexpr = parse_str("|  |");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("  ")]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("  ")]);
     }
 
     #[test]
     fn can_parse_arbitrary_verbatim_symbol() {
         let sexpr = parse_str("|hello, world!|");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("hello, world!")]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("hello, world!")]);
     }
 
     #[test]
     fn can_parse_example_identifiers() {
         // R7RS section 2.1
-        assert_eq!(parse_str("...").unwrap(), vec![Sexpr::symbol("...")]);
-        assert_eq!(parse_str("+").unwrap(), vec![Sexpr::symbol("+")]);
-        assert_eq!(parse_str("+soup+").unwrap(), vec![Sexpr::symbol("+soup+")]);
-        assert_eq!(parse_str("<=?").unwrap(), vec![Sexpr::symbol("<=?")]);
+        assert_eq!(parse_str("...").unwrap(), vec![Scm::symbol("...")]);
+        assert_eq!(parse_str("+").unwrap(), vec![Scm::symbol("+")]);
+        assert_eq!(parse_str("+soup+").unwrap(), vec![Scm::symbol("+soup+")]);
+        assert_eq!(parse_str("<=?").unwrap(), vec![Scm::symbol("<=?")]);
         assert_eq!(
             parse_str("->string").unwrap(),
-            vec![Sexpr::symbol("->string")]
+            vec![Scm::symbol("->string")]
         );
         assert_eq!(
             parse_str("a34kTMNs").unwrap(),
-            vec![Sexpr::symbol("a34kTMNs")]
+            vec![Scm::symbol("a34kTMNs")]
         );
-        assert_eq!(parse_str("lambda").unwrap(), vec![Sexpr::symbol("lambda")]);
+        assert_eq!(parse_str("lambda").unwrap(), vec![Scm::symbol("lambda")]);
         assert_eq!(
             parse_str("list->vector").unwrap(),
-            vec![Sexpr::symbol("list->vector")]
+            vec![Scm::symbol("list->vector")]
         );
-        assert_eq!(parse_str("q").unwrap(), vec![Sexpr::symbol("q")]);
-        assert_eq!(parse_str("V17a").unwrap(), vec![Sexpr::symbol("V17a")]);
+        assert_eq!(parse_str("q").unwrap(), vec![Scm::symbol("q")]);
+        assert_eq!(parse_str("V17a").unwrap(), vec![Scm::symbol("V17a")]);
         assert_eq!(
             parse_str("|two words|").unwrap(),
-            vec![Sexpr::symbol("two words")]
+            vec![Scm::symbol("two words")]
         );
         assert_eq!(
             parse_str(r"|two\x20;words|").unwrap(),
-            vec![Sexpr::symbol("two words")]
+            vec![Scm::symbol("two words")]
         );
         assert_eq!(
             parse_str("the-word-recursion-has-many-meanings").unwrap(),
-            vec![Sexpr::symbol("the-word-recursion-has-many-meanings")]
+            vec![Scm::symbol("the-word-recursion-has-many-meanings")]
         );
         assert_eq!(
             parse_str(r"|\x3BB;|").unwrap(),
-            vec![Sexpr::symbol("\u{3bb}")]
+            vec![Scm::symbol("\u{3bb}")]
         );
-        assert_eq!(
-            parse_str(r"|\t\t|").unwrap(),
-            vec![Sexpr::symbol("\x09\x09")]
-        );
+        assert_eq!(parse_str(r"|\t\t|").unwrap(), vec![Scm::symbol("\x09\x09")]);
     }
 
     #[test]
     fn can_parse_newline_in_verbatim_symbol() {
         let sexpr = parse_str("|hello\\    \n     world|");
-        assert_eq!(sexpr.unwrap(), vec![Sexpr::symbol("helloworld")]);
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("helloworld")]);
     }
 }

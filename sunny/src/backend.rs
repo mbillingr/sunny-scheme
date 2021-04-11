@@ -1,6 +1,6 @@
 use crate::frontend::library::Export;
 use std::collections::HashMap;
-use sunny_sexpr_parser::Sexpr;
+use sunny_sexpr_parser::Scm;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_vm::bytecode::Op;
 use sunny_vm::{BasicBlock, BlockChain, ValueStorage};
@@ -10,7 +10,7 @@ pub trait Backend {
 
     fn void(&mut self) -> Self::Ir;
 
-    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir;
+    fn constant(&mut self, context: SourceLocation<()>, c: &Scm) -> Self::Ir;
 
     fn fetch(&mut self, context: SourceLocation<()>, idx: usize) -> Self::Ir;
     fn store(&mut self, context: SourceLocation<()>, idx: usize, val: Self::Ir) -> Self::Ir;
@@ -69,8 +69,8 @@ impl Backend for ByteCodeBackend<'_> {
         BlockChain::singleton(BasicBlock::new(vec![Op::Void], vec![]))
     }
 
-    fn constant(&mut self, context: SourceLocation<()>, c: &Sexpr) -> Self::Ir {
-        let value = self.storage.sexpr_to_value(c);
+    fn constant(&mut self, context: SourceLocation<()>, c: &Scm) -> Self::Ir {
+        let value = self.storage.scm_to_value(c);
         let block = BasicBlock::new(vec![Op::Const(0)], vec![value]);
         block.map_source(0, context);
         BlockChain::singleton(block)
@@ -247,7 +247,7 @@ mod tests {
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
 
-        let code = bcb.constant(SourceLocation::new(()), &Sexpr::nil());
+        let code = bcb.constant(SourceLocation::new(()), &Scm::null());
 
         let cs = code.build_segment();
         assert_eq!(cs.code_slice(), &[Op::Const(0), Op::Halt]);
@@ -259,9 +259,9 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let a = bcb.constant(SourceLocation::new(()), &Sexpr::int(1));
-        let b = bcb.constant(SourceLocation::new(()), &Sexpr::int(2));
-        let c = bcb.constant(SourceLocation::new(()), &Sexpr::int(3));
+        let a = bcb.constant(SourceLocation::new(()), &Scm::int(1));
+        let b = bcb.constant(SourceLocation::new(()), &Scm::int(2));
+        let c = bcb.constant(SourceLocation::new(()), &Scm::int(3));
 
         let cs = bcb.ifexpr(SourceLocation::new(()), a, b, c).build_segment();
 
@@ -299,7 +299,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Scm::int(42));
         let expr = bcb.store(SourceLocation::new(()), 0, val);
 
         let cs = expr.build_segment();
@@ -315,7 +315,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Scm::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, false, val);
 
         let cs = expr.build_segment();
@@ -338,7 +338,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Scm::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, true, val);
 
         let cs = expr.build_segment();
@@ -361,7 +361,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Scm::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, false, val);
         expr.return_from();
 
@@ -385,7 +385,7 @@ mod tests {
         let mut storage = ValueStorage::new(100);
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
-        let val = bcb.constant(SourceLocation::new(()), &Sexpr::int(42));
+        let val = bcb.constant(SourceLocation::new(()), &Scm::int(42));
         let expr = bcb.lambda(SourceLocation::new(()), 0, false, val);
         let invoke = bcb.invoke(SourceLocation::new(()), vec![expr]);
 
@@ -419,9 +419,9 @@ mod tests {
         block.map_source(1, context);
         let args = vec![
             BlockChain::singleton(block),
-            bcb.constant(SourceLocation::new(()), &Sexpr::int(1)),
-            bcb.constant(SourceLocation::new(()), &Sexpr::int(2)),
-            bcb.constant(SourceLocation::new(()), &Sexpr::int(3)),
+            bcb.constant(SourceLocation::new(()), &Scm::int(1)),
+            bcb.constant(SourceLocation::new(()), &Scm::int(2)),
+            bcb.constant(SourceLocation::new(()), &Scm::int(3)),
         ];
         let invoke = bcb.invoke(SourceLocation::new(()), args);
 
@@ -470,7 +470,7 @@ mod tests {
         let mut global_table = GlobalTable::new();
         let mut bcb = ByteCodeBackend::new(&mut storage, &mut global_table);
 
-        let body = bcb.constant(SourceLocation::new(()), &Sexpr::Integer(42));
+        let body = bcb.constant(SourceLocation::new(()), &Scm::int(42));
         let code = bcb.module("mod", body, &[]);
 
         let cs = code.build_segment();

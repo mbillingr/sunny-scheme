@@ -1,9 +1,9 @@
-use crate::{Sexpr, SourceLocation};
+use crate::{Scm, SourceLocation};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub struct SourceMap {
-    mapping: RefCell<HashMap<Sexpr, SourceLocation<()>>>,
+    mapping: RefCell<HashMap<Scm, SourceLocation<()>>>,
 }
 
 impl Default for SourceMap {
@@ -19,14 +19,14 @@ impl SourceMap {
         }
     }
 
-    pub fn insert(&self, sexpr: Sexpr, location: SourceLocation<()>) {
-        self.mapping.borrow_mut().insert(sexpr, location);
+    pub fn insert(&self, scm: Scm, location: SourceLocation<()>) {
+        self.mapping.borrow_mut().insert(scm, location);
     }
 
-    pub fn get(&self, sexpr: &Sexpr) -> SourceLocation<()> {
+    pub fn get(&self, scm: &Scm) -> SourceLocation<()> {
         self.mapping
             .borrow()
-            .get(sexpr)
+            .get(scm)
             .cloned()
             .unwrap_or_else(SourceLocation::default)
     }

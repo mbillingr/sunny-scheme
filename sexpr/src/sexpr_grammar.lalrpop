@@ -3,11 +3,11 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::str::FromStr;
 use crate::parser::unescape;
-use crate::Sexpr;
+use crate::Scm;
 use crate::source_location::SourceLocation;
 use crate::source_map::SourceMap;
 
-grammar<'a>(context: &'a SourceLocation<()>, source_map: &SourceMap, datum_labels: &mut HashMap<&'input str, Sexpr>);
+grammar<'a>(context: &'a SourceLocation<()>, source_map: &SourceMap, datum_labels: &mut HashMap<&'input str, Scm>);
 
 match {
     r"\s*" => { }, // The default whitespace skipping is disabled an `ignore pattern` is specified
@@ -20,11 +20,11 @@ match {
     _
 }
 
-pub ExplicitSequence: Vec<Sexpr> = {
+pub ExplicitSequence: Vec<Scm> = {
     <cd:OptionalDatum*> => cd.into_iter().filter_map(|x|x).collect(),
 };
 
-OptionalDatum: Option<Sexpr> = {
+OptionalDatum: Option<Scm> = {
     Comment => None,
     <d:Datum> => Some(d),
 };
@@ -35,7 +35,7 @@ Comment: () = {
     BLOCK_COMMENT,
 };
 
-Datum: Sexpr = {
+Datum: Scm = {
     <i:r"#([0-9]+)="> <d:Datum> => { datum_labels.insert(&i[1..i.len()-1], d.clone()); d },
     <l:@L> <i:r"#([0-9]+)#"> <r:@R> =>? {
         let src = context.clone().with_span(l..r);
@@ -53,11 +53,11 @@ Datum: Sexpr = {
     },
 };
 
-RawSexpr: Sexpr = {
-    <b:Bool> => Sexpr::bool(b),
-    <n:Num> => Sexpr::int(n),
-    <s:Sym> => Sexpr::symbol(&s),
-    <s:Str> => Sexpr::string(s),
+RawSexpr: Scm = {
+    <b:Bool> => Scm::bool(b),
+    <n:Num> => Scm::int(n),
+    <s:Sym> => Scm::symbol(&s),
+    <s:Str> => Scm::string(s),
     <l:List> => <>,
     <q:Quotation> => <>,
 };
@@ -78,27 +78,27 @@ Str: &'input str = {
     <s:r#""[^"]*""#> => &s[1..s.len()-1],
 };
 
-List: Sexpr = {
-    "(" ")" => Sexpr::nil(),
+List: Scm = {
+    "(" ")" => Scm::null(),
     "(" <Sequence> ")" => <>,
 };
 
-Sequence: Sexpr = {
+Sequence: Scm = {
     <car:Comment> <seq:Sequence> => seq,
     <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => {
         let src = context.clone().with_span(l..r);
         source_map.insert(cdr.clone(), src);
-        Sexpr::cons(car, cdr)
+        Scm::cons(car, cdr)
     },
-    <car:Datum> "." <cdr:Datum> => Sexpr::cons(car, cdr),
-    <car:Datum> => Sexpr::cons(car, Sexpr::nil()),
+    <car:Datum> "." <cdr:Datum> => Scm::cons(car, cdr),
+    <car:Datum> => Scm::cons(car, Scm::null()),
 };
 
-Quotation: Sexpr = {
+Quotation: Scm = {
     <l:@L> "'" <r:@R> <x:Datum> => {
-        let quote = Sexpr::symbol("quote");
+        let quote = Scm::symbol("quote");
         let src = context.clone().with_span(l..r);
         source_map.insert(quote.clone(), src);
-        Sexpr::list(vec![quote, x].into_iter())
+        Scm::list(vec![quote, x].into_iter())
     }
 };

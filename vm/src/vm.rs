@@ -6,7 +6,7 @@ use crate::{
     RuntimeResult, Value,
 };
 use std::cell::Cell;
-use sunny_sexpr_parser::Sexpr;
+use sunny_sexpr_parser::Scm;
 
 pub struct Vm {
     storage: ValueStorage,
@@ -41,8 +41,8 @@ impl Vm {
         &mut self.storage
     }
 
-    pub fn build_value(&mut self, sexpr: &Sexpr) -> Value {
-        self.storage.sexpr_to_value(sexpr)
+    pub fn build_value(&mut self, scm: &Scm) -> Value {
+        self.storage.scm_to_value(scm)
     }
 
     pub fn eval_repl(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
