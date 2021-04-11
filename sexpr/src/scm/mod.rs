@@ -1,3 +1,4 @@
+mod bool;
 mod null;
 use crate::cxr::CxR;
 use crate::Int;
@@ -16,7 +17,7 @@ impl Scm {
     }
 
     pub fn bool(b: bool) -> Self {
-        Sexpr::bool(b).into()
+        bool::Bool::new(b).into()
     }
 
     pub fn int(i: Int) -> Self {
@@ -56,7 +57,7 @@ impl Scm {
     }
 
     pub fn as_bool(&self) -> Option<bool> {
-        self.0.downcast_ref::<Sexpr>().and_then(Sexpr::as_bool)
+        self.as_type::<bool::Bool>().map(bool::Bool::as_bool)
     }
 
     pub fn as_int(&self) -> Option<Int> {
@@ -162,7 +163,6 @@ impl<T: Any + SexprObject> AnySexprObject for T {
 
 #[derive(Debug, Clone)]
 pub enum Sexpr {
-    Bool(bool),
     Integer(Int),
     Symbol(String),
     String(String),
@@ -191,7 +191,7 @@ impl ScmObject for Sexpr {
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
         match self {
-            Sexpr::Bool(_) | Sexpr::Integer(_) | Sexpr::String(_) => self.clone().into(),
+            Sexpr::Integer(_) | Sexpr::String(_) => self.clone().into(),
             Sexpr::Pair(p) => Scm::cons(p.0.substitute(mapping), p.1.substitute(mapping)),
             Sexpr::Symbol(s) => {
                 if let Some(replacement) = mapping.get(s.as_str()) {
@@ -209,7 +209,6 @@ impl PartialEq for Sexpr {
     fn eq(&self, other: &Self) -> bool {
         use Sexpr::*;
         match (self, other) {
-            (Bool(a), Bool(b)) => a == b,
             (Integer(a), Integer(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
@@ -221,10 +220,6 @@ impl PartialEq for Sexpr {
 }
 
 impl Sexpr {
-    pub fn bool(b: bool) -> Self {
-        Self::Bool(b)
-    }
-
     pub fn int(i: Int) -> Self {
         Sexpr::Integer(i)
     }
@@ -248,13 +243,6 @@ impl Sexpr {
     pub fn as_pair(&self) -> Option<(&Scm, &Scm)> {
         match self {
             Sexpr::Pair(x) => Some((&x.0, &x.1)),
-            _ => None,
-        }
-    }
-
-    pub fn as_bool(&self) -> Option<bool> {
-        match self {
-            Sexpr::Bool(x) => Some(*x),
             _ => None,
         }
     }
@@ -295,8 +283,6 @@ impl Sexpr {
 impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Sexpr::Bool(true) => write!(f, "#t"),
-            Sexpr::Bool(false) => write!(f, "#f"),
             Sexpr::Integer(i) => write!(f, "{}", i),
             Sexpr::Symbol(s) => write!(f, "{}", s),
             Sexpr::String(s) => write!(f, "{:?}", s),
