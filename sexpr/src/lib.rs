@@ -12,7 +12,7 @@ pub mod str_utils;
 type Int = i64;
 
 pub use cxr::CxR;
-pub use scm::{AnySexprObject, Scm, ScmObject, Sexpr, SexprObject};
+pub use scm::{Scm, ScmObject, Sexpr};
 pub use shared_string::SharedStr;
 pub use source_location::{SourceKind, SourceLocation};
 pub use source_map::SourceMap;

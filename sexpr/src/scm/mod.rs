@@ -149,17 +149,9 @@ impl PartialEq for dyn ScmObject {
     }
 }
 
-pub trait SexprObject: Any + Display + Debug {
-    fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Rc<dyn AnySexprObject>;
-}
-
-pub trait AnySexprObject: Any + SexprObject {
-    fn as_any(&self) -> &dyn Any;
-}
-
-impl<T: Any + SexprObject> AnySexprObject for T {
-    fn as_any(&self) -> &dyn Any {
-        self
+impl<T: ScmObject> From<T> for Scm {
+    fn from(obj: T) -> Self {
+        Scm(Rc::new(obj))
     }
 }
 
@@ -169,12 +161,6 @@ pub enum Sexpr {
     String(String),
     Pair((Scm, Scm)),
     Object(Scm),
-}
-
-impl<T: ScmObject> From<T> for Scm {
-    fn from(obj: T) -> Self {
-        Scm(Rc::new(obj))
-    }
 }
 
 impl ScmObject for Sexpr {
