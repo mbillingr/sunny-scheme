@@ -2,6 +2,7 @@ mod bool;
 mod int;
 mod interner;
 mod null;
+mod symbol;
 
 use crate::cxr::CxR;
 use crate::Int;
@@ -28,7 +29,7 @@ impl Scm {
     }
 
     pub fn symbol(name: &str) -> Self {
-        Sexpr::symbol(name).into()
+        Scm(symbol::Symbol::interned(name))
     }
 
     pub fn string(name: &str) -> Self {
@@ -72,7 +73,7 @@ impl Scm {
     }
 
     pub fn as_symbol(&self) -> Option<&str> {
-        self.0.downcast_ref::<Sexpr>().and_then(Sexpr::as_symbol)
+        self.as_type::<symbol::Symbol>().map(symbol::Symbol::as_str)
     }
 
     pub fn as_string(&self) -> Option<&str> {
@@ -158,7 +159,6 @@ impl<T: ScmObject> From<T> for Scm {
 
 #[derive(Debug, Clone)]
 pub enum Sexpr {
-    Symbol(String),
     String(String),
     Pair((Scm, Scm)),
     Object(Scm),
@@ -181,13 +181,6 @@ impl ScmObject for Sexpr {
         match self {
             Sexpr::String(_) => self.clone().into(),
             Sexpr::Pair(p) => Scm::cons(p.0.substitute(mapping), p.1.substitute(mapping)),
-            Sexpr::Symbol(s) => {
-                if let Some(replacement) = mapping.get(s.as_str()) {
-                    replacement.clone()
-                } else {
-                    self.clone().into()
-                }
-            }
             Sexpr::Object(obj) => Sexpr::Object(obj.substitute(mapping)).into(),
         }
     }
@@ -197,7 +190,6 @@ impl PartialEq for Sexpr {
     fn eq(&self, other: &Self) -> bool {
         use Sexpr::*;
         match (self, other) {
-            (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
             (Object(a), Object(b)) => a == b,
@@ -207,10 +199,6 @@ impl PartialEq for Sexpr {
 }
 
 impl Sexpr {
-    pub fn symbol(name: &str) -> Self {
-        Sexpr::Symbol(name.to_string())
-    }
-
     pub fn string(name: &str) -> Self {
         Sexpr::String(name.to_string())
     }
@@ -230,17 +218,6 @@ impl Sexpr {
         }
     }
 
-    pub fn is_symbol(&self) -> bool {
-        self.as_symbol().is_some()
-    }
-
-    pub fn as_symbol(&self) -> Option<&str> {
-        match self {
-            Sexpr::Symbol(s) => Some(s),
-            _ => None,
-        }
-    }
-
     pub fn as_string(&self) -> Option<&str> {
         match self {
             Sexpr::String(s) => Some(s),
@@ -252,7 +229,6 @@ impl Sexpr {
 impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Sexpr::Symbol(s) => write!(f, "{}", s),
             Sexpr::String(s) => write!(f, "{:?}", s),
             Sexpr::Pair(p) => {
                 if !f.alternate() {

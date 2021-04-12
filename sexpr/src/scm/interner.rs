@@ -1,5 +1,20 @@
-type Strong<T> = std::rc::Rc<T>;
-type Weak<T> = std::rc::Weak<T>;
+use std::cell::RefCell;
+
+pub type Strong<T> = std::rc::Rc<T>;
+pub type Weak<T> = std::rc::Weak<T>;
+
+thread_local! {
+    static STRING_INTERNER: RefCell<Interner<Box<str>>> = RefCell::new(Interner::new());
+}
+
+pub fn interned_string(s: &str) -> Strong<Box<str>> {
+    STRING_INTERNER.with(|si| si.borrow_mut().get_interned(s))
+}
+
+pub trait Internable<T: ?Sized> {
+    fn is_same(&self, intern: &T) -> bool;
+    fn into_strong(self) -> Strong<T>;
+}
 
 pub struct Interner<T: ?Sized> {
     known_objects: Vec<Weak<T>>,
@@ -14,14 +29,12 @@ impl<T: 'static + ?Sized> Interner<T> {
 
     pub fn get_interned<Q>(&mut self, value: Q) -> Strong<T>
     where
-        Q: Into<Strong<T>>,
-        Q: AsRef<T>,
-        T: PartialEq,
+        Q: Internable<T>,
     {
-        if let Some(already_interned) = self.find_value(value.as_ref()) {
+        if let Some(already_interned) = self.find_value(&value) {
             already_interned
         } else {
-            let strong = value.into();
+            let strong = value.into_strong();
             self.insert_ref(&strong);
             strong
         }
@@ -31,14 +44,14 @@ impl<T: 'static + ?Sized> Interner<T> {
         self.known_objects.push(Strong::downgrade(strong));
     }
 
-    fn find_value(&mut self, value: &T) -> Option<Strong<T>>
+    fn find_value<Q>(&mut self, value: &Q) -> Option<Strong<T>>
     where
-        T: PartialEq,
+        Q: Internable<T>,
     {
         let mut idx = 0;
         while idx < self.known_objects.len() {
             if let Some(obj) = Weak::upgrade(&self.known_objects[idx]) {
-                if &*obj == value {
+                if value.is_same(&*obj) {
                     return Some(obj);
                 }
                 idx += 1;
@@ -49,6 +62,56 @@ impl<T: 'static + ?Sized> Interner<T> {
         }
 
         None
+    }
+}
+
+impl Internable<str> for &'_ str {
+    fn is_same(&self, intern: &str) -> bool {
+        *self == intern
+    }
+
+    fn into_strong(self) -> Strong<str> {
+        self.into()
+    }
+}
+
+impl Internable<str> for String {
+    fn is_same(&self, intern: &str) -> bool {
+        self == intern
+    }
+
+    fn into_strong(self) -> Strong<str> {
+        self.into()
+    }
+}
+
+impl Internable<Box<str>> for &'_ str {
+    fn is_same(&self, intern: &Box<str>) -> bool {
+        *self == &**intern
+    }
+
+    fn into_strong(self) -> Strong<Box<str>> {
+        Strong::new(self.to_owned().into_boxed_str())
+    }
+}
+
+impl Internable<Box<str>> for String {
+    fn is_same(&self, intern: &Box<str>) -> bool {
+        self == &**intern
+    }
+
+    fn into_strong(self) -> Strong<Box<str>> {
+        Strong::new(self.into_boxed_str())
+    }
+}
+
+impl<T: PartialEq> Internable<T> for T {
+    fn is_same(&self, intern: &T) -> bool {
+        self == intern
+    }
+
+    fn into_strong(self) -> Strong<T> {
+        Strong::new(self)
     }
 }
 
@@ -127,7 +190,6 @@ mod tests {
 
     struct InterneeSpy<T> {
         the_internee: Internee<T>,
-
         intern_count: Cell<usize>,
     }
 
@@ -152,14 +214,12 @@ mod tests {
         }
     }
 
-    impl<T> AsRef<Internee<T>> for InterneeSpy<T> {
-        fn as_ref(&self) -> &Internee<T> {
-            &self.the_internee
+    impl<T: Copy + PartialEq> Internable<Internee<T>> for &'_ InterneeSpy<T> {
+        fn is_same(&self, intern: &Internee<T>) -> bool {
+            &self.the_internee == intern
         }
-    }
 
-    impl<T: Copy> Into<Strong<Internee<T>>> for &InterneeSpy<T> {
-        fn into(self) -> Strong<Internee<T>> {
+        fn into_strong(self) -> Strong<Internee<T>> {
             self.intern_count.set(self.intern_count.get() + 1);
             Strong::new(self.the_internee)
         }
