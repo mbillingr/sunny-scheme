@@ -1,5 +1,6 @@
 mod bool;
 mod int;
+mod interner;
 mod null;
 
 use crate::cxr::CxR;
