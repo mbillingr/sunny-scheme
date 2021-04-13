@@ -286,7 +286,7 @@ impl Value {
                 p.1.deep_hash(state);
             }
             Value::Closure(_) => unimplemented!(),
-            Value::Primitive(p) => unimplemented!(),
+            Value::Primitive(_) => unimplemented!(),
             Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
             Value::Object(_) => unimplemented!(),
@@ -425,9 +425,9 @@ impl Value {
             Value::Symbol(p) => WeakValue::Symbol(p.downgrade()),
             Value::String(p) => WeakValue::String(p.downgrade()),
             Value::Pair(p) => WeakValue::Pair(p.downgrade()),
-            Value::Closure(p) => unimplemented!(),
-            Value::Primitive(p) => unimplemented!(),
-            Value::Continuation(p) => unimplemented!(),
+            Value::Closure(_) => unimplemented!(),
+            Value::Primitive(_) => unimplemented!(),
+            Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => WeakValue::Values(*n),
             Value::Object(p) => WeakValue::Object(p.downgrade()),
         }
@@ -449,9 +449,9 @@ impl WeakValue {
             WeakValue::Symbol(p) => p.upgrade().map(Value::Symbol),
             WeakValue::String(p) => p.upgrade().map(Value::String),
             WeakValue::Pair(p) => p.upgrade().map(Value::Pair),
-            WeakValue::Closure(p) => unimplemented!(),
-            WeakValue::Primitive(p) => unimplemented!(),
-            WeakValue::Continuation(p) => unimplemented!(),
+            WeakValue::Closure(_) => unimplemented!(),
+            WeakValue::Primitive(_) => unimplemented!(),
+            WeakValue::Continuation(_) => unimplemented!(),
             WeakValue::Values(n) => Some(Value::Values(*n)),
             WeakValue::Object(p) => p.upgrade().map(Value::Object),
         }

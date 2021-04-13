@@ -4,7 +4,7 @@ use crate::continuation::Continuation;
 use crate::scm_extension::ScmExt;
 use crate::{
     bytecode::Op, closure::Closure, mem::Ref, storage::ValueStorage, Error, ErrorKind, Result,
-    RuntimeResult, Value,
+    RuntimeResult,
 };
 use std::cell::Cell;
 use sunny_sexpr_parser::{CxR, Scm};

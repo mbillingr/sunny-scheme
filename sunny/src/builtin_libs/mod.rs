@@ -53,7 +53,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
         .define_primitive_vararg("values", 0, values)
-        .define_value("foo", |storage| Scm::cons(1, 2))
+        .define_value("foo", |_| Scm::cons(1, 2))
         .build();
 
     ctx.define_library("(sunny extra)")

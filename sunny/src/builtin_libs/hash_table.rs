@@ -1,15 +1,12 @@
 use crate::context::Context;
 use std::any::Any;
-use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
-use std::hash::{Hash, Hasher};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use sunny_sexpr_parser::{HashEqual, HashPtrEq, Scm, ScmHasher, ScmObject, WeakScm};
 use sunny_vm::scm_extension::ScmExt;
-use sunny_vm::{ErrorKind, Object, Result, Vm};
+use sunny_vm::{ErrorKind, Result, Vm};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
     ctx.define_library("(sunny hash-table)")
@@ -111,13 +108,13 @@ impl ScmObject for MutableTable {
     fn as_any(&self) -> &dyn Any {
         self
     }
-    fn equals(&self, other: &dyn ScmObject) -> bool {
+    fn equals(&self, _other: &dyn ScmObject) -> bool {
         unimplemented!()
     }
-    fn deep_hash(&self, state: &mut ScmHasher) {
+    fn deep_hash(&self, _state: &mut ScmHasher) {
         unimplemented!()
     }
-    fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
+    fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {
         unimplemented!()
     }
 }
@@ -194,8 +191,8 @@ impl Table for TableKeyWeakEq {
     fn table_ref(&self, key: Scm) -> Option<&Scm> {
         self.table
             .get_key_value(&key.downgrade())
-            .filter(|(k, v)| !k.is_dead())
-            .map(|(k, v)| v)
+            .filter(|(k, _)| !k.is_dead())
+            .map(|(_, v)| v)
     }
 
     fn table_del(&mut self, key: Scm) -> Option<Scm> {

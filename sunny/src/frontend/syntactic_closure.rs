@@ -27,7 +27,7 @@ impl ScmObject for SyntacticClosure {
         false
     }
 
-    fn deep_hash(&self, state: &mut ScmHasher) {
+    fn deep_hash(&self, _state: &mut ScmHasher) {
         unimplemented!()
     }
 

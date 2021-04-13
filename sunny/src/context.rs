@@ -9,10 +9,9 @@ use crate::frontend::{base_environment, error, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
 use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
 use sunny_sexpr_parser::{Scm, SharedStr, SourceLocation, SourceMap};
-use sunny_vm::mem::Ref;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::scm_extension::ScmExt;
-use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
+use sunny_vm::{ErrorKind, ValueStorage, Vm};
 use sunny_vm::{Primitive, PrimitiveProc};
 
 pub struct Context {
@@ -66,7 +65,7 @@ impl Context {
 
         println!("{}", ast);
 
-        let mut backend = ByteCodeBackend::new(self.vm.borrow_storage(), &mut self.globals);
+        let mut backend = ByteCodeBackend::new(&mut self.globals);
 
         let ir = ast.build(&mut backend);
         ir.return_from();
