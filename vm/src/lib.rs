@@ -19,6 +19,7 @@ mod primitive;
 mod storage;
 mod value;
 pub mod vm;
+mod scm_extension;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;
