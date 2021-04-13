@@ -63,15 +63,15 @@ primitive! {
 }
 
 fn make_strong_equals_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
-    make_hashtable(n_args, vm, TableKeyStrongEquals::new)
+    make_hashtable(n_args, vm, TableKeyStrongEquals::default)
 }
 
 fn make_strong_eq_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
-    make_hashtable(n_args, vm, TableKeyStrongEq::new)
+    make_hashtable(n_args, vm, TableKeyStrongEq::default)
 }
 
 fn make_weak_eq_hashtable(n_args: usize, vm: &mut Vm) -> Result<()> {
-    make_hashtable(n_args, vm, TableKeyWeakEq::new)
+    make_hashtable(n_args, vm, TableKeyWeakEq::default)
 }
 
 fn make_hashtable<T: 'static + Table>(
@@ -88,9 +88,16 @@ fn make_hashtable<T: 'static + Table>(
     Ok(())
 }
 
-type TableKeyStrongEquals = HashMap<HashEqual, Scm>;
-type TableKeyStrongEq = HashMap<HashPtrEq, Scm>;
-type TableKeyWeakEq = HashMap<WeakScm, Scm>;
+#[derive(Debug, Default)]
+struct TableKeyStrongEquals(HashMap<HashEqual, Scm>);
+
+#[derive(Debug, Default)]
+struct TableKeyStrongEq(HashMap<HashPtrEq, Scm>);
+
+#[derive(Debug, Default)]
+struct TableKeyWeakEq {
+    table: HashMap<WeakScm, Scm>,
+}
 
 impl ScmObject for Box<dyn Table> {
     fn as_any(&self) -> &dyn Any {
@@ -129,57 +136,81 @@ trait Table: Debug {
 
 impl Table for TableKeyStrongEquals {
     fn table_set(&mut self, key: Scm, value: Scm) -> Option<Scm> {
-        self.insert(key.into(), value)
+        self.0.insert(key.into(), value)
     }
 
     fn table_ref(&mut self, key: Scm) -> Option<&Scm> {
-        self.get(&HashEqual::from(key))
+        self.0.get(&HashEqual::from(key))
     }
 
     fn table_del(&mut self, key: Scm) -> Option<Scm> {
-        self.remove(&HashEqual::from(key))
+        self.0.remove(&HashEqual::from(key))
     }
 
     fn table_clear(&mut self) {
-        self.clear();
+        self.0.clear();
     }
 }
 
 impl Table for TableKeyStrongEq {
     fn table_set(&mut self, key: Scm, value: Scm) -> Option<Scm> {
-        self.insert(key.into(), value)
+        self.0.insert(key.into(), value)
     }
 
     fn table_ref(&mut self, key: Scm) -> Option<&Scm> {
-        self.get(&HashPtrEq::from(key))
+        self.0.get(&HashPtrEq::from(key))
     }
 
     fn table_del(&mut self, key: Scm) -> Option<Scm> {
-        self.remove(&HashPtrEq::from(key))
+        self.0.remove(&HashPtrEq::from(key))
     }
 
     fn table_clear(&mut self) {
-        self.clear();
+        self.0.clear();
     }
 }
 
 impl Table for TableKeyWeakEq {
     fn table_set(&mut self, key: Scm, value: Scm) -> Option<Scm> {
-        self.insert(key.downgrade(), value)
+        let capacity_before = self.table.capacity();
+        let old_value = self.table.insert(key.downgrade(), value);
+        drop(key);
+        if self.table.capacity() != capacity_before {
+            // I'd prefer to drop dead keys before growing the hash table
+            // but checking capacity after the fact is the best solution I could find.
+            self.drop_dead_keys();
+        }
+        old_value
     }
 
     fn table_ref(&mut self, key: Scm) -> Option<&Scm> {
-        self.get_key_value(&key.downgrade())
+        self.table
+            .get_key_value(&key.downgrade())
             .filter(|(k, v)| !k.is_dead())
             .map(|(k, v)| v)
     }
 
     fn table_del(&mut self, key: Scm) -> Option<Scm> {
-        self.remove(&key.downgrade())
+        self.table.remove(&key.downgrade())
     }
 
     fn table_clear(&mut self) {
-        self.clear();
+        self.table.clear();
+    }
+}
+
+impl TableKeyWeakEq {
+    fn drop_dead_keys(&mut self) {
+        let keys_to_drop: Vec<_> = self
+            .table
+            .keys()
+            .cloned()
+            .filter(WeakScm::is_dead)
+            .collect();
+
+        for key in keys_to_drop {
+            self.table.remove(&key);
+        }
     }
 }
 
@@ -190,62 +221,60 @@ mod tests {
 
     #[test]
     fn strong_table_keeps_keys_alive() {
-        let mut table = TableKeyStrongEquals::new();
+        let mut table = TableKeyStrongEquals::default();
         table.table_set(Scm::cons(1, 2), Scm::bool(true));
-        assert_eq!(table.len(), 1);
+        assert_eq!(table.0.len(), 1);
     }
 
     #[test]
-    fn weak_table_loses_dead_keys() {
-        let mut table = TableKeyWeakEq::new();
+    fn weak_table_eventually_loses_dead_keys() {
+        let mut table = TableKeyWeakEq::default();
 
-        let key = Scm::cons(1, 2).downgrade();
+        // this depends on the hashmap's initial capacity to be 4.
+        // after inserting the 5th item all dead keys are purged.
+        for _ in 0..5 {
+            table.table_set(Scm::cons(1, 2), Scm::bool(true));
+        }
 
-        table.insert(key.clone(), Scm::bool(true));
-
-        assert_eq!(table.len(), 1);
-
-        assert!(table.get(&key).is_none());
-
-        assert_eq!(table.len(), 0);
+        assert_eq!(table.table.len(), 0);
     }
 
     #[test]
     fn table_compares_keys_deeply() {
-        let mut table = TableKeyStrongEquals::new();
+        let mut table = TableKeyStrongEquals::default();
 
         table.table_set(Scm::cons(1, 2), Scm::bool(true));
         table.table_set(Scm::cons(1, 2), Scm::bool(false));
 
-        assert_eq!(table.len(), 1);
+        assert_eq!(table.0.len(), 1);
     }
 
     #[test]
     fn table_compares_keys_shallowly() {
-        let mut table = TableKeyStrongEq::new();
+        let mut table = TableKeyStrongEq::default();
 
         table.table_set(Scm::cons(1, 2), Scm::bool(true));
         table.table_set(Scm::cons(1, 2), Scm::bool(false));
 
-        assert_eq!(table.len(), 2);
+        assert_eq!(table.0.len(), 2);
     }
 
     #[test]
     fn can_remove_from_table() {
-        let mut table = TableKeyStrongEquals::new();
+        let mut table = TableKeyStrongEquals::default();
 
         table.table_set(Scm::cons(1, 2), Scm::bool(true));
 
-        assert_eq!(table.len(), 1);
+        assert_eq!(table.0.len(), 1);
 
         table.table_del(Scm::cons(1, 2));
 
-        assert_eq!(table.len(), 0);
+        assert_eq!(table.0.len(), 0);
     }
 
     #[test]
     fn can_get_value_from_strong_equals_table() {
-        let mut table = TableKeyStrongEquals::new();
+        let mut table = TableKeyStrongEquals::default();
 
         let key = Scm::cons(1, 2);
         table.table_set(key.clone(), Scm::bool(true));
@@ -254,7 +283,7 @@ mod tests {
 
     #[test]
     fn can_get_value_from_strong_eq_table() {
-        let mut table = TableKeyStrongEq::new();
+        let mut table = TableKeyStrongEq::default();
 
         let key = Scm::cons(1, 2);
         table.table_set(key.clone(), Scm::bool(true));
@@ -266,7 +295,7 @@ mod tests {
 
     #[test]
     fn can_get_value_from_weak_eq_table() {
-        let mut table = TableKeyWeakEq::new();
+        let mut table = TableKeyWeakEq::default();
 
         let key = Scm::cons(1, 2);
         table.table_set(key.clone(), Scm::bool(true));
