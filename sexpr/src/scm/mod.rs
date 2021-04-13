@@ -3,6 +3,7 @@ mod int;
 mod interner;
 mod null;
 mod symbol;
+mod string;
 
 use crate::cxr::CxR;
 use crate::Int;
@@ -33,7 +34,7 @@ impl Scm {
     }
 
     pub fn string(name: &str) -> Self {
-        Sexpr::string(name).into()
+        Scm(string::String::interned(name))
     }
 
     pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
@@ -77,7 +78,7 @@ impl Scm {
     }
 
     pub fn as_string(&self) -> Option<&str> {
-        self.0.downcast_ref::<Sexpr>().and_then(Sexpr::as_string)
+        self.as_type::<string::String>().map(string::String::as_str)
     }
 
     pub fn is_pair(&self) -> bool {
@@ -159,7 +160,6 @@ impl<T: ScmObject> From<T> for Scm {
 
 #[derive(Debug, Clone)]
 pub enum Sexpr {
-    String(String),
     Pair((Scm, Scm)),
     Object(Scm),
 }
@@ -179,7 +179,6 @@ impl ScmObject for Sexpr {
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
         match self {
-            Sexpr::String(_) => self.clone().into(),
             Sexpr::Pair(p) => Scm::cons(p.0.substitute(mapping), p.1.substitute(mapping)),
             Sexpr::Object(obj) => Sexpr::Object(obj.substitute(mapping)).into(),
         }
@@ -190,7 +189,6 @@ impl PartialEq for Sexpr {
     fn eq(&self, other: &Self) -> bool {
         use Sexpr::*;
         match (self, other) {
-            (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
             (Object(a), Object(b)) => a == b,
             _ => false,
@@ -199,10 +197,6 @@ impl PartialEq for Sexpr {
 }
 
 impl Sexpr {
-    pub fn string(name: &str) -> Self {
-        Sexpr::String(name.to_string())
-    }
-
     pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
         Sexpr::Pair((car.into(), cdr.into()))
     }
@@ -217,19 +211,11 @@ impl Sexpr {
             _ => None,
         }
     }
-
-    pub fn as_string(&self) -> Option<&str> {
-        match self {
-            Sexpr::String(s) => Some(s),
-            _ => None,
-        }
-    }
 }
 
 impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Sexpr::String(s) => write!(f, "{:?}", s),
             Sexpr::Pair(p) => {
                 if !f.alternate() {
                     write!(f, "({:#})", self)
