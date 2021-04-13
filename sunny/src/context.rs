@@ -9,6 +9,7 @@ use crate::frontend::{base_environment, error, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
 use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
 use sunny_sexpr_parser::{Scm, SharedStr, SourceLocation, SourceMap};
+use sunny_vm::mem::Ref;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{ErrorKind, ValueStorage, Vm};
@@ -74,7 +75,7 @@ impl Context {
         let code = tail_call_optimization(code);
         println!("{}", code);
 
-        let result = self.vm.eval_repl(code)?;
+        let result = self.vm.eval_repl(Ref::new(code))?;
 
         Ok(result)
     }
@@ -173,7 +174,7 @@ impl<'c> LibDefiner<'c> {
         proc: PrimitiveProc,
     ) -> Self {
         let primitive = Primitive::fixed_arity(name, arity, proc);
-        self.define_value(name, |_| Scm::primitive(primitive))
+        self.define_value(name, Scm::primitive(primitive))
     }
 
     pub fn define_primitive_max_arity(
@@ -184,7 +185,7 @@ impl<'c> LibDefiner<'c> {
         proc: PrimitiveProc,
     ) -> Self {
         let primitive = Primitive::max_arity(name, min_arity, max_arity, proc);
-        self.define_value(name, |_| Scm::primitive(primitive))
+        self.define_value(name, Scm::primitive(primitive))
     }
 
     pub fn define_primitive_vararg(
@@ -194,14 +195,13 @@ impl<'c> LibDefiner<'c> {
         proc: PrimitiveProc,
     ) -> Self {
         let primitive = Primitive::vararg(name, min_arity, proc);
-        self.define_value(name, |_| Scm::primitive(primitive))
+        self.define_value(name, Scm::primitive(primitive))
     }
 
-    pub fn define_value(mut self, name: &str, f: impl FnOnce(&mut ValueStorage) -> Scm) -> Self {
+    pub fn define_value(mut self, name: &str, value: Scm) -> Self {
         let fqn = self.fully_qualified_name(name);
 
         let idx = self.runtime_globals().determine_index(&fqn);
-        let value = f(self.storage());
         self.vm().assign_global(idx, value);
 
         let binding = EnvBinding::global(fqn);
@@ -215,10 +215,6 @@ impl<'c> LibDefiner<'c> {
 
     fn runtime_globals(&mut self) -> &mut GlobalTable {
         &mut self.context.globals
-    }
-
-    fn storage(&mut self) -> &mut ValueStorage {
-        self.context.vm.borrow_storage()
     }
 
     fn vm(&mut self) -> &mut Vm {

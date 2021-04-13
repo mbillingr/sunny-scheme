@@ -10,7 +10,6 @@ use std::cell::Cell;
 use sunny_sexpr_parser::{CxR, Scm};
 
 pub struct Vm {
-    storage: ValueStorage,
     value_stack: Vec<Scm>,
     globals: Vec<Scm>,
 
@@ -31,24 +30,14 @@ impl Vm {
         let root_activation = storage.insert(root_activation);
 
         Ok(Vm {
-            storage,
             value_stack: vec![],
             globals: vec![],
             current_activation: root_activation,
         })
     }
 
-    pub fn borrow_storage(&mut self) -> &mut ValueStorage {
-        &mut self.storage
-    }
-
-    pub fn build_value(&mut self, scm: &Scm) -> Scm {
-        scm.clone()
-    }
-
-    pub fn eval_repl(&mut self, code: CodeSegment) -> RuntimeResult<Scm> {
+    pub fn eval_repl(&mut self, code: Ref<CodeSegment>) -> RuntimeResult<Scm> {
         let mut root_activation = self.current_activation.clone();
-        let code = self.storage.insert(code);
         root_activation.code = CodePointer::new(code);
 
         match self.run() {
@@ -87,7 +76,7 @@ impl Vm {
             code: closure.code.clone(),
             locals: vec![],
         };
-        self.current_activation = self.storage.insert(activation);
+        self.current_activation = Ref::new(activation);
     }
 
     fn add_error_context(&mut self, kind: ErrorKind) -> Error {
@@ -390,7 +379,7 @@ impl Vm {
     fn call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
         let act = Activation::from_closure(self.current_activation.clone(), cls, args);
-        self.current_activation = self.storage.insert(act);
+        self.current_activation = Ref::new(act);
         Ok(())
     }
 
@@ -402,7 +391,7 @@ impl Vm {
             .as_ref()
             .unwrap_or(&self.current_activation);
         let act = Activation::from_closure(caller.clone(), &cls, args);
-        self.current_activation = self.storage.insert(act);
+        self.current_activation = Ref::new(act);
         Ok(())
     }
 
@@ -417,7 +406,7 @@ impl Vm {
         let args = self.pop_values(n_args)?;
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
-        self.current_activation = self.storage.insert(cnt.activation.duplicate());
+        self.current_activation = Ref::new(cnt.activation.duplicate());
         Ok(())
     }
 
@@ -548,7 +537,7 @@ impl Vm {
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
         let mut activation = self.current_activation.duplicate();
         activation.code = activation.code.offset(code_offset as isize);
-        let activation = self.storage.insert(activation);
+        let activation = Ref::new(activation);
 
         let mut value_stack = self.value_stack.clone();
         value_stack.pop().ok_or(ErrorKind::StackUnderflow)?; // remove the function called by call/cc
