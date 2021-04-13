@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use crate::shared_string::SharedStr;
 use crate::str_utils::{find_end_of_line, find_start_of_line, line_number};
-use crate::Sexpr;
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct SourceKind {
@@ -192,12 +191,6 @@ impl<T> Deref for SourceLocation<T> {
 impl<T> From<T> for SourceLocation<T> {
     fn from(x: T) -> SourceLocation<T> {
         SourceLocation::new(x)
-    }
-}
-
-impl PartialEq<Sexpr> for SourceLocation<Sexpr> {
-    fn eq(&self, other: &Sexpr) -> bool {
-        self.get_value() == other
     }
 }
 

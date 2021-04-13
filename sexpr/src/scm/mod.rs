@@ -14,6 +14,19 @@ use std::fmt::{Debug, Display};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
+pub trait ScmObject: Any + Debug + Display {
+    fn as_any(&self) -> &dyn Any;
+    fn eq(&self, other: &dyn ScmObject) -> bool;
+    fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
+}
+
+impl dyn ScmObject {
+    #[inline]
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.as_any().downcast_ref()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Scm(Rc<dyn ScmObject>);
 
@@ -134,19 +147,6 @@ impl PartialEq for Scm {
     }
 }
 
-pub trait ScmObject: Any + Debug + Display {
-    fn as_any(&self) -> &dyn Any;
-    fn eq(&self, other: &dyn ScmObject) -> bool;
-    fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
-}
-
-impl dyn ScmObject {
-    #[inline]
-    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
-        self.as_any().downcast_ref()
-    }
-}
-
 impl PartialEq for dyn ScmObject {
     fn eq(&self, other: &Self) -> bool {
         ScmObject::eq(self, other)
@@ -156,48 +156,6 @@ impl PartialEq for dyn ScmObject {
 impl<T: ScmObject> From<T> for Scm {
     fn from(obj: T) -> Self {
         Scm(Rc::new(obj))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum Sexpr {
-    Object(Scm),
-}
-
-impl ScmObject for Sexpr {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn eq(&self, other: &dyn ScmObject) -> bool {
-        if let Some(other) = other.downcast_ref() {
-            self == other
-        } else {
-            false
-        }
-    }
-
-    fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
-        match self {
-            Sexpr::Object(obj) => Sexpr::Object(obj.substitute(mapping)).into(),
-        }
-    }
-}
-
-impl PartialEq for Sexpr {
-    fn eq(&self, other: &Self) -> bool {
-        use Sexpr::*;
-        match (self, other) {
-            (Object(a), Object(b)) => a == b,
-        }
-    }
-}
-
-impl Display for Sexpr {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Sexpr::Object(obj) => write!(f, "{}", obj),
-        }
     }
 }
 
