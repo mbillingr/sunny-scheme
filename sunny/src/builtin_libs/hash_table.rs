@@ -1,6 +1,7 @@
 use crate::context::Context;
 use std::any::Any;
 use std::borrow::Borrow;
+use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
@@ -25,22 +26,20 @@ pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
 
 primitive! {
     fn is_hashtable(obj: Scm) -> Result<Scm> {
-        Ok(Scm::bool(obj.as_type::<Box<dyn Table>>().is_some()))
+        Ok(Scm::bool(obj.as_type::<MutableTable>().is_some()))
     }
 
     fn hashtable_set(obj: Scm, key: Scm, value: Scm) -> Result<Scm> {
-        //let table = obj.as_type::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
-        let table: &mut dyn Table = unimplemented!();
+        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
 
-        table.table_set(key, value);
+        table.0.borrow_mut().table_set(key, value);
         Ok(Scm::void())
     }
 
     fn hashtable_ref_default(obj: Scm, key: Scm, default: Scm) -> Result<Scm> {
-        //let table = obj.as_type::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
-        let table: &mut dyn Table = unimplemented!();
+        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
 
-        if let Some(value) = table.table_ref(key) {
+        if let Some(value) = table.0.borrow().table_ref(key) {
             Ok(value.clone())
         } else {
             Ok(default)
@@ -48,16 +47,14 @@ primitive! {
     }
 
     fn hashtable_delete(obj: Scm, key: Scm) -> Result<Scm> {
-        //let table = obj.as_type::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
-        let table: &mut dyn Table = unimplemented!();
-        table.table_del(key);
+        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
+        table.0.borrow_mut().table_del(key);
         Ok(Scm::void())
     }
 
     fn hashtable_clear(obj: Scm) -> Result<Scm> {
-        //let table = obj.as_type::<Box<dyn Table>>().ok_or(ErrorKind::TypeError)?;
-        let table: &mut dyn Table = unimplemented!();
-        table.table_clear();
+        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
+        table.0.borrow_mut().table_clear();
         Ok(Scm::void())
     }
 }
@@ -83,7 +80,8 @@ fn make_hashtable<T: 'static + Table>(
         return Err(ErrorKind::TooManyArgs);
     }
     let table: Box<dyn Table> = Box::new(table_constructor());
-    //let table: Box<dyn Object> = Box::new(table);
+    let table = RefCell::new(table);
+    let table = MutableTable(table);
     vm.push_value(Scm::obj(table));
     Ok(())
 }
@@ -99,7 +97,17 @@ struct TableKeyWeakEq {
     table: HashMap<WeakScm, Scm>,
 }
 
-impl ScmObject for Box<dyn Table> {
+#[derive(Debug)]
+struct MutableTable(RefCell<Box<dyn Table>>);
+
+impl Deref for MutableTable {
+    type Target = RefCell<Box<dyn Table>>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ScmObject for MutableTable {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -114,15 +122,15 @@ impl ScmObject for Box<dyn Table> {
     }
 }
 
-impl Display for Box<dyn Table> {
+impl Display for MutableTable {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{:?}", self)
+        write!(f, "{:?}", self.0.borrow())
     }
 }
 
 trait Table: Debug {
     fn table_set(&mut self, key: Scm, value: Scm) -> Option<Scm>;
-    fn table_ref(&mut self, key: Scm) -> Option<&Scm>;
+    fn table_ref(&self, key: Scm) -> Option<&Scm>;
     fn table_del(&mut self, key: Scm) -> Option<Scm>;
     fn table_clear(&mut self);
 
@@ -139,7 +147,7 @@ impl Table for TableKeyStrongEquals {
         self.0.insert(key.into(), value)
     }
 
-    fn table_ref(&mut self, key: Scm) -> Option<&Scm> {
+    fn table_ref(&self, key: Scm) -> Option<&Scm> {
         self.0.get(&HashEqual::from(key))
     }
 
@@ -157,7 +165,7 @@ impl Table for TableKeyStrongEq {
         self.0.insert(key.into(), value)
     }
 
-    fn table_ref(&mut self, key: Scm) -> Option<&Scm> {
+    fn table_ref(&self, key: Scm) -> Option<&Scm> {
         self.0.get(&HashPtrEq::from(key))
     }
 
@@ -183,7 +191,7 @@ impl Table for TableKeyWeakEq {
         old_value
     }
 
-    fn table_ref(&mut self, key: Scm) -> Option<&Scm> {
+    fn table_ref(&self, key: Scm) -> Option<&Scm> {
         self.table
             .get_key_value(&key.downgrade())
             .filter(|(k, v)| !k.is_dead())
