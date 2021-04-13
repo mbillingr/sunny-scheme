@@ -9,7 +9,9 @@ use crate::frontend::syntax_forms::{
 };
 use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
-use sunny_vm::{ErrorKind, Result, Value, Vm};
+use sunny_sexpr_parser::Scm;
+use sunny_vm::scm_extension::ScmExt;
+use sunny_vm::{ErrorKind, Result, Vm};
 
 /*  ===== R7RS compliant apply using our intrinsic function =====
 (define (full-apply f x . args) (if (null? args) (apply f x) (apply f (cons x (build-list args)))))
@@ -51,7 +53,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
         .define_primitive_vararg("values", 0, values)
-        .define_value("foo", |storage| storage.cons(1, 2))
+        .define_value("foo", |storage| Scm::cons(1, 2))
         .build();
 
     ctx.define_library("(sunny extra)")
@@ -62,117 +64,117 @@ pub fn define_standard_libraries(ctx: &mut Context) {
 }
 
 primitive! {
-    fn dec(num: Value) -> Result<Value> {
+    fn dec(num: Scm) -> Result<Scm> {
         let x = num.as_int().ok_or(ErrorKind::TypeError)?;
-        Ok(Value::number(x - 1))
+        Ok(Scm::number(x - 1))
     }
 
-    varfn add([args]) -> Result<Value> {
+    varfn add([args]) -> Result<Scm> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::number(0)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
+            [] => return Ok(Scm::number(0)),
+            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
-            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
             acc = &acc + x;
         }
 
-        Ok(Value::number(acc))
+        Ok(Scm::number(acc))
     }
 
-    varfn sub([args]) -> Result<Value> {
+    varfn sub([args]) -> Result<Scm> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::number(0)),
-            [x] => return Ok(Value::number(-x.as_number().ok_or(ErrorKind::TypeError)?)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
+            [] => return Ok(Scm::number(0)),
+            [x] => return Ok(Scm::number(-x.as_int().ok_or(ErrorKind::TypeError)?)),
+            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
-            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
             acc = &acc - x;
         }
 
-        Ok(Value::number(acc))
+        Ok(Scm::number(acc))
     }
 
-    varfn mul([args]) -> Result<Value> {
+    varfn mul([args]) -> Result<Scm> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::number(1)),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
+            [] => return Ok(Scm::number(1)),
+            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
-            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
             acc = &acc * x;
         }
 
-        Ok(Value::number(acc))
+        Ok(Scm::number(acc))
     }
 
-    varfn div([args]) -> Result<Value> {
+    varfn div([args]) -> Result<Scm> {
         let mut acc = match args.as_slice() {
-            [] => return Ok(Value::number(0)),
-            [x] => return Ok(Value::number(x.as_number().ok_or(ErrorKind::TypeError)?.inv())),
-            [x, ..] => x.as_number().ok_or(ErrorKind::TypeError)?.clone(),
+            [] => return Ok(Scm::number(0)),
+            [x] => return Ok(Scm::number(x.as_int().map(|i|1/i).ok_or(ErrorKind::TypeError)?)),
+            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
         };
 
         for x in &args[1..] {
-            let x = x.as_number().ok_or(ErrorKind::TypeError)?;
+            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
             acc = &acc / x;
         }
 
-        Ok(Value::number(acc))
+        Ok(Scm::number(acc))
     }
 
-    fn lt(a: Value, b: Value) -> Result<Value> {
-        Value::try_is_less(&a, &b).ok_or(ErrorKind::TypeError)
+    fn lt(a: Scm, b: Scm) -> Result<Scm> {
+        Scm::try_is_less(&a, &b).ok_or(ErrorKind::TypeError)
     }
 
-    fn gt(a: Value, b: Value) -> Result<Value> {
-        Value::try_is_greater(&a, &b).ok_or(ErrorKind::TypeError)
+    fn gt(a: Scm, b: Scm) -> Result<Scm> {
+        Scm::try_is_greater(&a, &b).ok_or(ErrorKind::TypeError)
     }
 
-    fn le(a: Value, b: Value) -> Result<Value> {
-        Value::try_is_less_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
+    fn le(a: Scm, b: Scm) -> Result<Scm> {
+        Scm::try_is_less_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
     }
 
-    fn ge(a: Value, b: Value) -> Result<Value> {
-        Value::try_is_greater_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
+    fn ge(a: Scm, b: Scm) -> Result<Scm> {
+        Scm::try_is_greater_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
     }
 
-    fn ne(a: Value, b: Value) -> Result<Value> {
-        Value::try_is_numeq(&a, &b).ok_or(ErrorKind::TypeError)
+    fn ne(a: Scm, b: Scm) -> Result<Scm> {
+        Scm::try_is_numeq(&a, &b).ok_or(ErrorKind::TypeError)
     }
 
-    fn is_null(obj: Value) -> Result<Value> {
-        Ok(Value::bool(obj.is_nil()))
+    fn is_null(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_null()))
     }
 
-    fn now() -> Result<Value> {
+    fn now() -> Result<Scm> {
         let begin = *BEGINNING_OF_TIME;
         let duration = std::time::Instant::now() - begin;
         let micros = duration.as_micros() as i64;
         Ok(micros.into())
     }
 
-    fn display(x: Value) -> Result<Value> {
+    fn display(x: Scm) -> Result<Scm> {
         print!("{}", x);
-        Ok(Value::Void)
+        Ok(Scm::void())
     }
 
-    fn newline() -> Result<Value> {
+    fn newline() -> Result<Scm> {
         println!();
-        Ok(Value::Void)
+        Ok(Scm::void())
     }
 
-    fn error(msg: Value) -> Result<Value> {
+    fn error(msg: Scm) -> Result<Scm> {
         Err(ErrorKind::Generic(msg))
     }
 }
 
 fn values(n_args: usize, vm: &mut Vm) -> Result<()> {
-    vm.push_value(Value::Values(n_args));
+    vm.push_value(Scm::values(n_args));
     Ok(())
 }
 
@@ -183,14 +185,17 @@ fn proc_arity(n_args: usize, vm: &mut Vm) -> Result<()> {
         _ => return Err(ErrorKind::TooManyArgs),
     }
     let proc = vm.pop_value()?;
-    let (min, max) = match proc {
-        Value::Primitive(pr) => (pr.min_arity, pr.max_arity),
-        Value::Closure(cls) => cls.arity(),
-        Value::Continuation(cnt) => cnt.arity(),
-        _ => return Err(ErrorKind::TypeError),
+    let (min, max) = if let Some(pri) = proc.as_primitive() {
+        (pri.min_arity, pri.max_arity)
+    } else if let Some(cls) = proc.as_closure() {
+        cls.arity()
+    } else if let Some(cnt) = proc.as_continuation() {
+        cnt.arity()
+    } else {
+        return Err(ErrorKind::TypeError);
     };
-    let max = max.map(Value::from).unwrap_or(Value::False);
-    let arity = vm.borrow_storage().cons(min, max);
+    let max = max.map(Scm::from).unwrap_or_else(|| Scm::bool(false));
+    let arity = Scm::cons(min, max);
     vm.push_value(arity);
     Ok(())
 }

@@ -1,3 +1,4 @@
+mod arithmetic;
 mod bool;
 mod int;
 mod interner;
@@ -9,14 +10,18 @@ mod symbol;
 use crate::cxr::CxR;
 use crate::Int;
 use std::any::Any;
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::{Hash, Hasher};
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
+
+pub type ScmHasher = std::collections::hash_map::DefaultHasher;
 
 pub trait ScmObject: Any + Debug + Display {
     fn as_any(&self) -> &dyn Any;
-    fn eq(&self, other: &dyn ScmObject) -> bool;
+    fn equals(&self, other: &dyn ScmObject) -> bool;
+    fn deep_hash(&self, state: &mut ScmHasher);
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
 }
 
@@ -29,6 +34,12 @@ impl dyn ScmObject {
 
 #[derive(Debug, Clone)]
 pub struct Scm(Rc<dyn ScmObject>);
+
+impl Default for Scm {
+    fn default() -> Self {
+        Scm::null() // TODO: should default to void
+    }
+}
 
 impl Scm {
     pub fn null() -> Self {
@@ -43,6 +54,10 @@ impl Scm {
         int::Int::new(i).into()
     }
 
+    pub fn number(i: impl Into<Int>) -> Self {
+        int::Int::new(i.into()).into()
+    }
+
     pub fn symbol(name: &str) -> Self {
         Scm(symbol::Symbol::interned(name))
     }
@@ -55,7 +70,7 @@ impl Scm {
         pair::Pair::new(car, cdr).into()
     }
 
-    pub fn list(items: impl DoubleEndedIterator<Item = Scm>) -> Self {
+    pub fn list<T: Into<Scm>>(items: impl DoubleEndedIterator<Item = T>) -> Self {
         items.rfold(Self::null(), |acc, x| Self::cons(x, acc))
     }
 
@@ -136,6 +151,18 @@ impl Scm {
         }
     }
 
+    pub fn ptr_eq(&self, other: &Scm) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+
+    pub fn equals(&self, other: &Scm) -> bool {
+        self.0.equals(&*other.0)
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        self.0.deep_hash(state)
+    }
+
     pub fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Self {
         self.0.substitute(mapping)
     }
@@ -143,13 +170,13 @@ impl Scm {
 
 impl PartialEq for Scm {
     fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(Rc::as_ptr(&self.0), Rc::as_ptr(&other.0)) || &self.0 == &other.0
+        std::ptr::eq(Rc::as_ptr(&self.0), Rc::as_ptr(&other.0)) || self.equals(other)
     }
 }
 
 impl PartialEq for dyn ScmObject {
     fn eq(&self, other: &Self) -> bool {
-        ScmObject::eq(self, other)
+        ScmObject::equals(self, other)
     }
 }
 
@@ -177,9 +204,21 @@ impl CxR for Scm {
     }
 }
 
+impl From<i32> for Scm {
+    fn from(i: i32) -> Self {
+        Scm::int(i as i64)
+    }
+}
+
 impl From<i64> for Scm {
     fn from(i: i64) -> Self {
         Scm::int(i)
+    }
+}
+
+impl From<usize> for Scm {
+    fn from(i: usize) -> Self {
+        Scm::int(i as i64)
     }
 }
 
@@ -191,8 +230,130 @@ impl<'s> From<&'s str> for Scm {
 
 impl Eq for Scm {}
 
-impl Hash for Scm {
+#[derive(Debug, Clone)]
+#[repr(transparent)]
+pub struct HashPtrEq(Scm);
+
+impl HashPtrEq {
+    pub fn from_ref(scm: &Scm) -> &Self {
+        unsafe {
+            // # Safety : safe if Self transparently wraps Scm
+            std::mem::transmute(scm)
+        }
+    }
+
+    pub fn into_scm(self) -> Scm {
+        self.0
+    }
+}
+
+impl Hash for HashPtrEq {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        Rc::as_ptr(&self.0).hash(state)
+        Rc::as_ptr(&self.0 .0).hash(state)
+    }
+}
+
+impl Eq for HashPtrEq {}
+
+impl PartialEq for HashPtrEq {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.ptr_eq(&other.0)
+    }
+}
+
+impl From<Scm> for HashPtrEq {
+    fn from(scm: Scm) -> Self {
+        HashPtrEq(scm)
+    }
+}
+
+impl Borrow<Scm> for HashPtrEq {
+    fn borrow(&self) -> &Scm {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+#[repr(transparent)]
+pub struct HashEqual(Scm);
+
+impl HashEqual {
+    pub fn from_ref(scm: &Scm) -> &Self {
+        unsafe {
+            // # Safety : safe if Self transparently wraps Scm
+            std::mem::transmute(scm)
+        }
+    }
+
+    pub fn into_scm(self) -> Scm {
+        self.0
+    }
+}
+
+impl Hash for HashEqual {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // We use an ScmHasher to compute the recursive hash of our value,
+        // then hash the result again with the provided hasher.
+        // I could not figure out a nicer way...
+        let mut hasher = ScmHasher::new();
+        self.0 .0.deep_hash(&mut hasher);
+        hasher.finish().hash(state);
+    }
+}
+
+impl Eq for HashEqual {}
+
+impl PartialEq for HashEqual {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.equals(&other.0)
+    }
+}
+
+impl From<Scm> for HashEqual {
+    fn from(scm: Scm) -> Self {
+        HashEqual(scm)
+    }
+}
+
+impl Borrow<Scm> for HashEqual {
+    fn borrow(&self) -> &Scm {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WeakScm(Weak<dyn ScmObject>);
+
+impl Scm {
+    pub fn downgrade(&self) -> WeakScm {
+        WeakScm(Rc::downgrade(&self.0))
+    }
+}
+
+impl WeakScm {
+    pub fn upgrade(&self) -> Option<Scm> {
+        self.0.upgrade().map(Scm)
+    }
+
+    pub fn is_dead(&self) -> bool {
+        self.upgrade().is_none()
+    }
+
+    pub fn ptr_eq(&self, other: &Self) -> bool {
+        Weak::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl Hash for WeakScm {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Weak::as_ptr(&self.0).hash(state)
+    }
+}
+
+impl Eq for WeakScm {}
+
+impl PartialEq for WeakScm {
+    fn eq(&self, other: &Self) -> bool {
+        self.ptr_eq(other)
     }
 }

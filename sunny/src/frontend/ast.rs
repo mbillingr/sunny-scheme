@@ -89,7 +89,7 @@ impl Ast {
     pub fn build<B: Backend>(&self, backend: &mut B) -> B::Ir {
         match self {
             Ast::Void => backend.void(),
-            Ast::Const(ctx, sexpr) => backend.constant(ctx.clone(), sexpr),
+            Ast::Const(ctx, sexpr) => backend.constant(ctx.clone(), sexpr.clone()),
             Ast::Fetch(ctx, idx) => backend.fetch(ctx.clone(), *idx),
             Ast::Store(ctx, idx, value) => {
                 let value = value.build(backend);

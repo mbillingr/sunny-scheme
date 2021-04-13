@@ -1,9 +1,9 @@
 use crate::bytecode::{CodeSegment, Op};
-use crate::Value;
+use crate::scm_extension::ScmExt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use sunny_sexpr_parser::SourceLocation;
+use sunny_sexpr_parser::{HashEqual, Scm, SourceLocation};
 
 /// A chain of blocks with a single entry and exit point.
 /// Control flow may branch in a chain, but all branches
@@ -108,14 +108,14 @@ impl BlockChain {
 #[derive(Debug, Default)]
 pub struct BasicBlock {
     code: RefCell<Vec<Op>>,
-    constants: RefCell<Vec<Value>>,
+    constants: RefCell<Vec<Scm>>,
     source_map: RefCell<HashMap<usize, SourceLocation<()>>>,
     exit: RefCell<Exit>,
     exit_context: RefCell<Option<SourceLocation<()>>>,
 }
 
 impl BasicBlock {
-    pub fn new(code: Vec<Op>, constants: Vec<Value>) -> Self {
+    pub fn new(code: Vec<Op>, constants: Vec<Scm>) -> Self {
         BasicBlock {
             code: RefCell::new(code),
             constants: RefCell::new(constants),
@@ -231,9 +231,9 @@ impl BasicBlock {
         let mut builder = CodeBuilder::new();
         builder.build_code(self);
 
-        let mut constants = vec![Value::Void; builder.constant_map.len()];
+        let mut constants = vec![Scm::void(); builder.constant_map.len()];
         for (val, idx) in builder.constant_map {
-            constants[idx] = val;
+            constants[idx] = val.into_scm();
         }
 
         CodeSegment::new(builder.code, constants).with_source_map(builder.source_map)
@@ -270,7 +270,7 @@ impl From<Op> for Rc<BasicBlock> {
 
 struct CodeBuilder {
     code: Vec<Op>,
-    constant_map: HashMap<Value, usize>,
+    constant_map: HashMap<HashEqual, usize>,
     source_map: HashMap<usize, SourceLocation<()>>,
     block_offsets: HashMap<*const BasicBlock, usize>,
 }
@@ -302,7 +302,7 @@ impl CodeBuilder {
                     let value = block.constants.borrow()[const_idx].clone();
 
                     let n = self.constant_map.len();
-                    let new_idx = *self.constant_map.entry(value).or_insert(n);
+                    let new_idx = *self.constant_map.entry(value.into()).or_insert(n);
 
                     let ops = Op::extended(Op::Const, new_idx);
                     self.code.extend(ops);
@@ -496,21 +496,21 @@ mod tests {
 
     #[test]
     fn convert_basic_block_to_code_segment_copies_used_constants() {
-        let block = BasicBlock::new(vec![Op::Const(0)], vec![Value::number(1), Value::number(2)]);
+        let block = BasicBlock::new(vec![Op::Const(0)], vec![Scm::number(1), Scm::number(2)]);
 
         let segment = block.build_segment();
 
-        assert_eq!(segment.constant_slice(), &[Value::number(1)]);
+        assert_eq!(segment.constant_slice(), &[Scm::number(1)]);
     }
 
     #[test]
     fn convert_basic_block_to_code_segment_adjusts_constant_indices() {
-        let block = BasicBlock::new(vec![Op::Const(1)], vec![Value::number(1), Value::number(2)]);
+        let block = BasicBlock::new(vec![Op::Const(1)], vec![Scm::number(1), Scm::number(2)]);
 
         let segment = block.build_segment();
 
         assert_eq!(segment.code_slice()[0], Op::Const(0));
-        assert_eq!(segment.constant_slice(), &[Value::number(2)]);
+        assert_eq!(segment.constant_slice(), &[Scm::number(2)]);
     }
 
     #[test]
@@ -529,8 +529,8 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_shares_constants_between_blocks() {
-        let block1 = BasicBlock::new(vec![Op::Const(0)], vec![Value::number(42)]);
-        let block2 = BasicBlock::new(vec![Op::Const(1)], vec![Value::Nil, Value::number(42)]);
+        let block1 = BasicBlock::new(vec![Op::Const(0)], vec![Scm::number(42)]);
+        let block2 = BasicBlock::new(vec![Op::Const(1)], vec![Scm::null(), Scm::number(42)]);
         block1.jump_to(block2);
 
         let segment = block1.build_segment();
@@ -539,7 +539,7 @@ mod tests {
             segment.code_slice(),
             &[Op::Const(0), Op::Const(0), Op::Halt]
         );
-        assert_eq!(segment.constant_slice(), &[Value::number(42)]);
+        assert_eq!(segment.constant_slice(), &[Scm::number(42)]);
     }
 
     #[test]
@@ -659,10 +659,10 @@ mod tests {
         let mut consts = vec![];
         for i in 0..=255 {
             ops.push(Op::Const(i));
-            consts.push(Value::number(i as i64));
+            consts.push(Scm::number(i as i64));
         }
         let block1 = BasicBlock::new(ops, consts);
-        let block2 = BasicBlock::new(vec![Op::Const(0)], vec![Value::Nil]);
+        let block2 = BasicBlock::new(vec![Op::Const(0)], vec![Scm::null()]);
         block1.jump_to(block2);
 
         let segment = block1.build_segment();
@@ -675,7 +675,7 @@ mod tests {
 
     #[test]
     fn convert_to_code_segment_correctly_removes_extargs_for_constants() {
-        let block = BasicBlock::new(vec![Op::ExtArg(0), Op::Const(0)], vec![Value::number(1)]);
+        let block = BasicBlock::new(vec![Op::ExtArg(0), Op::Const(0)], vec![Scm::number(1)]);
 
         let segment = block.build_segment();
 

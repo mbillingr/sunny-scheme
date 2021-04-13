@@ -1,17 +1,18 @@
 use crate::activation::Activation;
 use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
 use crate::continuation::Continuation;
+use crate::scm_extension::ScmExt;
 use crate::{
     bytecode::Op, closure::Closure, mem::Ref, storage::ValueStorage, Error, ErrorKind, Result,
     RuntimeResult, Value,
 };
 use std::cell::Cell;
-use sunny_sexpr_parser::Scm;
+use sunny_sexpr_parser::{CxR, Scm};
 
 pub struct Vm {
     storage: ValueStorage,
-    value_stack: Vec<Value>,
-    globals: Vec<Value>,
+    value_stack: Vec<Scm>,
+    globals: Vec<Scm>,
 
     current_activation: Ref<Activation>,
 }
@@ -41,11 +42,11 @@ impl Vm {
         &mut self.storage
     }
 
-    pub fn build_value(&mut self, scm: &Scm) -> Value {
-        self.storage.scm_to_value(scm)
+    pub fn build_value(&mut self, scm: &Scm) -> Scm {
+        scm.clone()
     }
 
-    pub fn eval_repl(&mut self, code: CodeSegment) -> RuntimeResult<Value> {
+    pub fn eval_repl(&mut self, code: CodeSegment) -> RuntimeResult<Scm> {
         let mut root_activation = self.current_activation.clone();
         let code = self.storage.insert(code);
         root_activation.code = CodePointer::new(code);
@@ -54,7 +55,7 @@ impl Vm {
             Ok(x) => {
                 if !self.value_stack.is_empty() {
                     panic!(
-                        "Value stack should be empty but contains {:?}",
+                        "Scm stack should be empty but contains {:?}",
                         self.value_stack
                     )
                 }
@@ -69,12 +70,12 @@ impl Vm {
         }
     }
 
-    pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Value> {
+    pub fn eval(&mut self, code: CodePointer) -> RuntimeResult<Scm> {
         let closure = Closure { code, parent: None };
         self.eval_closure(&closure)
     }
 
-    pub fn eval_closure(&mut self, closure: &Closure) -> RuntimeResult<Value> {
+    pub fn eval_closure(&mut self, closure: &Closure) -> RuntimeResult<Scm> {
         self.load_closure(closure);
         self.run().map_err(|e| self.add_error_context(e))
     }
@@ -96,7 +97,7 @@ impl Vm {
         }
     }
 
-    fn run(&mut self) -> Result<Value> {
+    fn run(&mut self) -> Result<Scm> {
         let mut arg: usize = 0;
         loop {
             let op = self.fetch_op();
@@ -149,8 +150,8 @@ impl Vm {
                 Op::TailCallDynamic => self.call_dynamic(Self::tail_call)?,
                 Op::PrepareArgs(n_args) => self.prepare_args(Op::extend_arg(n_args, arg))?,
                 Op::PrepareVarArgs(n_args) => self.prepare_varargs(Op::extend_arg(n_args, arg))?,
-                Op::Void => self.push_value(Value::Void),
-                Op::Integer(a) => self.push_value(Value::number(Op::extend_arg(a, arg) as i64)),
+                Op::Void => self.push_value(Scm::void()),
+                Op::Integer(a) => self.push_value(Scm::int(Op::extend_arg(a, arg) as i64)),
                 Op::Const(a) => self.push_const(Op::extend_arg(a, arg)),
                 Op::GetStack(a) => self.push_from_stack(Op::extend_arg(a, arg)),
                 Op::Dup => self.dup()?,
@@ -175,19 +176,19 @@ impl Vm {
         self.current_activation.code.fetch()
     }
 
-    pub fn push_value(&mut self, val: Value) {
+    pub fn push_value(&mut self, val: Scm) {
         //println!("pushing {:?}", val);
         self.value_stack.push(val);
     }
 
-    pub fn pop_value(&mut self) -> Result<Value> {
+    pub fn pop_value(&mut self) -> Result<Scm> {
         //println!("popping");
         self.value_stack.pop().ok_or(ErrorKind::StackUnderflow)
         //self.value_stack.pop().ok_or_else(||panic!())
     }
 
-    pub fn push_list_items(&mut self, list: &Value) -> Result<usize> {
-        if list.is_nil() {
+    pub fn push_list_items(&mut self, list: &Scm) -> Result<usize> {
+        if list.is_null() {
             Ok(0)
         } else if let Some(x) = list.car() {
             let n = self.push_list_items(list.cdr().unwrap())?;
@@ -202,7 +203,7 @@ impl Vm {
         self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)
     }
 
-    fn pop_values(&mut self, n: usize) -> Result<Vec<Value>> {
+    fn pop_values(&mut self, n: usize) -> Result<Vec<Scm>> {
         let mut values = Vec::with_capacity(n);
         for _ in 0..n {
             values.push(self.pop_value()?);
@@ -223,7 +224,7 @@ impl Vm {
     fn get_global(&mut self, idx: usize) -> Result<()> {
         if idx >= self.globals.len() {
             /*self.globals
-            .resize((idx + 1).next_power_of_two(), Value::Void);*/
+            .resize((idx + 1).next_power_of_two(), Scm::Void);*/
             return Err(ErrorKind::UndefinedVariable);
         }
         let x = self.globals[idx].clone();
@@ -240,10 +241,10 @@ impl Vm {
         Ok(())
     }
 
-    pub fn assign_global(&mut self, idx: usize, value: Value) {
+    pub fn assign_global(&mut self, idx: usize, value: Scm) {
         if idx >= self.globals.len() {
             self.globals
-                .resize((idx + 1).next_power_of_two(), Value::Void);
+                .resize((idx + 1).next_power_of_two(), Scm::void());
         }
         self.globals[idx] = value;
     }
@@ -254,11 +255,11 @@ impl Vm {
         Ok(())
     }
 
-    fn append_local(&mut self, value: Value) {
+    fn append_local(&mut self, value: Scm) {
         self.current_activation.locals.push(Cell::new(value));
     }
 
-    fn drop_local(&mut self) -> Result<Value> {
+    fn drop_local(&mut self) -> Result<Scm> {
         let value = self
             .current_activation
             .locals
@@ -282,7 +283,7 @@ impl Vm {
         Ok(())
     }
 
-    fn set_local(&mut self, mut idx: usize, value: Value) {
+    fn set_local(&mut self, mut idx: usize, value: Scm) {
         let mut act = &mut self.current_activation;
         while idx >= act.locals.len() && act.parent.is_some() {
             idx -= act.locals.len();
@@ -291,19 +292,18 @@ impl Vm {
 
         if idx >= act.locals.len() {
             act.locals
-                .resize_with((idx + 1).next_power_of_two(), || Cell::new(Value::Void));
+                .resize_with((idx + 1).next_power_of_two(), || Cell::new(Scm::void()));
         }
         act.locals[idx].set(value);
     }
 
     fn peek_closure(&mut self, idx: usize) -> Result<()> {
-        match self.pop_value()? {
-            Value::Closure(cls) => {
-                let x = cell_clone(&cls.parent.as_ref().unwrap().locals[idx]);
-                self.push_value(x);
-                Ok(())
-            }
-            _ => Err(ErrorKind::TypeError),
+        if let Some(cls) = self.pop_value()?.as_closure() {
+            let x = cell_clone(&cls.parent.as_ref().unwrap().locals[idx]);
+            self.push_value(x);
+            Ok(())
+        } else {
+            Err(ErrorKind::TypeError)
         }
     }
 
@@ -363,44 +363,50 @@ impl Vm {
 
     fn call(&mut self, n_args: usize) -> Result<()> {
         let func = self.pop_value()?;
-        match func {
-            Value::Closure(cls) => self.call_closure(cls, n_args),
-            Value::Primitive(p) => (p.proc)(n_args, self),
-            Value::Continuation(cnt) => self.call_continuation(cnt, n_args),
-            _ => Err(ErrorKind::TypeError),
+        if let Some(cls) = func.as_closure() {
+            self.call_closure(cls, n_args)
+        } else if let Some(pri) = func.as_primitive() {
+            (pri.proc)(n_args, self)
+        } else if let Some(cnt) = func.as_continuation() {
+            self.call_continuation(cnt, n_args)
+        } else {
+            Err(ErrorKind::TypeError)
         }
     }
 
     fn tail_call(&mut self, n_args: usize) -> Result<()> {
         let func = self.pop_value()?;
-        match func {
-            Value::Closure(cls) => self.tail_call_closure(cls, n_args),
-            Value::Primitive(p) => (p.proc)(n_args, self),
-            Value::Continuation(cnt) => self.call_continuation(cnt, n_args),
-            _ => Err(ErrorKind::TypeError),
+        if let Some(cls) = func.as_closure() {
+            self.tail_call_closure(cls, n_args)
+        } else if let Some(pri) = func.as_primitive() {
+            (pri.proc)(n_args, self)
+        } else if let Some(cnt) = func.as_continuation() {
+            self.call_continuation(cnt, n_args)
+        } else {
+            Err(ErrorKind::TypeError)
         }
     }
 
-    fn call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
+    fn call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
-        let act = Activation::from_closure(self.current_activation.clone(), &*cls, args);
+        let act = Activation::from_closure(self.current_activation.clone(), cls, args);
         self.current_activation = self.storage.insert(act);
         Ok(())
     }
 
-    fn tail_call_closure(&mut self, cls: Ref<Closure>, n_args: usize) -> Result<()> {
+    fn tail_call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
         let caller = self
             .current_activation
             .caller
             .as_ref()
             .unwrap_or(&self.current_activation);
-        let act = Activation::from_closure(caller.clone(), &*cls, args);
+        let act = Activation::from_closure(caller.clone(), &cls, args);
         self.current_activation = self.storage.insert(act);
         Ok(())
     }
 
-    fn call_continuation(&mut self, cnt: Ref<Continuation>, n_args: usize) -> Result<()> {
+    fn call_continuation(&mut self, cnt: &Continuation, n_args: usize) -> Result<()> {
         if n_args < 1 {
             return Err(ErrorKind::TooFewArgs);
         }
@@ -417,12 +423,11 @@ impl Vm {
 
     fn call_dynamic(&mut self, actual_call: fn(&mut Self, usize) -> Result<()>) -> Result<()> {
         let top = self.pop_value()?;
-        let n_args = match top {
-            Value::Values(n) => n,
-            _ => {
-                self.push_value(top);
-                1
-            }
+        let n_args = if let Some(n) = top.as_values() {
+            n
+        } else {
+            self.push_value(top);
+            1
         };
         self.get_callee_with_values(n_args)?;
         actual_call(self, n_args)
@@ -457,10 +462,10 @@ impl Vm {
 
         let n_varargs = self.current_activation.locals.len() - n_args;
 
-        let mut vararg = Value::Nil;
+        let mut vararg = Scm::null();
         for _ in 0..n_varargs {
             let x = self.drop_local()?;
-            vararg = self.storage.cons(x, vararg);
+            vararg = Scm::cons(x, vararg);
         }
 
         self.append_local(vararg);
@@ -491,26 +496,26 @@ impl Vm {
     fn eq(&mut self) -> Result<()> {
         let a = self.pop_value()?;
         let b = self.pop_value()?;
-        self.push_value(Value::bool(a.eq(&b)));
+        self.push_value(Scm::bool(a.eq(&b)));
         Ok(())
     }
 
     fn inc(&mut self) -> Result<()> {
         let x = self.pop_int()?;
-        self.push_value(Value::number(x + 1));
+        self.push_value(Scm::number(x + 1));
         Ok(())
     }
 
     fn dec(&mut self) -> Result<()> {
         let x = self.pop_int()?;
-        self.push_value(Value::number(x - 1));
+        self.push_value(Scm::number(x - 1));
         Ok(())
     }
 
     fn cons(&mut self) -> Result<()> {
         let cdr = self.pop_value()?;
         let car = self.pop_value()?;
-        let pair = self.storage.cons(car, cdr);
+        let pair = Scm::cons(car, cdr);
         self.push_value(pair);
         Ok(())
     }
@@ -536,9 +541,8 @@ impl Vm {
             code,
             parent: Some(self.current_activation.clone()),
         };
-        let closure = self.storage.insert(closure);
 
-        self.push_value(Value::Closure(closure));
+        self.push_value(Scm::closure(closure));
     }
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
@@ -553,8 +557,7 @@ impl Vm {
             activation,
             value_stack,
         };
-        let continuation = self.storage.insert(continuation);
-        self.push_value(Value::Continuation(continuation));
+        self.push_value(Scm::continuation(continuation));
 
         Ok(())
     }
@@ -574,7 +577,7 @@ mod tests {
 
     struct VmRunner {
         storage_capacity: usize,
-        value_stack: Option<Vec<Value>>,
+        value_stack: Option<Vec<Scm>>,
     }
 
     impl VmRunner {
@@ -592,14 +595,14 @@ mod tests {
             }
         }
 
-        fn with_value_stack(self, values: Vec<Value>) -> Self {
+        fn with_value_stack(self, values: Vec<Scm>) -> Self {
             VmRunner {
                 value_stack: Some(values),
                 ..self
             }
         }
 
-        fn run_code(self, cb: CodeBuilder) -> (Result<Value>, Vm) {
+        fn run_code(self, cb: CodeBuilder) -> (Result<Scm>, Vm) {
             let mut vm = self.prepare_vm(cb);
             let ret = vm.run();
             (ret, vm)
@@ -653,11 +656,11 @@ mod tests {
     #[test]
     fn op_return_from_toplevel_pops_value_stack() {
         let (ret, vm) = VmRunner::new()
-            .with_value_stack(vec![Value::number(0), Value::number(1)])
+            .with_value_stack(vec![Scm::number(0), Scm::number(1)])
             .run_code(CodeBuilder::new().op(Op::Return));
 
-        assert_eq!(ret, Ok(Value::number(1)));
-        assert_eq!(vm.value_stack, vec![Value::number(0)]);
+        assert_eq!(ret, Ok(Scm::number(1)));
+        assert_eq!(vm.value_stack, vec![Scm::number(0)]);
     }
 
     #[test]
@@ -675,7 +678,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(vm.value_stack, vec![Value::number(0x0123456789abcdef_i64)]);
+        assert_eq!(vm.value_stack, vec![Scm::number(0x0123456789abcdef_i64)]);
     }
 
     #[test]
@@ -683,34 +686,34 @@ mod tests {
         let (_, vm) =
             VmRunner::new().run_code(CodeBuilder::new().op(Op::Integer(123)).op(Op::Halt));
 
-        assert_eq!(vm.value_stack, vec![Value::number(123)]);
+        assert_eq!(vm.value_stack, vec![Scm::number(123)]);
     }
 
     #[test]
     fn op_const_pushes_constant() {
         let (_, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::Void)
-                .constant(Value::Nil)
-                .constant(Value::number(0))
+                .constant(Scm::void())
+                .constant(Scm::null())
+                .constant(Scm::number(0))
                 .op(Op::Halt),
         );
 
         assert_eq!(
             vm.value_stack,
-            vec![Value::Void, Value::Nil, Value::number(0)]
+            vec![Scm::void(), Scm::null(), Scm::number(0)]
         );
     }
 
     #[test]
     fn op_cons_pops_two_values_and_pushes_pair() {
         let (_, vm) = VmRunner::new()
-            .with_value_stack(vec![Value::number(0), Value::Nil])
+            .with_value_stack(vec![Scm::number(0), Scm::null()])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
         assert_eq!(
             vm.value_stack.last().unwrap(),
-            &(Value::number(0), Value::Nil)
+            &Scm::cons(Scm::number(0), Scm::null())
         );
     }
 
@@ -718,12 +721,12 @@ mod tests {
     fn op_cons_succeeds_even_when_storage_is_full() {
         let (_, vm) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::number(0), Value::Nil])
+            .with_value_stack(vec![Scm::number(0), Scm::null()])
             .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
 
         assert_eq!(
             vm.value_stack.last().unwrap(),
-            &(Value::number(0), Value::Nil)
+            &Scm::cons(Scm::number(0), Scm::null())
         );
     }
 
@@ -766,7 +769,7 @@ mod tests {
     fn op_call_expects_callable_on_top_of_stack() {
         let (ret, _) = VmRunner::new()
             .with_capacity(0)
-            .with_value_stack(vec![Value::number(0)])
+            .with_value_stack(vec![Scm::number(0)])
             .run_code(CodeBuilder::new().op(Op::Call { n_args: 0 }));
 
         assert_eq!(ret, Err(ErrorKind::TypeError));
@@ -797,7 +800,7 @@ mod tests {
             parent: None,
         };
 
-        let value_stack = vec![storage.store_closure(callee).unwrap()];
+        let value_stack = vec![Scm::closure(callee)];
 
         let mut vm = Vm::new(storage).unwrap();
 
@@ -807,7 +810,7 @@ mod tests {
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(vm.value_stack, vec![Value::number(1)]);
+        assert_eq!(vm.value_stack, vec![Scm::number(1)]);
     }
 
     #[test]
@@ -829,15 +832,15 @@ mod tests {
         assert_eq!(ret, Err(ErrorKind::Halted));
         assert_eq!(
             cell_clone(&vm.current_activation.locals[0]),
-            Value::number(12)
+            Scm::number(12)
         );
         assert_eq!(
             cell_clone(&vm.current_activation.locals[1]),
-            Value::number(11)
+            Scm::number(11)
         );
         assert_eq!(
             cell_clone(&vm.current_activation.locals[2]),
-            Value::number(10)
+            Scm::number(10)
         );
     }
 
@@ -863,10 +866,10 @@ mod tests {
         assert_eq!(
             &*vm.value_stack,
             vec![
-                Value::number(12),
-                Value::number(10),
-                Value::number(10),
-                Value::number(11)
+                Scm::number(12),
+                Scm::number(10),
+                Scm::number(10),
+                Scm::number(11)
             ]
         )
     }
@@ -896,10 +899,10 @@ mod tests {
         assert_eq!(
             &*vm.value_stack,
             vec![
-                Value::number(10),
-                Value::number(12),
-                Value::number(12),
-                Value::number(11)
+                Scm::number(10),
+                Scm::number(12),
+                Scm::number(12),
+                Scm::number(11)
             ]
         )
     }
@@ -919,7 +922,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(12), Value::number(34)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(12), Scm::number(34)])
     }
 
     #[test]
@@ -932,7 +935,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(0)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(0)])
     }
 
     #[test]
@@ -948,14 +951,14 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(2), Value::number(3)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(2), Scm::number(3)])
     }
 
     #[test]
     fn op_jump_conditionally_take_false_branch() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::False)
+                .constant(Scm::bool(false))
                 .branch_if("then")
                 .label("else")
                 .op(Op::Integer(0))
@@ -966,14 +969,14 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(0)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(0)])
     }
 
     #[test]
     fn op_jump_conditionally_take_true_branch() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::True)
+                .constant(Scm::bool(true))
                 .branch_if("then")
                 .label("else")
                 .op(Op::Integer(0))
@@ -984,14 +987,14 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(1)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(1)])
     }
 
     #[test]
     fn op_jump_void_falls_through_and_leaves_condition_on_stack() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::number(2))
+                .constant(Scm::number(2))
                 .branch_void("is void")
                 .op(Op::Integer(0))
                 .op(Op::Halt)
@@ -1001,14 +1004,14 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(2), Value::number(0)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(2), Scm::number(0)])
     }
 
     #[test]
     fn op_jump_void_take_true_branch() {
         let (ret, vm) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::Void)
+                .constant(Scm::void())
                 .branch_void("is void")
                 .op(Op::Integer(0))
                 .op(Op::Halt)
@@ -1018,7 +1021,7 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&*vm.value_stack, vec![Value::number(1)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(1)])
     }
 
     #[test]
@@ -1030,7 +1033,7 @@ mod tests {
             PRIM_CALLED.store(true, Ordering::SeqCst);
             Ok(())
         }
-        let prim_val = Value::Primitive(Ref::new(Primitive::fixed_arity("", 0, prim)));
+        let prim_val = Scm::primitive(Primitive::fixed_arity("", 0, prim));
 
         let (ret, _) = VmRunner::new().run_code(
             CodeBuilder::new()
@@ -1046,7 +1049,7 @@ mod tests {
     #[test]
     fn op_car_returns_value_error_if_no_pair_on_top() {
         let (ret, vm) = VmRunner::new()
-            .with_value_stack(vec![Value::Nil])
+            .with_value_stack(vec![Scm::null()])
             .run_code(CodeBuilder::new().op(Op::Car));
 
         assert_eq!(ret, Err(ErrorKind::TypeError));
@@ -1056,7 +1059,7 @@ mod tests {
     #[test]
     fn op_cdr_returns_value_error_if_no_pair_on_top() {
         let (ret, vm) = VmRunner::new()
-            .with_value_stack(vec![Value::Nil])
+            .with_value_stack(vec![Scm::null()])
             .run_code(CodeBuilder::new().op(Op::Cdr));
 
         assert_eq!(ret, Err(ErrorKind::TypeError));
@@ -1074,7 +1077,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::number(1)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(1)])
     }
 
     #[test]
@@ -1088,7 +1091,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::number(2)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(2)])
     }
 
     #[test]
@@ -1107,12 +1110,12 @@ mod tests {
         assert_eq!(
             &*vm.value_stack,
             vec![
-                Value::number(1),
-                Value::number(2),
-                Value::number(3),
-                Value::number(1),
-                Value::number(3),
-                Value::number(3)
+                Scm::number(1),
+                Scm::number(2),
+                Scm::number(3),
+                Scm::number(1),
+                Scm::number(3),
+                Scm::number(3)
             ]
         )
     }
@@ -1130,7 +1133,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::number(1), Value::number(2)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(1), Scm::number(2)])
     }
 
     #[test]
@@ -1147,7 +1150,7 @@ mod tests {
                 .op(Op::Halt),
         );
 
-        assert_eq!(&*vm.value_stack, vec![Value::number(1), Value::number(2)])
+        assert_eq!(&*vm.value_stack, vec![Scm::number(1), Scm::number(2)])
     }
 
     #[test]
@@ -1173,7 +1176,7 @@ mod tests {
             caller: None,
             parent: None,
             code: CodePointer::new(code_segment.clone()).at(999),
-            locals: vec![Cell::new(Value::number(1)), Cell::new(Value::number(2))],
+            locals: vec![Cell::new(Scm::number(1)), Cell::new(Scm::number(2))],
         };
         let act = storage.insert(act);
 
@@ -1182,7 +1185,7 @@ mod tests {
             parent: Some(act),
         };
 
-        let value_stack = vec![storage.store_closure(callee).unwrap()];
+        let value_stack = vec![Scm::closure(callee)];
 
         let mut vm = Vm::new(storage).unwrap();
 
@@ -1192,14 +1195,14 @@ mod tests {
         let ret = vm.run();
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(vm.value_stack, vec![Value::number(2)]);
+        assert_eq!(vm.value_stack, vec![Scm::number(2)]);
     }
 
     #[test]
     fn dereferencing_void_is_an_error() {
         let (res, _) = VmRunner::new().run_code(
             CodeBuilder::new()
-                .constant(Value::Void)
+                .constant(Scm::void())
                 .op(Op::PushLocal)
                 .op(Op::Fetch(0))
                 .op(Op::Halt),

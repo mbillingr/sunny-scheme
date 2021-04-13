@@ -1,11 +1,5 @@
 use std::rc::Rc;
 
-use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
-use sunny_sexpr_parser::{SharedStr, SourceLocation, SourceMap};
-use sunny_vm::optimizations::tail_call_optimization;
-use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
-use sunny_vm::{Primitive, PrimitiveProc};
-
 use crate::backend::{ByteCodeBackend, GlobalTable};
 use crate::frontend::ast::Ast;
 use crate::frontend::environment::{Env, EnvBinding};
@@ -13,7 +7,13 @@ use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
+use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
+use sunny_sexpr_parser::{Scm, SharedStr, SourceLocation, SourceMap};
 use sunny_vm::mem::Ref;
+use sunny_vm::optimizations::tail_call_optimization;
+use sunny_vm::scm_extension::ScmExt;
+use sunny_vm::{ErrorKind, Value, ValueStorage, Vm};
+use sunny_vm::{Primitive, PrimitiveProc};
 
 pub struct Context {
     env: Env,
@@ -42,12 +42,12 @@ impl Context {
         }
     }
 
-    pub fn eval(&mut self, src: SharedStr) -> Result<Value, Error> {
+    pub fn eval(&mut self, src: SharedStr) -> Result<Scm, Error> {
         let sexprs =
             parse_with_map(src.clone(), &mut self.src_map).map_err(|e| e.in_string(src.clone()))?;
 
         if sexprs.is_empty() {
-            return Ok(Value::Void);
+            return Ok(Scm::void());
         }
 
         //println!("{:#?}", self.env);
@@ -78,16 +78,6 @@ impl Context {
         let result = self.vm.eval_repl(code)?;
 
         Ok(result)
-    }
-
-    pub fn symbol(&mut self, name: &str) -> Value {
-        let storage = self.vm.borrow_storage();
-        storage.interned_symbol(name)
-    }
-
-    pub fn cons(&mut self, a: impl Into<Value>, b: impl Into<Value>) -> Value {
-        let storage = self.vm.borrow_storage();
-        storage.cons(a, b)
     }
 
     pub fn set_libfs(&mut self, lfs: LibraryFileSystem) {
@@ -184,7 +174,7 @@ impl<'c> LibDefiner<'c> {
         proc: PrimitiveProc,
     ) -> Self {
         let primitive = Primitive::fixed_arity(name, arity, proc);
-        self.define_value(name, |_| Value::Primitive(Ref::new(primitive)))
+        self.define_value(name, |_| Scm::primitive(primitive))
     }
 
     pub fn define_primitive_max_arity(
@@ -195,7 +185,7 @@ impl<'c> LibDefiner<'c> {
         proc: PrimitiveProc,
     ) -> Self {
         let primitive = Primitive::max_arity(name, min_arity, max_arity, proc);
-        self.define_value(name, |_| Value::Primitive(Ref::new(primitive)))
+        self.define_value(name, |_| Scm::primitive(primitive))
     }
 
     pub fn define_primitive_vararg(
@@ -205,10 +195,10 @@ impl<'c> LibDefiner<'c> {
         proc: PrimitiveProc,
     ) -> Self {
         let primitive = Primitive::vararg(name, min_arity, proc);
-        self.define_value(name, |_| Value::Primitive(Ref::new(primitive)))
+        self.define_value(name, |_| Scm::primitive(primitive))
     }
 
-    pub fn define_value(mut self, name: &str, f: impl FnOnce(&mut ValueStorage) -> Value) -> Self {
+    pub fn define_value(mut self, name: &str, f: impl FnOnce(&mut ValueStorage) -> Scm) -> Self {
         let fqn = self.fully_qualified_name(name);
 
         let idx = self.runtime_globals().determine_index(&fqn);

@@ -1,10 +1,10 @@
 use crate::activation::Activation;
 use crate::mem::Ref;
-use crate::Value;
+use sunny_sexpr_parser::Scm;
 
 pub struct Continuation {
     pub(crate) activation: Ref<Activation>,
-    pub(crate) value_stack: Vec<Value>,
+    pub(crate) value_stack: Vec<Scm>,
 }
 
 impl std::fmt::Debug for Continuation {

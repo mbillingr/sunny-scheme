@@ -1,9 +1,10 @@
+use crate::scm::HashPtrEq;
 use crate::{Scm, SourceLocation};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub struct SourceMap {
-    mapping: RefCell<HashMap<Scm, SourceLocation<()>>>,
+    mapping: RefCell<HashMap<HashPtrEq, SourceLocation<()>>>,
 }
 
 impl Default for SourceMap {
@@ -20,13 +21,13 @@ impl SourceMap {
     }
 
     pub fn insert(&self, scm: Scm, location: SourceLocation<()>) {
-        self.mapping.borrow_mut().insert(scm, location);
+        self.mapping.borrow_mut().insert(scm.into(), location);
     }
 
     pub fn get(&self, scm: &Scm) -> SourceLocation<()> {
         self.mapping
             .borrow()
-            .get(scm)
+            .get(HashPtrEq::from_ref(scm))
             .cloned()
             .unwrap_or_else(SourceLocation::default)
     }

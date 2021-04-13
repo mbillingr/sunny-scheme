@@ -1,3 +1,4 @@
+use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
 use std::any::Any;
 use std::collections::HashMap;
@@ -27,11 +28,16 @@ impl ScmObject for Pair {
         self
     }
 
-    fn eq(&self, other: &dyn ScmObject) -> bool {
+    fn equals(&self, other: &dyn ScmObject) -> bool {
         other
             .downcast_ref::<Self>()
             .map(|other| self.first == other.first && self.second == other.second)
             .unwrap_or(false)
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        self.first.deep_hash(state);
+        self.second.deep_hash(state);
     }
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {

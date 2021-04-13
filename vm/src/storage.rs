@@ -1,4 +1,3 @@
-use crate::closure::Closure;
 use crate::mem::{Ref, Storage};
 use crate::value::{ConstString, Symbol};
 use crate::Value;
@@ -84,11 +83,6 @@ impl ValueStorage {
             .into_iter()
             .rev()
             .fold(Value::Nil, |acc, x| self.cons(x, acc))
-    }
-
-    pub fn store_closure(&mut self, cls: Closure) -> Result<Value, Closure> {
-        let obj = self.insert(cls);
-        Ok(Value::Closure(obj))
     }
 
     pub fn insert<T: 'static>(&mut self, obj: T) -> Ref<T> {

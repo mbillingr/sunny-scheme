@@ -6,6 +6,7 @@ pub use value::{Object, Value, WeakValue};
 pub use vm::Vm;
 
 use crate::bytecode::CodePointer;
+use sunny_sexpr_parser::Scm;
 
 mod activation;
 mod basic_block;
@@ -16,17 +17,17 @@ mod continuation;
 pub mod number;
 pub mod optimizations;
 mod primitive;
+pub mod scm_extension;
 mod storage;
 mod value;
 pub mod vm;
-mod scm_extension;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ErrorKind {
-    Generic(Value),
+    Generic(Scm),
     Halted,
     StackUnderflow,
     NotCallable,

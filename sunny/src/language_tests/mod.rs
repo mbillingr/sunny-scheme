@@ -21,22 +21,22 @@ use hamcrest2::matchers::err::IsErr;
 use hamcrest2::matchers::has::Has;
 use hamcrest2::prelude::*;
 use std::cell::Cell;
-use sunny_sexpr_parser::SourceLocation;
-use sunny_vm::Value;
+use sunny_sexpr_parser::{Scm, SourceLocation};
+use sunny_vm::scm_extension::ScmExt;
 
 struct EvaluatesTo;
 
 impl EvaluatesTo {
-    pub fn an_error() -> EvaluationMatcher<IsErr<Value, Error>> {
+    pub fn an_error() -> EvaluationMatcher<IsErr<Scm, Error>> {
         EvaluationMatcher::new(err())
     }
 
     pub fn a_procedure() -> EvaluationMatcher<ResultSatisfies> {
-        EvaluationMatcher::new(satisfies(Value::is_procedure, "<a procedure>"))
+        EvaluationMatcher::new(satisfies(Scm::is_procedure, "<a procedure>"))
     }
 
-    pub fn void() -> EvaluationMatcher<Has<Value>> {
-        EvaluationMatcher::new(has(Value::Void))
+    pub fn void() -> EvaluationMatcher<Has<Scm>> {
+        EvaluationMatcher::new(has(Scm::void()))
     }
 
     pub fn the_frontend_error(err: FrontendError) -> EvaluationMatcher<IsSpecificErr<Error>> {
@@ -45,12 +45,12 @@ impl EvaluatesTo {
         EvaluationMatcher::new(is_err(err))
     }
 
-    pub fn the_integer(i: i64) -> EvaluationMatcher<Has<Value>> {
-        EvaluationMatcher::new(has(Value::number(i)))
+    pub fn the_integer(i: i64) -> EvaluationMatcher<Has<Scm>> {
+        EvaluationMatcher::new(has(Scm::number(i)))
     }
 
-    pub fn the_boolean(b: bool) -> EvaluationMatcher<Has<Value>> {
-        EvaluationMatcher::new(has(Value::bool(b)))
+    pub fn the_boolean(b: bool) -> EvaluationMatcher<Has<Scm>> {
+        EvaluationMatcher::new(has(Scm::bool(b)))
     }
 
     pub fn the_symbol(name: &'static str) -> EvaluationMatcher<IsOk<EqualsSymbol>> {
@@ -59,43 +59,40 @@ impl EvaluatesTo {
         }
     }
 
-    pub fn the_pair(
-        a: impl Into<Value>,
-        b: impl Into<Value>,
-    ) -> EvaluationMatcher<IsOk<EqualsPair>> {
+    pub fn the_pair(a: impl Into<Scm>, b: impl Into<Scm>) -> EvaluationMatcher<IsOk<EqualsPair>> {
         EvaluationMatcher {
             result_matcher: is_ok(equals_pair(a, b)),
         }
     }
 
-    pub fn the_list(items: Vec<impl Into<Value>>) -> EvaluationMatcher<IsOk<EqualsList>> {
+    pub fn the_list(items: Vec<impl Into<Scm>>) -> EvaluationMatcher<IsOk<EqualsList>> {
         EvaluationMatcher {
             result_matcher: is_ok(equals_list(items)),
         }
     }
 
-    pub fn nil() -> EvaluationMatcher<EqualTo<Result<Value, Error>>> {
-        EvaluationMatcher::new(equal_to(Ok(Value::Nil)))
+    pub fn nil() -> EvaluationMatcher<EqualTo<Result<Scm, Error>>> {
+        EvaluationMatcher::new(equal_to(Ok(Scm::null())))
     }
 }
 
-struct EvaluationMatcher<M: Matcher<Result<Value, Error>>> {
+struct EvaluationMatcher<M: Matcher<Result<Scm, Error>>> {
     result_matcher: M,
 }
 
-impl<M: Matcher<Result<Value, Error>>> EvaluationMatcher<M> {
+impl<M: Matcher<Result<Scm, Error>>> EvaluationMatcher<M> {
     pub fn new(result_matcher: M) -> Self {
         EvaluationMatcher { result_matcher }
     }
 }
 
-impl<M: Matcher<Result<Value, Error>>> std::fmt::Display for EvaluationMatcher<M> {
+impl<M: Matcher<Result<Scm, Error>>> std::fmt::Display for EvaluationMatcher<M> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         self.result_matcher.fmt(f)
     }
 }
 
-impl<M: Matcher<Result<Value, Error>>, T: Eval> Matcher<T> for EvaluationMatcher<M> {
+impl<M: Matcher<Result<Scm, Error>>, T: Eval> Matcher<T> for EvaluationMatcher<M> {
     fn matches(&self, testee: T) -> MatchResult {
         let mut context = testee.make_context();
         let result = testee.eval(&mut context);
@@ -104,7 +101,7 @@ impl<M: Matcher<Result<Value, Error>>, T: Eval> Matcher<T> for EvaluationMatcher
 }
 
 pub trait Eval {
-    fn eval(&self, context: &mut Context) -> Result<Value, Error>;
+    fn eval(&self, context: &mut Context) -> Result<Scm, Error>;
 
     fn make_context(&self) -> Context {
         let mut context = Context::new();
@@ -124,13 +121,13 @@ pub trait Eval {
 }
 
 impl Eval for &str {
-    fn eval(&self, context: &mut Context) -> Result<Value, Error> {
+    fn eval(&self, context: &mut Context) -> Result<Scm, Error> {
         context.eval((*self).into())
     }
 }
 
 impl<T: Eval> Eval for Vec<T> {
-    fn eval(&self, context: &mut Context) -> Result<Value, Error> {
+    fn eval(&self, context: &mut Context) -> Result<Scm, Error> {
         if self.len() >= 2 {
             for expr in &self[..self.len() - 1] {
                 expr.eval(context)?;
@@ -186,7 +183,7 @@ impl<T> EvalIn<T> {
 }
 
 impl<T: Eval> Eval for EvalIn<T> {
-    fn eval(&self, context: &mut Context) -> Result<Value, Error> {
+    fn eval(&self, context: &mut Context) -> Result<Scm, Error> {
         self.evalee.eval(context)
     }
 
@@ -197,8 +194,8 @@ impl<T: Eval> Eval for EvalIn<T> {
 
 #[derive(Debug)]
 pub struct EqualsPair {
-    car: Value,
-    cdr: Value,
+    car: Scm,
+    cdr: Scm,
 }
 
 impl std::fmt::Display for EqualsPair {
@@ -207,21 +204,21 @@ impl std::fmt::Display for EqualsPair {
     }
 }
 
-impl Matcher<Value> for EqualsPair {
-    fn matches(&self, actual: Value) -> MatchResult {
+impl Matcher<Scm> for EqualsPair {
+    fn matches(&self, actual: Scm) -> MatchResult {
         expect(&actual == self, format!("was {}", actual))
     }
 }
 
-impl PartialEq<Value> for EqualsPair {
-    fn eq(&self, x: &Value) -> bool {
+impl PartialEq<Scm> for EqualsPair {
+    fn eq(&self, x: &Scm) -> bool {
         x.as_pair()
             .map(|p| p.0.equals(&self.car) && p.1.equals(&self.cdr))
             .unwrap_or(false)
     }
 }
 
-impl PartialEq<EqualsPair> for Value {
+impl PartialEq<EqualsPair> for Scm {
     fn eq(&self, x: &EqualsPair) -> bool {
         self.as_pair()
             .map(|p| p.0.equals(&x.car) && p.1.equals(&x.cdr))
@@ -229,7 +226,7 @@ impl PartialEq<EqualsPair> for Value {
     }
 }
 
-pub fn equals_pair(car: impl Into<Value>, cdr: impl Into<Value>) -> EqualsPair {
+pub fn equals_pair(car: impl Into<Scm>, cdr: impl Into<Scm>) -> EqualsPair {
     EqualsPair {
         car: car.into(),
         cdr: cdr.into(),
@@ -247,21 +244,21 @@ impl std::fmt::Display for EqualsSymbol {
     }
 }
 
-impl Matcher<Value> for EqualsSymbol {
-    fn matches(&self, actual: Value) -> MatchResult {
+impl Matcher<Scm> for EqualsSymbol {
+    fn matches(&self, actual: Scm) -> MatchResult {
         expect(&actual == self, format!("was {}", actual))
     }
 }
 
-impl PartialEq<Value> for EqualsSymbol {
-    fn eq(&self, x: &Value) -> bool {
-        x.as_symbol().map(|s| **s == *self.name).unwrap_or(false)
+impl PartialEq<Scm> for EqualsSymbol {
+    fn eq(&self, x: &Scm) -> bool {
+        x.as_symbol().map(|s| *s == *self.name).unwrap_or(false)
     }
 }
 
-impl PartialEq<EqualsSymbol> for Value {
+impl PartialEq<EqualsSymbol> for Scm {
     fn eq(&self, x: &EqualsSymbol) -> bool {
-        self.as_symbol().map(|s| **s == *x.name).unwrap_or(false)
+        self.as_symbol().map(|s| *s == *x.name).unwrap_or(false)
     }
 }
 
@@ -271,8 +268,8 @@ pub fn equals_symbol(name: &'static str) -> EqualsSymbol {
 
 #[derive(Debug)]
 pub struct EqualsList {
-    items: Vec<Value>,
-    last_cdr: Value,
+    items: Vec<Scm>,
+    last_cdr: Scm,
 }
 
 impl std::fmt::Display for EqualsList {
@@ -282,32 +279,32 @@ impl std::fmt::Display for EqualsList {
         for x in &self.items[1..] {
             write!(f, " {}", x)?;
         }
-        if !self.last_cdr.is_nil() {
+        if !self.last_cdr.is_null() {
             write!(f, " . {}", self.last_cdr)?;
         }
         write!(f, ")")
     }
 }
 
-impl Matcher<Value> for EqualsList {
-    fn matches(&self, actual: Value) -> MatchResult {
+impl Matcher<Scm> for EqualsList {
+    fn matches(&self, actual: Scm) -> MatchResult {
         expect(&actual == self, format!("was {}", actual))
     }
 }
 
-impl PartialEq<Value> for EqualsList {
-    fn eq(&self, x: &Value) -> bool {
+impl PartialEq<Scm> for EqualsList {
+    fn eq(&self, x: &Scm) -> bool {
         is_list_eq(x, &self.items, &self.last_cdr)
     }
 }
 
-impl PartialEq<EqualsList> for Value {
+impl PartialEq<EqualsList> for Scm {
     fn eq(&self, x: &EqualsList) -> bool {
         is_list_eq(self, &x.items, &x.last_cdr)
     }
 }
 
-fn is_list_eq(x: &Value, items: &[Value], last_cdr: &Value) -> bool {
+fn is_list_eq(x: &Scm, items: &[Scm], last_cdr: &Scm) -> bool {
     match (items, last_cdr, x.as_pair()) {
         ([], ld, _) => x.equals(ld),
         ([a, d @ ..], ld, Some(p)) => a.equals(&p.0) && is_list_eq(&p.1, d, ld),
@@ -315,16 +312,16 @@ fn is_list_eq(x: &Value, items: &[Value], last_cdr: &Value) -> bool {
     }
 }
 
-pub fn equals_list(items: Vec<impl Into<Value>>) -> EqualsList {
+pub fn equals_list(items: Vec<impl Into<Scm>>) -> EqualsList {
     EqualsList {
         items: items.into_iter().map(|x| x.into()).collect(),
-        last_cdr: Value::Nil,
+        last_cdr: Scm::null(),
     }
 }
 
 pub struct ResultSatisfies {
     description: &'static str,
-    predicate: fn(&Value) -> bool,
+    predicate: fn(&Scm) -> bool,
 }
 
 impl std::fmt::Display for ResultSatisfies {
@@ -333,8 +330,8 @@ impl std::fmt::Display for ResultSatisfies {
     }
 }
 
-impl<E: std::fmt::Debug> Matcher<Result<Value, E>> for ResultSatisfies {
-    fn matches(&self, actual: Result<Value, E>) -> MatchResult {
+impl<E: std::fmt::Debug> Matcher<Result<Scm, E>> for ResultSatisfies {
+    fn matches(&self, actual: Result<Scm, E>) -> MatchResult {
         match actual {
             Ok(val) if (self.predicate)(&val) => success(),
             Ok(val) => Err(format!("was Ok({})", val)),
@@ -343,7 +340,7 @@ impl<E: std::fmt::Debug> Matcher<Result<Value, E>> for ResultSatisfies {
     }
 }
 
-pub fn satisfies(predicate: fn(&Value) -> bool, description: &'static str) -> ResultSatisfies {
+pub fn satisfies(predicate: fn(&Scm) -> bool, description: &'static str) -> ResultSatisfies {
     ResultSatisfies {
         predicate,
         description,

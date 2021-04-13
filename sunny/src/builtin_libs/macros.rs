@@ -1,11 +1,11 @@
 macro_rules! primitive {
-    ($($kind:tt $name:ident($($args:tt)*) -> Result<Value> $body:block)*) => {
+    ($($kind:tt $name:ident($($args:tt)*) -> Result<Scm> $body:block)*) => {
         $(
-            primitive!{def $kind $name($($args)*) -> Result<Value> $body}
+            primitive!{def $kind $name($($args)*) -> Result<Scm> $body}
         )*
     };
 
-    (def fn $name:ident($($a:ident: Value),*) -> Result<Value> $body:block) => {
+    (def fn $name:ident($($a:ident: Scm),*) -> Result<Scm> $body:block) => {
         fn $name(n_args: usize, vm: &mut sunny_vm::Vm) -> Result<()> {
             let n_expect = 0;
             $(let $a; let n_expect = n_expect + 1;)*
@@ -25,7 +25,7 @@ macro_rules! primitive {
         }
     };
 
-    (def varfn $name:ident($($a:ident: Value,)* [$vararg:ident]) -> Result<Value> $body:block) => {
+    (def varfn $name:ident($($a:ident: Scm,)* [$vararg:ident]) -> Result<Scm> $body:block) => {
         fn $name(n_args: usize, vm: &mut sunny_vm::Vm) -> Result<()> {
             let n_expect = 0;
             $(let $a; let n_expect = n_expect + 1;)*

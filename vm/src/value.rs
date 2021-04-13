@@ -37,7 +37,6 @@ impl dyn Object {
     }
 }
 
-#[derive(Clone)]
 #[repr(u8)]
 pub enum Value {
     Void,
@@ -49,9 +48,9 @@ pub enum Value {
     String(Ref<ConstString>),
     Pair(Ref<(Value, Value)>),
 
-    Closure(Ref<Closure>),
-    Primitive(Ref<Primitive>),
-    Continuation(Ref<Continuation>),
+    Closure(Closure),
+    Primitive(Primitive),
+    Continuation(Continuation),
 
     Values(usize), // mark multiple return values on stack
     Object(Ref<Box<dyn Object>>),
@@ -135,6 +134,14 @@ impl Value {
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, as_mut_pair, Value::Pair, ref (Value, Value));
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
+    impl_accessor!(is_primitive, as_primitive, Value::Primitive, ref Primitive);
+    impl_accessor!(
+        is_continuation,
+        as_continuation,
+        Value::Continuation,
+        ref Continuation
+    );
+    impl_accessor!(is_values, as_values, Value::Values, ref usize);
 
     pub fn bool(b: bool) -> Self {
         match b {
@@ -233,7 +240,7 @@ impl Value {
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
             (Pair(a), Pair(b)) => a.0.equals(&b.0) && a.1.equals(&b.1),
-            (Closure(a), Closure(b)) => **a == **b,
+            (Closure(a), Closure(b)) => *a == *b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
             (Object(a), Object(b)) => a.equals(&***b),
@@ -256,9 +263,9 @@ impl Value {
             Value::Symbol(p) => p.as_ptr().hash(state),
             Value::String(p) => p.as_ptr().hash(state),
             Value::Pair(p) => p.as_ptr().hash(state),
-            Value::Closure(p) => p.as_ptr().hash(state),
-            Value::Primitive(p) => p.as_ptr().hash(state),
-            Value::Continuation(p) => p.as_ptr().hash(state),
+            Value::Closure(p) => (p as *const Closure).hash(state),
+            Value::Primitive(p) => (p as *const Primitive).hash(state),
+            Value::Continuation(p) => (p as *const Continuation).hash(state),
             Value::Values(n) => n.hash(state),
             Value::Object(p) => p.as_ptr().hash(state),
         }
@@ -279,7 +286,7 @@ impl Value {
                 p.1.deep_hash(state);
             }
             Value::Closure(_) => unimplemented!(),
-            Value::Primitive(p) => p.as_ptr().hash(state),
+            Value::Primitive(p) => unimplemented!(),
             Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
             Value::Object(_) => unimplemented!(),
@@ -315,7 +322,7 @@ impl std::fmt::Display for Value {
             Value::Pair(p) => write!(f, "({} . {})", p.0, p.1),
             Value::Closure(p) => write!(f, "{:?}", p),
             Value::Primitive(p) => write!(f, "<primitive {:p}>", p),
-            Value::Continuation(p) => write!(f, "{:?}", **p),
+            Value::Continuation(p) => write!(f, "{:?}", *p),
             Value::Values(n) => write!(f, "<{} values>", n),
             Value::Object(p) => write!(f, "<object {:p}>", p),
         }
@@ -418,9 +425,9 @@ impl Value {
             Value::Symbol(p) => WeakValue::Symbol(p.downgrade()),
             Value::String(p) => WeakValue::String(p.downgrade()),
             Value::Pair(p) => WeakValue::Pair(p.downgrade()),
-            Value::Closure(p) => WeakValue::Closure(p.downgrade()),
-            Value::Primitive(p) => WeakValue::Primitive(p.downgrade()),
-            Value::Continuation(p) => WeakValue::Continuation(p.downgrade()),
+            Value::Closure(p) => unimplemented!(),
+            Value::Primitive(p) => unimplemented!(),
+            Value::Continuation(p) => unimplemented!(),
             Value::Values(n) => WeakValue::Values(*n),
             Value::Object(p) => WeakValue::Object(p.downgrade()),
         }
@@ -442,9 +449,9 @@ impl WeakValue {
             WeakValue::Symbol(p) => p.upgrade().map(Value::Symbol),
             WeakValue::String(p) => p.upgrade().map(Value::String),
             WeakValue::Pair(p) => p.upgrade().map(Value::Pair),
-            WeakValue::Closure(p) => p.upgrade().map(Value::Closure),
-            WeakValue::Primitive(p) => p.upgrade().map(Value::Primitive),
-            WeakValue::Continuation(p) => p.upgrade().map(Value::Continuation),
+            WeakValue::Closure(p) => unimplemented!(),
+            WeakValue::Primitive(p) => unimplemented!(),
+            WeakValue::Continuation(p) => unimplemented!(),
             WeakValue::Values(n) => Some(Value::Values(*n)),
             WeakValue::Object(p) => p.upgrade().map(Value::Object),
         }
@@ -551,13 +558,6 @@ pub mod arithmetic {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn check_size_of_value_type() {
-        let value_size = std::mem::size_of::<Value>();
-        let pointer_size = std::mem::size_of::<usize>();
-        assert_eq!(value_size, 2 * pointer_size);
-    }
 
     #[test]
     fn compound_values_are_compared_by_pointer() {

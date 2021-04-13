@@ -1,9 +1,9 @@
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
 use crate::storage::ValueStorage;
 use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
-use sunny_sexpr_parser::Scm;
 use sunny_sexpr_parser::SourceLocation;
 use sunny_sexpr_parser::{CxR, SourceMap};
+use sunny_sexpr_parser::{Scm, ScmObject};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 
@@ -40,16 +40,13 @@ impl From<ParseError> for Error {
     }
 }
 
-pub fn user_load(
-    src: &str,
-    storage: &mut ValueStorage,
-) -> std::result::Result<CodeSegment, String> {
-    load_str(src, storage)
+pub fn user_load(src: &str) -> std::result::Result<CodeSegment, String> {
+    load_str(src)
         .map_err(|e| e.in_string(src))
         .map_err(|e| e.pretty_fmt())
 }
 
-pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
+pub fn load_str(src: &str) -> Result<CodeSegment> {
     let mut src_map = SourceMap::new();
     let seq = parse_with_map(src, &mut src_map).map_err(|e| e.convert())?;
 
@@ -63,7 +60,7 @@ pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
         let section_body = sexpr.cdr().unwrap();
 
         match section_name {
-            "constants:" => cb = build_constant_section(cb, section_body, storage),
+            "constants:" => cb = build_constant_section(cb, section_body),
             "code:" => cb = build_code_section(cb, section_body, &src_map)?,
             _ => {
                 return Err(error_at(
@@ -77,14 +74,9 @@ pub fn load_str(src: &str, storage: &mut ValueStorage) -> Result<CodeSegment> {
     cb.build().map_err(|_| unreachable!())
 }
 
-fn build_constant_section(
-    mut cb: CodeBuilder,
-    constants_section: &Scm,
-    storage: &mut ValueStorage,
-) -> CodeBuilder {
+fn build_constant_section(mut cb: CodeBuilder, constants_section: &Scm) -> CodeBuilder {
     for value in constants_section.iter() {
-        let c = storage.scm_to_value(&value);
-        cb.add_constant(c);
+        cb.add_constant(value.clone());
     }
     cb
 }
@@ -249,8 +241,7 @@ mod tests {
 the-end:
     return)
         ";
-        let mut storage = ValueStorage::new(1024);
-        let code = match user_load(source, &mut storage) {
+        let code = match user_load(source) {
             Ok(code) => code,
             Err(e) => panic!("{}", e),
         };
@@ -268,8 +259,8 @@ the-end:
             ]
         );
 
-        assert!(code.constant_slice()[0].equals(&Value::number(42)));
-        assert!(code.constant_slice()[1].equals(&storage.interned_symbol("foo")));
-        assert!(code.constant_slice()[2].equals(&storage.list(vec![1, 2, 3])));
+        assert!(code.constant_slice()[0].equals(&Scm::number(42)));
+        assert!(code.constant_slice()[1].equals(&Scm::symbol("foo")));
+        assert!(code.constant_slice()[2].equals(&Scm::list(vec![1, 2, 3].into_iter())));
     }
 }

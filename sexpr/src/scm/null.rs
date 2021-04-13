@@ -1,9 +1,11 @@
+use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
 use std::any::Any;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::hash::Hash;
 
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 pub struct Null;
 
 impl ScmObject for Null {
@@ -11,8 +13,12 @@ impl ScmObject for Null {
         self
     }
 
-    fn eq(&self, other: &dyn ScmObject) -> bool {
+    fn equals(&self, other: &dyn ScmObject) -> bool {
         other.downcast_ref::<Self>().is_some()
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        self.hash(state)
     }
 
     fn substitute(&self, _: &HashMap<&str, Scm>) -> Scm {

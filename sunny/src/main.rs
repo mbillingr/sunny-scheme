@@ -81,7 +81,7 @@ fn run_bytecode(path: &std::path::Path) {
 
     let mut storage = ValueStorage::new(1024);
 
-    let code = match user_load(&source, &mut storage) {
+    let code = match user_load(&source) {
         Ok(code) => code,
         Err(e) => panic!("{}", e),
     };

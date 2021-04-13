@@ -1,7 +1,7 @@
 use crate::frontend::{ast::AstNode, environment::Env, error::Result, SyntaxExpander};
 use std::any::Any;
 use std::collections::HashMap;
-use sunny_sexpr_parser::{Scm, ScmObject, SourceMap};
+use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject, SourceMap};
 
 pub struct SyntacticClosure {
     sexpr: Scm,
@@ -23,8 +23,12 @@ impl ScmObject for SyntacticClosure {
         self
     }
 
-    fn eq(&self, _other: &dyn ScmObject) -> bool {
+    fn equals(&self, _other: &dyn ScmObject) -> bool {
         false
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        unimplemented!()
     }
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {

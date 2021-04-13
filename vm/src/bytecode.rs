@@ -1,7 +1,6 @@
 use crate::mem::Ref;
-use crate::Value;
 use std::collections::HashMap;
-use sunny_sexpr_parser::SourceLocation;
+use sunny_sexpr_parser::{Scm, SourceLocation};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]
@@ -183,12 +182,12 @@ pub mod repr {
 #[derive(Debug, Clone)]
 pub struct CodeSegment {
     code: Box<[Op]>,
-    constants: Box<[Value]>,
+    constants: Box<[Scm]>,
     source_map: Option<HashMap<usize, SourceLocation<()>>>,
 }
 
 impl CodeSegment {
-    pub fn new(code: impl Into<Box<[Op]>>, constants: impl Into<Box<[Value]>>) -> Self {
+    pub fn new(code: impl Into<Box<[Op]>>, constants: impl Into<Box<[Scm]>>) -> Self {
         CodeSegment {
             code: code.into(),
             constants: constants.into(),
@@ -201,7 +200,7 @@ impl CodeSegment {
         self
     }
 
-    pub fn get_constant(&self, index: usize) -> &Value {
+    pub fn get_constant(&self, index: usize) -> &Scm {
         &self.constants[index]
     }
 
@@ -216,7 +215,7 @@ impl CodeSegment {
         &mut *self.code
     }
 
-    pub fn constant_slice(&self) -> &[Value] {
+    pub fn constant_slice(&self) -> &[Scm] {
         &*self.constants
     }
 
@@ -303,7 +302,7 @@ impl CodePointer {
         }
     }
 
-    pub fn get_constant(&self, index: usize) -> &Value {
+    pub fn get_constant(&self, index: usize) -> &Scm {
         self.segment.get_constant(index)
     }
 
@@ -333,7 +332,7 @@ impl CodePointer {
         &self.segment.code_slice()[self.position..]
     }
 
-    pub fn constant_slice(&self) -> &[Value] {
+    pub fn constant_slice(&self) -> &[Scm] {
         self.segment.constant_slice()
     }
 
@@ -357,7 +356,7 @@ impl CodePointer {
 #[derive(Debug)]
 pub struct CodeBuilder {
     code: Vec<BuildOp>,
-    constants: Vec<Value>,
+    constants: Vec<Scm>,
     labels: HashMap<String, usize>,
 }
 
@@ -405,7 +404,7 @@ impl CodeBuilder {
         self
     }
 
-    pub fn constant(mut self, value: Value) -> Self {
+    pub fn constant(mut self, value: Scm) -> Self {
         let idx = self.add_constant(value);
         self.with(Op::Const, idx)
     }
@@ -529,7 +528,7 @@ impl CodeBuilder {
         self
     }
 
-    pub fn add_constant(&mut self, value: Value) -> usize {
+    pub fn add_constant(&mut self, value: Scm) -> usize {
         if let Some(idx) = self.constants.iter().position(|c| c == &value) {
             return idx;
         }
@@ -567,18 +566,18 @@ mod tests {
 
     #[test]
     fn chaining_code_segments_relocates_constant_references() {
-        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::number(1)]);
-        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::number(2)]);
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Scm::number(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Scm::number(2)]);
         let both = CodeSegment::chain(&[first, second]);
         assert_eq!(both.code_slice(), &[Op::Const(0), Op::Const(1)]);
     }
 
     #[test]
     fn chaining_code_segments_appends_different_constants() {
-        let first = CodeSegment::new(vec![Op::Const(0)], vec![Value::number(1)]);
-        let second = CodeSegment::new(vec![Op::Const(0)], vec![Value::number(2)]);
+        let first = CodeSegment::new(vec![Op::Const(0)], vec![Scm::number(1)]);
+        let second = CodeSegment::new(vec![Op::Const(0)], vec![Scm::number(2)]);
         let both = CodeSegment::chain(&[first, second]);
-        assert_eq!(both.constant_slice(), &[Value::number(1), Value::number(2)]);
+        assert_eq!(both.constant_slice(), &[Scm::number(1), Scm::number(2)]);
     }
 
     #[test]
@@ -662,41 +661,35 @@ mod tests {
 
     #[test]
     fn build_constant() {
-        let segment = CodeBuilder::new().constant(Value::Nil).build().unwrap();
+        let segment = CodeBuilder::new().constant(Scm::null()).build().unwrap();
         assert_eq!(segment.code_slice(), &[Op::Const(0)]);
-        assert_eq!(segment.constant_slice(), &[Value::Nil]);
+        assert_eq!(segment.constant_slice(), &[Scm::null()]);
     }
 
     #[test]
     fn build_different_constants() {
         let segment = CodeBuilder::new()
-            .constant(Value::number(1))
-            .constant(Value::number(2))
+            .constant(Scm::number(1))
+            .constant(Scm::number(2))
             .build()
             .unwrap();
         assert_eq!(segment.code_slice(), &[Op::Const(0), Op::Const(1)]);
-        assert_eq!(
-            segment.constant_slice(),
-            &[Value::number(1), Value::number(2)]
-        );
+        assert_eq!(segment.constant_slice(), &[Scm::number(1), Scm::number(2)]);
     }
 
     #[test]
     fn build_reuse_same_constants() {
         let segment = CodeBuilder::new()
-            .constant(Value::number(1))
-            .constant(Value::number(2))
-            .constant(Value::number(1))
+            .constant(Scm::number(1))
+            .constant(Scm::number(2))
+            .constant(Scm::number(1))
             .build()
             .unwrap();
         assert_eq!(
             segment.code_slice(),
             &[Op::Const(0), Op::Const(1), Op::Const(0)]
         );
-        assert_eq!(
-            segment.constant_slice(),
-            &[Value::number(1), Value::number(2)]
-        );
+        assert_eq!(segment.constant_slice(), &[Scm::number(1), Scm::number(2)]);
     }
 
     #[test]
