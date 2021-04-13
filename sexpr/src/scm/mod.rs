@@ -2,8 +2,9 @@ mod bool;
 mod int;
 mod interner;
 mod null;
-mod symbol;
+mod pair;
 mod string;
+mod symbol;
 
 use crate::cxr::CxR;
 use crate::Int;
@@ -38,7 +39,7 @@ impl Scm {
     }
 
     pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
-        Sexpr::cons(car, cdr).into()
+        pair::Pair::new(car, cdr).into()
     }
 
     pub fn list(items: impl DoubleEndedIterator<Item = Scm>) -> Self {
@@ -86,7 +87,7 @@ impl Scm {
     }
 
     pub fn as_pair(&self) -> Option<(&Scm, &Scm)> {
-        self.0.downcast_ref::<Sexpr>().and_then(Sexpr::as_pair)
+        self.as_type::<pair::Pair>().map(pair::Pair::as_tuple)
     }
 
     pub fn last_cdr(&self) -> &Self {
@@ -160,7 +161,6 @@ impl<T: ScmObject> From<T> for Scm {
 
 #[derive(Debug, Clone)]
 pub enum Sexpr {
-    Pair((Scm, Scm)),
     Object(Scm),
 }
 
@@ -179,7 +179,6 @@ impl ScmObject for Sexpr {
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
         match self {
-            Sexpr::Pair(p) => Scm::cons(p.0.substitute(mapping), p.1.substitute(mapping)),
             Sexpr::Object(obj) => Sexpr::Object(obj.substitute(mapping)).into(),
         }
     }
@@ -189,26 +188,7 @@ impl PartialEq for Sexpr {
     fn eq(&self, other: &Self) -> bool {
         use Sexpr::*;
         match (self, other) {
-            (Pair(a), Pair(b)) => a.0 == b.0 && a.1 == b.1,
             (Object(a), Object(b)) => a == b,
-            _ => false,
-        }
-    }
-}
-
-impl Sexpr {
-    pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
-        Sexpr::Pair((car.into(), cdr.into()))
-    }
-
-    pub fn is_pair(&self) -> bool {
-        matches!(self, Sexpr::Pair(_))
-    }
-
-    pub fn as_pair(&self) -> Option<(&Scm, &Scm)> {
-        match self {
-            Sexpr::Pair(x) => Some((&x.0, &x.1)),
-            _ => None,
         }
     }
 }
@@ -216,20 +196,6 @@ impl Sexpr {
 impl Display for Sexpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Sexpr::Pair(p) => {
-                if !f.alternate() {
-                    write!(f, "({:#})", self)
-                } else {
-                    write!(f, "{}", p.0)?;
-                    if p.1.is_null() {
-                        Ok(())
-                    } else if p.1.is_pair() {
-                        write!(f, " {:#}", p.1)
-                    } else {
-                        write!(f, " . {}", p.1)
-                    }
-                }
-            }
             Sexpr::Object(obj) => write!(f, "{}", obj),
         }
     }
