@@ -39,7 +39,6 @@ impl dyn Object {
 
 #[repr(u8)]
 pub enum Value {
-    Nil,
     False,
     True,
     Number(Number),
@@ -58,7 +57,6 @@ pub enum Value {
 #[derive(Clone)]
 #[repr(u8)]
 pub enum WeakValue {
-    Nil,
     False,
     True,
     Number(WeakNumber),
@@ -126,7 +124,6 @@ macro_rules! impl_accessor {
 }
 
 impl Value {
-    impl_accessor!(is_nil, Value::Nil);
     impl_accessor!(is_number, as_number, Value::Number, ref Number);
     impl_accessor!(is_symbol, as_symbol, Value::Symbol, ref Symbol);
     impl_accessor!(is_pair, as_pair, as_mut_pair, Value::Pair, ref (Value, Value));
@@ -154,7 +151,6 @@ impl Value {
     pub fn get_tag(&self) -> u8 {
         use Value::*;
         match self {
-            Nil => 1,
             False => 2,
             True => 3,
             Number(_) => 4,
@@ -224,7 +220,6 @@ impl Value {
     pub fn equals(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
-            (Nil, Nil) => true,
             (False, False) => true,
             (True, True) => true,
             (Number(a), Number(b)) => a.equals(b),
@@ -246,7 +241,6 @@ impl Value {
     pub fn shallow_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Nil => {}
             Value::False => {}
             Value::True => {}
             Value::Number(n) => n.hash(state),
@@ -264,7 +258,6 @@ impl Value {
     pub fn deep_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Nil => {}
             Value::False => {}
             Value::True => {}
             Value::Number(n) => n.hash(state),
@@ -301,7 +294,6 @@ impl std::fmt::Debug for Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Value::Nil => write!(f, "<nil>"),
             Value::False => write!(f, "#f"),
             Value::True => write!(f, "#t"),
             Value::Number(i) => write!(f, "{}", i),
@@ -323,7 +315,6 @@ impl PartialEq for WeakValue {
     fn eq(&self, rhs: &Self) -> bool {
         use WeakValue::*;
         match (self, rhs) {
-            (Nil, Nil) => true,
             (False, False) => true,
             (True, True) => true,
             (Number(a), Number(b)) => a == b,
@@ -343,7 +334,6 @@ impl PartialEq for Value {
     fn eq(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
-            (Nil, Nil) => true,
             (False, False) => true,
             (True, True) => true,
             (Number(a), Number(b)) => a == b,
@@ -377,7 +367,6 @@ impl Hash for WeakValue {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            WeakValue::Nil => {}
             WeakValue::False => {}
             WeakValue::True => {}
             WeakValue::Number(n) => n.hash(state),
@@ -402,7 +391,6 @@ impl<T: Into<Number>> From<T> for Value {
 impl Value {
     pub fn downgrade(&self) -> WeakValue {
         match self {
-            Value::Nil => WeakValue::Nil,
             Value::False => WeakValue::False,
             Value::True => WeakValue::True,
             Value::Number(n) => WeakValue::Number(n.downgrade()),
@@ -425,7 +413,6 @@ impl WeakValue {
 
     pub fn upgrade(&self) -> Option<Value> {
         match self {
-            WeakValue::Nil => Some(Value::Nil),
             WeakValue::False => Some(Value::False),
             WeakValue::True => Some(Value::True),
             WeakValue::Number(n) => n.upgrade().map(Value::Number),
@@ -443,7 +430,6 @@ impl WeakValue {
     pub fn get_tag(&self) -> u8 {
         use WeakValue::*;
         match self {
-            Nil => 1,
             False => 2,
             True => 3,
             Number(_) => 4,
