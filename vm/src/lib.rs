@@ -10,7 +10,7 @@ mod activation;
 mod basic_block;
 pub mod bytecode;
 pub mod bytecode_loader;
-mod closure;
+pub mod closure;
 mod continuation;
 pub mod number;
 pub mod optimizations;

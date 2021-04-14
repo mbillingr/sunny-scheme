@@ -135,7 +135,7 @@ define_form! {
         [(f: Symbol . _) => {
             match env.lookup_variable(f) {
                 Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, src_map, env),
-                Some(EnvBinding::Intrinsic(name, n_params)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, src_map),
+                Some(EnvBinding::Intrinsic(name, n_params, _)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, src_map),
                 _ => Expression.expand_application(sexpr, src_map, env),
             }
         }]
@@ -155,10 +155,16 @@ define_form! {
                 }
                 Some(Global(full_name)) => Ok(Ast::fetch_global(context, full_name)),
                 Some(Syntax(_)) => Err(error_at(&context, Error::SyntaxAsValue)),
-                Some(Intrinsic(name, n_params)) => {
-                    Ok(Ast::lambda(SourceLocation::new(()), n_params,
+                Some(Intrinsic(name, _, reified)) => {
+                    if let Global(full_name) = *reified {
+                        Ok(Ast::fetch_global(context, full_name))
+                    } else {
+                        panic!("Invalid intrinsic: {}", name)
+                    }
+                    /*Ok(Ast::lambda(SourceLocation::new(()), n_params,
                                    Ast::invoke_intrinsic(SourceLocation::new(()), name,
-                                                         (0..n_params).map(|n| Ast::fetch(SourceLocation::new(()), n)).collect())))}
+                                                         (0..n_params).map(|n| Ast::fetch(SourceLocation::new(()), n)).collect())))}*/
+                }
                 None => {
                     env.ensure_global_variable(name);
                     Expression.expand(sexpr, src_map, env)

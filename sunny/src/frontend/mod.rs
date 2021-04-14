@@ -134,7 +134,10 @@ mod tests {
     #[test]
     fn meaning_of_an_intrinsic() {
         let env = minimal_syntax_environment("test");
-        env.add_global_binding("cons", EnvBinding::Intrinsic("cons", 2));
+        env.add_global_binding(
+            "cons",
+            EnvBinding::Intrinsic("cons", 2, Box::new(EnvBinding::Variable)),
+        );
         assert_eq!(
             meaning_of![env @ (cons 1 2)],
             Ok(ast!(intrinsic cons (const 1) (const 2)))

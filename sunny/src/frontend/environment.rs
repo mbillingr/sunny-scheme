@@ -16,7 +16,7 @@ use sunny_sexpr_parser::parser::parse_with_map;
 #[derive(Clone)]
 pub enum EnvBinding {
     Variable,
-    Intrinsic(&'static str, usize),
+    Intrinsic(&'static str, usize, Box<EnvBinding>),
     Global(Rc<str>),
     Syntax(Rc<dyn SyntaxExpander>),
 }
@@ -34,7 +34,7 @@ impl EnvBinding {
         match self {
             EnvBinding::Variable => true,
             EnvBinding::Global(_) => true,
-            EnvBinding::Intrinsic(_, _) => false,
+            EnvBinding::Intrinsic(_, _, _) => false,
             EnvBinding::Syntax(_) => false,
         }
     }
@@ -43,10 +43,10 @@ impl EnvBinding {
         self.as_intrinsic().is_some()
     }
 
-    pub fn as_intrinsic(&self) -> Option<(&str, usize)> {
+    pub fn as_intrinsic(&self) -> Option<(&str, usize, &EnvBinding)> {
         match self {
             EnvBinding::Variable => None,
-            EnvBinding::Intrinsic(name, n_params) => Some((name, *n_params)),
+            EnvBinding::Intrinsic(name, n_params, reified) => Some((name, *n_params, reified)),
             EnvBinding::Global(_) => None,
             EnvBinding::Syntax(_) => None,
         }
@@ -59,7 +59,7 @@ impl EnvBinding {
     pub fn as_global(&self) -> Option<&str> {
         match self {
             EnvBinding::Variable => None,
-            EnvBinding::Intrinsic(_, _) => None,
+            EnvBinding::Intrinsic(_, _, _) => None,
             EnvBinding::Global(name) => Some(name),
             EnvBinding::Syntax(_) => None,
         }
@@ -68,7 +68,7 @@ impl EnvBinding {
     pub fn is_syntax(&self) -> bool {
         match self {
             EnvBinding::Variable => false,
-            EnvBinding::Intrinsic(_, _) => false,
+            EnvBinding::Intrinsic(_, _, _) => false,
             EnvBinding::Global(_) => false,
             EnvBinding::Syntax(_) => true,
         }
@@ -77,7 +77,7 @@ impl EnvBinding {
     pub fn as_syntax(&self) -> Option<&Rc<dyn SyntaxExpander>> {
         match self {
             EnvBinding::Variable => None,
-            EnvBinding::Intrinsic(_, _) => None,
+            EnvBinding::Intrinsic(_, _, _) => None,
             EnvBinding::Global(_) => None,
             EnvBinding::Syntax(x) => Some(x),
         }
@@ -100,7 +100,7 @@ impl std::fmt::Debug for EnvBinding {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             EnvBinding::Variable => write!(f, "var"),
-            EnvBinding::Intrinsic(name, n_params) => write!(f, "{}/{}", name, n_params),
+            EnvBinding::Intrinsic(name, n_params, _) => write!(f, "{}/{}", name, n_params),
             EnvBinding::Global(fqn) => write!(f, "@{}", fqn),
             EnvBinding::Syntax(exp) => write!(f, "{}", exp.description()),
         }
@@ -112,7 +112,7 @@ impl PartialEq for EnvBinding {
         use EnvBinding::*;
         match (self, other) {
             (Variable, Variable) => true,
-            (Intrinsic(name1, _), Intrinsic(name2, _)) => name1 == name2,
+            (Intrinsic(name1, _, _), Intrinsic(name2, _, _)) => name1 == name2,
             (Global(fqn1), Global(fqn2)) => fqn1 == fqn2,
             (Syntax(exp1), Syntax(exp2)) => {
                 std::ptr::eq(Rc::as_ptr(exp1) as *const u8, Rc::as_ptr(exp2) as *const u8)

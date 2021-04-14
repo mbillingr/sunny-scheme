@@ -55,7 +55,11 @@ fn eqv() {
         "(let ((x \"foo\")) (eqv? x x))",
         EvaluatesTo::the_boolean(true)
     );
-    //assert_equivalence!("eq?", "car", "car");
+    assert_that!(
+        "(let ((x (lambda () 0))) (eqv? x x))",
+        EvaluatesTo::the_boolean(true)
+    );
+    assert_equivalence!("eq?", "car", "car");
 
     assert_different!("eqv?", "'()", "#f");
     assert_different!("eqv?", "#t", "#f");
@@ -101,7 +105,11 @@ fn eq() {
         "(let ((x \"foo\")) (eq? x x))",
         EvaluatesTo::the_boolean(true)
     );
-    //assert_equivalence!("eq?", "car", "car");
+    assert_that!(
+        "(let ((x (lambda () 0))) (eq? x x))",
+        EvaluatesTo::the_boolean(true)
+    );
+    assert_equivalence!("eq?", "car", "car");
 
     assert_different!("eq?", "'()", "#f");
     assert_different!("eq?", "#t", "#f");
@@ -149,7 +157,11 @@ fn equal() {
         "(let ((x \"foo\")) (equal? x x))",
         EvaluatesTo::the_boolean(true)
     );
-    //assert_equivalence!("eq?", "car", "car");
+    assert_that!(
+        "(let ((x (lambda () 0))) (equal? x x))",
+        EvaluatesTo::the_boolean(true)
+    );
+    assert_equivalence!("eq?", "car", "car");
 
     assert_different!("equal?", "'()", "#f");
     assert_different!("equal?", "#t", "#f");

@@ -19,6 +19,10 @@ impl std::fmt::Display for Closure {
 }
 
 impl Closure {
+    pub fn new_procedure(code: CodePointer) -> Self {
+        Closure { parent: None, code }
+    }
+
     pub fn arity(&self) -> (usize, Option<usize>) {
         let mut n_args = 0;
         loop {

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::backend::{ByteCodeBackend, GlobalTable};
+use crate::backend::{Backend, ByteCodeBackend, GlobalTable};
 use crate::frontend::ast::Ast;
 use crate::frontend::environment::{Env, EnvBinding};
 use crate::frontend::library::Export;
@@ -9,10 +9,12 @@ use crate::frontend::{base_environment, error, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
 use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
 use sunny_sexpr_parser::{Scm, SharedStr, SourceLocation, SourceMap};
+use sunny_vm::bytecode::{CodePointer, Op};
+use sunny_vm::closure::Closure;
 use sunny_vm::mem::Ref;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::scm_extension::ScmExt;
-use sunny_vm::{ErrorKind, Vm};
+use sunny_vm::{BasicBlock, BlockChain, ErrorKind, Vm};
 use sunny_vm::{Primitive, PrimitiveProc};
 
 pub struct Context {
@@ -161,7 +163,28 @@ impl<'c> LibDefiner<'c> {
     }
 
     pub fn define_intrinsic(mut self, name: &'static str, n_params: usize) -> Self {
-        let binding = EnvBinding::Intrinsic(name, n_params);
+        let fqn = self.fully_qualified_name(name);
+
+        let mut backend = ByteCodeBackend::new(&mut self.context.globals);
+
+        let mut prep_args_ops = Op::extended(Op::PrepareArgs, n_params);
+        prep_args_ops.push(Op::Void);
+        let prep_args = BlockChain::singleton(BasicBlock::new(prep_args_ops, vec![]));
+        let args = (0..n_params)
+            .map(|p| backend.fetch(SourceLocation::new(()), p))
+            .collect();
+        let apply = backend.intrinsic(SourceLocation::new(()), name, args);
+        let ir = backend.sequence(prep_args, apply);
+        ir.return_from();
+
+        let code = CodePointer::new(Ref::new(ir.build_segment()));
+        let reified = Closure::new_procedure(code);
+
+        let idx = self.runtime_globals().determine_index(&fqn);
+        self.vm().assign_global(idx, reified.into());
+        let reified_binding = EnvBinding::global(fqn);
+
+        let binding = EnvBinding::Intrinsic(name, n_params, Box::new(reified_binding));
         self.exports.push(Export::new(name, binding));
         self
     }

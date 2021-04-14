@@ -180,7 +180,7 @@ impl Scm {
     }
 
     pub fn is_equal(&self, other: &Scm) -> bool {
-        self.0.is_equal(&*other.0)
+        self.ptr_eq(other) || self.0.is_equal(&*other.0)
     }
 
     fn deep_hash(&self, state: &mut ScmHasher) {
