@@ -49,6 +49,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("display", 1, display)
         .define_primitive_fixed_arity("dec", 1, dec)
         .define_intrinsic("eq?", 2)
+        .define_primitive_fixed_arity("equal?", 2, is_equal)
+        .define_primitive_fixed_arity("eqv?", 2, is_eqv)
         .define_primitive_fixed_arity("error", 1, error)
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
@@ -125,6 +127,14 @@ primitive! {
         }
 
         Ok(Scm::number(acc))
+    }
+
+    fn is_equal(a: Scm, b: Scm) -> Result<Scm> {
+        Ok(Scm::bool(a.is_equal(&b)))
+    }
+
+    fn is_eqv(a: Scm, b: Scm) -> Result<Scm> {
+        Ok(Scm::bool(a.is_eqv(&b)))
     }
 
     fn lt(a: Scm, b: Scm) -> Result<Scm> {

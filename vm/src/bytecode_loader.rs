@@ -256,8 +256,8 @@ the-end:
             ]
         );
 
-        assert!(code.constant_slice()[0].equals(&Scm::number(42)));
-        assert!(code.constant_slice()[1].equals(&Scm::symbol("foo")));
-        assert!(code.constant_slice()[2].equals(&Scm::list(vec![1, 2, 3].into_iter())));
+        assert!(code.constant_slice()[0].is_equal(&Scm::number(42)));
+        assert!(code.constant_slice()[1].is_equal(&Scm::symbol("foo")));
+        assert!(code.constant_slice()[2].is_equal(&Scm::list(vec![1, 2, 3].into_iter())));
     }
 }

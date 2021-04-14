@@ -63,7 +63,7 @@ impl ScmObject for Primitive {
         self
     }
 
-    fn equals(&self, other: &dyn ScmObject) -> bool {
+    fn is_eqv(&self, other: &dyn ScmObject) -> bool {
         other
             .downcast_ref::<Self>()
             .map(|other| std::ptr::eq(&self.proc, &other.proc))

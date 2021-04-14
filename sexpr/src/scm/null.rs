@@ -13,7 +13,7 @@ impl ScmObject for Null {
         self
     }
 
-    fn equals(&self, other: &dyn ScmObject) -> bool {
+    fn is_eqv(&self, other: &dyn ScmObject) -> bool {
         other.downcast_ref::<Self>().is_some()
     }
 

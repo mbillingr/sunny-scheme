@@ -1,6 +1,7 @@
 mod constant_expressions;
 mod control_features;
 mod control_flow;
+mod equivalence_predicates;
 mod global_variables;
 mod lexical_conventions;
 mod libraries;
@@ -213,7 +214,7 @@ impl Matcher<Scm> for EqualsPair {
 impl PartialEq<Scm> for EqualsPair {
     fn eq(&self, x: &Scm) -> bool {
         x.as_pair()
-            .map(|p| p.0.equals(&self.car) && p.1.equals(&self.cdr))
+            .map(|p| p.0.is_equal(&self.car) && p.1.is_equal(&self.cdr))
             .unwrap_or(false)
     }
 }
@@ -221,7 +222,7 @@ impl PartialEq<Scm> for EqualsPair {
 impl PartialEq<EqualsPair> for Scm {
     fn eq(&self, x: &EqualsPair) -> bool {
         self.as_pair()
-            .map(|p| p.0.equals(&x.car) && p.1.equals(&x.cdr))
+            .map(|p| p.0.is_equal(&x.car) && p.1.is_equal(&x.cdr))
             .unwrap_or(false)
     }
 }
@@ -306,8 +307,8 @@ impl PartialEq<EqualsList> for Scm {
 
 fn is_list_eq(x: &Scm, items: &[Scm], last_cdr: &Scm) -> bool {
     match (items, last_cdr, x.as_pair()) {
-        ([], ld, _) => x.equals(ld),
-        ([a, d @ ..], ld, Some(p)) => a.equals(&p.0) && is_list_eq(&p.1, d, ld),
+        ([], ld, _) => x.is_equal(ld),
+        ([a, d @ ..], ld, Some(p)) => a.is_equal(&p.0) && is_list_eq(&p.1, d, ld),
         _ => false,
     }
 }

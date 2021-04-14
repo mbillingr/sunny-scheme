@@ -21,7 +21,10 @@ pub type ScmHasher = std::collections::hash_map::DefaultHasher;
 
 pub trait ScmObject: Any + Debug + Display {
     fn as_any(&self) -> &dyn Any;
-    fn equals(&self, other: &dyn ScmObject) -> bool;
+    fn is_eqv(&self, other: &dyn ScmObject) -> bool;
+    fn is_equal(&self, other: &dyn ScmObject) -> bool {
+        self.is_eqv(other)
+    }
     fn deep_hash(&self, state: &mut ScmHasher);
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
 }
@@ -48,11 +51,15 @@ impl Scm {
     }
 
     pub fn null() -> Self {
-        null::Null.into()
+        NULL.with(Clone::clone)
     }
 
     pub fn bool(b: bool) -> Self {
-        bool::Bool::new(b).into()
+        if b {
+            TRUE.with(Clone::clone)
+        } else {
+            FALSE.with(Clone::clone)
+        }
     }
 
     pub fn int(i: Int) -> Self {
@@ -168,8 +175,12 @@ impl Scm {
         Rc::ptr_eq(&self.0, &other.0)
     }
 
-    pub fn equals(&self, other: &Scm) -> bool {
-        self.0.equals(&*other.0)
+    pub fn is_eqv(&self, other: &Scm) -> bool {
+        self.ptr_eq(other) || self.0.is_eqv(&*other.0)
+    }
+
+    pub fn is_equal(&self, other: &Scm) -> bool {
+        self.0.is_equal(&*other.0)
     }
 
     fn deep_hash(&self, state: &mut ScmHasher) {
@@ -183,13 +194,13 @@ impl Scm {
 
 impl PartialEq for Scm {
     fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(Rc::as_ptr(&self.0), Rc::as_ptr(&other.0)) || self.equals(other)
+        std::ptr::eq(Rc::as_ptr(&self.0), Rc::as_ptr(&other.0)) || self.is_equal(other)
     }
 }
 
 impl PartialEq for dyn ScmObject {
     fn eq(&self, other: &Self) -> bool {
-        ScmObject::equals(self, other)
+        ScmObject::is_equal(self, other)
     }
 }
 
@@ -318,7 +329,7 @@ impl Eq for HashEqual {}
 
 impl PartialEq for HashEqual {
     fn eq(&self, other: &Self) -> bool {
-        self.0.equals(&other.0)
+        self.0.is_equal(&other.0)
     }
 }
 
@@ -369,4 +380,11 @@ impl PartialEq for WeakScm {
     fn eq(&self, other: &Self) -> bool {
         self.ptr_eq(other)
     }
+}
+
+// Special values that must always refer to the same object
+thread_local! {
+    static NULL: Scm = null::Null.into();
+    static TRUE: Scm = bool::Bool::new(true).into();
+    static FALSE: Scm = bool::Bool::new(false).into();
 }

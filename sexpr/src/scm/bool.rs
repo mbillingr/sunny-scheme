@@ -23,7 +23,7 @@ impl ScmObject for Bool {
         self
     }
 
-    fn equals(&self, other: &dyn ScmObject) -> bool {
+    fn is_eqv(&self, other: &dyn ScmObject) -> bool {
         other
             .downcast_ref::<Self>()
             .map(|other| self.0 == other.0)

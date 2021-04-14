@@ -33,7 +33,11 @@ impl ScmObject for Continuation {
         self
     }
 
-    fn equals(&self, other: &dyn ScmObject) -> bool {
+    fn is_eqv(&self, _other: &dyn ScmObject) -> bool {
+        false
+    }
+
+    fn is_equal(&self, other: &dyn ScmObject) -> bool {
         other
             .downcast_ref::<Self>()
             .map(|other| self.activation == other.activation)

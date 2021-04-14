@@ -43,10 +43,10 @@ impl ScmObject for Closure {
         self
     }
 
-    fn equals(&self, other: &dyn ScmObject) -> bool {
+    fn is_eqv(&self, other: &dyn ScmObject) -> bool {
         other
             .downcast_ref::<Self>()
-            .map(|other| self == other)
+            .map(|other| std::ptr::eq(self, other))
             .unwrap_or(false)
     }
 

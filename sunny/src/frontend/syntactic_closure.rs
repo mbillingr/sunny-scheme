@@ -23,7 +23,7 @@ impl ScmObject for SyntacticClosure {
         self
     }
 
-    fn equals(&self, _other: &dyn ScmObject) -> bool {
+    fn is_eqv(&self, _other: &dyn ScmObject) -> bool {
         false
     }
 

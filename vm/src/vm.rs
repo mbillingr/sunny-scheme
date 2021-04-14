@@ -476,7 +476,7 @@ impl Vm {
     fn eq(&mut self) -> Result<()> {
         let a = self.pop_value()?;
         let b = self.pop_value()?;
-        self.push_value(Scm::bool(a.eq(&b)));
+        self.push_value(Scm::bool(a.ptr_eq(&b)));
         Ok(())
     }
 

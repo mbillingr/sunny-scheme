@@ -42,7 +42,7 @@ fn inner_defines_appear_in_the_right_order() {
 fn inner_defines_support_mutual_recursion() {
     assert_that!(
         vec![
-            "(define (is-even? n) (define (even? n) (if (eq? n 0) #t (odd? (- n 1)))) (define (odd? n) (if (eq? n 0) #f (even? (- n 1)))) (even? n))",
+            "(define (is-even? n) (define (even? n) (if (= n 0) #t (odd? (- n 1)))) (define (odd? n) (if (= n 0) #f (even? (- n 1)))) (even? n))",
             "(is-even? 5)",],
         EvaluatesTo::the_boolean(false)
     );
