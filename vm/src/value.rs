@@ -2,8 +2,8 @@ use std::hash::{Hash, Hasher};
 
 use crate::closure::Closure;
 use crate::continuation::Continuation;
-use crate::mem::{Ref, Weak};
-use crate::number::{Number, WeakNumber};
+use crate::mem::Ref;
+use crate::number::Number;
 use crate::primitive::Primitive;
 use std::any::Any;
 use std::fmt::Debug;
@@ -50,22 +50,6 @@ pub enum Value {
 
     Values(usize), // mark multiple return values on stack
     Object(Ref<Box<dyn Object>>),
-}
-
-#[derive(Clone)]
-#[repr(u8)]
-pub enum WeakValue {
-    Number(WeakNumber),
-    Symbol(Weak<Symbol>),
-    String(Weak<ConstString>),
-    Pair(Weak<(Value, Value)>),
-
-    Closure(Weak<Closure>),
-    Primitive(Weak<Primitive>),
-    Continuation(Weak<Continuation>),
-
-    Values(usize),
-    Object(Weak<Box<dyn Object>>),
 }
 
 impl Default for Value {
@@ -245,15 +229,6 @@ impl Value {
     }
 }
 
-impl std::fmt::Debug for WeakValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self.upgrade() {
-            Some(value) => write!(f, "{}", value),
-            None => write!(f, "<dead value>"),
-        }
-    }
-}
-
 impl std::fmt::Debug for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self)
@@ -272,25 +247,6 @@ impl std::fmt::Display for Value {
             Value::Continuation(p) => write!(f, "{:?}", *p),
             Value::Values(n) => write!(f, "<{} values>", n),
             Value::Object(p) => write!(f, "<object {:p}>", p),
-        }
-    }
-}
-
-impl Eq for WeakValue {}
-
-impl PartialEq for WeakValue {
-    fn eq(&self, rhs: &Self) -> bool {
-        use WeakValue::*;
-        match (self, rhs) {
-            (Number(a), Number(b)) => a == b,
-            (Symbol(a), Symbol(b)) => a == b,
-            (String(a), String(b)) => a == b,
-            (Pair(a), Pair(b)) => a == b,
-            (Closure(a), Closure(b)) => a == b,
-            (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
-            (Values(a), Values(b)) => a == b,
-            (Object(a), Object(b)) => a == b,
-            _ => false,
         }
     }
 }
@@ -326,77 +282,9 @@ impl Hash for Value {
     }
 }
 
-impl Hash for WeakValue {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.get_tag().hash(state);
-        match self {
-            WeakValue::Number(n) => n.hash(state),
-            WeakValue::Symbol(p) => p.as_ptr().hash(state),
-            WeakValue::String(p) => p.as_ptr().hash(state),
-            WeakValue::Pair(p) => p.as_ptr().hash(state),
-            WeakValue::Closure(p) => p.as_ptr().hash(state),
-            WeakValue::Primitive(p) => p.as_ptr().hash(state),
-            WeakValue::Continuation(p) => p.as_ptr().hash(state),
-            WeakValue::Values(n) => n.hash(state),
-            WeakValue::Object(p) => p.as_ptr().hash(state),
-        }
-    }
-}
-
 impl<T: Into<Number>> From<T> for Value {
     fn from(i: T) -> Self {
         Value::Number(i.into())
-    }
-}
-
-impl Value {
-    pub fn downgrade(&self) -> WeakValue {
-        match self {
-            Value::Number(n) => WeakValue::Number(n.downgrade()),
-            Value::Symbol(p) => WeakValue::Symbol(p.downgrade()),
-            Value::String(p) => WeakValue::String(p.downgrade()),
-            Value::Pair(p) => WeakValue::Pair(p.downgrade()),
-            Value::Closure(_) => unimplemented!(),
-            Value::Primitive(_) => unimplemented!(),
-            Value::Continuation(_) => unimplemented!(),
-            Value::Values(n) => WeakValue::Values(*n),
-            Value::Object(p) => WeakValue::Object(p.downgrade()),
-        }
-    }
-}
-
-impl WeakValue {
-    pub fn is_dead(&self) -> bool {
-        self.upgrade().is_none()
-    }
-
-    pub fn upgrade(&self) -> Option<Value> {
-        match self {
-            WeakValue::Number(n) => n.upgrade().map(Value::Number),
-            WeakValue::Symbol(p) => p.upgrade().map(Value::Symbol),
-            WeakValue::String(p) => p.upgrade().map(Value::String),
-            WeakValue::Pair(p) => p.upgrade().map(Value::Pair),
-            WeakValue::Closure(_) => unimplemented!(),
-            WeakValue::Primitive(_) => unimplemented!(),
-            WeakValue::Continuation(_) => unimplemented!(),
-            WeakValue::Values(n) => Some(Value::Values(*n)),
-            WeakValue::Object(p) => p.upgrade().map(Value::Object),
-        }
-    }
-
-    pub fn get_tag(&self) -> u8 {
-        use WeakValue::*;
-        match self {
-            Number(_) => 4,
-            Symbol(_) => 5,
-            String(_) => 6,
-            Pair(_) => 7,
-            Closure(_) => 8,
-            Primitive(_) => 9,
-            Continuation(_) => 10,
-            Values(_) => 254,
-            Object(_) => 255,
-        }
     }
 }
 
