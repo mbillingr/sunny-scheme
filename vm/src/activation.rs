@@ -1,14 +1,15 @@
 use crate::bytecode::CodePointer;
 use crate::closure::Closure;
 use crate::mem::Ref;
-use std::cell::Cell;
+use crate::scm_extension::ScmExt;
 use sunny_sexpr_parser::Scm;
 
+#[derive(Clone)]
 pub struct Activation {
     pub(crate) caller: Option<Ref<Activation>>,
     pub(crate) parent: Option<Ref<Activation>>,
     pub(crate) code: CodePointer,
-    pub(crate) locals: Vec<Cell<Scm>>,
+    pub(crate) locals: Vec<Scm>,
 }
 
 impl std::fmt::Debug for Activation {
@@ -31,19 +32,25 @@ impl Activation {
     }
 
     pub fn duplicate(&self) -> Self {
-        Activation {
-            caller: self.caller.clone(),
-            parent: self.parent.clone(),
-            code: self.code.clone(),
-            locals: self
-                .locals
-                .iter()
-                .map(|cv| {
-                    let val = cv.take();
-                    cv.set(val.clone());
-                    Cell::new(val)
-                })
-                .collect(),
+        self.clone()
+    }
+
+    pub fn push_local(&mut self, value: Scm) {
+        self.locals.push(value)
+    }
+
+    pub fn pop_local(&mut self) -> Option<Scm> {
+        self.locals.pop()
+    }
+
+    pub fn get_local(&self, idx: usize) -> &Scm {
+        &self.locals[idx]
+    }
+
+    pub fn set_local(&mut self, idx: usize, value: Scm) {
+        if idx >= self.locals.len() {
+            self.locals.resize(idx + 1, Scm::void());
         }
+        self.locals[idx] = value
     }
 }

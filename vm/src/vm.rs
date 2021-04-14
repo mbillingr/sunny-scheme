@@ -3,7 +3,6 @@ use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
 use crate::continuation::Continuation;
 use crate::scm_extension::ScmExt;
 use crate::{bytecode::Op, closure::Closure, mem::Ref, Error, ErrorKind, Result, RuntimeResult};
-use std::cell::Cell;
 use sunny_sexpr_parser::{CxR, Scm};
 
 pub struct Vm {
@@ -242,16 +241,15 @@ impl Vm {
     }
 
     fn append_local(&mut self, value: Scm) {
-        self.current_activation.locals.push(Cell::new(value));
+        self.current_activation.push_local(value);
     }
 
     fn drop_local(&mut self) -> Result<Scm> {
         let value = self
             .current_activation
-            .locals
-            .pop()
+            .pop_local()
             .ok_or(ErrorKind::StackUnderflow)?;
-        Ok(value.into_inner())
+        Ok(value)
     }
 
     fn get_local(&mut self, mut idx: usize) -> Result<()> {
@@ -261,7 +259,7 @@ impl Vm {
             act = act.parent.as_ref().ok_or(ErrorKind::UndefinedVariable)?;
         }
 
-        let x = cell_clone(&act.locals[idx]);
+        let x = act.get_local(idx).clone();
         if x.is_void() {
             return Err(ErrorKind::UndefinedVariable);
         }
@@ -276,16 +274,12 @@ impl Vm {
             act = act.parent.as_mut().unwrap();
         }
 
-        if idx >= act.locals.len() {
-            act.locals
-                .resize_with((idx + 1).next_power_of_two(), || Cell::new(Scm::void()));
-        }
-        act.locals[idx].set(value);
+        act.set_local(idx, value)
     }
 
     fn peek_closure(&mut self, idx: usize) -> Result<()> {
         if let Some(cls) = self.pop_value()?.as_closure() {
-            let x = cell_clone(&cls.parent.as_ref().unwrap().locals[idx]);
+            let x = cls.parent.as_ref().unwrap().get_local(idx).clone();
             self.push_value(x);
             Ok(())
         } else {
@@ -549,12 +543,6 @@ impl Vm {
     }
 }
 
-fn cell_clone<T: Clone + Default>(cell: &Cell<T>) -> T {
-    let x = cell.take();
-    cell.set(x.clone());
-    x
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -766,18 +754,9 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(
-            cell_clone(&vm.current_activation.locals[0]),
-            Scm::number(12)
-        );
-        assert_eq!(
-            cell_clone(&vm.current_activation.locals[1]),
-            Scm::number(11)
-        );
-        assert_eq!(
-            cell_clone(&vm.current_activation.locals[2]),
-            Scm::number(10)
-        );
+        assert_eq!(&vm.current_activation.locals[0], &Scm::number(12));
+        assert_eq!(&vm.current_activation.locals[1], &Scm::number(11));
+        assert_eq!(&vm.current_activation.locals[2], &Scm::number(10));
     }
 
     #[test]
@@ -1110,7 +1089,7 @@ mod tests {
             caller: None,
             parent: None,
             code: CodePointer::new(code_segment.clone()).at(999),
-            locals: vec![Cell::new(Scm::number(1)), Cell::new(Scm::number(2))],
+            locals: vec![Scm::number(1), Scm::number(2)],
         };
         let act = Ref::new(act);
 

@@ -14,6 +14,15 @@ impl<T> Ref<T> {
     }
 }
 
+impl<T: Clone> Ref<T> {
+    pub fn unwrap_or_clone(self) -> T {
+        match rc::Rc::try_unwrap(self.0) {
+            Ok(inner) => inner,
+            Err(shared) => (*shared).clone(),
+        }
+    }
+}
+
 impl<T: ?Sized> Ref<T> {
     pub fn as_ptr(&self) -> *const T {
         rc::Rc::as_ptr(&self.0)
