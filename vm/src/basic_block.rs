@@ -1,5 +1,4 @@
 use crate::bytecode::{CodeSegment, Op};
-use crate::scm_extension::ScmExt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};

@@ -27,7 +27,6 @@ impl ScmObject for Value {
 }
 
 pub trait ScmExt {
-    fn void() -> Scm;
     fn closure(cls: Closure) -> Scm;
     fn primitive(pri: Primitive) -> Scm;
     fn continuation(cnt: Continuation) -> Scm;
@@ -36,7 +35,6 @@ pub trait ScmExt {
     fn is_like_true(&self) -> bool;
     fn is_procedure(&self) -> bool;
 
-    fn is_void(&self) -> bool;
     fn is_closure(&self) -> bool;
     fn as_closure(&self) -> Option<&Closure>;
     fn is_primitive(&self) -> bool;
@@ -47,10 +45,6 @@ pub trait ScmExt {
 }
 
 impl ScmExt for Scm {
-    fn void() -> Scm {
-        Scm::obj(Value::Void)
-    }
-
     fn closure(cls: Closure) -> Scm {
         Scm::obj(Value::Closure(cls.into()))
     }
@@ -73,10 +67,6 @@ impl ScmExt for Scm {
 
     fn is_procedure(&self) -> bool {
         self.is_closure() || self.is_primitive() || self.is_continuation()
-    }
-
-    fn is_void(&self) -> bool {
-        self.as_type::<Value>().map(Value::is_void).unwrap_or(false)
     }
 
     fn is_closure(&self) -> bool {

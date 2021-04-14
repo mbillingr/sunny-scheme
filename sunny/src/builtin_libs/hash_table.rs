@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::ops::Deref;
 use sunny_sexpr_parser::{HashEqual, HashPtrEq, Scm, ScmHasher, ScmObject, WeakScm};
-use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{ErrorKind, Result, Vm};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {

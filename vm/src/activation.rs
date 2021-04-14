@@ -1,7 +1,6 @@
 use crate::bytecode::CodePointer;
 use crate::closure::Closure;
 use crate::mem::Ref;
-use crate::scm_extension::ScmExt;
 use sunny_sexpr_parser::Scm;
 
 #[derive(Clone)]

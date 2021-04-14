@@ -6,6 +6,7 @@ mod null;
 mod pair;
 mod string;
 mod symbol;
+mod void;
 
 use crate::cxr::CxR;
 use crate::Int;
@@ -37,11 +38,15 @@ pub struct Scm(Rc<dyn ScmObject>);
 
 impl Default for Scm {
     fn default() -> Self {
-        Scm::null() // TODO: should default to void
+        Scm::void()
     }
 }
 
 impl Scm {
+    pub fn void() -> Self {
+        void::Void.into()
+    }
+
     pub fn null() -> Self {
         null::Null.into()
     }
@@ -84,6 +89,10 @@ impl Scm {
 
     pub fn as_type<T: 'static>(&self) -> Option<&T> {
         self.0.downcast_ref()
+    }
+
+    pub fn is_void(&self) -> bool {
+        self.is::<void::Void>()
     }
 
     pub fn is_null(&self) -> bool {
