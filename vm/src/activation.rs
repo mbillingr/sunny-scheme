@@ -1,7 +1,9 @@
 use crate::bytecode::CodePointer;
 use crate::closure::Closure;
 use crate::mem::Ref;
-use sunny_sexpr_parser::Scm;
+use std::any::Any;
+use std::collections::HashMap;
+use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
 
 #[derive(Clone)]
 pub struct Activation {
@@ -14,6 +16,12 @@ pub struct Activation {
 impl std::fmt::Debug for Activation {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "<activation record @ {:p}>", self)
+    }
+}
+
+impl std::fmt::Display for Activation {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}>", self)
     }
 }
 
@@ -51,5 +59,26 @@ impl Activation {
             self.locals.resize(idx + 1, Scm::void());
         }
         self.locals[idx] = value
+    }
+}
+
+impl ScmObject for Activation {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn equals(&self, other: &dyn ScmObject) -> bool {
+        other
+            .downcast_ref::<Self>()
+            .map(|other| std::ptr::eq(self, other))
+            .unwrap_or(false)
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        std::ptr::hash(self, state);
+    }
+
+    fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {
+        unimplemented!()
     }
 }
