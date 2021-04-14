@@ -3,6 +3,7 @@ use crate::continuation::Continuation;
 use crate::{Primitive, Value};
 use std::any::Any;
 use std::collections::HashMap;
+use std::hash::Hash;
 use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
 
 impl ScmObject for Value {
@@ -86,10 +87,40 @@ impl ScmExt for Scm {
     }
 
     fn values(n: usize) -> Scm {
-        Scm::obj(Value::Values(n))
+        Scm::obj(Values(n))
     }
 
     fn as_values(&self) -> Option<usize> {
-        self.as_type::<Value>().and_then(Value::as_values).copied()
+        self.as_type::<Values>().map(|values| values.0)
+    }
+}
+
+#[derive(Debug)]
+struct Values(usize);
+
+impl std::fmt::Display for Values {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "<{} values>", self.0)
+    }
+}
+
+impl ScmObject for Values {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn equals(&self, other: &dyn ScmObject) -> bool {
+        other
+            .downcast_ref::<Self>()
+            .map(|other| self.0 == other.0)
+            .unwrap_or(false)
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        self.0.hash(state);
+    }
+
+    fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {
+        unimplemented!()
     }
 }
