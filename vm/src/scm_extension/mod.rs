@@ -27,46 +27,30 @@ impl ScmObject for Value {
 }
 
 pub trait ScmExt {
-    fn closure(cls: Closure) -> Scm;
-    fn primitive(pri: Primitive) -> Scm;
-    fn continuation(cnt: Continuation) -> Scm;
-    fn values(n: usize) -> Scm;
-
-    fn is_like_true(&self) -> bool;
     fn is_procedure(&self) -> bool;
 
+    fn closure(cls: Closure) -> Scm;
     fn is_closure(&self) -> bool;
     fn as_closure(&self) -> Option<&Closure>;
+
+    fn primitive(pri: Primitive) -> Scm;
     fn is_primitive(&self) -> bool;
     fn as_primitive(&self) -> Option<&Primitive>;
+
+    fn continuation(cnt: Continuation) -> Scm;
     fn is_continuation(&self) -> bool;
     fn as_continuation(&self) -> Option<&Continuation>;
+
+    fn values(n: usize) -> Scm;
     fn as_values(&self) -> Option<usize>;
 }
 
 impl ScmExt for Scm {
-    fn closure(cls: Closure) -> Scm {
-        Scm::obj(Value::Closure(cls.into()))
-    }
-
-    fn primitive(pri: Primitive) -> Scm {
-        Scm::obj(Value::Primitive(pri.into()))
-    }
-
-    fn continuation(cnt: Continuation) -> Scm {
-        Scm::obj(Value::Continuation(cnt.into()))
-    }
-
-    fn values(n: usize) -> Scm {
-        Scm::obj(Value::Values(n))
-    }
-
-    fn is_like_true(&self) -> bool {
-        self.as_bool().unwrap_or(true) && !self.is_void()
-    }
-
     fn is_procedure(&self) -> bool {
         self.is_closure() || self.is_primitive() || self.is_continuation()
+    }
+    fn closure(cls: Closure) -> Scm {
+        Scm::obj(Value::Closure(cls.into()))
     }
 
     fn is_closure(&self) -> bool {
@@ -77,6 +61,10 @@ impl ScmExt for Scm {
         self.as_type::<Value>().and_then(Value::as_closure)
     }
 
+    fn primitive(pri: Primitive) -> Scm {
+        Scm::obj(Value::Primitive(pri.into()))
+    }
+
     fn is_primitive(&self) -> bool {
         self.as_primitive().is_some()
     }
@@ -85,12 +73,20 @@ impl ScmExt for Scm {
         self.as_type::<Value>().and_then(Value::as_primitive)
     }
 
+    fn continuation(cnt: Continuation) -> Scm {
+        Scm::obj(Value::Continuation(cnt.into()))
+    }
+
     fn is_continuation(&self) -> bool {
         self.as_continuation().is_some()
     }
 
     fn as_continuation(&self) -> Option<&Continuation> {
         self.as_type::<Value>().and_then(Value::as_continuation)
+    }
+
+    fn values(n: usize) -> Scm {
+        Scm::obj(Value::Values(n))
     }
 
     fn as_values(&self) -> Option<usize> {

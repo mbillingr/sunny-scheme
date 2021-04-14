@@ -83,6 +83,10 @@ impl Scm {
         Scm(Rc::new(obj))
     }
 
+    pub fn is_like_true(&self) -> bool {
+        self.as_bool().unwrap_or(true) && !self.is_void()
+    }
+
     pub fn is<T: 'static>(&self) -> bool {
         self.as_type::<T>().is_some()
     }
