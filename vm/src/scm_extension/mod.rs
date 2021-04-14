@@ -62,7 +62,7 @@ impl ScmExt for Scm {
     }
 
     fn primitive(pri: Primitive) -> Scm {
-        Scm::obj(Value::Primitive(pri.into()))
+        Scm::obj(pri)
     }
 
     fn is_primitive(&self) -> bool {
@@ -70,7 +70,7 @@ impl ScmExt for Scm {
     }
 
     fn as_primitive(&self) -> Option<&Primitive> {
-        self.as_type::<Value>().and_then(Value::as_primitive)
+        self.as_type::<Primitive>()
     }
 
     fn continuation(cnt: Continuation) -> Scm {

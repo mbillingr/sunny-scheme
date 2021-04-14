@@ -2,12 +2,10 @@ use std::hash::{Hash, Hasher};
 
 use crate::closure::Closure;
 use crate::continuation::Continuation;
-use crate::primitive::Primitive;
 
 #[repr(u8)]
 pub enum Value {
     Closure(Closure),
-    Primitive(Primitive),
     Continuation(Continuation),
 
     Values(usize), // mark multiple return values on stack
@@ -66,7 +64,6 @@ macro_rules! impl_accessor {
 
 impl Value {
     impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
-    impl_accessor!(is_primitive, as_primitive, Value::Primitive, ref Primitive);
     impl_accessor!(
         is_continuation,
         as_continuation,
@@ -79,7 +76,6 @@ impl Value {
         use Value::*;
         match self {
             Closure(_) => 8,
-            Primitive(_) => 9,
             Continuation(_) => 10,
             Values(_) => 254,
         }
@@ -89,7 +85,6 @@ impl Value {
         use Value::*;
         match (self, rhs) {
             (Closure(a), Closure(b)) => *a == *b,
-            (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
             _ => false,
         }
@@ -103,7 +98,6 @@ impl Value {
         self.get_tag().hash(state);
         match self {
             Value::Closure(p) => (p as *const Closure).hash(state),
-            Value::Primitive(p) => (p as *const Primitive).hash(state),
             Value::Continuation(p) => (p as *const Continuation).hash(state),
             Value::Values(n) => n.hash(state),
         }
@@ -113,7 +107,6 @@ impl Value {
         self.get_tag().hash(state);
         match self {
             Value::Closure(_) => unimplemented!(),
-            Value::Primitive(_) => unimplemented!(),
             Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
         }
@@ -130,7 +123,6 @@ impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Value::Closure(p) => write!(f, "{:?}", p),
-            Value::Primitive(p) => write!(f, "<primitive {:p}>", p),
             Value::Continuation(p) => write!(f, "{:?}", *p),
             Value::Values(n) => write!(f, "<{} values>", n),
         }
@@ -142,7 +134,6 @@ impl PartialEq for Value {
         use Value::*;
         match (self, rhs) {
             (Closure(a), Closure(b)) => a == b,
-            (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Values(a), Values(b)) => a == b,
             _ => false,
         }
