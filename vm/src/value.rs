@@ -6,36 +6,9 @@ use crate::mem::Ref;
 use crate::number::Number;
 use crate::primitive::Primitive;
 use std::any::Any;
-use std::fmt::Debug;
 
 pub type Symbol = Box<str>;
 pub type ConstString = Box<str>;
-
-pub trait Object: 'static + Debug {
-    fn as_any(&self) -> &dyn Any;
-
-    fn equals(&self, other: &dyn Object) -> bool {
-        std::ptr::eq(
-            self as *const _ as *const u8,
-            other as *const _ as *const u8,
-        )
-    }
-}
-
-impl dyn Object {
-    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
-        self.as_any().downcast_ref()
-    }
-
-    /// # Safety
-    /// It is unsafe and probably undefined behavior to cast a const reference to a mutable pointer.
-    pub unsafe fn downcast_mut<T: Any>(&self) -> Option<&mut T> {
-        let ptr = self.as_any() as *const dyn Any;
-        let ptr = ptr as *mut dyn Any;
-        let any = &mut *ptr;
-        any.downcast_mut()
-    }
-}
 
 #[repr(u8)]
 pub enum Value {
@@ -49,7 +22,6 @@ pub enum Value {
     Continuation(Continuation),
 
     Values(usize), // mark multiple return values on stack
-    Object(Ref<Box<dyn Object>>),
 }
 
 impl Default for Value {
@@ -132,7 +104,6 @@ impl Value {
             Primitive(_) => 9,
             Continuation(_) => 10,
             Values(_) => 254,
-            Object(_) => 255,
         }
     }
 
@@ -164,14 +135,12 @@ impl Value {
 
     pub fn as_obj<T: Any>(&self) -> Option<&T> {
         match self {
-            Value::Object(obj) => obj.downcast_ref(),
             _ => None,
         }
     }
 
     pub fn as_obj_mut<T: Any>(&self) -> Option<&mut T> {
         match self {
-            Value::Object(obj) => unsafe { obj.downcast_mut() },
             _ => None,
         }
     }
@@ -186,7 +155,6 @@ impl Value {
             (Closure(a), Closure(b)) => *a == *b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
-            (Object(a), Object(b)) => a.equals(&***b),
             _ => false,
         }
     }
@@ -206,7 +174,6 @@ impl Value {
             Value::Primitive(p) => (p as *const Primitive).hash(state),
             Value::Continuation(p) => (p as *const Continuation).hash(state),
             Value::Values(n) => n.hash(state),
-            Value::Object(p) => p.as_ptr().hash(state),
         }
     }
 
@@ -224,7 +191,6 @@ impl Value {
             Value::Primitive(_) => unimplemented!(),
             Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
-            Value::Object(_) => unimplemented!(),
         }
     }
 }
@@ -246,7 +212,6 @@ impl std::fmt::Display for Value {
             Value::Primitive(p) => write!(f, "<primitive {:p}>", p),
             Value::Continuation(p) => write!(f, "{:?}", *p),
             Value::Values(n) => write!(f, "<{} values>", n),
-            Value::Object(p) => write!(f, "<object {:p}>", p),
         }
     }
 }
@@ -262,7 +227,6 @@ impl PartialEq for Value {
             (Closure(a), Closure(b)) => a == b,
             (Primitive(a), Primitive(b)) => std::ptr::eq(a, b),
             (Values(a), Values(b)) => a == b,
-            (Object(a), Object(b)) => a == b,
             _ => false,
         }
     }

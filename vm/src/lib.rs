@@ -1,7 +1,7 @@
 pub use basic_block::{BasicBlock, BlockChain};
 pub use primitive::{Primitive, PrimitiveProc};
 pub use sunny_memory::rc as mem;
-pub use value::{Object, Value};
+pub use value::Value;
 pub use vm::Vm;
 
 use crate::bytecode::CodePointer;
