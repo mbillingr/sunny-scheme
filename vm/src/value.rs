@@ -1,11 +1,7 @@
 use std::hash::{Hash, Hasher};
 
-use crate::continuation::Continuation;
-
 #[repr(u8)]
 pub enum Value {
-    Continuation(Continuation),
-
     Values(usize), // mark multiple return values on stack
 }
 
@@ -42,7 +38,6 @@ macro_rules! impl_accessor {
         pub fn $conv(&self) -> Option<&$output> {
             match self {
                 $variant(x) => Some(&*x),
-                _ => None,
             }
         }
     };
@@ -54,34 +49,18 @@ macro_rules! impl_accessor {
         pub fn $conv(&self) -> Option<$output> {
             match self {
                 $variant(x) => Some(*x),
-                _ => None,
             }
         }
     };
 }
 
 impl Value {
-    impl_accessor!(
-        is_continuation,
-        as_continuation,
-        Value::Continuation,
-        ref Continuation
-    );
     impl_accessor!(is_values, as_values, Value::Values, ref usize);
 
     pub fn get_tag(&self) -> u8 {
         use Value::*;
         match self {
-            Continuation(_) => 10,
             Values(_) => 254,
-        }
-    }
-
-    pub fn equals(&self, rhs: &Self) -> bool {
-        use Value::*;
-        match (self, rhs) {
-            (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
-            _ => false,
         }
     }
 
@@ -92,7 +71,6 @@ impl Value {
     pub fn shallow_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Continuation(p) => (p as *const Continuation).hash(state),
             Value::Values(n) => n.hash(state),
         }
     }
@@ -100,7 +78,6 @@ impl Value {
     pub fn deep_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
         }
     }
@@ -115,7 +92,6 @@ impl std::fmt::Debug for Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Value::Continuation(p) => write!(f, "{:?}", *p),
             Value::Values(n) => write!(f, "<{} values>", n),
         }
     }
@@ -126,7 +102,6 @@ impl PartialEq for Value {
         use Value::*;
         match (self, rhs) {
             (Values(a), Values(b)) => a == b,
-            _ => false,
         }
     }
 }

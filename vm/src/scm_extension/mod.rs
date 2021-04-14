@@ -74,7 +74,7 @@ impl ScmExt for Scm {
     }
 
     fn continuation(cnt: Continuation) -> Scm {
-        Scm::obj(Value::Continuation(cnt.into()))
+        Scm::obj(cnt)
     }
 
     fn is_continuation(&self) -> bool {
@@ -82,7 +82,7 @@ impl ScmExt for Scm {
     }
 
     fn as_continuation(&self) -> Option<&Continuation> {
-        self.as_type::<Value>().and_then(Value::as_continuation)
+        self.as_type::<Continuation>()
     }
 
     fn values(n: usize) -> Scm {
