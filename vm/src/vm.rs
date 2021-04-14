@@ -2,10 +2,7 @@ use crate::activation::Activation;
 use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
 use crate::continuation::Continuation;
 use crate::scm_extension::ScmExt;
-use crate::{
-    bytecode::Op, closure::Closure, mem::Ref, storage::ValueStorage, Error, ErrorKind, Result,
-    RuntimeResult,
-};
+use crate::{bytecode::Op, closure::Closure, mem::Ref, Error, ErrorKind, Result, RuntimeResult};
 use std::cell::Cell;
 use sunny_sexpr_parser::{CxR, Scm};
 
@@ -17,9 +14,9 @@ pub struct Vm {
 }
 
 impl Vm {
-    pub fn new(mut storage: ValueStorage) -> Result<Self> {
+    pub fn new() -> Result<Self> {
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
-        let code_ptr = CodePointer::new(storage.insert(code_segment));
+        let code_ptr = CodePointer::new(Ref::new(code_segment));
 
         let root_activation = Activation {
             caller: None,
@@ -27,7 +24,7 @@ impl Vm {
             code: code_ptr,
             locals: vec![],
         };
-        let root_activation = storage.insert(root_activation);
+        let root_activation = Ref::new(root_activation);
 
         Ok(Vm {
             value_stack: vec![],
@@ -565,23 +562,12 @@ mod tests {
     use crate::Primitive;
 
     struct VmRunner {
-        storage_capacity: usize,
         value_stack: Option<Vec<Scm>>,
     }
 
     impl VmRunner {
         fn new() -> Self {
-            VmRunner {
-                storage_capacity: 1024,
-                value_stack: None,
-            }
-        }
-
-        fn with_capacity(self, capacity: usize) -> Self {
-            VmRunner {
-                storage_capacity: capacity,
-                ..self
-            }
+            VmRunner { value_stack: None }
         }
 
         fn with_value_stack(self, values: Vec<Scm>) -> Self {
@@ -598,18 +584,15 @@ mod tests {
         }
 
         fn prepare_vm(self, cb: CodeBuilder) -> Vm {
-            let additional_capacity = 3 + 2; // required by the vm's default closure and by the closure being run
-            let mut storage = ValueStorage::new(self.storage_capacity + additional_capacity);
-
             let code_segment = cb.build().unwrap();
-            let code_ptr = CodePointer::new(storage.insert(code_segment));
+            let code_ptr = CodePointer::new(Ref::new(code_segment));
 
             let closure = Closure {
                 code: code_ptr,
                 parent: None,
             };
 
-            let mut vm = Vm::new(storage).unwrap();
+            let mut vm = Vm::new().unwrap();
 
             if let Some(value_stack) = self.value_stack {
                 vm.value_stack = value_stack;
@@ -623,8 +606,7 @@ mod tests {
 
     #[test]
     fn default_program_halts_immediately() {
-        let storage = ValueStorage::new(1024);
-        let mut vm = Vm::new(storage).unwrap();
+        let mut vm = Vm::new().unwrap();
         let ret = vm.run();
         assert_eq!(ret, Err(ErrorKind::Halted));
     }
@@ -707,19 +689,6 @@ mod tests {
     }
 
     #[test]
-    fn op_cons_succeeds_even_when_storage_is_full() {
-        let (_, vm) = VmRunner::new()
-            .with_capacity(0)
-            .with_value_stack(vec![Scm::number(0), Scm::null()])
-            .run_code(CodeBuilder::new().op(Op::Cons).op(Op::Halt));
-
-        assert_eq!(
-            vm.value_stack.last().unwrap(),
-            &Scm::cons(Scm::number(0), Scm::null())
-        );
-    }
-
-    #[test]
     fn op_make_closure_pushes_closure() {
         let (_, mut vm) = VmRunner::new().with_value_stack(vec![]).run_code(
             CodeBuilder::new()
@@ -736,28 +705,8 @@ mod tests {
     }
 
     #[test]
-    fn op_make_closure_succeeds_even_when_storage_is_full() {
-        let (_, mut vm) = VmRunner::new()
-            .with_capacity(0)
-            .with_value_stack(vec![])
-            .run_code(
-                CodeBuilder::new()
-                    .op(Op::MakeClosure { offset: 0 })
-                    .op(Op::Halt),
-            );
-
-        let closure = vm.value_stack.pop().unwrap();
-        let closure = closure.as_closure().unwrap();
-
-        assert!(vm.value_stack.is_empty());
-
-        assert_eq!(closure.code.clone().fetch(), Op::Halt);
-    }
-
-    #[test]
     fn op_call_expects_callable_on_top_of_stack() {
         let (ret, _) = VmRunner::new()
-            .with_capacity(0)
             .with_value_stack(vec![Scm::number(0)])
             .run_code(CodeBuilder::new().op(Op::Call { n_args: 0 }));
 
@@ -766,8 +715,6 @@ mod tests {
 
     #[test]
     fn op_call_executes_closure() {
-        let mut storage = ValueStorage::new(1024);
-
         let code = CodeBuilder::new()
             // main
             .op(Op::Call { n_args: 0 })
@@ -777,7 +724,7 @@ mod tests {
             .op(Op::Halt)
             .build()
             .unwrap();
-        let code_segment = storage.insert(code);
+        let code_segment = Ref::new(code);
 
         let main = Closure {
             code: CodePointer::new(code_segment.clone()).at(0),
@@ -791,7 +738,7 @@ mod tests {
 
         let value_stack = vec![Scm::closure(callee)];
 
-        let mut vm = Vm::new(storage).unwrap();
+        let mut vm = Vm::new().unwrap();
 
         vm.value_stack = value_stack;
 
@@ -1144,8 +1091,6 @@ mod tests {
 
     #[test]
     fn op_peek_into_closure() {
-        let mut storage = ValueStorage::new(1024);
-
         let code = CodeBuilder::new()
             // main
             .op(Op::Peek(1))
@@ -1154,7 +1099,7 @@ mod tests {
             .op(Op::Halt)
             .build()
             .unwrap();
-        let code_segment = storage.insert(code);
+        let code_segment = Ref::new(code);
 
         let main = Closure {
             code: CodePointer::new(code_segment.clone()).at(0),
@@ -1167,7 +1112,7 @@ mod tests {
             code: CodePointer::new(code_segment.clone()).at(999),
             locals: vec![Cell::new(Scm::number(1)), Cell::new(Scm::number(2))],
         };
-        let act = storage.insert(act);
+        let act = Ref::new(act);
 
         let callee = Closure {
             code: CodePointer::new(code_segment).at(2),
@@ -1176,7 +1121,7 @@ mod tests {
 
         let value_stack = vec![Scm::closure(callee)];
 
-        let mut vm = Vm::new(storage).unwrap();
+        let mut vm = Vm::new().unwrap();
 
         vm.value_stack = value_stack;
 

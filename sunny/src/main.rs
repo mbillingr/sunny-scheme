@@ -14,7 +14,8 @@ use std::path::{Path, PathBuf};
 use sunny_sexpr_parser::SharedStr;
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
-use sunny_vm::{ValueStorage, Vm};
+use sunny_vm::mem::Ref;
+use sunny_vm::Vm;
 
 pub mod backend;
 pub mod builtin_libs;
@@ -79,17 +80,15 @@ fn run_bytecode(path: &std::path::Path) {
         .read_to_string(&mut source)
         .unwrap();
 
-    let mut storage = ValueStorage::new(1024);
-
     let code = match user_load(&source) {
         Ok(code) => code,
         Err(e) => panic!("{}", e),
     };
-    let code = storage.insert(code);
+    let code = Ref::new(code);
 
     let cp = CodePointer::new(code);
 
-    let mut vm = Vm::new(storage).unwrap();
+    let mut vm = Vm::new().unwrap();
     let result = vm.eval(cp).unwrap();
     println!("Result: {}", result);
 }

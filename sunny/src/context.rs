@@ -12,7 +12,7 @@ use sunny_sexpr_parser::{Scm, SharedStr, SourceLocation, SourceMap};
 use sunny_vm::mem::Ref;
 use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::scm_extension::ScmExt;
-use sunny_vm::{ErrorKind, ValueStorage, Vm};
+use sunny_vm::{ErrorKind, Vm};
 use sunny_vm::{Primitive, PrimitiveProc};
 
 pub struct Context {
@@ -31,8 +31,7 @@ impl Default for Context {
 impl Context {
     pub fn new() -> Self {
         let globals = GlobalTable::new();
-        let storage = ValueStorage::new(11);
-        let vm = Vm::new(storage).unwrap();
+        let vm = Vm::new().unwrap();
 
         Context {
             env: base_environment("main"),

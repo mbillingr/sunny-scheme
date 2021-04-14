@@ -1,6 +1,5 @@
 pub use basic_block::{BasicBlock, BlockChain};
 pub use primitive::{Primitive, PrimitiveProc};
-pub use storage::ValueStorage;
 pub use sunny_memory::rc as mem;
 pub use value::{Object, Value, WeakValue};
 pub use vm::Vm;
@@ -18,7 +17,6 @@ pub mod number;
 pub mod optimizations;
 mod primitive;
 pub mod scm_extension;
-mod storage;
 mod value;
 pub mod vm;
 
