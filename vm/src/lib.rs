@@ -1,7 +1,6 @@
 pub use basic_block::{BasicBlock, BlockChain};
 pub use primitive::{Primitive, PrimitiveProc};
 pub use sunny_memory::rc as mem;
-pub use value::Value;
 pub use vm::Vm;
 
 use crate::bytecode::CodePointer;
@@ -17,7 +16,6 @@ pub mod number;
 pub mod optimizations;
 mod primitive;
 pub mod scm_extension;
-mod value;
 pub mod vm;
 
 pub type Result<T> = std::result::Result<T, ErrorKind>;

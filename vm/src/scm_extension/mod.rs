@@ -1,31 +1,10 @@
 use crate::closure::Closure;
 use crate::continuation::Continuation;
-use crate::{Primitive, Value};
+use crate::Primitive;
 use std::any::Any;
 use std::collections::HashMap;
 use std::hash::Hash;
 use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
-
-impl ScmObject for Value {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn equals(&self, other: &dyn ScmObject) -> bool {
-        other
-            .downcast_ref::<Self>()
-            .map(|other| self.equals(other))
-            .unwrap_or(false)
-    }
-
-    fn deep_hash(&self, state: &mut ScmHasher) {
-        self.deep_hash(state)
-    }
-
-    fn substitute(&self, _: &HashMap<&str, Scm>) -> Scm {
-        unimplemented!()
-    }
-}
 
 pub trait ScmExt {
     fn is_procedure(&self) -> bool;
