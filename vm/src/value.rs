@@ -1,11 +1,9 @@
 use std::hash::{Hash, Hasher};
 
-use crate::closure::Closure;
 use crate::continuation::Continuation;
 
 #[repr(u8)]
 pub enum Value {
-    Closure(Closure),
     Continuation(Continuation),
 
     Values(usize), // mark multiple return values on stack
@@ -63,7 +61,6 @@ macro_rules! impl_accessor {
 }
 
 impl Value {
-    impl_accessor!(is_closure, as_closure, Value::Closure, ref Closure);
     impl_accessor!(
         is_continuation,
         as_continuation,
@@ -75,7 +72,6 @@ impl Value {
     pub fn get_tag(&self) -> u8 {
         use Value::*;
         match self {
-            Closure(_) => 8,
             Continuation(_) => 10,
             Values(_) => 254,
         }
@@ -84,7 +80,6 @@ impl Value {
     pub fn equals(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
-            (Closure(a), Closure(b)) => *a == *b,
             (Continuation(a), Continuation(b)) => std::ptr::eq(a, b),
             _ => false,
         }
@@ -97,7 +92,6 @@ impl Value {
     pub fn shallow_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Closure(p) => (p as *const Closure).hash(state),
             Value::Continuation(p) => (p as *const Continuation).hash(state),
             Value::Values(n) => n.hash(state),
         }
@@ -106,7 +100,6 @@ impl Value {
     pub fn deep_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::Closure(_) => unimplemented!(),
             Value::Continuation(_) => unimplemented!(),
             Value::Values(n) => n.hash(state),
         }
@@ -122,7 +115,6 @@ impl std::fmt::Debug for Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Value::Closure(p) => write!(f, "{:?}", p),
             Value::Continuation(p) => write!(f, "{:?}", *p),
             Value::Values(n) => write!(f, "<{} values>", n),
         }
@@ -133,7 +125,6 @@ impl PartialEq for Value {
     fn eq(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
-            (Closure(a), Closure(b)) => a == b,
             (Values(a), Values(b)) => a == b,
             _ => false,
         }

@@ -1,11 +1,21 @@
 use crate::activation::Activation;
 use crate::bytecode::{CodePointer, Op};
 use crate::mem::Ref;
+use std::any::Any;
+use std::collections::HashMap;
+use std::hash::Hash;
+use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {
     pub(crate) parent: Option<Ref<Activation>>,
     pub(crate) code: CodePointer,
+}
+
+impl std::fmt::Display for Closure {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "<closure {:p}>", self)
+    }
 }
 
 impl Closure {
@@ -25,5 +35,27 @@ impl Closure {
                 op => panic!("Closure unexpectedly starts with {}", op),
             }
         }
+    }
+}
+
+impl ScmObject for Closure {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn equals(&self, other: &dyn ScmObject) -> bool {
+        other
+            .downcast_ref::<Self>()
+            .map(|other| self == other)
+            .unwrap_or(false)
+    }
+
+    fn deep_hash(&self, state: &mut ScmHasher) {
+        self.code.hash(state);
+        self.parent.hash(state);
+    }
+
+    fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {
+        unimplemented!()
     }
 }

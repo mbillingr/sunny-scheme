@@ -50,7 +50,7 @@ impl ScmExt for Scm {
         self.is_closure() || self.is_primitive() || self.is_continuation()
     }
     fn closure(cls: Closure) -> Scm {
-        Scm::obj(Value::Closure(cls.into()))
+        Scm::obj(cls)
     }
 
     fn is_closure(&self) -> bool {
@@ -58,7 +58,7 @@ impl ScmExt for Scm {
     }
 
     fn as_closure(&self) -> Option<&Closure> {
-        self.as_type::<Value>().and_then(Value::as_closure)
+        self.as_type::<Closure>()
     }
 
     fn primitive(pri: Primitive) -> Scm {
