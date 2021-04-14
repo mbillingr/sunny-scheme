@@ -39,8 +39,6 @@ impl dyn Object {
 
 #[repr(u8)]
 pub enum Value {
-    False,
-    True,
     Number(Number),
     Symbol(Ref<Symbol>),
     String(Ref<ConstString>),
@@ -57,8 +55,6 @@ pub enum Value {
 #[derive(Clone)]
 #[repr(u8)]
 pub enum WeakValue {
-    False,
-    True,
     Number(WeakNumber),
     Symbol(Weak<Symbol>),
     String(Weak<ConstString>),
@@ -137,13 +133,6 @@ impl Value {
     );
     impl_accessor!(is_values, as_values, Value::Values, ref usize);
 
-    pub fn bool(b: bool) -> Self {
-        match b {
-            true => Self::True,
-            false => Self::False,
-        }
-    }
-
     pub fn number(x: impl Into<Number>) -> Self {
         Value::Number(x.into())
     }
@@ -151,8 +140,6 @@ impl Value {
     pub fn get_tag(&self) -> u8 {
         use Value::*;
         match self {
-            False => 2,
-            True => 3,
             Number(_) => 4,
             Symbol(_) => 5,
             String(_) => 6,
@@ -162,18 +149,6 @@ impl Value {
             Continuation(_) => 10,
             Values(_) => 254,
             Object(_) => 255,
-        }
-    }
-
-    pub fn is_bool(&self) -> bool {
-        self.as_bool().is_some()
-    }
-
-    pub fn as_bool(&self) -> Option<bool> {
-        match self {
-            Value::True => Some(true),
-            Value::False => Some(false),
-            _ => None,
         }
     }
 
@@ -220,8 +195,6 @@ impl Value {
     pub fn equals(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
-            (False, False) => true,
-            (True, True) => true,
             (Number(a), Number(b)) => a.equals(b),
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
@@ -241,8 +214,6 @@ impl Value {
     pub fn shallow_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::False => {}
-            Value::True => {}
             Value::Number(n) => n.hash(state),
             Value::Symbol(p) => p.as_ptr().hash(state),
             Value::String(p) => p.as_ptr().hash(state),
@@ -258,8 +229,6 @@ impl Value {
     pub fn deep_hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            Value::False => {}
-            Value::True => {}
             Value::Number(n) => n.hash(state),
             Value::Symbol(p) => p.as_ptr().hash(state),
             Value::String(p) => p.as_ptr().hash(state),
@@ -294,8 +263,6 @@ impl std::fmt::Debug for Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Value::False => write!(f, "#f"),
-            Value::True => write!(f, "#t"),
             Value::Number(i) => write!(f, "{}", i),
             Value::Symbol(p) => write!(f, "'{}", **p),
             Value::String(p) => write!(f, "{}", **p),
@@ -315,8 +282,6 @@ impl PartialEq for WeakValue {
     fn eq(&self, rhs: &Self) -> bool {
         use WeakValue::*;
         match (self, rhs) {
-            (False, False) => true,
-            (True, True) => true,
             (Number(a), Number(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
@@ -334,8 +299,6 @@ impl PartialEq for Value {
     fn eq(&self, rhs: &Self) -> bool {
         use Value::*;
         match (self, rhs) {
-            (False, False) => true,
-            (True, True) => true,
             (Number(a), Number(b)) => a == b,
             (Symbol(a), Symbol(b)) => a == b,
             (String(a), String(b)) => a == b,
@@ -367,8 +330,6 @@ impl Hash for WeakValue {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.get_tag().hash(state);
         match self {
-            WeakValue::False => {}
-            WeakValue::True => {}
             WeakValue::Number(n) => n.hash(state),
             WeakValue::Symbol(p) => p.as_ptr().hash(state),
             WeakValue::String(p) => p.as_ptr().hash(state),
@@ -391,8 +352,6 @@ impl<T: Into<Number>> From<T> for Value {
 impl Value {
     pub fn downgrade(&self) -> WeakValue {
         match self {
-            Value::False => WeakValue::False,
-            Value::True => WeakValue::True,
             Value::Number(n) => WeakValue::Number(n.downgrade()),
             Value::Symbol(p) => WeakValue::Symbol(p.downgrade()),
             Value::String(p) => WeakValue::String(p.downgrade()),
@@ -413,8 +372,6 @@ impl WeakValue {
 
     pub fn upgrade(&self) -> Option<Value> {
         match self {
-            WeakValue::False => Some(Value::False),
-            WeakValue::True => Some(Value::True),
             WeakValue::Number(n) => n.upgrade().map(Value::Number),
             WeakValue::Symbol(p) => p.upgrade().map(Value::Symbol),
             WeakValue::String(p) => p.upgrade().map(Value::String),
@@ -430,8 +387,6 @@ impl WeakValue {
     pub fn get_tag(&self) -> u8 {
         use WeakValue::*;
         match self {
-            False => 2,
-            True => 3,
             Number(_) => 4,
             Symbol(_) => 5,
             String(_) => 6,
@@ -477,46 +432,6 @@ pub mod arithmetic {
             use Value::*;
             match (self, other) {
                 (Number(a), Number(b)) => Some(Number(a / b)),
-                _ => None,
-            }
-        }
-
-        pub fn try_is_less(&self, other: &Self) -> Option<Self> {
-            use Value::*;
-            match (self, other) {
-                (Number(a), Number(b)) => Some(Value::bool(a < b)),
-                _ => None,
-            }
-        }
-
-        pub fn try_is_greater(&self, other: &Self) -> Option<Self> {
-            use Value::*;
-            match (self, other) {
-                (Number(a), Number(b)) => Some(Value::bool(a > b)),
-                _ => None,
-            }
-        }
-
-        pub fn try_is_less_or_equal(&self, other: &Self) -> Option<Self> {
-            use Value::*;
-            match (self, other) {
-                (Number(a), Number(b)) => Some(Value::bool(a <= b)),
-                _ => None,
-            }
-        }
-
-        pub fn try_is_greater_or_equal(&self, other: &Self) -> Option<Self> {
-            use Value::*;
-            match (self, other) {
-                (Number(a), Number(b)) => Some(Value::bool(a >= b)),
-                _ => None,
-            }
-        }
-
-        pub fn try_is_numeq(&self, other: &Self) -> Option<Self> {
-            use Value::*;
-            match (self, other) {
-                (Number(a), Number(b)) => Some(Value::bool(a == b)),
                 _ => None,
             }
         }
