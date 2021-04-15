@@ -183,7 +183,7 @@ impl Scm {
         self.ptr_eq(other) || self.0.is_equal(&*other.0)
     }
 
-    fn deep_hash(&self, state: &mut ScmHasher) {
+    pub fn deep_hash(&self, state: &mut ScmHasher) {
         self.0.deep_hash(state)
     }
 

@@ -217,7 +217,13 @@ define_form! {
 
 define_form! {
     Quotation(sexpr, src_map, _env):
-        [(_, value) => { Ok(Ast::constant(src_map.get(value), value.clone())) }]
+        [(_, value) => {
+            let mut value = value;
+            if let Some(cls) = value.as_type::<SyntacticClosure>() {
+                value = cls.raw_expr();
+            }
+            Ok(Ast::constant(src_map.get(value), value.clone()))
+        }]
 }
 
 define_form! {

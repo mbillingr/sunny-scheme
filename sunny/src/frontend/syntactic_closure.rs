@@ -16,6 +16,10 @@ impl SyntacticClosure {
     pub fn expand(&self, expander: &impl SyntaxExpander, src_map: &SourceMap) -> Result<AstNode> {
         expander.expand(&self.sexpr, src_map, &self.env)
     }
+
+    pub fn raw_expr(&self) -> &Scm {
+        &self.sexpr
+    }
 }
 
 impl ScmObject for SyntacticClosure {
