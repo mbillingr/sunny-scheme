@@ -1,4 +1,4 @@
-(import (scheme base)
+(import (sunny core)
         (sunny time))
 
 (define (fib n)
