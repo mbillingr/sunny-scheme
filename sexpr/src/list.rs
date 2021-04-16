@@ -57,7 +57,7 @@ where
 
 /// Return a new list with all items replaced by the result of calling
 /// a function on them. Returns `None` if `list` is not a proper list.
-pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, func: impl Fn(&T) -> U) -> Option<R>
+pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, mut func: impl FnMut(&T) -> U) -> Option<R>
 where
     S: List<T>,
     R: List<U>,
@@ -72,9 +72,8 @@ where
     }
 }
 
-/// Return a new list with all items replaced by the result of calling
-/// a function on them. Returns `None` if `list` is not a proper list.
-pub fn fold<A, T, S>(list: &S, acc: A, func: impl Fn(A, &T) -> A) -> Option<A>
+/// Left fold
+pub fn fold_left<A, T, S>(list: &S, acc: A, mut func: impl FnMut(A, &T) -> A) -> Option<A>
 where
     S: List<T>,
 {
@@ -82,7 +81,28 @@ where
         Some(acc)
     } else {
         let acc = func(acc, list.first()?);
-        fold(list.rest()?, acc, func)
+        fold_left(list.rest()?, acc, func)
+    }
+}
+
+/// Right fold
+pub fn fold_right<A, T, S>(list: &S, acc: A, func: impl FnMut(A, &T) -> A) -> Option<A>
+where
+    S: List<T>,
+{
+    foldr(list, acc, func).map(|(result, _)| result)
+}
+
+fn foldr<A, T, S, P>(list: &S, acc: A, func: P) -> Option<(A, P)>
+where
+    S: List<T>,
+    P: FnMut(A, &T) -> A,
+{
+    if list.is_empty() {
+        Some((acc, func))
+    } else {
+        let (acc, mut func) = foldr(list.rest()?, acc, func)?;
+        list.first().map(|item| (func(acc, item), func))
     }
 }
 
@@ -99,7 +119,7 @@ pub fn length<T, S>(list: &S) -> Option<usize>
 where
     S: List<T>,
 {
-    fold(list, 0, |n, _| n + 1)
+    fold_left(list, 0, |n, _| n + 1)
 }
 
 /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
@@ -108,13 +128,11 @@ where
     F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
     S: List<T>,
 {
-    if left.is_empty() {
-        Some(factory.copy_value(right))
-    } else {
-        let car = factory.copy_value(left.first()?);
-        let cdr = append(left.rest()?, right, factory)?;
-        Some(factory.cons(car, cdr))
-    }
+    let right = factory.copy_value(right);
+    fold_right(left, right, |acc, item| {
+        let item = factory.copy_value(item);
+        factory.cons(item, acc)
+    })
 }
 
 /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
@@ -240,6 +258,7 @@ mod tests {
     fn length_of_empty_list_is_zero() {
         let list: List<()> = list![];
         let result = length(&list);
+        assert_eq!(result, Some(0));
     }
 
     #[test]
