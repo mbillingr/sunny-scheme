@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use sunny_sexpr_parser::{CxR, Scm, SourceLocation, SourceMap};
+use sunny_scm::{CxR, Scm, SourceLocation, SourceMap};
 
 use crate::frontend::{
     ast::{Ast, AstNode},
@@ -105,7 +105,7 @@ macro_rules! _match_sexpr {
     };
 
     ($expr:tt; $literal:expr => $action:block) => {
-        if $expr == &sunny_sexpr_parser::Scm::from($literal) {
+        if $expr == &sunny_scm::Scm::from($literal) {
             Some($action)
         } else {
             None

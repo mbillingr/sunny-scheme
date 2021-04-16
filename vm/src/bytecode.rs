@@ -1,6 +1,6 @@
 use crate::mem::Ref;
 use std::collections::HashMap;
-use sunny_sexpr_parser::{Scm, SourceLocation};
+use sunny_scm::{Scm, SourceLocation};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]

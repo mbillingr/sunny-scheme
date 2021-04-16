@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use sunny_sexpr_parser::{Scm, SourceLocation, SourceMap};
+use sunny_scm::{Scm, SourceLocation, SourceMap};
 
 use crate::frontend::error::error_after;
 use crate::frontend::library::{Export, LibraryBinding};
@@ -11,7 +11,7 @@ use crate::frontend::{
 };
 use crate::library_filesystem::LibraryFileSystem;
 use std::collections::HashMap;
-use sunny_sexpr_parser::parser::parse_with_map;
+use sunny_scm::parser::parse_with_map;
 
 #[derive(Clone)]
 pub enum EnvBinding {

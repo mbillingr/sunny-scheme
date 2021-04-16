@@ -22,7 +22,7 @@ use hamcrest2::matchers::err::IsErr;
 use hamcrest2::matchers::has::Has;
 use hamcrest2::prelude::*;
 use std::cell::Cell;
-use sunny_sexpr_parser::{Scm, SourceLocation};
+use sunny_scm::{Scm, SourceLocation};
 use sunny_vm::scm_extension::ScmExt;
 
 struct EvaluatesTo;

@@ -1,8 +1,5 @@
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
-use sunny_sexpr_parser::parser::{parse_with_map, Error as ParseError};
-use sunny_sexpr_parser::Scm;
-use sunny_sexpr_parser::SourceLocation;
-use sunny_sexpr_parser::{CxR, SourceMap};
+use sunny_scm::{parser::{parse_with_map, Error as ParseError}, Scm, SourceLocation, CxR, SourceMap};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 

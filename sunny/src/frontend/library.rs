@@ -1,6 +1,6 @@
 use crate::frontend::environment::EnvBinding;
 use std::rc::Rc;
-use sunny_sexpr_parser::Scm;
+use sunny_scm::Scm;
 
 pub fn libname_to_string(libname: &Scm) -> String {
     libname.to_string()

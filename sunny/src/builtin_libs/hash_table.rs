@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::ops::Deref;
-use sunny_sexpr_parser::{HashEqual, HashPtrEq, Scm, ScmHasher, ScmObject, WeakScm};
+use sunny_scm::{HashEqual, HashPtrEq, Scm, ScmHasher, ScmObject, WeakScm};
 use sunny_vm::{ErrorKind, Result, Vm};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
@@ -221,7 +221,7 @@ impl TableKeyWeakEq {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sunny_sexpr_parser::Scm;
+    use sunny_scm::Scm;
 
     #[test]
     fn strong_table_keeps_keys_alive() {

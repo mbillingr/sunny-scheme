@@ -9,7 +9,7 @@ use crate::frontend::syntax_forms::{
 };
 use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
-use sunny_sexpr_parser::Scm;
+use sunny_scm::Scm;
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{ErrorKind, Result, Vm};
 

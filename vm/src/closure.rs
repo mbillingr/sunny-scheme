@@ -4,7 +4,7 @@ use crate::mem::Ref;
 use std::any::Any;
 use std::collections::HashMap;
 use std::hash::Hash;
-use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
+use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Closure {

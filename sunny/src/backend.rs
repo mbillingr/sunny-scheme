@@ -1,7 +1,6 @@
 use crate::frontend::library::Export;
 use std::collections::HashMap;
-use sunny_sexpr_parser::Scm;
-use sunny_sexpr_parser::SourceLocation;
+use sunny_scm::{Scm, SourceLocation};
 use sunny_vm::bytecode::Op;
 use sunny_vm::{BasicBlock, BlockChain};
 

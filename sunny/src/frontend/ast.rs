@@ -1,6 +1,6 @@
 use crate::backend::Backend;
 use crate::frontend::library::Export;
-use sunny_sexpr_parser::{Scm, SourceLocation};
+use sunny_scm::{Scm, SourceLocation};
 
 pub type AstNode = Box<Ast>;
 

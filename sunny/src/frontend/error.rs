@@ -1,5 +1,5 @@
-use sunny_sexpr_parser::parser::Error as ParseError;
-use sunny_sexpr_parser::SourceLocation;
+use sunny_scm::parser::Error as ParseError;
+use sunny_scm::SourceLocation;
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 

@@ -3,7 +3,7 @@ use crate::closure::Closure;
 use crate::mem::Ref;
 use std::any::Any;
 use std::collections::HashMap;
-use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
+use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 #[derive(Clone)]
 pub struct Activation {

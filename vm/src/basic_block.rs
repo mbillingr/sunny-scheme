@@ -2,7 +2,7 @@ use crate::bytecode::{CodeSegment, Op};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use sunny_sexpr_parser::{HashEqual, Scm, SourceLocation};
+use sunny_scm::{HashEqual, Scm, SourceLocation};
 
 /// A chain of blocks with a single entry and exit point.
 /// Control flow may branch in a chain, but all branches

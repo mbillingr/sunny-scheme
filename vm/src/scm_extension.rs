@@ -4,7 +4,7 @@ use crate::Primitive;
 use std::any::Any;
 use std::collections::HashMap;
 use std::hash::Hash;
-use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
+use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 pub trait ScmExt {
     fn is_procedure(&self) -> bool;

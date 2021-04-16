@@ -3,7 +3,7 @@ use crate::mem::Ref;
 use std::any::Any;
 use std::collections::HashMap;
 use std::hash::Hash;
-use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
+use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 pub struct Continuation {
     pub(crate) activation: Ref<Activation>,

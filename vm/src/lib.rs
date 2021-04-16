@@ -4,7 +4,7 @@ pub use sunny_memory::rc as mem;
 pub use vm::Vm;
 
 use crate::bytecode::CodePointer;
-use sunny_sexpr_parser::Scm;
+use sunny_scm::Scm;
 
 mod activation;
 mod basic_block;

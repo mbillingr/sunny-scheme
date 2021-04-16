@@ -11,7 +11,7 @@ use crate::frontend::syntax_forms::Import;
 use crate::frontend::{
     ast::AstNode, environment::Env, error::Result, syntax_forms::LibraryDefinition,
 };
-use sunny_sexpr_parser::{Scm, SourceMap};
+use sunny_scm::{Scm, SourceMap};
 
 pub trait SyntaxExpander: std::fmt::Debug {
     fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode>;
@@ -39,7 +39,7 @@ mod tests {
         SyntaxDefinition,
     };
     use ast::Ast;
-    use sunny_sexpr_parser::SourceLocation;
+    use sunny_scm::SourceLocation;
 
     fn minimal_syntax_environment(name: impl ToString) -> Env {
         let global = Environment::Empty

@@ -1,7 +1,7 @@
 use crate::frontend::{ast::AstNode, environment::Env, error::Result, SyntaxExpander};
 use std::any::Any;
 use std::collections::HashMap;
-use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject, SourceMap};
+use sunny_scm::{Scm, ScmHasher, ScmObject, SourceMap};
 
 pub struct SyntacticClosure {
     sexpr: Scm,

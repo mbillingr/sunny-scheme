@@ -11,7 +11,7 @@ use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
 use context::{Context, Error};
 use std::path::{Path, PathBuf};
-use sunny_sexpr_parser::SharedStr;
+use sunny_scm::SharedStr;
 use sunny_vm::bytecode::CodePointer;
 use sunny_vm::bytecode_loader::user_load;
 use sunny_vm::mem::Ref;

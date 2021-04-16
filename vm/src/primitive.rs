@@ -1,7 +1,7 @@
 use crate::{Result, Vm};
 use std::any::Any;
 use std::collections::HashMap;
-use sunny_sexpr_parser::{Scm, ScmHasher, ScmObject};
+use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 pub struct Primitive {
     pub name: &'static str,
