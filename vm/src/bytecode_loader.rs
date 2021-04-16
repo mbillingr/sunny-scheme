@@ -1,5 +1,8 @@
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
-use sunny_scm::{parser::{parse_with_map, Error as ParseError}, Scm, SourceLocation, CxR, SourceMap};
+use sunny_scm::{
+    parser::{parse_with_map, Error as ParseError},
+    CxR, Scm, SourceLocation, SourceMap,
+};
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
 

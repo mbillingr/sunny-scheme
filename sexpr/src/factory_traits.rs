@@ -1,0 +1,48 @@
+//! Traits for constructing S-expressions.
+//!
+//! These traits were designed with flexibility in mind. In other words,
+//! there are no functions like `Sexpr::cons` because there might be an
+//! object in the system that needs to track or control allocations.
+//! This could be a string interner, a garbage collector, or some other
+//! kind of memory manager.
+//!
+
+use crate::core_traits::{Nullable, Pair, Sexpr};
+
+/// Implement Factories for this type if no memory management is needed.
+/// This enables some convenience interfaces.
+pub struct DummyFactory;
+
+impl<T: Clone> CopyTracker<T> for DummyFactory {
+    fn copy_value(&mut self, expr: &T) -> T {
+        expr.clone()
+    }
+}
+
+/// An S-expression factory.
+/// Convenience trait that collects all factory traits S-expression
+/// factories should implement.
+pub trait SexprFactory<S: Sexpr>: NullFactory<S> + PairFactory<S> {}
+
+/// Allow copying of S-expressions.
+pub trait CopyTracker<S> {
+    /// Return a copy of an S-expression value.
+    fn copy_value(&mut self, expr: &S) -> S;
+}
+
+/// Construct Null values
+pub trait NullFactory<S: Nullable> {
+    /// Return a new null value.
+    fn null(&mut self) -> S;
+}
+
+/// Construct Pair values
+pub trait PairFactory<S: Pair> {
+    /// Construct a new pair from the input arguments.
+    fn pair(&mut self, first: S::First, second: S::Second) -> S;
+
+    /// Construct a new pair from the input arguments using Lisp's traditional name.
+    fn cons(&mut self, car: impl Into<S::First>, cdr: impl Into<S::Second>) -> S {
+        self.pair(car.into(), cdr.into())
+    }
+}

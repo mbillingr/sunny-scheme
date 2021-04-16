@@ -3,6 +3,7 @@
 members = [
     "memory",
     "scm",
+    "sexpr",
     "vm",
 
     "sunny"
