@@ -1,48 +1,102 @@
 use crate::core_traits::{Nullable, Pair};
 use crate::factory_traits::{CopyTracker, NullFactory, PairFactory};
 
-/// Return `true` if `expr` is a proper list.
-pub fn is_list<S>(expr: &S) -> bool
+/// Trait for types that can represent lists.
+pub trait List<T> {
+    /// Return `true` if the value represents an empty list.
+    fn is_empty(&self) -> bool;
+
+    /// Return a reference to the list's first element
+    /// or `None` if the value does not represent a list.
+    fn first(&self) -> Option<&T>;
+
+    /// Return a reference to the sublist after the first element
+    /// or `None` if the value does not represent a list.
+    fn rest(&self) -> Option<&Self>;
+}
+
+/// Construct List values
+pub trait ListFactory<T, S: List<T>> {
+    /// Return a new empty list.
+    fn empty(&mut self) -> S;
+
+    /// Return a new list whose first element is `item`, followed by `list`.
+    fn cons(&mut self, item: T, list: S) -> S;
+}
+
+impl<T, S> List<T> for S
 where
-    S: Nullable + Pair<First = S, Second = S>,
+    S: Nullable + Pair<First = T, Second = S>,
 {
-    expr.is_null() || expr.second().map(is_list).unwrap_or(false)
+    fn is_empty(&self) -> bool {
+        self.is_null()
+    }
+
+    fn first(&self) -> Option<&T> {
+        Pair::first(self)
+    }
+
+    fn rest(&self) -> Option<&Self> {
+        Pair::second(self)
+    }
+}
+
+impl<T, S, F> ListFactory<T, S> for F
+where
+    S: Nullable + Pair<First = T, Second = S>,
+    F: NullFactory<S> + PairFactory<S>,
+{
+    fn empty(&mut self) -> S {
+        self.null()
+    }
+
+    fn cons(&mut self, item: T, list: S) -> S {
+        self.pair(item, list)
+    }
+}
+
+/// Return `true` if `expr` is a proper list.
+pub fn is_list<T, S>(expr: &S) -> bool
+where
+    S: List<T>,
+{
+    expr.is_empty() || expr.rest().map(is_list).unwrap_or(false)
 }
 
 /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
 pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> Option<S>
 where
-    F: CopyTracker<T> + NullFactory<S> + PairFactory<S>,
-    S: Nullable + Pair<First = T, Second = S>,
+    F: CopyTracker<T> + ListFactory<T, S>,
+    S: List<T>,
 {
-    reverse_iter(expr, factory.null(), factory)
+    reverse_iter(expr, factory.empty(), factory)
 }
 
-fn reverse_iter<T, S, F>(rest: &S, acc: S, factory: &mut F) -> Option<S>
+fn reverse_iter<T, S, F>(list: &S, acc: S, factory: &mut F) -> Option<S>
 where
-    F: CopyTracker<T> + NullFactory<S> + PairFactory<S>,
-    S: Nullable + Pair<First = T, Second = S>,
+    F: CopyTracker<T> + ListFactory<T, S>,
+    S: List<T>,
 {
-    if rest.is_null() {
+    if list.is_empty() {
         Some(acc)
     } else {
-        let car = factory.copy_value(rest.first()?);
+        let car = factory.copy_value(list.first()?);
         let acc = factory.cons(car, acc);
-        reverse_iter(rest.second()?, acc, factory)
+        reverse_iter(list.rest()?, acc, factory)
     }
 }
 
 /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
 pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> Option<S>
 where
-    F: CopyTracker<T> + CopyTracker<S> + NullFactory<S> + PairFactory<S>,
-    S: Nullable + Pair<First = T, Second = S>,
+    F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
+    S: List<T>,
 {
-    if left.is_null() {
+    if left.is_empty() {
         Some(factory.copy_value(right))
     } else {
         let car = factory.copy_value(left.first()?);
-        let cdr = append(left.second()?, right, factory)?;
+        let cdr = append(left.rest()?, right, factory)?;
         Some(factory.cons(car, cdr))
     }
 }
@@ -56,8 +110,8 @@ pub mod convenience {
     /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
     pub fn reverse<T, S>(expr: &S) -> Option<S>
     where
-        DummyFactory: CopyTracker<T> + NullFactory<S> + PairFactory<S>,
-        S: Nullable + Pair<First = T, Second = S>,
+        DummyFactory: CopyTracker<T> + ListFactory<T, S>,
+        S: List<T>,
     {
         super::reverse(expr, &mut DummyFactory)
     }
@@ -65,8 +119,8 @@ pub mod convenience {
     /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
     pub fn append<T, S>(left: &S, right: &S) -> Option<S>
     where
-        DummyFactory: CopyTracker<T> + CopyTracker<S> + NullFactory<S> + PairFactory<S>,
-        S: Nullable + Pair<First = T, Second = S>,
+        DummyFactory: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
+        S: List<T>,
     {
         super::append(left, right, &mut DummyFactory)
     }

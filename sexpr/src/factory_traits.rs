@@ -25,24 +25,24 @@ impl<T: Clone> CopyTracker<T> for DummyFactory {
 pub trait SexprFactory<S: Sexpr>: NullFactory<S> + PairFactory<S> {}
 
 /// Allow copying of S-expressions.
-pub trait CopyTracker<S> {
+pub trait CopyTracker<T> {
     /// Return a copy of an S-expression value.
-    fn copy_value(&mut self, expr: &S) -> S;
+    fn copy_value(&mut self, expr: &T) -> T;
 }
 
 /// Construct Null values
-pub trait NullFactory<S: Nullable> {
+pub trait NullFactory<T: Nullable> {
     /// Return a new null value.
-    fn null(&mut self) -> S;
+    fn null(&mut self) -> T;
 }
 
 /// Construct Pair values
-pub trait PairFactory<S: Pair> {
+pub trait PairFactory<T: Pair> {
     /// Construct a new pair from the input arguments.
-    fn pair(&mut self, first: S::First, second: S::Second) -> S;
+    fn pair(&mut self, first: T::First, second: T::Second) -> T;
 
     /// Construct a new pair from the input arguments using Lisp's traditional name.
-    fn cons(&mut self, car: impl Into<S::First>, cdr: impl Into<S::Second>) -> S {
+    fn cons(&mut self, car: impl Into<T::First>, cdr: impl Into<T::Second>) -> T {
         self.pair(car.into(), cdr.into())
     }
 }
