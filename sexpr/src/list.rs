@@ -55,6 +55,37 @@ where
     }
 }
 
+/// Return a new list with all items replaced by the result of calling
+/// a function on them. Returns `None` if `list` is not a proper list.
+pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, func: impl Fn(&T) -> U) -> Option<R>
+where
+    S: List<T>,
+    R: List<U>,
+    F: ListFactory<U, R>,
+{
+    if list.is_empty() {
+        Some(factory.empty())
+    } else {
+        let first = func(list.first()?);
+        let rest = map(list.rest()?, factory, func)?;
+        Some(factory.cons(first, rest))
+    }
+}
+
+/// Return a new list with all items replaced by the result of calling
+/// a function on them. Returns `None` if `list` is not a proper list.
+pub fn fold<A, T, S>(list: &S, acc: A, func: impl Fn(A, &T) -> A) -> Option<A>
+where
+    S: List<T>,
+{
+    if list.is_empty() {
+        Some(acc)
+    } else {
+        let acc = func(acc, list.first()?);
+        fold(list.rest()?, acc, func)
+    }
+}
+
 /// Return `true` if `expr` is a proper list.
 pub fn is_list<T, S>(expr: &S) -> bool
 where
@@ -68,11 +99,7 @@ pub fn length<T, S>(list: &S) -> Option<usize>
 where
     S: List<T>,
 {
-    if list.is_empty() {
-        Some(0)
-    } else {
-        list.rest().and_then(length).map(|n| n + 1)
-    }
+    fold(list, 0, |n, _| n + 1)
 }
 
 /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
