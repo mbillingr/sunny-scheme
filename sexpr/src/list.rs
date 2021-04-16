@@ -63,6 +63,33 @@ where
     expr.is_empty() || expr.rest().map(is_list).unwrap_or(false)
 }
 
+/// Return the length if `list` is a proper list and `None` otherwise.
+pub fn length<T, S>(list: &S) -> Option<usize>
+where
+    S: List<T>,
+{
+    if list.is_empty() {
+        Some(0)
+    } else {
+        list.rest().and_then(length).map(|n| n + 1)
+    }
+}
+
+/// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
+pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> Option<S>
+where
+    F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
+    S: List<T>,
+{
+    if left.is_empty() {
+        Some(factory.copy_value(right))
+    } else {
+        let car = factory.copy_value(left.first()?);
+        let cdr = append(left.rest()?, right, factory)?;
+        Some(factory.cons(car, cdr))
+    }
+}
+
 /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
 pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> Option<S>
 where
@@ -86,26 +113,13 @@ where
     }
 }
 
-/// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
-pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> Option<S>
-where
-    F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
-    S: List<T>,
-{
-    if left.is_empty() {
-        Some(factory.copy_value(right))
-    } else {
-        let car = factory.copy_value(left.first()?);
-        let cdr = append(left.rest()?, right, factory)?;
-        Some(factory.cons(car, cdr))
-    }
-}
-
 /// Convenience interface for types that don't need explicit memory management.
 #[macro_use]
 pub mod convenience {
     use super::*;
     use crate::factory_traits::DummyFactory;
+
+    pub use super::{is_list, length};
 
     /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
     pub fn reverse<T, S>(expr: &S) -> Option<S>
@@ -196,23 +210,15 @@ mod tests {
     }
 
     #[test]
-    fn reverse_empty_list_produces_empty_list() {
+    fn length_of_empty_list_is_zero() {
         let list: List<()> = list![];
-        let result = reverse(&list);
-        assert_eq!(result, Some(list![]));
+        let result = length(&list);
     }
 
     #[test]
-    fn reverse_single_element_list_produces_same_list() {
-        let list = list![42];
-        let result = reverse(&list);
-        assert_eq!(result, Some(list));
-    }
-
-    #[test]
-    fn reverse_list() {
-        let result = reverse(&list![1, 2, 3]);
-        assert_eq!(result, Some(list![3, 2, 1]));
+    fn length_of_arbitrary_list_is_equal_to_number_of_items() {
+        let result = length(&list![1, 2, 3]);
+        assert_eq!(result, Some(3));
     }
 
     #[test]
@@ -237,5 +243,25 @@ mod tests {
         let list2 = list![4, 5, 6];
         let result = append(&list1, &list2);
         assert_eq!(result, Some(list![1, 2, 3, 4, 5, 6]))
+    }
+
+    #[test]
+    fn reverse_empty_list_produces_empty_list() {
+        let list: List<()> = list![];
+        let result = reverse(&list);
+        assert_eq!(result, Some(list![]));
+    }
+
+    #[test]
+    fn reverse_single_element_list_produces_same_list() {
+        let list = list![42];
+        let result = reverse(&list);
+        assert_eq!(result, Some(list));
+    }
+
+    #[test]
+    fn reverse_list() {
+        let result = reverse(&list![1, 2, 3]);
+        assert_eq!(result, Some(list![3, 2, 1]));
     }
 }
