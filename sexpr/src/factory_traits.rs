@@ -7,7 +7,7 @@
 //! kind of memory manager.
 //!
 
-use crate::core_traits::{MaybePair, Nullable, Sexpr};
+use crate::core_traits::{MaybePair, Nullable, Sexpr, MaybeBool};
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
@@ -34,6 +34,12 @@ pub trait CopyTracker<T> {
 pub trait NullFactory<T: Nullable> {
     /// Return a new null value.
     fn null(&mut self) -> T;
+}
+
+/// Construct Boolean values
+pub trait BoolFactory<T: MaybeBool> {
+    /// Construct a new boolean value.
+    fn bool(&mut self, b: bool) -> T;
 }
 
 /// Construct Pair values
