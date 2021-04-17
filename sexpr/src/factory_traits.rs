@@ -7,7 +7,7 @@
 //! kind of memory manager.
 //!
 
-use crate::core_traits::{MaybePair, Nullable, Sexpr, MaybeBool};
+use crate::core_traits::{MaybeBool, MaybeChar, MaybePair, Nullable, Sexpr};
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
@@ -40,6 +40,16 @@ pub trait NullFactory<T: Nullable> {
 pub trait BoolFactory<T: MaybeBool> {
     /// Construct a new boolean value.
     fn bool(&mut self, b: bool) -> T;
+}
+
+/// Construct Character values
+pub trait CharFactory<T: MaybeChar> {
+    /// Construct a new unicode character value.
+    /// May panic if the implementation does not support the character.
+    fn char(&mut self, ch: char) -> T;
+
+    /// Construct a new ascii character value.
+    fn ascii(&mut self, ch: u8) -> T;
 }
 
 /// Construct Pair values

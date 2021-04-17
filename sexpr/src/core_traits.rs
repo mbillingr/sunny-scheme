@@ -18,15 +18,30 @@ pub trait MaybeBool {
     /// Return true if the value represents boolean "false".
     fn is_false(&self) -> bool;
 
-    /// Convert to boolean; returns `None` if value does not represent a boolean.
+    /// Return boolean value; returns `None` if value does not represent a boolean.
     fn to_bool(&self) -> Option<bool> {
         match (self.is_true(), self.is_false()) {
             (false, false) => None,
             (true, false) => Some(true),
             (false, true) => Some(true),
-            (true, true) => panic!("value appears both true and false.")
+            (true, true) => panic!("value appears both true and false."),
         }
     }
+}
+
+/// Trait for types that can represent characters.
+pub trait MaybeChar {
+    /// Return `true` if the value represents a character.
+    fn is_char(&self) -> bool;
+
+    /// Return `true` if the value represents an ASCII character.
+    fn is_ascii(&self) -> char;
+
+    /// Return the character value or `None` if the value does not represent a character.
+    fn to_char(&self) -> Option<char>;
+
+    /// Return the character as an `u8` or `None` if this is not possible.
+    fn to_ascii(&self) -> Option<u8>;
 }
 
 /// Trait for types that can represent pairs.
