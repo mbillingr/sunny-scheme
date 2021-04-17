@@ -7,7 +7,7 @@
 //! kind of memory manager.
 //!
 
-use crate::core_traits::{Nullable, Pair, Sexpr};
+use crate::core_traits::{MaybePair, Nullable, Sexpr};
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
@@ -37,7 +37,7 @@ pub trait NullFactory<T: Nullable> {
 }
 
 /// Construct Pair values
-pub trait PairFactory<T: Pair> {
+pub trait PairFactory<T: MaybePair> {
     /// Construct a new pair from the input arguments.
     fn pair(&mut self, first: T::First, second: T::Second) -> T;
 

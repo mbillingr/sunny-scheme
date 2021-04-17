@@ -1,4 +1,4 @@
-use crate::core_traits::{Nullable, Pair};
+use crate::core_traits::{MaybePair, Nullable};
 use crate::factory_traits::{CopyTracker, NullFactory, PairFactory};
 
 /// Trait for types that can represent lists.
@@ -26,24 +26,24 @@ pub trait ListFactory<T, S: List<T>> {
 
 impl<T, S> List<T> for S
 where
-    S: Nullable + Pair<First = T, Second = S>,
+    S: Nullable + MaybePair<First = T, Second = S>,
 {
     fn is_empty(&self) -> bool {
         self.is_null()
     }
 
     fn first(&self) -> Option<&T> {
-        Pair::first(self)
+        MaybePair::first(self)
     }
 
     fn rest(&self) -> Option<&Self> {
-        Pair::second(self)
+        MaybePair::second(self)
     }
 }
 
 impl<T, S, F> ListFactory<T, S> for F
 where
-    S: Nullable + Pair<First = T, Second = S>,
+    S: Nullable + MaybePair<First = T, Second = S>,
     F: NullFactory<S> + PairFactory<S>,
 {
     fn empty(&mut self) -> S {
@@ -236,7 +236,7 @@ pub mod convenience {
 #[cfg(test)]
 mod tests {
     use super::convenience::*;
-    use crate::core_traits::{Nullable, Pair};
+    use crate::core_traits::{MaybePair, Nullable};
     use crate::factory_traits::{DummyFactory, NullFactory, PairFactory};
 
     #[derive(Debug, Clone)]
@@ -268,7 +268,7 @@ mod tests {
         }
     }
 
-    impl<T> Pair for List<T> {
+    impl<T> MaybePair for List<T> {
         type First = T;
         type Second = List<T>;
 

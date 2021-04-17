@@ -2,7 +2,7 @@
 
 /// An S-expression.
 /// Convenience trait that collects all traits S-expressions should implement.
-pub trait Sexpr: Nullable + Pair {}
+pub trait Sexpr: Nullable + MaybePair {}
 
 /// Trait for types that can be "null".
 pub trait Nullable {
@@ -11,7 +11,7 @@ pub trait Nullable {
 }
 
 /// Trait for types that can represent pairs.
-pub trait Pair {
+pub trait MaybePair {
     /// Type of the pair's first element.
     type First;
     /// Type of the pair's second element.
