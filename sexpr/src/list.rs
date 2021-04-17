@@ -149,7 +149,7 @@ where
 }
 
 /// Return the sublist of `list` obtained by omitting the first `k` elements.
-/// Return `None` if `list` is not a proper list or `k` exceeds the list's length.
+/// Return `None` if `k` exceeds the list's length.
 pub fn list_tail<T, S>(list: &S, k: usize) -> Option<&S>
 where
     S: List<T>,
@@ -162,12 +162,28 @@ where
 }
 
 /// Return the `k`th element of `list`.
-/// Return `None` if `list` is not a proper list or `k` equals the list's length or more.
+/// Return `None` if `k` equals the list's length or more.
 pub fn list_ref<T, S>(list: &S, k: usize) -> Option<&T>
 where
     S: List<T>,
 {
     list_tail(list, k).and_then(List::first)
+}
+
+/// Return a list containing the first `k` elements of `list`.
+/// Return `None` if `k` exceeds the list's length.
+pub fn list_head<T, S, F>(list: &S, k: usize, factory: &mut F) -> Option<S>
+where
+    F: CopyTracker<T> + ListFactory<T, S>,
+    S: List<T>,
+{
+    if k == 0 {
+        Some(factory.empty())
+    } else {
+        let item = factory.copy_value(list.first()?);
+        let rest = list_head(list.rest()?, k - 1, factory)?;
+        Some(factory.cons(item, rest))
+    }
 }
 
 /// Convenience interface for types that don't need explicit memory management.
@@ -195,6 +211,16 @@ pub mod convenience {
         S: List<T>,
     {
         super::append(left, right, &mut DummyFactory)
+    }
+
+    /// Return the sublist of `list` obtained by omitting the first `k` elements.
+    /// Return `None` if `k` exceeds the list's length.
+    pub fn list_head<T, S>(list: &S, k: usize) -> Option<S>
+    where
+        DummyFactory: CopyTracker<T> + ListFactory<T, S>,
+        S: List<T>,
+    {
+        super::list_head(list, k, &mut DummyFactory)
     }
 
     #[macro_export]
@@ -357,5 +383,33 @@ mod tests {
         let list = list![1, 2, 3];
         let result = list_ref(&list, 1);
         assert_eq!(result, Some(&2));
+    }
+
+    #[test]
+    fn list_head_zero_creates_empty_list() {
+        let list = list![1, 2, 3];
+        let result = list_head(&list, 0);
+        assert_eq!(result, Some(list![]));
+    }
+
+    #[test]
+    fn list_head_returns_same_list_if_k_equals_list_length() {
+        let list = list![1, 2, 3];
+        let result = list_head(&list, 4);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn list_head_returns_none_if_k_exceeds_list_length() {
+        let list = list![1, 2, 3];
+        let result = list_head(&list, 3);
+        assert_eq!(result, Some(list));
+    }
+
+    #[test]
+    fn list_head_returns_k_elements() {
+        let list = list![1, 2, 3];
+        let result = list_head(&list, 2);
+        assert_eq!(result, Some(list![1, 2]));
     }
 }
