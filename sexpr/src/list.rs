@@ -122,7 +122,8 @@ where
     fold_left(list, 0, |n, _| n + 1)
 }
 
-/// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
+/// Returns a list consisting of the elements of the `left` followed by the elements `right`.
+/// Returns `None` if `left` is not a proper list.
 pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> Option<S>
 where
     F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
@@ -186,7 +187,8 @@ pub mod convenience {
         super::reverse(expr, &mut DummyFactory)
     }
 
-    /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
+    /// Returns a list consisting of the elements of the `left` followed by the elements `right`.
+    /// Returns `None` if `left` is not a proper list.
     pub fn append<T, S>(left: &S, right: &S) -> Option<S>
     where
         DummyFactory: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
