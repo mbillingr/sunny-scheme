@@ -141,21 +141,10 @@ where
     F: CopyTracker<T> + ListFactory<T, S>,
     S: List<T>,
 {
-    reverse_iter(expr, factory.empty(), factory)
-}
-
-fn reverse_iter<T, S, F>(list: &S, acc: S, factory: &mut F) -> Option<S>
-where
-    F: CopyTracker<T> + ListFactory<T, S>,
-    S: List<T>,
-{
-    if list.is_empty() {
-        Some(acc)
-    } else {
-        let car = factory.copy_value(list.first()?);
-        let acc = factory.cons(car, acc);
-        reverse_iter(list.rest()?, acc, factory)
-    }
+    fold_left(expr, factory.empty(), |acc, item| {
+        let item = factory.copy_value(item);
+        factory.cons(item, acc)
+    })
 }
 
 /// Convenience interface for types that don't need explicit memory management.
