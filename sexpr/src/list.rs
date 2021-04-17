@@ -148,6 +148,7 @@ where
 }
 
 /// Return the sublist of `list` obtained by omitting the first `k` elements.
+/// Return `None` if `list` is not a proper list or `k` exceeds the list's length.
 pub fn list_tail<T, S>(list: &S, k: usize) -> Option<&S>
 where
     S: List<T>,
@@ -159,13 +160,22 @@ where
     }
 }
 
+/// Return the `k`th element of `list`.
+/// Return `None` if `list` is not a proper list or `k` equals the list's length or more.
+pub fn list_ref<T, S>(list: &S, k: usize) -> Option<&T>
+where
+    S: List<T>,
+{
+    list_tail(list, k).and_then(List::first)
+}
+
 /// Convenience interface for types that don't need explicit memory management.
 #[macro_use]
 pub mod convenience {
     use super::*;
     use crate::factory_traits::DummyFactory;
 
-    pub use super::{is_list, length, list_tail};
+    pub use super::{is_list, length, list_ref, list_tail};
 
     /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
     pub fn reverse<T, S>(expr: &S) -> Option<S>
@@ -331,5 +341,19 @@ mod tests {
         let list = list![1, 2, 3];
         let result = list_tail(&list, 4);
         assert_eq!(result, None);
+    }
+
+    #[test]
+    fn list_ref_returns_none_if_k_is_list_length() {
+        let list = list![1, 2, 3];
+        let result = list_ref(&list, 3);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn list_ref_returns_kth_element() {
+        let list = list![1, 2, 3];
+        let result = list_ref(&list, 1);
+        assert_eq!(result, Some(&2));
     }
 }
