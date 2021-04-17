@@ -147,13 +147,25 @@ where
     })
 }
 
+/// Return the sublist of `list` obtained by omitting the first `k` elements.
+pub fn list_tail<T, S>(list: &S, k: usize) -> Option<&S>
+where
+    S: List<T>,
+{
+    if k == 0 {
+        Some(list)
+    } else {
+        list_tail(list.rest()?, k - 1)
+    }
+}
+
 /// Convenience interface for types that don't need explicit memory management.
 #[macro_use]
 pub mod convenience {
     use super::*;
     use crate::factory_traits::DummyFactory;
 
-    pub use super::{is_list, length};
+    pub use super::{is_list, length, list_tail};
 
     /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
     pub fn reverse<T, S>(expr: &S) -> Option<S>
@@ -298,5 +310,26 @@ mod tests {
     fn reverse_list() {
         let result = reverse(&list![1, 2, 3]);
         assert_eq!(result, Some(list![3, 2, 1]));
+    }
+
+    #[test]
+    fn list_tail_zero_is_same_list() {
+        let list = list![1, 2, 3];
+        let result = list_tail(&list, 0);
+        assert_eq!(result, Some(&list));
+    }
+
+    #[test]
+    fn list_tail_omits_k_items() {
+        let list = list![1, 2, 3, 4];
+        let result = list_tail(&list, 2);
+        assert_eq!(result, Some(&list![3, 4]));
+    }
+
+    #[test]
+    fn list_tail_returns_none_if_k_above_list_length() {
+        let list = list![1, 2, 3];
+        let result = list_tail(&list, 4);
+        assert_eq!(result, None);
     }
 }
