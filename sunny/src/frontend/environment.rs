@@ -1,8 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use sunny_scm::{Scm, SourceLocation, SourceMap};
-
 use crate::frontend::error::error_after;
 use crate::frontend::library::{Export, LibraryBinding};
 use crate::frontend::{
@@ -10,8 +8,10 @@ use crate::frontend::{
     SyntaxExpander,
 };
 use crate::library_filesystem::LibraryFileSystem;
+use sexpr_generics::list;
 use std::collections::HashMap;
 use sunny_scm::parser::parse_with_map;
+use sunny_scm::{Scm, SourceLocation, SourceMap};
 
 #[derive(Clone)]
 pub enum EnvBinding {
@@ -162,10 +162,20 @@ impl Env {
 
     pub fn extend_from_sexpr(&self, vars: &Scm, src_map: &SourceMap) -> Result<Self> {
         let mut names = vec![];
-        for v in vars.iter() {
+        for v in list::iter(vars) {
             let name = v
                 .as_symbol()
                 .ok_or_else(|| error_at(&src_map.get(&v), Error::ExpectedSymbol))?
+                .to_string();
+
+            names.push(name);
+        }
+
+        let last = vars.last_cdr();
+        if !last.is_null() {
+            let name = last
+                .as_symbol()
+                .ok_or_else(|| error_at(&src_map.get(&last), Error::ExpectedSymbol))?
                 .to_string();
 
             names.push(name);

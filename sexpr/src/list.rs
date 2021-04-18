@@ -55,6 +55,22 @@ where
     }
 }
 
+/// Iterate over a lists items.
+pub fn iter<'a, T: 'a, S>(list: &'a S) -> impl Iterator<Item = &T>
+where
+    S: List<T>,
+{
+    let mut cursor = list;
+    (0..)
+        .map(move |_| {
+            let item = cursor.first();
+            cursor = cursor.rest()?;
+            item
+        })
+        .take_while(|x| x.is_some())
+        .map(Option::unwrap)
+}
+
 /// Return a new list with all items replaced by the result of calling
 /// a function on them.
 pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, mut func: impl FnMut(&T) -> U) -> R

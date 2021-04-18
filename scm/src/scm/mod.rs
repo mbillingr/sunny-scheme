@@ -10,7 +10,6 @@ mod symbol;
 mod void;
 
 use crate::Int;
-use sexpr_generics::cxr::CxR;
 use std::any::Any;
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -143,33 +142,6 @@ impl Scm {
         self.as_pair()
             .map(|(_, cdr)| cdr.last_cdr())
             .unwrap_or(self)
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Scm> {
-        let mut cursor = Some(self);
-        (0..)
-            .map(move |_| {
-                if cursor.is_none() {
-                    None
-                } else if cursor.unwrap().is_null() {
-                    None
-                } else if let Some(pair) = cursor.unwrap().as_pair() {
-                    cursor = Some(pair.1);
-                    Some(pair.0)
-                } else {
-                    cursor.take()
-                }
-            })
-            .take_while(|x| x.is_some())
-            .map(Option::unwrap)
-    }
-
-    pub fn list_length(&self) -> usize {
-        if self.is_pair() {
-            1 + self.cdr().unwrap().list_length()
-        } else {
-            0
-        }
     }
 
     pub fn ptr_eq(&self, other: &Scm) -> bool {

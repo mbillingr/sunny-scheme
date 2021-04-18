@@ -119,11 +119,10 @@ pub trait CxR {
     }
 }
 
-
 impl<S, T> CxR for T
 where
-    T: MaybePair<First=S, Second=S>,
-    S: MaybePair<First=S, Second=S>,
+    T: MaybePair<First = S, Second = S>,
+    S: MaybePair<First = S, Second = S>,
 {
     type Result = S;
 
