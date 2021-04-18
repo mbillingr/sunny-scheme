@@ -7,11 +7,11 @@ pub trait List<T> {
     fn is_empty(&self) -> bool;
 
     /// Return a reference to the list's first element
-    /// or `None` if the value does not represent a list.
+    /// or `None` if the list is empty.
     fn first(&self) -> Option<&T>;
 
     /// Return a reference to the sublist after the first element
-    /// or `None` if the value does not represent a list.
+    /// or `None` if the list is empty.
     fn rest(&self) -> Option<&Self>;
 }
 
@@ -26,10 +26,10 @@ pub trait ListFactory<T, S: List<T>> {
 
 impl<T, S> List<T> for S
 where
-    S: Nullable + MaybePair<First = T, Second = S>,
+    S: MaybePair<First = T, Second = S>,
 {
     fn is_empty(&self) -> bool {
-        self.is_null()
+        !self.is_pair()
     }
 
     fn first(&self) -> Option<&T> {
@@ -56,53 +56,54 @@ where
 }
 
 /// Return a new list with all items replaced by the result of calling
-/// a function on them. Returns `None` if `list` is not a proper list.
-pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, mut func: impl FnMut(&T) -> U) -> Option<R>
+/// a function on them.
+pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, mut func: impl FnMut(&T) -> U) -> R
 where
     S: List<T>,
     R: List<U>,
     F: ListFactory<U, R>,
 {
     if list.is_empty() {
-        Some(factory.empty())
+        factory.empty()
     } else {
-        let first = func(list.first()?);
-        let rest = map(list.rest()?, factory, func)?;
-        Some(factory.cons(first, rest))
+        let first = func(list.first().unwrap());
+        let rest = map(list.rest().unwrap(), factory, func);
+        factory.cons(first, rest)
     }
 }
 
 /// Left fold
-pub fn fold_left<A, T, S>(list: &S, acc: A, mut func: impl FnMut(A, &T) -> A) -> Option<A>
+pub fn fold_left<A, T, S>(list: &S, acc: A, mut func: impl FnMut(A, &T) -> A) -> A
 where
     S: List<T>,
 {
     if list.is_empty() {
-        Some(acc)
+        acc
     } else {
-        let acc = func(acc, list.first()?);
-        fold_left(list.rest()?, acc, func)
+        let acc = func(acc, list.first().unwrap());
+        fold_left(list.rest().unwrap(), acc, func)
     }
 }
 
 /// Right fold
-pub fn fold_right<A, T, S>(list: &S, acc: A, func: impl FnMut(A, &T) -> A) -> Option<A>
+pub fn fold_right<A, T, S>(list: &S, acc: A, func: impl FnMut(A, &T) -> A) -> A
 where
     S: List<T>,
 {
-    foldr(list, acc, func).map(|(result, _)| result)
+    let (result, _) = foldr(list, acc, func);
+    result
 }
 
-fn foldr<A, T, S, P>(list: &S, acc: A, func: P) -> Option<(A, P)>
+fn foldr<A, T, S, P>(list: &S, acc: A, func: P) -> (A, P)
 where
     S: List<T>,
     P: FnMut(A, &T) -> A,
 {
     if list.is_empty() {
-        Some((acc, func))
+        (acc, func)
     } else {
-        let (acc, mut func) = foldr(list.rest()?, acc, func)?;
-        list.first().map(|item| (func(acc, item), func))
+        let (acc, mut func) = foldr(list.rest().unwrap(), acc, func);
+        (func(acc, list.first().unwrap()), func)
     }
 }
 
@@ -114,8 +115,8 @@ where
     expr.is_empty() || expr.rest().map(is_list).unwrap_or(false)
 }
 
-/// Return the length if `list` is a proper list and `None` otherwise.
-pub fn length<T, S>(list: &S) -> Option<usize>
+/// Return the length if `list`.
+pub fn length<T, S>(list: &S) -> usize
 where
     S: List<T>,
 {
@@ -123,8 +124,7 @@ where
 }
 
 /// Returns a list consisting of the elements of the `left` followed by the elements `right`.
-/// Returns `None` if `left` is not a proper list.
-pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> Option<S>
+pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> S
 where
     F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
     S: List<T>,
@@ -136,8 +136,8 @@ where
     })
 }
 
-/// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
-pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> Option<S>
+/// Return the reverse of the list if `expr`.
+pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> S
 where
     F: CopyTracker<T> + ListFactory<T, S>,
     S: List<T>,
@@ -146,6 +146,15 @@ where
         let item = factory.copy_value(item);
         factory.cons(item, acc)
     })
+}
+
+/// Return the `k`th element of `list`.
+/// Return `None` if `k` equals the list's length or more.
+pub fn get<T, S>(list: &S, k: usize) -> Option<&T>
+where
+    S: List<T>,
+{
+    tail(list, k).and_then(List::first)
 }
 
 /// Return the sublist of `list` obtained by omitting the first `k` elements.
@@ -159,15 +168,6 @@ where
     } else {
         tail(list.rest()?, k - 1)
     }
-}
-
-/// Return the `k`th element of `list`.
-/// Return `None` if `k` equals the list's length or more.
-pub fn get<T, S>(list: &S, k: usize) -> Option<&T>
-where
-    S: List<T>,
-{
-    tail(list, k).and_then(List::first)
 }
 
 /// Return a list containing the first `k` elements of `list`.
@@ -195,7 +195,7 @@ pub mod convenience {
     pub use super::{get, is_list, length, tail};
 
     /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
-    pub fn reverse<T, S>(expr: &S) -> Option<S>
+    pub fn reverse<T, S>(expr: &S) -> S
     where
         DummyFactory: CopyTracker<T> + ListFactory<T, S>,
         S: List<T>,
@@ -205,7 +205,7 @@ pub mod convenience {
 
     /// Returns a list consisting of the elements of the `left` followed by the elements `right`.
     /// Returns `None` if `left` is not a proper list.
-    pub fn append<T, S>(left: &S, right: &S) -> Option<S>
+    pub fn append<T, S>(left: &S, right: &S) -> S
     where
         DummyFactory: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
         S: List<T>,
@@ -297,13 +297,13 @@ mod tests {
     fn length_of_empty_list_is_zero() {
         let list: List<()> = list![];
         let result = length(&list);
-        assert_eq!(result, Some(0));
+        assert_eq!(result, 0);
     }
 
     #[test]
     fn length_of_arbitrary_list_is_equal_to_number_of_items() {
         let result = length(&list![1, 2, 3]);
-        assert_eq!(result, Some(3));
+        assert_eq!(result, 3);
     }
 
     #[test]
@@ -311,7 +311,7 @@ mod tests {
         let list1 = list![];
         let list2 = list![4, 5, 6];
         let result = append(&list1, &list2);
-        assert_eq!(result, Some(list2))
+        assert_eq!(result, list2)
     }
 
     #[test]
@@ -319,7 +319,7 @@ mod tests {
         let list1 = list![1, 2, 3];
         let list2 = list![];
         let result = append(&list1, &list2);
-        assert_eq!(result, Some(list1))
+        assert_eq!(result, list1)
     }
 
     #[test]
@@ -327,27 +327,27 @@ mod tests {
         let list1 = list![1, 2, 3];
         let list2 = list![4, 5, 6];
         let result = append(&list1, &list2);
-        assert_eq!(result, Some(list![1, 2, 3, 4, 5, 6]))
+        assert_eq!(result, list![1, 2, 3, 4, 5, 6])
     }
 
     #[test]
     fn reverse_empty_list_produces_empty_list() {
         let list: List<()> = list![];
         let result = reverse(&list);
-        assert_eq!(result, Some(list![]));
+        assert_eq!(result, list![]);
     }
 
     #[test]
     fn reverse_single_element_list_produces_same_list() {
         let list = list![42];
         let result = reverse(&list);
-        assert_eq!(result, Some(list));
+        assert_eq!(result, list);
     }
 
     #[test]
     fn reverse_list() {
         let result = reverse(&list![1, 2, 3]);
-        assert_eq!(result, Some(list![3, 2, 1]));
+        assert_eq!(result, list![3, 2, 1]);
     }
 
     #[test]
