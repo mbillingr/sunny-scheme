@@ -1,3 +1,5 @@
+use crate::core_traits::MaybePair;
+
 pub trait CxR {
     type Result: CxR<Result = Self::Result>;
 
@@ -114,5 +116,22 @@ pub trait CxR {
 
     fn cddddr(&self) -> Option<&Self::Result> {
         self.cddr()?.cddr()
+    }
+}
+
+
+impl<S, T> CxR for T
+where
+    T: MaybePair<First=S, Second=S>,
+    S: MaybePair<First=S, Second=S>,
+{
+    type Result = S;
+
+    fn car(&self) -> Option<&S> {
+        self.first()
+    }
+
+    fn cdr(&self) -> Option<&S> {
+        self.second()
     }
 }

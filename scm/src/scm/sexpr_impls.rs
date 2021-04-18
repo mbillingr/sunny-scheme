@@ -1,6 +1,5 @@
 use crate::Scm;
 use sexpr_generics::core_traits::{MaybeBool, MaybeChar, MaybePair, Nullable};
-use sexpr_generics::cxr::CxR;
 
 impl Nullable for Scm {
     fn is_null(&self) -> bool {
@@ -33,18 +32,6 @@ impl MaybePair for Scm {
     }
 
     fn second(&self) -> Option<&Self::First> {
-        self.as_pair().map(|(_, cdr)| cdr)
-    }
-}
-
-impl CxR for Scm {
-    type Result = Self;
-
-    fn car(&self) -> Option<&Self> {
-        self.as_pair().map(|(car, _)| car)
-    }
-
-    fn cdr(&self) -> Option<&Self> {
         self.as_pair().map(|(_, cdr)| cdr)
     }
 }
