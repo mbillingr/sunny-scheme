@@ -7,7 +7,7 @@
 //! kind of memory manager.
 //!
 
-use crate::core_traits::{MaybeBool, MaybeChar, MaybePair, Nullable, Sexpr};
+use crate::core_traits::{MaybeBool, MaybeChar, MaybeNumber, MaybePair, Nullable, Sexpr};
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
@@ -50,6 +50,12 @@ pub trait CharFactory<T: MaybeChar> {
 
     /// Construct a new ascii character value.
     fn ascii(&mut self, ch: u8) -> T;
+}
+
+/// Construct Numeric values
+pub trait NumberFactory<N, T: MaybeNumber<N>> {
+    /// Construct a new exact number.
+    fn number(&mut self, n: N) -> T;
 }
 
 /// Construct Pair values
