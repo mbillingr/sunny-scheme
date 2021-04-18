@@ -3,7 +3,8 @@ use crate::bytecode::{CodeBuilder, CodePointer, CodeSegment};
 use crate::continuation::Continuation;
 use crate::scm_extension::ScmExt;
 use crate::{bytecode::Op, closure::Closure, mem::Ref, Error, ErrorKind, Result, RuntimeResult};
-use sunny_scm::{CxR, Scm};
+use sexpr_generics::prelude::*;
+use sunny_scm::Scm;
 
 pub struct Vm {
     value_stack: Vec<Scm>,

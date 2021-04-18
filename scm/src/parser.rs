@@ -199,6 +199,7 @@ fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &
 mod tests {
     use crate::parser::parse_str;
     use crate::*;
+    use sexpr_generics::prelude::*;
 
     #[test]
     fn can_parse_empty_string() {

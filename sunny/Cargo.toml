@@ -13,6 +13,7 @@ maplit = "1.0"
 project-root = "0.2"
 rustyline = "7.1"
 simple_logger = "1.11"
+sexpr-generics = {path = "../sexpr" }
 sunny-scm = {path = "../scm" }
 sunny-vm = {path = "../vm"}
 structopt = "0.3"

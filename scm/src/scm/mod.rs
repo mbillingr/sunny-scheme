@@ -4,6 +4,7 @@ mod int;
 mod interner;
 mod null;
 mod pair;
+mod sexpr_impls;
 mod string;
 mod symbol;
 mod void;
@@ -213,18 +214,6 @@ impl<T: ScmObject> From<T> for Scm {
 impl Display for Scm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         Display::fmt(&self.0, f)
-    }
-}
-
-impl CxR for Scm {
-    type Result = Self;
-
-    fn car(&self) -> Option<&Self> {
-        self.as_pair().map(|(car, _)| car)
-    }
-
-    fn cdr(&self) -> Option<&Self> {
-        self.as_pair().map(|(_, cdr)| cdr)
     }
 }
 

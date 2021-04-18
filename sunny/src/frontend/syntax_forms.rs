@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use sunny_scm::{CxR, Scm, SourceLocation, SourceMap};
+use sexpr_generics::prelude::*;
+use sunny_scm::{Scm, SourceLocation, SourceMap};
 
 use crate::frontend::{
     ast::{Ast, AstNode},

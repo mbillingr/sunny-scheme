@@ -8,5 +8,6 @@ edition = "2018"
 
 [dependencies]
 maplit = "1.0"
+sexpr-generics = {path = "../sexpr" }
 sunny-memory = {path = "../memory"}
 sunny-scm = {path = "../scm" }
