@@ -12,5 +12,3 @@ mod shared_string;
 mod source_location;
 mod source_map;
 pub mod str_utils;
-
-type Int = i64;

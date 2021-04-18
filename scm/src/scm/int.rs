@@ -13,8 +13,8 @@ impl Int {
         Int(x)
     }
 
-    pub fn as_int(&self) -> i64 {
-        self.0
+    pub fn as_int(&self) -> &i64 {
+        &self.0
     }
 }
 

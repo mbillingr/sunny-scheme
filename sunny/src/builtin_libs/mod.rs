@@ -9,6 +9,7 @@ use crate::frontend::syntax_forms::{
 };
 use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
+use sexpr_generics::numbers;
 use sunny_scm::Scm;
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{ErrorKind, Result, Vm};
@@ -72,17 +73,7 @@ primitive! {
     }
 
     varfn add([args]) -> Result<Scm> {
-        let mut acc = match args.as_slice() {
-            [] => return Ok(Scm::number(0)),
-            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
-        };
-
-        for x in &args[1..] {
-            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
-            acc = &acc + x;
-        }
-
-        Ok(Scm::number(acc))
+        numbers::convenience::sum(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     varfn sub([args]) -> Result<Scm> {

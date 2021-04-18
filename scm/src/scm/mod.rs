@@ -9,7 +9,6 @@ mod string;
 mod symbol;
 mod void;
 
-use crate::Int;
 use std::any::Any;
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -62,11 +61,11 @@ impl Scm {
         }
     }
 
-    pub fn int(i: Int) -> Self {
+    pub fn int(i: i64) -> Self {
         int::Int::new(i).into()
     }
 
-    pub fn number(i: impl Into<Int>) -> Self {
+    pub fn number(i: impl Into<i64>) -> Self {
         int::Int::new(i.into()).into()
     }
 
@@ -114,7 +113,11 @@ impl Scm {
         self.as_type::<bool::Bool>().map(bool::Bool::as_bool)
     }
 
-    pub fn as_int(&self) -> Option<Int> {
+    pub fn as_int(&self) -> Option<i64> {
+        self.as_type::<int::Int>().map(int::Int::as_int).copied()
+    }
+
+    pub fn as_number(&self) -> Option<&i64> {
         self.as_type::<int::Int>().map(int::Int::as_int)
     }
 

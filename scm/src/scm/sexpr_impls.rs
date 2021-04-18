@@ -1,5 +1,6 @@
 use crate::Scm;
-use sexpr_generics::core_traits::{MaybeBool, MaybeChar, MaybePair, Nullable};
+use sexpr_generics::core_traits::{MaybeBool, MaybeChar, MaybeNumber, MaybePair, Nullable};
+use sexpr_generics::factory_traits::{DummyFactory, NumberFactory};
 
 impl Nullable for Scm {
     fn is_null(&self) -> bool {
@@ -20,6 +21,21 @@ impl MaybeChar for Scm {
 
     fn to_ascii(&self) -> Option<u8> {
         unimplemented!()
+    }
+}
+
+impl MaybeNumber<i64> for Scm {
+    fn to_number(&self) -> Option<&i64> {
+        Scm::as_number(self)
+    }
+}
+
+impl NumberFactory<i64, Scm> for DummyFactory {
+    fn number(&mut self, n: i64) -> Scm {
+        Scm::int(n)
+    }
+    fn raw_zero(&mut self) -> i64 {
+        0
     }
 }
 
