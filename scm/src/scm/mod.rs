@@ -8,8 +8,8 @@ mod string;
 mod symbol;
 mod void;
 
-use crate::cxr::CxR;
 use crate::Int;
+use sexpr_generics::cxr::CxR;
 use std::any::Any;
 use std::borrow::Borrow;
 use std::collections::HashMap;
