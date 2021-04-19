@@ -31,6 +31,10 @@ impl ScmObject for SyntacticClosure {
         false
     }
 
+    fn value_hash(&self, state: &mut ScmHasher) {
+        std::ptr::hash(self, state)
+    }
+
     fn deep_hash(&self, _state: &mut ScmHasher) {
         unimplemented!()
     }

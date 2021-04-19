@@ -24,6 +24,9 @@ pub trait ScmObject: Any + Debug + Display {
     fn is_equal(&self, other: &dyn ScmObject) -> bool {
         self.is_eqv(other)
     }
+    fn value_hash(&self, state: &mut ScmHasher) {
+        std::ptr::hash(self, state)
+    }
     fn deep_hash(&self, state: &mut ScmHasher);
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
 }
@@ -151,16 +154,28 @@ impl Scm {
             .unwrap_or(self)
     }
 
-    pub fn ptr_eq(&self, other: &Scm) -> bool {
+    pub fn as_ref(&self) -> &dyn ScmObject {
+        &*self.0
+    }
+
+    pub fn as_ptr(&self) -> *const dyn ScmObject {
+        Rc::as_ptr(&self.0)
+    }
+
+    pub fn is_eq(&self, other: &Scm) -> bool {
         Rc::ptr_eq(&self.0, &other.0)
     }
 
     pub fn is_eqv(&self, other: &Scm) -> bool {
-        self.ptr_eq(other) || self.0.is_eqv(&*other.0)
+        self.is_eq(other) || self.0.is_eqv(&*other.0)
     }
 
     pub fn is_equal(&self, other: &Scm) -> bool {
-        self.ptr_eq(other) || self.0.is_equal(&*other.0)
+        self.is_eq(other) || self.0.is_equal(&*other.0)
+    }
+
+    pub fn value_hash(&self, state: &mut ScmHasher) {
+        self.0.value_hash(state)
     }
 
     pub fn deep_hash(&self, state: &mut ScmHasher) {
@@ -174,7 +189,7 @@ impl Scm {
 
 impl PartialEq for Scm {
     fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(Rc::as_ptr(&self.0), Rc::as_ptr(&other.0)) || self.is_equal(other)
+        self.is_equal(other)
     }
 }
 
@@ -249,7 +264,7 @@ impl Eq for HashPtrEq {}
 
 impl PartialEq for HashPtrEq {
     fn eq(&self, other: &Self) -> bool {
-        self.0.ptr_eq(&other.0)
+        self.0.is_eq(&other.0)
     }
 }
 

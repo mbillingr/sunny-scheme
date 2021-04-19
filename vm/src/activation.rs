@@ -78,6 +78,10 @@ impl ScmObject for Activation {
             .unwrap_or(false)
     }
 
+    fn value_hash(&self, state: &mut ScmHasher) {
+        std::ptr::hash(self, state);
+    }
+
     fn deep_hash(&self, state: &mut ScmHasher) {
         std::ptr::hash(self, state);
     }

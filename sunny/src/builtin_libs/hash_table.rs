@@ -110,6 +110,9 @@ impl ScmObject for MutableTable {
     fn is_eqv(&self, _other: &dyn ScmObject) -> bool {
         unimplemented!()
     }
+    fn value_hash(&self, _state: &mut ScmHasher) {
+        unimplemented!()
+    }
     fn deep_hash(&self, _state: &mut ScmHasher) {
         unimplemented!()
     }

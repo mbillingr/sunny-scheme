@@ -93,6 +93,7 @@
 
 pub mod core_traits;
 pub mod cxr;
+pub mod equality;
 pub mod factory_traits;
 pub mod lists;
 pub mod numbers;

@@ -17,6 +17,10 @@ impl ScmObject for Null {
         other.downcast_ref::<Self>().is_some()
     }
 
+    fn value_hash(&self, state: &mut ScmHasher) {
+        self.hash(state)
+    }
+
     fn deep_hash(&self, state: &mut ScmHasher) {
         self.hash(state)
     }

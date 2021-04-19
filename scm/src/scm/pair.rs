@@ -39,6 +39,10 @@ impl ScmObject for Pair {
             .unwrap_or(false)
     }
 
+    fn value_hash(&self, state: &mut ScmHasher) {
+        std::ptr::hash(self, state);
+    }
+
     fn deep_hash(&self, state: &mut ScmHasher) {
         self.first.deep_hash(state);
         self.second.deep_hash(state);

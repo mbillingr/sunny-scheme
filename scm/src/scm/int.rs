@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::hash::Hash;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Hash)]
 pub struct Int(i64);
 
 impl Int {
@@ -30,8 +30,12 @@ impl ScmObject for Int {
             .unwrap_or(false)
     }
 
+    fn value_hash(&self, state: &mut ScmHasher) {
+        self.hash(state)
+    }
+
     fn deep_hash(&self, state: &mut ScmHasher) {
-        self.0.hash(state)
+        self.hash(state)
     }
 
     fn substitute(&self, _: &HashMap<&str, Scm>) -> Scm {

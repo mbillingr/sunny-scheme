@@ -74,7 +74,7 @@ impl ScmExt for Scm {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 struct Values(usize);
 
 impl std::fmt::Display for Values {
@@ -95,8 +95,12 @@ impl ScmObject for Values {
             .unwrap_or(false)
     }
 
+    fn value_hash(&self, state: &mut ScmHasher) {
+        self.hash(state);
+    }
+
     fn deep_hash(&self, state: &mut ScmHasher) {
-        self.0.hash(state);
+        self.hash(state);
     }
 
     fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {

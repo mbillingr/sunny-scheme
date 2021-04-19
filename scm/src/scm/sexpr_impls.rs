@@ -1,5 +1,9 @@
-use crate::Scm;
+use crate::{Scm, ScmHasher};
+use sexpr_generics::equality::{
+    PointerEq, PointerHash, RecursionEq, RecursionHash, ValueEq, ValueHash,
+};
 use sexpr_generics::prelude::*;
+use std::hash::{Hash, Hasher};
 
 impl Nullable for Scm {
     fn is_null(&self) -> bool {
@@ -96,5 +100,51 @@ impl SymbolFactory<&str, Scm> for StatelessFactory {
 
     fn uninterned_symbol(&mut self, name: &str) -> Scm {
         Scm::uninterned_symbol(name)
+    }
+}
+
+impl PointerEq for Scm {
+    fn ptr_eq(&self, other: &Self) -> bool {
+        self.is_eq(other)
+    }
+}
+
+impl ValueEq for Scm {
+    fn val_eq(&self, other: &Self) -> bool {
+        self.is_eq(other) || self.0.is_eqv(&*other.0)
+    }
+}
+
+impl RecursionEq for Scm {
+    fn rec_eq(&self, other: &Self) -> bool {
+        self.is_eq(other) || self.0.is_equal(&*other.0)
+    }
+}
+
+impl PointerHash for Scm {
+    fn ptr_hash<H: Hasher>(&self, state: &mut H) {
+        self.as_ptr().hash(state)
+    }
+}
+
+impl ValueHash for Scm {
+    fn val_hash<H: Hasher>(&self, state: &mut H) {
+        // We use an ScmHasher to compute the hash of our value,
+        // then hash the result again with the provided hasher.
+        // I could not figure out a nicer way...
+        let mut hasher = ScmHasher::new();
+        self.value_hash(&mut hasher);
+        hasher.finish().hash(state);
+    }
+}
+
+impl RecursionHash for Scm {
+    fn rec_hash<H: Hasher>(&self, state: &mut H) {
+        // We use an ScmHasher to compute the recursive hash of our value,
+        // then hash the result again with the provided hasher.
+        // I could not figure out a nicer way...
+        let mut hasher = ScmHasher::new();
+        self.deep_hash(&mut hasher);
+        hasher.finish().hash(state);
     }
 }
