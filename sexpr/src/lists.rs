@@ -1,7 +1,7 @@
 //! Generic list algorithms.
 
 use crate::core_traits::{MaybePair, Nullable};
-use crate::equality::{PointerEq, RecursionEq, ValueEq};
+use crate::equality::{IdentityEq, PointerEq, ValueEq};
 use crate::factory_traits::{CopyTracker, NullFactory, PairFactory};
 use crate::prelude::StatelessFactory;
 
@@ -200,27 +200,27 @@ where
 }
 
 /// Returns the first sublist of `list` whose first element and `obj` are equivalent
-/// according to [`rec_eq`].
-///
-/// [`rec_eq`]: crate::equality::RecursionEq::rec_eq
-pub fn member<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
-where
-    T: RecursionEq,
-    S: List<T>,
-{
-    find(list, |item| item.rec_eq(obj))
-}
-
-/// Returns the first sublist of `list` whose first element and `obj` are equivalent
 /// according to [`val_eq`].
 ///
 /// [`val_eq`]: crate::equality::ValueEq::val_eq
-pub fn memv<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
+pub fn member<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
 where
     T: ValueEq,
     S: List<T>,
 {
     find(list, |item| item.val_eq(obj))
+}
+
+/// Returns the first sublist of `list` whose first element and `obj` are equivalent
+/// according to [`id_eq`].
+///
+/// [`id_eq`]: crate::equality::IdentityEq::id_eq
+pub fn memv<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
+where
+    T: IdentityEq,
+    S: List<T>,
+{
+    find(list, |item| item.id_eq(obj))
 }
 
 /// Returns the first sublist of `list` whose first element and `obj` are equivalent
@@ -252,29 +252,29 @@ where
 }
 
 /// Returns the first pair in `list` whose first element and `obj` are equivalent
-/// according to [`rec_eq`].
-///
-/// [`rec_eq`]: crate::equality::RecursionEq::rec_eq
-pub fn assoc<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
-where
-    T: MaybePair<First = K>,
-    K: RecursionEq,
-    S: List<T>,
-{
-    afind(list, |key| key.rec_eq(obj))
-}
-
-/// Returns the first pair in `list` whose first element and `obj` are equivalent
 /// according to [`val_eq`].
 ///
 /// [`val_eq`]: crate::equality::ValueEq::val_eq
-pub fn assv<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
+pub fn assoc<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
 where
     T: MaybePair<First = K>,
     K: ValueEq,
     S: List<T>,
 {
     afind(list, |key| key.val_eq(obj))
+}
+
+/// Returns the first pair in `list` whose first element and `obj` are equivalent
+/// according to [`id_eq`].
+///
+/// [`id_eq`]: crate::equality::IdentityEq::id_eq
+pub fn assv<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
+where
+    T: MaybePair<First = K>,
+    K: IdentityEq,
+    S: List<T>,
+{
+    afind(list, |key| key.id_eq(obj))
 }
 
 /// Returns the first pair in `list` whose first element and `obj` are equivalent

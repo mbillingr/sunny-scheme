@@ -44,11 +44,11 @@ impl ScmObject for Continuation {
             .unwrap_or(false)
     }
 
-    fn value_hash(&self, state: &mut ScmHasher) {
+    fn eqv_hash(&self, state: &mut ScmHasher) {
         std::ptr::hash(self, state);
     }
 
-    fn deep_hash(&self, state: &mut ScmHasher) {
+    fn equal_hash(&self, state: &mut ScmHasher) {
         self.activation.hash(state);
     }
 

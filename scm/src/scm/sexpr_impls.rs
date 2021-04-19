@@ -1,9 +1,9 @@
-use crate::{Scm, ScmHasher};
+use crate::Scm;
 use sexpr_generics::equality::{
-    PointerEq, PointerHash, RecursionEq, RecursionHash, ValueEq, ValueHash,
+    IdentityEq, IdentityHash, PointerEq, PointerHash, ValueEq, ValueHash,
 };
 use sexpr_generics::prelude::*;
-use std::hash::{Hash, Hasher};
+use std::hash::Hasher;
 
 impl Nullable for Scm {
     fn is_null(&self) -> bool {
@@ -109,42 +109,172 @@ impl PointerEq for Scm {
     }
 }
 
-impl ValueEq for Scm {
-    fn val_eq(&self, other: &Self) -> bool {
+impl IdentityEq for Scm {
+    fn id_eq(&self, other: &Self) -> bool {
         self.is_eq(other) || self.0.is_eqv(&*other.0)
     }
 }
 
-impl RecursionEq for Scm {
-    fn rec_eq(&self, other: &Self) -> bool {
+impl ValueEq for Scm {
+    fn val_eq(&self, other: &Self) -> bool {
         self.is_eq(other) || self.0.is_equal(&*other.0)
     }
 }
 
 impl PointerHash for Scm {
     fn ptr_hash<H: Hasher>(&self, state: &mut H) {
-        self.as_ptr().hash(state)
+        self.eq_hash(state)
+    }
+}
+
+impl IdentityHash for Scm {
+    fn id_hash<H: Hasher>(&self, state: &mut H) {
+        self.eqv_hash(state)
     }
 }
 
 impl ValueHash for Scm {
     fn val_hash<H: Hasher>(&self, state: &mut H) {
-        // We use an ScmHasher to compute the hash of our value,
-        // then hash the result again with the provided hasher.
-        // I could not figure out a nicer way...
-        let mut hasher = ScmHasher::new();
-        self.value_hash(&mut hasher);
-        hasher.finish().hash(state);
+        self.equal_hash(state)
     }
 }
 
-impl RecursionHash for Scm {
-    fn rec_hash<H: Hasher>(&self, state: &mut H) {
-        // We use an ScmHasher to compute the recursive hash of our value,
-        // then hash the result again with the provided hasher.
-        // I could not figure out a nicer way...
-        let mut hasher = ScmHasher::new();
-        self.deep_hash(&mut hasher);
-        hasher.finish().hash(state);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sexpr_generics::equality::{IdentityKey, PointerKey, ValueKey};
+    use std::hash::Hash;
+
+    fn value_hash(x: &impl ValueHash) -> u64 {
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        x.val_hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn pointer_hash(x: &impl PointerHash) -> u64 {
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        x.ptr_hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn hash(x: &impl Hash) -> u64 {
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        x.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[test]
+    fn two_different_pairs_can_have_same_value() {
+        let a = Scm::cons(1, 2);
+        let b = Scm::cons(1, 2);
+
+        assert!(a.val_eq(&b));
+        assert_eq!(value_hash(&a), value_hash(&b));
+    }
+
+    #[test]
+    fn two_different_pairs_are_different_objects() {
+        let a = Scm::cons(1, 2);
+        let b = Scm::cons(1, 2);
+
+        assert!(a.ptr_eq(&a.clone()));
+        assert!(!a.ptr_eq(&b));
+        assert_ne!(pointer_hash(&a), pointer_hash(&b));
+    }
+
+    #[test]
+    fn number_pointer_keys() {
+        let a = Scm::int(42);
+        let b = a.clone();
+        let c = Scm::int(42);
+
+        let ka = PointerKey::from(a);
+        let kb = PointerKey::from(b);
+        let kc = PointerKey::from(c);
+
+        assert_eq!(ka, kb);
+        assert_eq!(hash(&ka), hash(&kb));
+        assert_ne!(ka, kc);
+        assert_ne!(hash(&ka), hash(&kc));
+    }
+
+    #[test]
+    fn number_identity_keys() {
+        let a = Scm::int(42);
+        let b = a.clone();
+        let c = Scm::int(42);
+
+        let ka = IdentityKey::from(a);
+        let kb = IdentityKey::from(b);
+        let kc = IdentityKey::from(c);
+
+        assert_eq!(ka, kb);
+        assert_eq!(hash(&ka), hash(&kb));
+        assert_eq!(ka, kc);
+        assert_eq!(hash(&ka), hash(&kc));
+    }
+
+    #[test]
+    fn number_value_keys() {
+        let a = Scm::int(42);
+        let b = a.clone();
+        let c = Scm::int(42);
+
+        let ka = ValueKey::from(a);
+        let kb = ValueKey::from(b);
+        let kc = ValueKey::from(c);
+
+        assert_eq!(ka, kb);
+        assert_eq!(hash(&ka), hash(&kb));
+        assert_eq!(ka, kc);
+        assert_eq!(hash(&ka), hash(&kc));
+    }
+
+    #[test]
+    fn pair_pointer_keys() {
+        let a = Scm::cons(1, 2);
+        let b = a.clone();
+        let c = Scm::cons(1, 2);
+
+        let ka = PointerKey::from(a);
+        let kb = PointerKey::from(b);
+        let kc = PointerKey::from(c);
+
+        assert_eq!(ka, kb);
+        assert_eq!(hash(&ka), hash(&kb));
+        assert_ne!(ka, kc);
+        assert_ne!(hash(&ka), hash(&kc));
+    }
+
+    #[test]
+    fn pair_identity_keys() {
+        let a = Scm::cons(1, 2);
+        let b = a.clone();
+        let c = Scm::cons(1, 2);
+
+        let ka = IdentityKey::from(a);
+        let kb = IdentityKey::from(b);
+        let kc = IdentityKey::from(c);
+
+        assert_eq!(ka, kb);
+        assert_eq!(hash(&ka), hash(&kb));
+        assert_ne!(ka, kc);
+        assert_ne!(hash(&ka), hash(&kc));
+    }
+
+    #[test]
+    fn pair_value_keys() {
+        let a = Scm::cons(1, 2);
+        let b = a.clone();
+        let c = Scm::cons(1, 2);
+
+        let ka = ValueKey::from(a);
+        let kb = ValueKey::from(b);
+        let kc = ValueKey::from(c);
+
+        assert_eq!(ka, kb);
+        assert_eq!(hash(&ka), hash(&kb));
+        assert_eq!(ka, kc);
+        assert_eq!(hash(&ka), hash(&kc));
     }
 }

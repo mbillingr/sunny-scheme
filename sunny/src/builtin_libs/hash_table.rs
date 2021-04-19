@@ -1,10 +1,11 @@
 use crate::context::Context;
+use sexpr_generics::equality::{PointerKey, ValueKey};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::ops::Deref;
-use sunny_scm::{HashEqual, HashPtrEq, Scm, ScmHasher, ScmObject, WeakScm};
+use sunny_scm::{Scm, ScmHasher, ScmObject, WeakScm};
 use sunny_vm::{ErrorKind, Result, Vm};
 
 pub fn define_lib_sunny_hash_table(ctx: &mut Context) {
@@ -83,10 +84,10 @@ fn make_hashtable<T: 'static + Table>(
 }
 
 #[derive(Debug, Default)]
-struct TableKeyStrongEquals(HashMap<HashEqual, Scm>);
+struct TableKeyStrongEquals(HashMap<ValueKey<Scm>, Scm>);
 
 #[derive(Debug, Default)]
-struct TableKeyStrongEq(HashMap<HashPtrEq, Scm>);
+struct TableKeyStrongEq(HashMap<PointerKey<Scm>, Scm>);
 
 #[derive(Debug, Default)]
 struct TableKeyWeakEq {
@@ -110,10 +111,10 @@ impl ScmObject for MutableTable {
     fn is_eqv(&self, _other: &dyn ScmObject) -> bool {
         unimplemented!()
     }
-    fn value_hash(&self, _state: &mut ScmHasher) {
+    fn eqv_hash(&self, _state: &mut ScmHasher) {
         unimplemented!()
     }
-    fn deep_hash(&self, _state: &mut ScmHasher) {
+    fn equal_hash(&self, _state: &mut ScmHasher) {
         unimplemented!()
     }
     fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {
@@ -147,11 +148,11 @@ impl Table for TableKeyStrongEquals {
     }
 
     fn table_ref(&self, key: Scm) -> Option<&Scm> {
-        self.0.get(&HashEqual::from(key))
+        self.0.get(&ValueKey::from(key))
     }
 
     fn table_del(&mut self, key: Scm) -> Option<Scm> {
-        self.0.remove(&HashEqual::from(key))
+        self.0.remove(&ValueKey::from(key))
     }
 
     fn table_clear(&mut self) {
@@ -165,11 +166,11 @@ impl Table for TableKeyStrongEq {
     }
 
     fn table_ref(&self, key: Scm) -> Option<&Scm> {
-        self.0.get(&HashPtrEq::from(key))
+        self.0.get(&PointerKey::from(key))
     }
 
     fn table_del(&mut self, key: Scm) -> Option<Scm> {
-        self.0.remove(&HashPtrEq::from(key))
+        self.0.remove(&PointerKey::from(key))
     }
 
     fn table_clear(&mut self) {

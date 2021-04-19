@@ -21,7 +21,7 @@ pub mod vm;
 pub type Result<T> = std::result::Result<T, ErrorKind>;
 pub type RuntimeResult<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ErrorKind {
     Generic(Scm),
     Halted,
@@ -33,7 +33,7 @@ pub enum ErrorKind {
     TooManyArgs,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Error {
     kind: ErrorKind,
     location: CodePointer,

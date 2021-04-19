@@ -10,7 +10,6 @@ mod symbol;
 mod void;
 
 use std::any::Any;
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::{Hash, Hasher};
@@ -24,10 +23,10 @@ pub trait ScmObject: Any + Debug + Display {
     fn is_equal(&self, other: &dyn ScmObject) -> bool {
         self.is_eqv(other)
     }
-    fn value_hash(&self, state: &mut ScmHasher) {
+    fn eqv_hash(&self, state: &mut ScmHasher) {
         std::ptr::hash(self, state)
     }
-    fn deep_hash(&self, state: &mut ScmHasher);
+    fn equal_hash(&self, state: &mut ScmHasher);
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
 }
 
@@ -174,12 +173,26 @@ impl Scm {
         self.is_eq(other) || self.0.is_equal(&*other.0)
     }
 
-    pub fn value_hash(&self, state: &mut ScmHasher) {
-        self.0.value_hash(state)
+    pub fn eq_hash<H: Hasher>(&self, state: &mut H) {
+        self.as_ptr().hash(state)
     }
 
-    pub fn deep_hash(&self, state: &mut ScmHasher) {
-        self.0.deep_hash(state)
+    pub fn eqv_hash<H: Hasher>(&self, state: &mut H) {
+        // We use an ScmHasher to compute the hash of our value,
+        // then hash the result again with the provided hasher.
+        // I could not figure out a nicer way...
+        let mut hasher = ScmHasher::new();
+        self.0.eqv_hash(&mut hasher);
+        hasher.finish().hash(state);
+    }
+
+    pub fn equal_hash<H: Hasher>(&self, state: &mut H) {
+        // We use an ScmHasher to compute the recursive hash of our value,
+        // then hash the result again with the provided hasher.
+        // I could not figure out a nicer way...
+        let mut hasher = ScmHasher::new();
+        self.0.equal_hash(&mut hasher);
+        hasher.finish().hash(state);
     }
 
     pub fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Self {
@@ -232,99 +245,6 @@ impl From<usize> for Scm {
 impl<'s> From<&'s str> for Scm {
     fn from(s: &'s str) -> Self {
         Scm::symbol(s)
-    }
-}
-
-impl Eq for Scm {}
-
-#[derive(Debug, Clone)]
-#[repr(transparent)]
-pub struct HashPtrEq(Scm);
-
-impl HashPtrEq {
-    pub fn from_ref(scm: &Scm) -> &Self {
-        unsafe {
-            // # Safety : safe if Self transparently wraps Scm
-            std::mem::transmute(scm)
-        }
-    }
-
-    pub fn into_scm(self) -> Scm {
-        self.0
-    }
-}
-
-impl Hash for HashPtrEq {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        Rc::as_ptr(&self.0 .0).hash(state)
-    }
-}
-
-impl Eq for HashPtrEq {}
-
-impl PartialEq for HashPtrEq {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.is_eq(&other.0)
-    }
-}
-
-impl From<Scm> for HashPtrEq {
-    fn from(scm: Scm) -> Self {
-        HashPtrEq(scm)
-    }
-}
-
-impl Borrow<Scm> for HashPtrEq {
-    fn borrow(&self) -> &Scm {
-        &self.0
-    }
-}
-
-#[derive(Debug, Clone)]
-#[repr(transparent)]
-pub struct HashEqual(Scm);
-
-impl HashEqual {
-    pub fn from_ref(scm: &Scm) -> &Self {
-        unsafe {
-            // # Safety : safe if Self transparently wraps Scm
-            std::mem::transmute(scm)
-        }
-    }
-
-    pub fn into_scm(self) -> Scm {
-        self.0
-    }
-}
-
-impl Hash for HashEqual {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // We use an ScmHasher to compute the recursive hash of our value,
-        // then hash the result again with the provided hasher.
-        // I could not figure out a nicer way...
-        let mut hasher = ScmHasher::new();
-        self.0 .0.deep_hash(&mut hasher);
-        hasher.finish().hash(state);
-    }
-}
-
-impl Eq for HashEqual {}
-
-impl PartialEq for HashEqual {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.is_equal(&other.0)
-    }
-}
-
-impl From<Scm> for HashEqual {
-    fn from(scm: Scm) -> Self {
-        HashEqual(scm)
-    }
-}
-
-impl Borrow<Scm> for HashEqual {
-    fn borrow(&self) -> &Scm {
-        &self.0
     }
 }
 

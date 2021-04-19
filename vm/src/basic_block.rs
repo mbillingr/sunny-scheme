@@ -1,8 +1,9 @@
 use crate::bytecode::{CodeSegment, Op};
+use sexpr_generics::equality::ValueKey;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use sunny_scm::{HashEqual, Scm, SourceLocation};
+use sunny_scm::{Scm, SourceLocation};
 
 /// A chain of blocks with a single entry and exit point.
 /// Control flow may branch in a chain, but all branches
@@ -232,7 +233,7 @@ impl BasicBlock {
 
         let mut constants = vec![Scm::void(); builder.constant_map.len()];
         for (val, idx) in builder.constant_map {
-            constants[idx] = val.into_scm();
+            constants[idx] = val.into_inner();
         }
 
         CodeSegment::new(builder.code, constants).with_source_map(builder.source_map)
@@ -269,7 +270,7 @@ impl From<Op> for Rc<BasicBlock> {
 
 struct CodeBuilder {
     code: Vec<Op>,
-    constant_map: HashMap<HashEqual, usize>,
+    constant_map: HashMap<ValueKey<Scm>, usize>,
     source_map: HashMap<usize, SourceLocation<()>>,
     block_offsets: HashMap<*const BasicBlock, usize>,
 }

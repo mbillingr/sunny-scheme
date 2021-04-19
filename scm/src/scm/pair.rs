@@ -39,13 +39,13 @@ impl ScmObject for Pair {
             .unwrap_or(false)
     }
 
-    fn value_hash(&self, state: &mut ScmHasher) {
+    fn eqv_hash(&self, state: &mut ScmHasher) {
         std::ptr::hash(self, state);
     }
 
-    fn deep_hash(&self, state: &mut ScmHasher) {
-        self.first.deep_hash(state);
-        self.second.deep_hash(state);
+    fn equal_hash(&self, state: &mut ScmHasher) {
+        self.first.equal_hash(state);
+        self.second.equal_hash(state);
     }
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
