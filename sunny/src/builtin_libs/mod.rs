@@ -77,47 +77,15 @@ primitive! {
     }
 
     varfn sub([args]) -> Result<Scm> {
-        let mut acc = match args.as_slice() {
-            [] => return Ok(Scm::number(0)),
-            [x] => return Ok(Scm::number(-x.as_int().ok_or(ErrorKind::TypeError)?)),
-            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
-        };
-
-        for x in &args[1..] {
-            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
-            acc = &acc - x;
-        }
-
-        Ok(Scm::number(acc))
+        numbers::convenience::diff(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     varfn mul([args]) -> Result<Scm> {
-        let mut acc = match args.as_slice() {
-            [] => return Ok(Scm::number(1)),
-            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
-        };
-
-        for x in &args[1..] {
-            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
-            acc = &acc * x;
-        }
-
-        Ok(Scm::number(acc))
+        numbers::convenience::prod(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     varfn div([args]) -> Result<Scm> {
-        let mut acc = match args.as_slice() {
-            [] => return Ok(Scm::number(0)),
-            [x] => return Ok(Scm::number(x.as_int().map(|i|1/i).ok_or(ErrorKind::TypeError)?)),
-            [x, ..] => x.as_int().ok_or(ErrorKind::TypeError)?.clone(),
-        };
-
-        for x in &args[1..] {
-            let x = x.as_int().ok_or(ErrorKind::TypeError)?;
-            acc = &acc / x;
-        }
-
-        Ok(Scm::number(acc))
+        numbers::convenience::quot(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     fn is_equal(a: Scm, b: Scm) -> Result<Scm> {

@@ -37,6 +37,9 @@ impl NumberFactory<i64, Scm> for DummyFactory {
     fn raw_zero(&mut self) -> i64 {
         0
     }
+    fn raw_one(&mut self) -> i64 {
+        1
+    }
 }
 
 impl MaybePair for Scm {
