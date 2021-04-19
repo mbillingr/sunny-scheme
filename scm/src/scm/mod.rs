@@ -79,8 +79,8 @@ impl Scm {
         Scm(symbol::Symbol::uninterned(name))
     }
 
-    pub fn string(name: &str) -> Self {
-        Scm(string::String::interned(name))
+    pub fn string(content: &str) -> Self {
+        Scm(string::String::interned(content))
     }
 
     pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {

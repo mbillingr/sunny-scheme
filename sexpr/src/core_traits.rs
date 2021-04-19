@@ -97,3 +97,24 @@ pub trait MaybeSymbol {
         Some(std::ptr::eq(self.to_symbol()?, other.to_symbol()?))
     }
 }
+
+/// Trait for types that can represent strings.
+pub trait MaybeString {
+    /// Return `true` if `self` represents a string.
+    fn is_str(&self) -> bool {
+        self.to_str().is_some()
+    }
+
+    /// Return `true` if `self` represents a mutable string.
+    fn is_mut_str(&mut self) -> bool {
+        self.to_mut_str().is_some()
+    }
+
+    /// Return a reference to the string content,
+    /// or `None` if `self` does not represent a string.
+    fn to_str(&self) -> Option<&str>;
+
+    /// Return a mutable reference to the string the content,
+    /// or `None` if `self` does not represent a string.
+    fn to_mut_str(&mut self) -> Option<&mut str>;
+}

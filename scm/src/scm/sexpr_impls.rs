@@ -103,6 +103,26 @@ impl SymbolFactory<&str, Scm> for StatelessFactory {
     }
 }
 
+impl MaybeString for Scm {
+    fn to_str(&self) -> Option<&str> {
+        self.as_string()
+    }
+
+    fn to_mut_str(&mut self) -> Option<&mut str> {
+        unimplemented!()
+    }
+}
+
+impl StringFactory<&str, Scm> for StatelessFactory {
+    fn constant_string(&mut self, content: &str) -> Scm {
+        Scm::string(content)
+    }
+
+    fn mutable_string(&mut self, content: &str) -> Scm {
+        Scm::string(content)
+    }
+}
+
 impl PointerEq for Scm {
     fn ptr_eq(&self, other: &Self) -> bool {
         self.is_eq(other)

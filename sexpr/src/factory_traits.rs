@@ -8,7 +8,7 @@
 //!
 
 use crate::core_traits::{MaybeBool, MaybeChar, MaybeNumber, MaybePair, Nullable, Sexpr};
-use crate::prelude::MaybeSymbol;
+use crate::prelude::{MaybeString, MaybeSymbol};
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
@@ -78,7 +78,7 @@ pub trait PairFactory<T: MaybePair> {
 
 /// Construct Symbol values
 pub trait SymbolFactory<S, T: MaybeSymbol> {
-    /// Construct a new interned symbol from the input argument.
+    /// Construct a new interned symbol.
     ///
     /// Any two symbols with the same name created by this function
     /// must compare equal when passed to [`MaybeSymbol::is_same_symbol`].
@@ -86,7 +86,7 @@ pub trait SymbolFactory<S, T: MaybeSymbol> {
     ///[`MaybeSymbol::is_same_symbol`]: crate::core_traits::MaybeSymbol::is_same_symbol
     fn interned_symbol(&mut self, name: S) -> T;
 
-    /// Construct a new uninterned symbol from the input argument.
+    /// Construct a new uninterned symbol.
     ///
     /// Any two symbols must not compare equal when  passed to
     /// [`MaybeSymbol::is_same_symbol`] if at least one of them was
@@ -94,4 +94,13 @@ pub trait SymbolFactory<S, T: MaybeSymbol> {
     ///
     ///[`MaybeSymbol::is_same_symbol`]: crate::core_traits::MaybeSymbol::is_same_symbol
     fn uninterned_symbol(&mut self, name: S) -> T;
+}
+
+/// Construct string values
+pub trait StringFactory<S, T: MaybeString> {
+    /// Construct a new immutable string.
+    fn constant_string(&mut self, content: S) -> T;
+
+    /// Construct a new mutable string.
+    fn mutable_string(&mut self, content: S) -> T;
 }
