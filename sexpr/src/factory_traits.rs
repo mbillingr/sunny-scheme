@@ -8,6 +8,7 @@
 //!
 
 use crate::core_traits::{MaybeBool, MaybeChar, MaybeNumber, MaybePair, Nullable, Sexpr};
+use crate::prelude::MaybeSymbol;
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
@@ -73,4 +74,24 @@ pub trait PairFactory<T: MaybePair> {
     fn cons(&mut self, car: impl Into<T::First>, cdr: impl Into<T::Second>) -> T {
         self.pair(car.into(), cdr.into())
     }
+}
+
+/// Construct Symbol values
+pub trait SymbolFactory<S, T: MaybeSymbol> {
+    /// Construct a new interned symbol from the input argument.
+    ///
+    /// Any two symbols with the same name created by this function
+    /// must compare equal when passed to [`MaybeSymbol::is_same_symbol`].
+    ///
+    ///[`MaybeSymbol::is_same_symbol`]: crate::core_traits::MaybeSymbol::is_same_symbol
+    fn interned_symbol(&mut self, name: S) -> T;
+
+    /// Construct a new uninterned symbol from the input argument.
+    ///
+    /// Any two symbols must not compare equal when  passed to
+    /// [`MaybeSymbol::is_same_symbol`] if at least one of them was
+    /// created with `uninterned_symbol`. Even if they have the same name.
+    ///
+    ///[`MaybeSymbol::is_same_symbol`]: crate::core_traits::MaybeSymbol::is_same_symbol
+    fn uninterned_symbol(&mut self, name: S) -> T;
 }

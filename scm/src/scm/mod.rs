@@ -73,6 +73,10 @@ impl Scm {
         Scm(symbol::Symbol::interned(name))
     }
 
+    pub fn uninterned_symbol(name: &str) -> Self {
+        Scm(symbol::Symbol::uninterned(name))
+    }
+
     pub fn string(name: &str) -> Self {
         Scm(string::String::interned(name))
     }

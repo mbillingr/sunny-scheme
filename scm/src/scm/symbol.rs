@@ -20,6 +20,10 @@ impl Symbol {
         }
     }
 
+    pub fn uninterned(_name: &str) -> Strong<Symbol> {
+        unimplemented!()
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
