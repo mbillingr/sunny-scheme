@@ -24,13 +24,14 @@ impl MaybeChar for Scm {
     }
 }
 
-impl MaybeNumber<i64> for Scm {
+impl MaybeNumber for Scm {
+    type Number = i64;
     fn to_number(&self) -> Option<&i64> {
         Scm::as_number(self)
     }
 }
 
-impl NumberFactory<i64, Scm> for DummyFactory {
+impl NumberFactory<Scm> for DummyFactory {
     fn number(&mut self, n: i64) -> Scm {
         Scm::int(n)
     }

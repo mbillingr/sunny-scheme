@@ -13,8 +13,8 @@ macro_rules! define_binary_operations {
             pub fn $method<N, S, F>(a: &S, b: &S, factory: &mut F) -> Option<S>
                 where
                         for<'a> &'a N: std::ops::$trait<Output = N>,
-                        S: crate::core_traits::MaybeNumber<N>,
-                        F: crate::factory_traits::NumberFactory<N, S>,
+                        S: crate::core_traits::MaybeNumber<Number = N>,
+                        F: crate::factory_traits::NumberFactory<S>,
             {
                 let a = a.to_number()?;
                 let b = b.to_number()?;
@@ -32,8 +32,8 @@ macro_rules! define_binary_operations {
                 pub fn $method<N, S>(a: &S, b: &S) -> Option<S>
                 where
                     for<'a> &'a N: std::ops::$trait<Output = N>,
-                    S: crate::core_traits::MaybeNumber<N>,
-                    DummyFactory: NumberFactory<N, S>,
+                    S: crate::core_traits::MaybeNumber<Number = N>,
+                    DummyFactory: NumberFactory<S>,
                 {
                     super::$method(a, b, &mut DummyFactory)
                 }
@@ -72,8 +72,8 @@ define_binary_operations!(
 pub fn sum<'a, N, S: 'a, F>(values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
 where
     for<'b> &'b N: Add<Output = N>,
-    S: MaybeNumber<N>,
-    F: NumberFactory<N, S>,
+    S: MaybeNumber<Number = N>,
+    F: NumberFactory<S>,
 {
     let mut acc = factory.raw_zero();
     for x in values {
@@ -87,8 +87,8 @@ where
 pub fn prod<'a, N, S: 'a, F>(values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
 where
     for<'b> &'b N: Mul<Output = N>,
-    S: MaybeNumber<N>,
-    F: NumberFactory<N, S>,
+    S: MaybeNumber<Number = N>,
+    F: NumberFactory<S>,
 {
     let mut acc = factory.raw_one();
     for x in values {
@@ -108,8 +108,8 @@ pub fn diff<'a, N, S: 'a, F>(mut values: impl Iterator<Item = &'a S>, factory: &
 where
     for<'b> &'b N: Sub<Output = N>,
     for<'b> &'b N: Neg<Output = N>,
-    S: MaybeNumber<N>,
-    F: NumberFactory<N, S>,
+    S: MaybeNumber<Number = N>,
+    F: NumberFactory<S>,
 {
     let first = values.next();
     let second = values.next();
@@ -135,8 +135,8 @@ where
 pub fn quot<'a, N, S: 'a, F>(mut values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
 where
     for<'b> &'b N: Div<Output = N>,
-    S: MaybeNumber<N>,
-    F: NumberFactory<N, S>,
+    S: MaybeNumber<Number = N>,
+    F: NumberFactory<S>,
 {
     let first = values.next();
     let second = values.next();
@@ -165,8 +165,8 @@ pub mod convenience {
     pub fn sum<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
     where
         for<'b> &'b N: Add<Output = N>,
-        S: MaybeNumber<N>,
-        DummyFactory: NumberFactory<N, S>,
+        S: MaybeNumber<Number = N>,
+        DummyFactory: NumberFactory<S>,
     {
         super::sum(values, &mut DummyFactory)
     }
@@ -175,8 +175,8 @@ pub mod convenience {
     pub fn prod<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
     where
         for<'b> &'b N: Mul<Output = N>,
-        S: MaybeNumber<N>,
-        DummyFactory: NumberFactory<N, S>,
+        S: MaybeNumber<Number = N>,
+        DummyFactory: NumberFactory<S>,
     {
         super::prod(values, &mut DummyFactory)
     }
@@ -191,8 +191,8 @@ pub mod convenience {
     where
         for<'b> &'b N: Sub<Output = N>,
         for<'b> &'b N: Neg<Output = N>,
-        S: MaybeNumber<N>,
-        DummyFactory: NumberFactory<N, S>,
+        S: MaybeNumber<Number = N>,
+        DummyFactory: NumberFactory<S>,
     {
         super::diff(values, &mut DummyFactory)
     }
@@ -206,8 +206,8 @@ pub mod convenience {
     pub fn quot<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
     where
         for<'b> &'b N: Div<Output = N>,
-        S: MaybeNumber<N>,
-        DummyFactory: NumberFactory<N, S>,
+        S: MaybeNumber<Number = N>,
+        DummyFactory: NumberFactory<S>,
     {
         super::quot(values, &mut DummyFactory)
     }
@@ -227,7 +227,8 @@ mod tests {
         N(T),
     }
 
-    impl<T> MaybeNumber<T> for Num<T> {
+    impl<T> MaybeNumber for Num<T> {
+        type Number = T;
         fn to_number(&self) -> Option<&T> {
             match self {
                 Num::NaN => None,
@@ -236,7 +237,7 @@ mod tests {
         }
     }
 
-    impl NumberFactory<i32, Num<i32>> for DummyFactory {
+    impl NumberFactory<Num<i32>> for DummyFactory {
         fn number(&mut self, n: i32) -> Num<i32> {
             Num::N(n)
         }
@@ -250,7 +251,7 @@ mod tests {
         }
     }
 
-    impl NumberFactory<f32, Num<f32>> for DummyFactory {
+    impl NumberFactory<Num<f32>> for DummyFactory {
         fn number(&mut self, n: f32) -> Num<f32> {
             Num::N(n)
         }

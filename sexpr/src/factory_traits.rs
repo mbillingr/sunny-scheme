@@ -53,15 +53,15 @@ pub trait CharFactory<T: MaybeChar> {
 }
 
 /// Construct Numeric values
-pub trait NumberFactory<N, T: MaybeNumber<N>> {
+pub trait NumberFactory<T: MaybeNumber> {
     /// Construct a new exact number.
-    fn number(&mut self, n: N) -> T;
+    fn number(&mut self, n: T::Number) -> T;
 
     ///Construct a new zero-valued raw number.
-    fn raw_zero(&mut self) -> N;
+    fn raw_zero(&mut self) -> T::Number;
 
     ///Construct a new one-valued raw number.
-    fn raw_one(&mut self) -> N;
+    fn raw_one(&mut self) -> T::Number;
 }
 
 /// Construct Pair values

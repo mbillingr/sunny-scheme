@@ -45,15 +45,18 @@ pub trait MaybeChar {
     fn to_ascii(&self) -> Option<u8>;
 }
 
-/// Trait for types that can represent numbers of type `N`.
-pub trait MaybeNumber<N> {
-    /// Return `true` if the value represents a number of type `N`.
+/// Trait for types that can represent numbers.
+pub trait MaybeNumber {
+    /// Type of the number implementation
+    type Number;
+
+    /// Return `true` if the value represents a number.
     fn is_number(&self) -> bool {
         self.to_number().is_some()
     }
 
-    /// Return numeric value, or `None` if value does not represent a number of type `N`.
-    fn to_number(&self) -> Option<&N>;
+    /// Return numeric value, or `None` if value does not represent a number.
+    fn to_number(&self) -> Option<&Self::Number>;
 }
 
 /// Trait for types that can represent pairs.
