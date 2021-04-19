@@ -1,6 +1,7 @@
 //! Generic list algorithms.
 
 use crate::core_traits::{MaybePair, Nullable};
+use crate::equality::{PointerEq, RecursionEq, ValueEq};
 use crate::factory_traits::{CopyTracker, NullFactory, PairFactory};
 use crate::prelude::StatelessFactory;
 
@@ -185,6 +186,54 @@ where
     S: List<T>,
 {
     factory::append(left, right, &mut StatelessFactory)
+}
+
+/// Returns the first sublist of `list` whose first element satisfies the predicate.
+pub fn find<T, S>(list: &S, pred: impl Fn(&T) -> bool) -> Option<&S>
+where
+    S: List<T>,
+{
+    if pred(list.first()?) {
+        Some(list)
+    } else {
+        find(list.rest()?, pred)
+    }
+}
+
+/// Returns the first sublist of `list` whose first element and `obj` are equivalent
+/// according to [`rec_eq`].
+///
+/// [`rec_eq`]: crate::equality::RecursionEq::rec_eq
+pub fn member<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
+where
+    T: RecursionEq,
+    S: List<T>,
+{
+    find(list, |item| item.rec_eq(obj))
+}
+
+/// Returns the first sublist of `list` whose first element and `obj` are equivalent
+/// according to [`val_eq`].
+///
+/// [`val_eq`]: crate::equality::ValueEq::val_eq
+pub fn memv<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
+where
+    T: ValueEq,
+    S: List<T>,
+{
+    find(list, |item| item.val_eq(obj))
+}
+
+/// Returns the first sublist of `list` whose first element and `obj` are equivalent
+/// according to [`ptr_eq`].
+///
+/// [`ptr_eq`]: crate::equality::PointerEq::ptr_eq
+pub fn memq<'a, T, S>(list: &'a S, obj: &T) -> Option<&'a S>
+where
+    T: PointerEq,
+    S: List<T>,
+{
+    find(list, |item| item.ptr_eq(obj))
 }
 
 /// Creates a [`List`] containing the arguments.
@@ -451,5 +500,19 @@ mod tests {
         let list = list![1, 2, 3];
         let result = map(&list, |&x| x * x);
         assert_eq!(result, list![1, 4, 9]);
+    }
+
+    #[test]
+    fn find_in_list() {
+        let list = list![1, 2, 3];
+        let result = find(&list, |&x| x == 2);
+        assert_eq!(result, Some(&list![2, 3]));
+    }
+
+    #[test]
+    fn find_in_list_returns_none_if_not_found() {
+        let list = list![1, 2, 3];
+        let result = find(&list, |_| false);
+        assert_eq!(result, None);
     }
 }

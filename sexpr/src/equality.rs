@@ -40,6 +40,8 @@ pub trait PointerHash {
     /// Compute a hash value based on the object's address in memory.
     /// If [`ptr_eq`] returns `true`, `ptr_hash` must return the same
     /// hash for each of its arguments.
+    ///
+    /// [`ptr_eq`]: crate::equality::PointerEq::ptr_eq
     fn ptr_hash<H: Hasher>(&self, state: &mut H);
 }
 
@@ -48,6 +50,8 @@ pub trait ValueHash {
     /// Compute a hash value based on the object's identity.
     /// If [`val_eq`] returns `true`, `val_hash` must return the same
     /// hash for each of its arguments.
+    ///
+    /// [`val_eq`]: crate::equality::ValueEq::val_eq
     fn val_hash<H: Hasher>(&self, state: &mut H);
 }
 
@@ -56,5 +60,7 @@ pub trait RecursionHash {
     /// Compute a hash value based on the object's value.
     /// If [`rec_eq`] returns `true`, `rec_hash` must return the same
     /// hash for each of its arguments.
+    ///
+    /// [`rec_eq`]: crate::equality::RecursionEq::rec_eq
     fn rec_hash<H: Hasher>(&self, state: &mut H);
 }
