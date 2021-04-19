@@ -9,7 +9,7 @@ use crate::frontend::syntax_forms::{
 };
 use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
-use sexpr_generics::numbers;
+use sexpr_generics::{lists, numbers};
 use sunny_scm::Scm;
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{ErrorKind, Result, Vm};
@@ -31,6 +31,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("let", Let)
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
+        .define_primitive_fixed_arity("append", 2, list_append)
         .define_intrinsic("call/cc", 1)
         .define_intrinsic("call-with-values", 2)
         .define_primitive_vararg("+", 0, add)
@@ -55,6 +56,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("error", 1, error)
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
+        .define_primitive_fixed_arity("reverse", 1, list_reverse)
         .define_primitive_vararg("values", 0, values)
         .define_value("foo", Scm::cons(1, 2))
         .build();
@@ -139,6 +141,14 @@ primitive! {
 
     fn error(msg: Scm) -> Result<Scm> {
         Err(ErrorKind::Generic(msg))
+    }
+
+    fn list_reverse(list: Scm) -> Result<Scm> {
+        Ok(lists::reverse(&list))
+    }
+
+    fn list_append(left: Scm, right: Scm) -> Result<Scm> {
+        Ok(lists::append(&left, &right))
     }
 }
 
