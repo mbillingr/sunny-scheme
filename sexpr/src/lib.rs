@@ -98,3 +98,4 @@ pub mod factory_traits;
 pub mod lists;
 pub mod numbers;
 pub mod prelude;
+pub mod static_matcher;
