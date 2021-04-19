@@ -59,7 +59,7 @@ where
     }
 }
 
-/// Iterate over a lists items.
+/// Iterate over a list's items.
 pub fn iter<'a, T: 'a, S>(list: &'a S) -> impl Iterator<Item = &T>
 where
     S: List<T>,
@@ -169,23 +169,22 @@ where
     factory::head(list, k, &mut StatelessFactory)
 }
 
-/// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
-pub fn reverse<T, S>(expr: &S) -> S
-where
-    StatelessFactory: CopyTracker<T> + ListFactory<T, S>,
-    S: List<T>,
-{
-    factory::reverse(expr, &mut StatelessFactory)
-}
-
-/// Returns a list consisting of the elements of the `left` followed by the elements `right`.
-/// Returns `None` if `left` is not a proper list.
+/// Returns a list consisting of the elements of `left` followed by `right`.
 pub fn append<T, S>(left: &S, right: &S) -> S
 where
     StatelessFactory: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
     S: List<T>,
 {
     factory::append(left, right, &mut StatelessFactory)
+}
+
+/// Return the reverse of `list`.
+pub fn reverse<T, S>(list: &S) -> S
+where
+    StatelessFactory: CopyTracker<T> + ListFactory<T, S>,
+    S: List<T>,
+{
+    factory::reverse(list, &mut StatelessFactory)
 }
 
 /// Returns the first sublist of `list` whose first element satisfies the predicate.
@@ -236,6 +235,61 @@ where
     find(list, |item| item.ptr_eq(obj))
 }
 
+/// Returns the first pair in `list` whose first element satisfies the predicate.
+pub fn afind<K, T, S>(list: &S, pred: impl Fn(&K) -> bool) -> Option<&T>
+where
+    T: MaybePair<First = K>,
+    S: List<T>,
+{
+    find(list, |item| {
+        if let Some(key) = item.first() {
+            pred(key)
+        } else {
+            false
+        }
+    })
+    .and_then(S::first)
+}
+
+/// Returns the first pair in `list` whose first element and `obj` are equivalent
+/// according to [`rec_eq`].
+///
+/// [`rec_eq`]: crate::equality::RecursionEq::rec_eq
+pub fn assoc<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
+where
+    T: MaybePair<First = K>,
+    K: RecursionEq,
+    S: List<T>,
+{
+    afind(list, |key| key.rec_eq(obj))
+}
+
+/// Returns the first pair in `list` whose first element and `obj` are equivalent
+/// according to [`val_eq`].
+///
+/// [`val_eq`]: crate::equality::ValueEq::val_eq
+pub fn assv<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
+where
+    T: MaybePair<First = K>,
+    K: ValueEq,
+    S: List<T>,
+{
+    afind(list, |key| key.val_eq(obj))
+}
+
+/// Returns the first pair in `list` whose first element and `obj` are equivalent
+/// according to [`ptr_eq`].
+///
+/// [`ptr_eq`]: crate::equality::PointerEq::ptr_eq
+pub fn assq<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
+where
+    T: MaybePair<First = K>,
+    K: PointerEq,
+    S: List<T>,
+{
+    afind(list, |key| key.ptr_eq(obj))
+}
+
 /// Creates a [`List`] containing the arguments.
 ///
 /// [`List`]: crate::lists::List
@@ -273,7 +327,7 @@ pub mod factory {
         }
     }
 
-    /// Returns a list consisting of the elements of the `left` followed by the elements `right`.
+    /// Returns a list consisting of the elements of `left` followed by `right`.
     pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> S
     where
         F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
@@ -286,13 +340,13 @@ pub mod factory {
         })
     }
 
-    /// Return the reverse of the list if `expr`.
-    pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> S
+    /// Return the reverse of `list`.
+    pub fn reverse<T, S, F>(list: &S, factory: &mut F) -> S
     where
         F: CopyTracker<T> + ListFactory<T, S>,
         S: List<T>,
     {
-        fold_left(expr, factory.empty(), |acc, item| {
+        fold_left(list, factory.empty(), |acc, item| {
             let item = factory.copy_value(item);
             factory.cons(item, acc)
         })
