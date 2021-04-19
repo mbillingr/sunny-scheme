@@ -73,19 +73,19 @@ primitive! {
     }
 
     varfn add([args]) -> Result<Scm> {
-        numbers::convenience::sum(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::sum(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     varfn sub([args]) -> Result<Scm> {
-        numbers::convenience::diff(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::diff(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     varfn mul([args]) -> Result<Scm> {
-        numbers::convenience::prod(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::prod(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     varfn div([args]) -> Result<Scm> {
-        numbers::convenience::quot(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::quot(args.iter()).ok_or(ErrorKind::TypeError)
     }
 
     fn is_equal(a: Scm, b: Scm) -> Result<Scm> {

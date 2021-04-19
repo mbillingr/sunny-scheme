@@ -1,5 +1,7 @@
+//! Generic operations on values that may represent numbers.
+
 use crate::core_traits::MaybeNumber;
-use crate::factory_traits::NumberFactory;
+use crate::factory_traits::{NumberFactory, StatelessFactory};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 macro_rules! define_binary_operations {
@@ -7,35 +9,34 @@ macro_rules! define_binary_operations {
         $(#[$extra_docs:meta])*
         $trait:ident :: $method:ident;
     )*) => {
+
         $(
             $(#[$extra_docs])*
             /// Returns `None` if either argument is not a number.
-            pub fn $method<N, S, F>(a: &S, b: &S, factory: &mut F) -> Option<S>
-                where
-                        for<'a> &'a N: std::ops::$trait<Output = N>,
-                        S: crate::core_traits::MaybeNumber<Number = N>,
-                        F: crate::factory_traits::NumberFactory<S>,
+            pub fn $method<N, S>(a: &S, b: &S) -> Option<S>
+            where
+                for<'a> &'a N: std::ops::$trait<Output = N>,
+                S: crate::core_traits::MaybeNumber<Number = N>,
+                StatelessFactory: NumberFactory<S>,
             {
-                let a = a.to_number()?;
-                let b = b.to_number()?;
-                let c = factory.number(std::ops::$trait::$method(a, b));
-                Some(c)
+                factory::$method(a, b, &mut StatelessFactory)
             }
         )*
 
-        mod convenience_binop {
-            use crate::factory_traits::{DummyFactory, NumberFactory};
-
+        mod factory_binop {
             $(
                 $(#[$extra_docs])*
                 /// Returns `None` if either argument is not a number.
-                pub fn $method<N, S>(a: &S, b: &S) -> Option<S>
-                where
-                    for<'a> &'a N: std::ops::$trait<Output = N>,
-                    S: crate::core_traits::MaybeNumber<Number = N>,
-                    DummyFactory: NumberFactory<S>,
+                pub fn $method<N, S, F>(a: &S, b: &S, factory: &mut F) -> Option<S>
+                    where
+                            for<'a> &'a N: std::ops::$trait<Output = N>,
+                            S: crate::core_traits::MaybeNumber<Number = N>,
+                            F: crate::factory_traits::NumberFactory<S>,
                 {
-                    super::$method(a, b, &mut DummyFactory)
+                    let a = a.to_number()?;
+                    let b = b.to_number()?;
+                    let c = factory.number(std::ops::$trait::$method(a, b));
+                    Some(c)
                 }
             )*
         }
@@ -69,33 +70,23 @@ define_binary_operations!(
 );
 
 /// Sum multiple numbers. Returns `None` if any value is not a number.
-pub fn sum<'a, N, S: 'a, F>(values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
+pub fn sum<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
 where
     for<'b> &'b N: Add<Output = N>,
     S: MaybeNumber<Number = N>,
-    F: NumberFactory<S>,
+    StatelessFactory: NumberFactory<S>,
 {
-    let mut acc = factory.raw_zero();
-    for x in values {
-        let x = x.to_number()?;
-        acc = &acc + x;
-    }
-    Some(factory.number(acc))
+    factory::sum(values, &mut StatelessFactory)
 }
 
 /// Multiply multiple numbers. Returns `None` if any value is not a number.
-pub fn prod<'a, N, S: 'a, F>(values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
+pub fn prod<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
 where
     for<'b> &'b N: Mul<Output = N>,
     S: MaybeNumber<Number = N>,
-    F: NumberFactory<S>,
+    StatelessFactory: NumberFactory<S>,
 {
-    let mut acc = factory.raw_one();
-    for x in values {
-        let x = x.to_number()?;
-        acc = &acc * x;
-    }
-    Some(factory.number(acc))
+    factory::prod(values, &mut StatelessFactory)
 }
 
 /// Subtract multiple numbers. Returns `None` if any value is not a number.
@@ -104,81 +95,65 @@ where
 ///   - no arguments returns 0
 ///   - a single argument is negated
 ///   - more than one argument returns the first minus the sum of all others
-pub fn diff<'a, N, S: 'a, F>(mut values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
+pub fn diff<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
 where
     for<'b> &'b N: Sub<Output = N>,
     for<'b> &'b N: Neg<Output = N>,
     S: MaybeNumber<Number = N>,
-    F: NumberFactory<S>,
+    StatelessFactory: NumberFactory<S>,
 {
-    let first = values.next();
-    let second = values.next();
-    let mut acc = match (first, second) {
-        (None, None) => factory.raw_zero(),
-        (Some(a), None) => Neg::neg(a.to_number()?),
-        (Some(a), Some(b)) => Sub::sub(a.to_number()?, b.to_number()?),
-        (None, Some(_)) => unreachable!(),
-    };
-    for x in values {
-        let x = x.to_number()?;
-        acc = &acc - x;
-    }
-    Some(factory.number(acc))
+    factory::diff(values, &mut StatelessFactory)
 }
 
-/// Subtract multiple numbers. Returns `None` if any value is not a number.
+/// Divide multiple numbers. Returns `None` if any value is not a number.
 ///
-/// This function follows the semantics of Scheme's `-` procedure:
-///   - no arguments returns 0
-///   - a single argument is negated
-///   - more than one argument returns the first minus the sum of all others
-pub fn quot<'a, N, S: 'a, F>(mut values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
+/// This function follows the semantics of Scheme's `/` procedure:
+///   - no arguments returns 1
+///   - a single argument is inverted
+///   - more than one argument returns the first divided by the product of all others
+pub fn quot<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
 where
     for<'b> &'b N: Div<Output = N>,
     S: MaybeNumber<Number = N>,
-    F: NumberFactory<S>,
+    StatelessFactory: NumberFactory<S>,
 {
-    let first = values.next();
-    let second = values.next();
-    let mut acc = match (first, second) {
-        (None, None) => factory.raw_one(),
-        (Some(a), None) => &factory.raw_one() / a.to_number()?,
-        (Some(a), Some(b)) => a.to_number()? / b.to_number()?,
-        (None, Some(_)) => unreachable!(),
-    };
-    for x in values {
-        let x = x.to_number()?;
-        acc = &acc / x;
-    }
-    Some(factory.number(acc))
+    factory::quot(values, &mut StatelessFactory)
 }
 
-/// Convenience interface for types that don't need explicit memory management.
-#[macro_use]
-pub mod convenience {
+/// API for types that require custom factories for construction.
+pub mod factory {
     use super::*;
-    use crate::factory_traits::DummyFactory;
 
-    pub use super::convenience_binop::{add, bitand, bitor, bitxor, div, mul, rem, sub};
+    pub use factory_binop::{add, bitand, bitor, bitxor, div, mul, rem, sub};
 
     /// Sum multiple numbers. Returns `None` if any value is not a number.
-    pub fn sum<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
+    pub fn sum<'a, N, S: 'a, F>(values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
     where
         for<'b> &'b N: Add<Output = N>,
         S: MaybeNumber<Number = N>,
-        DummyFactory: NumberFactory<S>,
+        F: NumberFactory<S>,
     {
-        super::sum(values, &mut DummyFactory)
+        let mut acc = factory.raw_zero();
+        for x in values {
+            let x = x.to_number()?;
+            acc = &acc + x;
+        }
+        Some(factory.number(acc))
     }
 
     /// Multiply multiple numbers. Returns `None` if any value is not a number.
-    pub fn prod<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
+    pub fn prod<'a, N, S: 'a, F>(values: impl Iterator<Item = &'a S>, factory: &mut F) -> Option<S>
     where
         for<'b> &'b N: Mul<Output = N>,
         S: MaybeNumber<Number = N>,
-        DummyFactory: NumberFactory<S>,
+        F: NumberFactory<S>,
     {
-        super::prod(values, &mut DummyFactory)
+        let mut acc = factory.raw_one();
+        for x in values {
+            let x = x.to_number()?;
+            acc = &acc * x;
+        }
+        Some(factory.number(acc))
     }
 
     /// Subtract multiple numbers. Returns `None` if any value is not a number.
@@ -187,37 +162,67 @@ pub mod convenience {
     ///   - no arguments returns 0
     ///   - a single argument is negated
     ///   - more than one argument returns the first minus the sum of all others
-    pub fn diff<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
+    pub fn diff<'a, N, S: 'a, F>(
+        mut values: impl Iterator<Item = &'a S>,
+        factory: &mut F,
+    ) -> Option<S>
     where
         for<'b> &'b N: Sub<Output = N>,
         for<'b> &'b N: Neg<Output = N>,
         S: MaybeNumber<Number = N>,
-        DummyFactory: NumberFactory<S>,
+        F: NumberFactory<S>,
     {
-        super::diff(values, &mut DummyFactory)
+        let first = values.next();
+        let second = values.next();
+        let mut acc = match (first, second) {
+            (None, None) => factory.raw_zero(),
+            (Some(a), None) => Neg::neg(a.to_number()?),
+            (Some(a), Some(b)) => Sub::sub(a.to_number()?, b.to_number()?),
+            (None, Some(_)) => unreachable!(),
+        };
+        for x in values {
+            let x = x.to_number()?;
+            acc = &acc - x;
+        }
+        Some(factory.number(acc))
     }
 
-    /// Divide multiple numbers. Returns `None` if any value is not a number.
+    /// Subtract multiple numbers. Returns `None` if any value is not a number.
     ///
-    /// This function follows the semantics of Scheme's `/` procedure:
-    ///   - no arguments returns 1
-    ///   - a single argument is inverted
-    ///   - more than one argument returns the first divided by the product of all others
-    pub fn quot<'a, N, S: 'a>(values: impl Iterator<Item = &'a S>) -> Option<S>
+    /// This function follows the semantics of Scheme's `-` procedure:
+    ///   - no arguments returns 0
+    ///   - a single argument is negated
+    ///   - more than one argument returns the first minus the sum of all others
+    pub fn quot<'a, N, S: 'a, F>(
+        mut values: impl Iterator<Item = &'a S>,
+        factory: &mut F,
+    ) -> Option<S>
     where
         for<'b> &'b N: Div<Output = N>,
         S: MaybeNumber<Number = N>,
-        DummyFactory: NumberFactory<S>,
+        F: NumberFactory<S>,
     {
-        super::quot(values, &mut DummyFactory)
+        let first = values.next();
+        let second = values.next();
+        let mut acc = match (first, second) {
+            (None, None) => factory.raw_one(),
+            (Some(a), None) => &factory.raw_one() / a.to_number()?,
+            (Some(a), Some(b)) => a.to_number()? / b.to_number()?,
+            (None, Some(_)) => unreachable!(),
+        };
+        for x in values {
+            let x = x.to_number()?;
+            acc = &acc / x;
+        }
+        Some(factory.number(acc))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::convenience::*;
+    use super::*;
     use crate::core_traits::MaybeNumber;
-    use crate::factory_traits::{DummyFactory, NumberFactory};
+    use crate::factory_traits::{NumberFactory, StatelessFactory};
 
     use Num::*;
 
@@ -237,7 +242,7 @@ mod tests {
         }
     }
 
-    impl NumberFactory<Num<i32>> for DummyFactory {
+    impl NumberFactory<Num<i32>> for StatelessFactory {
         fn number(&mut self, n: i32) -> Num<i32> {
             Num::N(n)
         }
@@ -251,7 +256,7 @@ mod tests {
         }
     }
 
-    impl NumberFactory<Num<f32>> for DummyFactory {
+    impl NumberFactory<Num<f32>> for StatelessFactory {
         fn number(&mut self, n: f32) -> Num<f32> {
             Num::N(n)
         }

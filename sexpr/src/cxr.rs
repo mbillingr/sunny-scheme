@@ -1,23 +1,33 @@
+//! Lisp-style accessors for pairs.
+
 use crate::core_traits::MaybePair;
 
+/// Lisp-style accessors for pairs up to a nesting depth of four.
 pub trait CxR {
     type Result: CxR<Result = Self::Result>;
 
+    /// First element of a pair.
     fn car(&self) -> Option<&Self::Result>;
+
+    /// Second element of a pair.
     fn cdr(&self) -> Option<&Self::Result>;
 
+    /// First element of a pair's first element.
     fn caar(&self) -> Option<&Self::Result> {
         self.car()?.car()
     }
 
+    /// First element of a pair's second element.
     fn cadr(&self) -> Option<&Self::Result> {
         self.cdr()?.car()
     }
 
+    /// Second element of a pair's first element.
     fn cdar(&self) -> Option<&Self::Result> {
         self.car()?.cdr()
     }
 
+    /// Second element of a pair's second element.
     fn cddr(&self) -> Option<&Self::Result> {
         self.cdr()?.cdr()
     }

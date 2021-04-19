@@ -1,5 +1,5 @@
 use crate::bytecode::{repr, CodeBuilder, CodeSegment, Op};
-use sexpr_generics::list;
+use sexpr_generics::lists;
 use sexpr_generics::prelude::*;
 use sunny_scm::{
     parser::{parse_with_map, Error as ParseError},
@@ -76,14 +76,14 @@ pub fn load_str(src: &str) -> Result<CodeSegment> {
 }
 
 fn build_constant_section(mut cb: CodeBuilder, constants_section: &Scm) -> CodeBuilder {
-    for value in list::iter(constants_section) {
+    for value in lists::iter(constants_section) {
         cb.add_constant(value.clone());
     }
     cb
 }
 
 fn build_code_section(mut cb: CodeBuilder, code: &Scm, src_map: &SourceMap) -> Result<CodeBuilder> {
-    let mut code_parts = list::iter(code);
+    let mut code_parts = lists::iter(code);
     while let Some(statement) = code_parts.next() {
         let stmt = statement
             .as_symbol()

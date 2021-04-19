@@ -10,7 +10,7 @@ use crate::frontend::{
     syntactic_closure::SyntacticClosure,
     SyntaxExpander,
 };
-use sexpr_generics::list;
+use sexpr_generics::lists;
 use sexpr_generics::prelude::*;
 use sunny_scm::{Scm, SourceLocation, SourceMap};
 
@@ -183,7 +183,7 @@ define_form! {
 impl Expression {
     fn expand_application(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode> {
         let mut args = vec![];
-        for a in list::iter(sexpr) {
+        for a in lists::iter(sexpr) {
             args.push(self.expand(&a, src_map, env)?);
         }
         Ok(Ast::invoke(src_map.get(sexpr), args))
@@ -198,7 +198,7 @@ impl Expression {
         src_map: &SourceMap,
     ) -> Result<AstNode> {
         let mut args = vec![];
-        for a in list::iter(sexpr).skip(1) {
+        for a in lists::iter(sexpr).skip(1) {
             args.push(self.expand(&a, src_map, env)?);
         }
         if args.len() != n_params {
@@ -308,7 +308,7 @@ define_form! {
             let mut vars = vec![];
             let mut values = vec![];
 
-            for binding in list::iter(bindings) {
+            for binding in lists::iter(bindings) {
                 match_sexpr![
                     [binding: (var: Symbol, val) => {
                         vars.push(var);
@@ -351,9 +351,9 @@ impl Lambda {
         let body = Body.expand(body, src_map, &body_env)?;
 
         if params.last_cdr().is_null() {
-            Ok(Ast::lambda(context, list::length(params), body))
+            Ok(Ast::lambda(context, lists::length(params), body))
         } else {
-            Ok(Ast::lambda_vararg(context, list::length(params), body))
+            Ok(Ast::lambda_vararg(context, lists::length(params), body))
         }
     }
 }
@@ -366,7 +366,7 @@ impl SyntaxExpander for Body {
         let mut body = vec![];
         let mut definition_names = vec![];
         let mut definition_exprs = vec![];
-        for exp in list::iter(sexpr) {
+        for exp in lists::iter(sexpr) {
             if is_definition(&exp) {
                 definition_names.push(definition_name(&exp).unwrap());
                 definition_exprs.push(definition_value_expr(&exp).unwrap());
@@ -472,7 +472,7 @@ define_form! {
     Import(sexpr, src_map, env):
        [(_ . import_sets) => {
            let mut import_ast = Ast::void();
-           for import_set in list::iter(import_sets) {
+           for import_set in lists::iter(import_sets) {
                let set_ast = Self::process_import_set(&import_set, env, src_map)?;
                import_ast = Ast::sequence(import_ast, set_ast)
            }
@@ -561,7 +561,7 @@ impl SyntaxExpander for SimpleMacro {
 impl SimpleMacro {
     pub fn new(args: &Scm, body: &Scm, env: &Env, src_map: &SourceMap) -> Result<Self> {
         let mut argnames = vec![];
-        for arg in list::iter(args) {
+        for arg in lists::iter(args) {
             if let Some(name) = arg.as_symbol() {
                 argnames.push(name.to_string());
             } else {
@@ -604,7 +604,7 @@ impl SyntaxExpander for LibraryDefinition {
                 let mut lib_env = base_environment(libname);
                 lib_env.use_libraries_from(env);
 
-                for stmt in list::iter(statements) {
+                for stmt in lists::iter(statements) {
                     match stmt.car().and_then(|s| s.as_symbol()) {
                         Some("import") => {Import.expand(&stmt, src_map, &lib_env)?;}
                         Some("export") => {}
@@ -614,16 +614,16 @@ impl SyntaxExpander for LibraryDefinition {
                 }
 
                 let mut body_parts = vec![];
-                for stmt in list::iter(statements) {
+                for stmt in lists::iter(statements) {
                     if let Some("begin") = stmt.car().and_then(|s| s.as_symbol()) {
                         body_parts.push(Sequence.expand(stmt.cdr().unwrap(), src_map, &lib_env)?)
                     }
                 }
 
                 let mut exports = vec![];
-                for stmt in list::iter(statements) {
+                for stmt in lists::iter(statements) {
                     if let Some("export") = stmt.car().and_then(|s| s.as_symbol()) {
-                        for export_item in list::iter(stmt.cdr().unwrap()) {
+                        for export_item in lists::iter(stmt.cdr().unwrap()) {
                             let export_name = export_item
                                 .as_symbol()
                                 .ok_or_else(|| error_at(&src_map.get(&export_item), Error::ExpectedSymbol))?;

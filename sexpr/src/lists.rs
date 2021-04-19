@@ -1,5 +1,8 @@
+//! Generic list algorithms.
+
 use crate::core_traits::{MaybePair, Nullable};
 use crate::factory_traits::{CopyTracker, NullFactory, PairFactory};
+use crate::prelude::StatelessFactory;
 
 /// Trait for types that can represent lists.
 pub trait List<T> {
@@ -73,19 +76,13 @@ where
 
 /// Return a new list with all items replaced by the result of calling
 /// a function on them.
-pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, mut func: impl FnMut(&T) -> U) -> R
+pub fn map<T, U, S, R>(list: &S, func: impl FnMut(&T) -> U) -> R
 where
     S: List<T>,
     R: List<U>,
-    F: ListFactory<U, R>,
+    StatelessFactory: ListFactory<U, R>,
 {
-    if list.is_empty() {
-        factory.empty()
-    } else {
-        let first = func(list.first().unwrap());
-        let rest = map(list.rest().unwrap(), factory, func);
-        factory.cons(first, rest)
-    }
+    factory::map(list, &mut StatelessFactory, func)
 }
 
 /// Left fold
@@ -139,31 +136,6 @@ where
     fold_left(list, 0, |n, _| n + 1)
 }
 
-/// Returns a list consisting of the elements of the `left` followed by the elements `right`.
-pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> S
-where
-    F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
-    S: List<T>,
-{
-    let right = factory.copy_value(right);
-    fold_right(left, right, |acc, item| {
-        let item = factory.copy_value(item);
-        factory.cons(item, acc)
-    })
-}
-
-/// Return the reverse of the list if `expr`.
-pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> S
-where
-    F: CopyTracker<T> + ListFactory<T, S>,
-    S: List<T>,
-{
-    fold_left(expr, factory.empty(), |acc, item| {
-        let item = factory.copy_value(item);
-        factory.cons(item, acc)
-    })
-}
-
 /// Return the `k`th element of `list`.
 /// Return `None` if `k` equals the list's length or more.
 pub fn get<T, S>(list: &S, k: usize) -> Option<&T>
@@ -186,84 +158,129 @@ where
     }
 }
 
-/// Return a list containing the first `k` elements of `list`.
+/// Return the sublist of `list` obtained by omitting the first `k` elements.
 /// Return `None` if `k` exceeds the list's length.
-pub fn head<T, S, F>(list: &S, k: usize, factory: &mut F) -> Option<S>
+pub fn head<T, S>(list: &S, k: usize) -> Option<S>
 where
-    F: CopyTracker<T> + ListFactory<T, S>,
+    StatelessFactory: CopyTracker<T> + ListFactory<T, S>,
     S: List<T>,
 {
-    if k == 0 {
-        Some(factory.empty())
-    } else {
-        let item = factory.copy_value(list.first()?);
-        let rest = head(list.rest()?, k - 1, factory)?;
-        Some(factory.cons(item, rest))
-    }
+    factory::head(list, k, &mut StatelessFactory)
 }
 
-/// Convenience interface for types that don't need explicit memory management.
-#[macro_use]
-pub mod convenience {
+/// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
+pub fn reverse<T, S>(expr: &S) -> S
+where
+    StatelessFactory: CopyTracker<T> + ListFactory<T, S>,
+    S: List<T>,
+{
+    factory::reverse(expr, &mut StatelessFactory)
+}
+
+/// Returns a list consisting of the elements of the `left` followed by the elements `right`.
+/// Returns `None` if `left` is not a proper list.
+pub fn append<T, S>(left: &S, right: &S) -> S
+where
+    StatelessFactory: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
+    S: List<T>,
+{
+    factory::append(left, right, &mut StatelessFactory)
+}
+
+/// Creates a [`List`] containing the arguments.
+///
+/// [`List`]: crate::lists::List
+#[macro_export]
+macro_rules! list {
+    () => {$crate::factory_traits::StatelessFactory.null()};
+    ($x:expr) => {list![$x,]};
+    ($x:expr, $($rest:expr),*) => {
+        $crate::lists::ListFactory::cons(
+            &mut $crate::factory_traits::StatelessFactory,
+            $x,
+            list![$($rest),*]
+        )
+    };
+}
+
+/// API for types that require custom factories for construction.
+pub mod factory {
     use super::*;
-    use crate::factory_traits::DummyFactory;
 
-    pub use super::{get, is_list, length, tail};
-
-    /// Return the reverse of the list if `expr` is a proper list and `None` otherwise.
-    pub fn reverse<T, S>(expr: &S) -> S
+    /// Return a new list with all items replaced by the result of calling
+    /// a function on them.
+    pub fn map<T, U, S, R, F>(list: &S, factory: &mut F, mut func: impl FnMut(&T) -> U) -> R
     where
-        DummyFactory: CopyTracker<T> + ListFactory<T, S>,
         S: List<T>,
+        R: List<U>,
+        F: ListFactory<U, R>,
     {
-        super::reverse(expr, &mut DummyFactory)
+        if list.is_empty() {
+            factory.empty()
+        } else {
+            let first = func(list.first().unwrap());
+            let rest = map(list.rest().unwrap(), factory, func);
+            factory.cons(first, rest)
+        }
     }
 
     /// Returns a list consisting of the elements of the `left` followed by the elements `right`.
-    /// Returns `None` if `left` is not a proper list.
-    pub fn append<T, S>(left: &S, right: &S) -> S
+    pub fn append<T, S, F>(left: &S, right: &S, factory: &mut F) -> S
     where
-        DummyFactory: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
+        F: CopyTracker<T> + CopyTracker<S> + ListFactory<T, S>,
         S: List<T>,
     {
-        super::append(left, right, &mut DummyFactory)
+        let right = factory.copy_value(right);
+        fold_right(left, right, |acc, item| {
+            let item = factory.copy_value(item);
+            factory.cons(item, acc)
+        })
     }
 
-    /// Return the sublist of `list` obtained by omitting the first `k` elements.
+    /// Return the reverse of the list if `expr`.
+    pub fn reverse<T, S, F>(expr: &S, factory: &mut F) -> S
+    where
+        F: CopyTracker<T> + ListFactory<T, S>,
+        S: List<T>,
+    {
+        fold_left(expr, factory.empty(), |acc, item| {
+            let item = factory.copy_value(item);
+            factory.cons(item, acc)
+        })
+    }
+
+    /// Return a list containing the first `k` elements of `list`.
     /// Return `None` if `k` exceeds the list's length.
-    pub fn head<T, S>(list: &S, k: usize) -> Option<S>
+    pub fn head<T, S, F>(list: &S, k: usize, factory: &mut F) -> Option<S>
     where
-        DummyFactory: CopyTracker<T> + ListFactory<T, S>,
+        F: CopyTracker<T> + ListFactory<T, S>,
         S: List<T>,
     {
-        super::head(list, k, &mut DummyFactory)
-    }
-
-    #[macro_export]
-    macro_rules! list {
-        () => {crate::factory_traits::DummyFactory.null()};
-        ($x:expr) => {list![$x,]};
-        ($x:expr, $($rest:expr),*) => {
-            crate::factory_traits::DummyFactory.pair($x, list![$($rest),*])
-        };
+        if k == 0 {
+            Some(factory.empty())
+        } else {
+            let item = factory.copy_value(list.first()?);
+            let rest = head(list.rest()?, k - 1, factory)?;
+            Some(factory.cons(item, rest))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::convenience::*;
+    use super::*;
     use crate::core_traits::{MaybePair, Nullable};
-    use crate::factory_traits::{DummyFactory, NullFactory, PairFactory};
+    use crate::factory_traits::{NullFactory, PairFactory, StatelessFactory};
 
     #[derive(Debug, Clone)]
-    enum List<T> {
+    enum MyList<T> {
         Empty,
-        Item(T, Box<List<T>>),
+        Item(T, Box<MyList<T>>),
     }
 
-    impl<T: PartialEq> PartialEq for List<T> {
+    impl<T: PartialEq> PartialEq for MyList<T> {
         fn eq(&self, other: &Self) -> bool {
-            use List::*;
+            use MyList::*;
             match (self, other) {
                 (Empty, Empty) => true,
                 (Item(a, ta), Item(b, tb)) => a == b && ta == tb,
@@ -272,46 +289,46 @@ mod tests {
         }
     }
 
-    impl<T> Nullable for List<T> {
+    impl<T> Nullable for MyList<T> {
         fn is_null(&self) -> bool {
-            matches!(self, List::Empty)
+            matches!(self, MyList::Empty)
         }
     }
 
-    impl<T> NullFactory<List<T>> for DummyFactory {
-        fn null(&mut self) -> List<T> {
-            List::Empty
+    impl<T> NullFactory<MyList<T>> for StatelessFactory {
+        fn null(&mut self) -> MyList<T> {
+            MyList::Empty
         }
     }
 
-    impl<T> MaybePair for List<T> {
+    impl<T> MaybePair for MyList<T> {
         type First = T;
-        type Second = List<T>;
+        type Second = MyList<T>;
 
         fn first(&self) -> Option<&Self::First> {
             match self {
-                List::Empty => None,
-                List::Item(x, _) => Some(x),
+                MyList::Empty => None,
+                MyList::Item(x, _) => Some(x),
             }
         }
 
         fn second(&self) -> Option<&Self::Second> {
             match self {
-                List::Empty => None,
-                List::Item(_, tail) => Some(tail),
+                MyList::Empty => None,
+                MyList::Item(_, tail) => Some(tail),
             }
         }
     }
 
-    impl<T> PairFactory<List<T>> for DummyFactory {
-        fn pair(&mut self, first: T, second: List<T>) -> List<T> {
-            List::Item(first.into(), Box::new(second.into()))
+    impl<T> PairFactory<MyList<T>> for StatelessFactory {
+        fn pair(&mut self, first: T, second: MyList<T>) -> MyList<T> {
+            MyList::Item(first.into(), Box::new(second.into()))
         }
     }
 
     #[test]
     fn length_of_empty_list_is_zero() {
-        let list: List<()> = list![];
+        let list: MyList<()> = list![];
         let result = length(&list);
         assert_eq!(result, 0);
     }
@@ -348,7 +365,7 @@ mod tests {
 
     #[test]
     fn reverse_empty_list_produces_empty_list() {
-        let list: List<()> = list![];
+        let list: MyList<()> = list![];
         let result = reverse(&list);
         assert_eq!(result, list![]);
     }
@@ -427,5 +444,12 @@ mod tests {
         let list = list![1, 2, 3];
         let result = head(&list, 2);
         assert_eq!(result, Some(list![1, 2]));
+    }
+
+    #[test]
+    fn map_list() {
+        let list = list![1, 2, 3];
+        let result = map(&list, |&x| x * x);
+        assert_eq!(result, list![1, 4, 9]);
     }
 }

@@ -11,9 +11,9 @@ use crate::core_traits::{MaybeBool, MaybeChar, MaybeNumber, MaybePair, Nullable,
 
 /// Implement Factories for this type if no memory management is needed.
 /// This enables some convenience interfaces.
-pub struct DummyFactory;
+pub struct StatelessFactory;
 
-impl<T: Clone> CopyTracker<T> for DummyFactory {
+impl<T: Clone> CopyTracker<T> for StatelessFactory {
     fn copy_value(&mut self, expr: &T) -> T {
         expr.clone()
     }

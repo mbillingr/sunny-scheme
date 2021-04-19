@@ -8,7 +8,7 @@ use crate::frontend::{
     SyntaxExpander,
 };
 use crate::library_filesystem::LibraryFileSystem;
-use sexpr_generics::list;
+use sexpr_generics::lists;
 use std::collections::HashMap;
 use sunny_scm::parser::parse_with_map;
 use sunny_scm::{Scm, SourceLocation, SourceMap};
@@ -162,7 +162,7 @@ impl Env {
 
     pub fn extend_from_sexpr(&self, vars: &Scm, src_map: &SourceMap) -> Result<Self> {
         let mut names = vec![];
-        for v in list::iter(vars) {
+        for v in lists::iter(vars) {
             let name = v
                 .as_symbol()
                 .ok_or_else(|| error_at(&src_map.get(&v), Error::ExpectedSymbol))?
