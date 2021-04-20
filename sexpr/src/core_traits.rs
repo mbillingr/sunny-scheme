@@ -10,6 +10,18 @@ pub trait Nullable {
     fn is_null(&self) -> bool;
 }
 
+/// Trait for types that can represent other types.
+pub trait MaybeGeneric {
+    /// Return true if `self` represents a value of target type.
+    fn is_of_type<T: 'static>(&self) -> bool {
+        self.to_type::<T>().is_some()
+    }
+
+    /// Return reference of target type;
+    /// returns `None` if `self` does not represent a value of that type.
+    fn to_type<T: 'static>(&self) -> Option<&T>;
+}
+
 /// Trait for types that can represent booleans.
 pub trait MaybeBool {
     /// Return true if `self` represents boolean "true".
@@ -61,23 +73,23 @@ pub trait MaybeNumber {
 
 /// Trait for types that can represent pairs.
 pub trait MaybePair {
-    /// Type of the pair's first element.
-    type First;
-    /// Type of the pair's second element.
-    type Second;
+    /// Type of the pair's left (first) element.
+    type Left;
+    /// Type of the pair's right (second) element.
+    type Right;
 
     /// Return `true` if `self` represents a pair.
     fn is_pair(&self) -> bool {
-        self.first().is_some()
+        self.left().is_some()
     }
 
-    /// Return a reference to the pair's first element
+    /// Return a reference to the pair's left (first) element
     /// or `None` if `self` does not represent a pair.
-    fn first(&self) -> Option<&Self::First>;
+    fn left(&self) -> Option<&Self::Left>;
 
-    /// Return a reference to the pair's second element
+    /// Return a reference to the pair's right (second) element
     /// or `None` if `self` does not represent a pair.
-    fn second(&self) -> Option<&Self::Second>;
+    fn right(&self) -> Option<&Self::Right>;
 }
 
 /// Trait for types that can represent symbols.

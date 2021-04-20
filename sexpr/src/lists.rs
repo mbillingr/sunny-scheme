@@ -30,24 +30,24 @@ pub trait ListFactory<T, S: List<T>> {
 
 impl<T, S> List<T> for S
 where
-    S: MaybePair<First = T, Second = S>,
+    S: MaybePair<Left = T, Right = S>,
 {
     fn is_empty(&self) -> bool {
         !self.is_pair()
     }
 
     fn first(&self) -> Option<&T> {
-        MaybePair::first(self)
+        MaybePair::left(self)
     }
 
     fn rest(&self) -> Option<&Self> {
-        MaybePair::second(self)
+        MaybePair::right(self)
     }
 }
 
 impl<T, S, F> ListFactory<T, S> for F
 where
-    S: Nullable + MaybePair<First = T, Second = S>,
+    S: Nullable + MaybePair<Left = T, Right = S>,
     F: NullFactory<S> + PairFactory<S>,
 {
     fn empty(&mut self) -> S {
@@ -122,11 +122,12 @@ where
 }
 
 /// Return `true` if `expr` is a proper list.
-pub fn is_list<T, S>(expr: &S) -> bool
+pub fn is_proper_list<T, S>(expr: &S) -> bool
 where
     S: List<T>,
+    S: Nullable,
 {
-    expr.is_empty() || expr.rest().map(is_list).unwrap_or(false)
+    expr.is_null() || expr.rest().map(is_proper_list).unwrap_or(false)
 }
 
 /// Return the length if `list`.
@@ -238,11 +239,11 @@ where
 /// Returns the first pair in `list` whose first element satisfies the predicate.
 pub fn afind<K, T, S>(list: &S, pred: impl Fn(&K) -> bool) -> Option<&T>
 where
-    T: MaybePair<First = K>,
+    T: MaybePair<Left = K>,
     S: List<T>,
 {
     find(list, |item| {
-        if let Some(key) = item.first() {
+        if let Some(key) = item.left() {
             pred(key)
         } else {
             false
@@ -257,7 +258,7 @@ where
 /// [`val_eq`]: crate::equality::ValueEq::val_eq
 pub fn assoc<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
 where
-    T: MaybePair<First = K>,
+    T: MaybePair<Left = K>,
     K: ValueEq,
     S: List<T>,
 {
@@ -270,7 +271,7 @@ where
 /// [`id_eq`]: crate::equality::IdentityEq::id_eq
 pub fn assv<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
 where
-    T: MaybePair<First = K>,
+    T: MaybePair<Left = K>,
     K: IdentityEq,
     S: List<T>,
 {
@@ -283,7 +284,7 @@ where
 /// [`ptr_eq`]: crate::equality::PointerEq::ptr_eq
 pub fn assq<'a, K, T, S>(list: &'a S, obj: &K) -> Option<&'a T>
 where
-    T: MaybePair<First = K>,
+    T: MaybePair<Left = K>,
     K: PointerEq,
     S: List<T>,
 {
@@ -405,17 +406,17 @@ mod tests {
     }
 
     impl<T> MaybePair for MyList<T> {
-        type First = T;
-        type Second = MyList<T>;
+        type Left = T;
+        type Right = MyList<T>;
 
-        fn first(&self) -> Option<&Self::First> {
+        fn left(&self) -> Option<&Self::Left> {
             match self {
                 MyList::Empty => None,
                 MyList::Item(x, _) => Some(x),
             }
         }
 
-        fn second(&self) -> Option<&Self::Second> {
+        fn right(&self) -> Option<&Self::Right> {
             match self {
                 MyList::Empty => None,
                 MyList::Item(_, tail) => Some(tail),

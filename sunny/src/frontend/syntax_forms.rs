@@ -10,120 +10,22 @@ use crate::frontend::{
     syntactic_closure::SyntacticClosure,
     SyntaxExpander,
 };
-use sexpr_generics::lists;
 use sexpr_generics::prelude::*;
+use sexpr_generics::{lists, with_sexpr_matcher};
 use sunny_scm::{Scm, SourceLocation, SourceMap};
 
-macro_rules! match_sexpr {
-    ([$expr:tt: $($rules:tt)*]) => {
-        _match_sexpr![$expr; $($rules)*]
-    };
-
-    ([$($first:tt)*] $($rest:tt)*) => {{
-        match match_sexpr![[$($first)*]] {
-            Some(r) => Some(r),
-            None => match_sexpr![$($rest)*],
-        }
-    }};
-}
-
-macro_rules! _match_sexpr {
-    ($expr:tt; _ => $action:block) => {{
-        let _ = $expr;
-        #[allow(unreachable_code)]
-        Some($action)
-    }};
-
-    ($expr:tt; $x:ident => $action:block) => {{ let $x = $expr; Some($action) }};
-
-    ($expr:tt; $x:ident: List => $action:block) => {
-        if $expr.is_pair() || $expr.is_null() {
-            let $x = $expr;
-            Some($action)
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; $x:ident: Symbol => $action:block) => {
-        if let Some($x) = $expr.as_symbol() {
-            Some($action)
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; $x:ident: Obj<$t:ty> => $action:block) => {
-        if let Some($x) = $expr.as_type::<$t>() {
-            Some($action)
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; () => $action:block) => {
-        if $expr.is_null() {
-            Some($action)
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; ($first:tt $(:$typ1:tt)? . $second:tt $(:$typ2:tt)?) => $action:block) => {
-        if $expr.is_pair() {
-            let car = $expr.car().unwrap();
-            let cdr = $expr.cdr().unwrap();
-            _match_sexpr![car; $first $(:$typ1)? => {
-                _match_sexpr![cdr; $second $(:$typ2)? => $action]
-            }].flatten()
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; ($first:tt $(:$typ:tt)?) => $action:block) => {
-        if $expr.is_pair() {
-            let car = $expr.car().unwrap();
-            let cdr = $expr.cdr().unwrap();
-            _match_sexpr![cdr; () => {
-                _match_sexpr![car; $first $(:$typ)? => $action]
-            }].flatten()
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; ($first:tt $(:$typ:tt)?, $($rest:tt)*) => $action:block) => {
-        if $expr.is_pair() {
-            let car = $expr.car().unwrap();
-            let cdr = $expr.cdr().unwrap();
-            _match_sexpr![car; $first $(:$typ)? => {
-                _match_sexpr![cdr; ($($rest)*) => $action]
-            }].flatten()
-        } else {
-            None
-        }
-    };
-
-    ($expr:tt; $literal:expr => $action:block) => {
-        if $expr == &sunny_scm::Scm::from($literal) {
-            Some($action)
-        } else {
-            None
-        }
-    };
-}
-
 macro_rules! define_form {
-    ($t:ident($xpr:ident, $map:ident, $env:ident): $([$($rules:tt)*])+) => {
+    ($t:ident($xpr:ident, $map:ident, $env:ident): $($rules:tt)*) => {
         #[derive(Debug)]
         pub struct $t;
         impl SyntaxExpander for $t {
             fn expand(&self, $xpr: &Scm, $map: &SourceMap, $env: &Env) -> Result<AstNode> {
-                match_sexpr![
-                    $([$xpr: $($rules)*])+
-                ]
-                .unwrap_or_else(|| Err($map.get($xpr).map_value(Error::InvalidForm)))
+                with_sexpr_matcher! {
+                    match $xpr, {
+                        $($rules)*
+                        _ => { Err($map.get($xpr).map_value(Error::InvalidForm)) }
+                    }
+                }
             }
         }
     }
@@ -133,20 +35,20 @@ macro_rules! define_form {
 
 define_form! {
     Expression(sexpr, src_map, env):
-        [(f: Symbol . _) => {
+        ({f: Symbol} . _) => {
             match env.lookup_variable(f) {
                 Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, src_map, env),
                 Some(EnvBinding::Intrinsic(name, n_params, _)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, src_map),
                 _ => Expression.expand_application(sexpr, src_map, env),
             }
-        }]
-        [() => {
+        }
+        () => {
             Err(src_map.get(sexpr).map(|_|Error::InvalidForm))
-        }]
-        [list: List => {
+        }
+        {list: List} => {
             Expression.expand_application(list, src_map, env)
-        }]
-        [name: Symbol => {
+        }
+        {name: Symbol} => {
             use EnvBinding::*;
             let context = src_map.get(sexpr);
             match env.lookup_variable(name) {
@@ -171,13 +73,13 @@ define_form! {
                     Expression.expand(sexpr, src_map, env)
                 }
             }
-        }]
-        [sc: Obj<SyntacticClosure> => {
+        }
+        {sc: Obj<SyntacticClosure>} => {
             sc.expand(&Expression, src_map)
-        }]
-        [_ => {
+        }
+        _ => {
             Ok(Ast::constant(src_map.get(sexpr), sexpr.clone()))
-        }]
+        }
 }
 
 impl Expression {
@@ -213,23 +115,23 @@ impl Expression {
 
 define_form! {
     Begin(sexpr, src_map, env):
-        [(_ . rest) => { Sequence.expand(rest, src_map, env) }]
+        (_ . rest) => { Sequence.expand(rest, src_map, env) }
 }
 
 define_form! {
     Quotation(sexpr, src_map, _env):
-        [(_, value) => {
+        (_ value) => {
             let mut value = value;
             if let Some(cls) = value.as_type::<SyntacticClosure>() {
                 value = cls.raw_expr();
             }
             Ok(Ast::constant(src_map.get(value), value.clone()))
-        }]
+        }
 }
 
 define_form! {
     Assignment(sexpr, src_map, env):
-        [(_, name: Symbol, value) => {
+        (_ {name: Symbol} value) => {
             let context = src_map.get(sexpr);
             env.ensure_variable(name);
             let value = Expression.expand(value, src_map, env)?;
@@ -239,19 +141,19 @@ define_form! {
                 let offset = env.lookup_variable_index(name).unwrap();
                 Ok(Ast::store(context, offset, value))
             }
-        }]
+        }
 }
 
 define_form! {
     Definition(sexpr, src_map, env):
-        [(_, name: Symbol, value) => {
+        (_ {name: Symbol} value) => {
             let value = Expression.expand(value, src_map, env)?;
             env.ensure_global_variable(name);
             let binding = env.lookup_global_variable(name).unwrap();
             let full_name = binding.as_global().unwrap();
             Ok(Ast::store_global(src_map.get(sexpr), full_name, value))
-        }]
-        [(_, (name: Symbol . args) . body) => {
+        }
+        (_ ({name: Symbol} . args) . body) => {
             env.ensure_global_variable(name);
 
             let function = Lambda::build_ast(src_map.get(sexpr), args, body, env, src_map)?;
@@ -259,63 +161,65 @@ define_form! {
             let binding = env.lookup_global_variable(name).unwrap();
             let full_name = binding.as_global().unwrap();
             Ok(Ast::store_global(src_map.get(sexpr), full_name, function))
-        }]
+        }
 }
 
 define_form! {
     LocalDefinition(sexpr, src_map, env):
-        [(_, name: Symbol, value) => {
+        (_ {name: Symbol} value) => {
             let value = Expression.expand(value, src_map, env)?;
             let idx = env.lookup_variable_index(name).unwrap();
             Ok(Ast::store(src_map.get(sexpr), idx, value))
-        }]
-        [(_, (name: Symbol . args) . body) => {
+        }
+        (_ ({name: Symbol} . args) . body) => {
             let function = Lambda::build_ast(src_map.get(sexpr), args, body, env, src_map)?;
             let idx = env.lookup_variable_index(name).unwrap();
             Ok(Ast::store(src_map.get(sexpr), idx, function))
-        }]
+        }
 }
 
 define_form! {
     Sequence(sexpr, src_map, env):
-        [(expr) => { Expression.expand(expr, src_map, env) }]
-        [(expr . rest) => {
+        (expr) => { Expression.expand(expr, src_map, env) }
+        (expr . rest) => {
             let first = Expression.expand(expr, src_map, env)?;
             let rest = Sequence.expand(rest, src_map, env)?;
             Ok(Ast::sequence(first, rest))
-        }]
+        }
 }
 
 define_form! {
     Branch(sexpr, src_map, env):
-        [(_, condition, consequence, alternative) => {
+        (_ condition consequence alternative) => {
             let condition = Expression.expand(condition, src_map, env)?;
             let consequence = Expression.expand(consequence, src_map, env)?;
             let alternative = Expression.expand(alternative, src_map, env)?;
             Ok(Ast::ifexpr(src_map.get(sexpr), condition, consequence, alternative))
-        }]
-        [(_, condition, consequence) => {
+        }
+        (_ condition consequence) => {
             let condition = Expression.expand(condition, src_map, env)?;
             let consequence = Expression.expand(consequence, src_map, env)?;
             let alternative = Ast::void();
             Ok(Ast::ifexpr(src_map.get(sexpr), condition, consequence, alternative))
-        }]
+        }
 }
 
 define_form! {
     Let(sexpr, src_map, env):
-        [(_, bindings . body) => {
+        (_ bindings . body) => {
             let mut vars = vec![];
             let mut values = vec![];
 
             for binding in lists::iter(bindings) {
-                match_sexpr![
-                    [binding: (var: Symbol, val) => {
-                        vars.push(var);
-                        values.push(val);
-                    }]
-                ]
-                .ok_or_else(|| src_map.get(&binding).map_value(Error::InvalidForm))?;
+                with_sexpr_matcher! {
+                    match binding, {
+                        ({var: Symbol} val) => {
+                            vars.push(var);
+                            values.push(val);
+                        }
+                        _ => { return Err(src_map.get(&binding).map_value(Error::InvalidForm)) }
+                    }
+                }
             }
 
             let body_env = env.extend_vars(vars.into_iter());
@@ -329,14 +233,14 @@ define_form! {
             }
 
             Ok(Ast::invoke(src_map.get(sexpr), args))
-        }]
+        }
 }
 
 define_form! {
     Lambda(sexpr, src_map, env):
-        [(_, params . body) => {
+        (_ params . body) => {
             Self::build_ast(src_map.get(sexpr), params, body, env, src_map)
-        }]
+        }
 }
 
 impl Lambda {
@@ -391,36 +295,41 @@ impl SyntaxExpander for Body {
 }
 
 fn is_definition(expr: &Scm) -> bool {
-    match_sexpr![
-        [expr: ("define" . _) => { true }]
-        [expr: _ => { false }]
-    ]
-    .unwrap()
+    with_sexpr_matcher! {
+        match expr, {
+            ((:define) . _) => { true }
+            _ => { false }
+        }
+    }
 }
 
 fn definition_name(expr: &Scm) -> Option<&str> {
-    match_sexpr![
-        [expr: (_, name: Symbol, _) => { name }]
-        [expr: (_, (name: Symbol . _) . _) => { name }]
-    ]
+    with_sexpr_matcher! {
+        match expr, {
+            (_ {name: Symbol} _) => { Some(name) }
+            (_ ({name: Symbol} . _) . _) => { Some(name) }
+            _ => { None }
+        }
+    }
 }
 
 fn definition_value_expr(expr: &Scm) -> Option<Scm> {
-    match_sexpr![
-        [expr: (_, _name: Symbol, value) => {
-            value.clone()
-        }]
-        [expr: (_, (_ . args) . body) => {
-            Scm::cons(Scm::symbol("lambda"),
-                        Scm::cons(args.clone(),
-                                    body.clone())).into()
-        }]
-    ]
+    with_sexpr_matcher! {
+        match expr, {
+            (_ {_: Symbol} value) => { Some(value.clone()) }
+            (_ (_ . args) . body) => {
+                Some(Scm::cons(Scm::symbol("lambda"),
+                               Scm::cons(args.clone(),
+                                         body.clone())).into())
+            }
+            _ => { None }
+        }
+    }
 }
 
 define_form! {
-    LetRec(sexpr, _src_map, _env):
-        [_ => { unimplemented!() }]
+    LetRec(_sexpr, _src_map, _env):
+        _ => { unimplemented!() }
 }
 
 impl LetRec {
@@ -461,23 +370,23 @@ impl LetRec {
 
 define_form! {
     SyntaxDefinition(sexpr, src_map, env):
-       [(_, keyword: Symbol, transformer_spec) => {
+       (_ {keyword: Symbol} transformer_spec) => {
             let transformer = SyntaxTransformer.build(transformer_spec, env, src_map)?;
             env.add_global_binding(keyword, transformer);
             Ok(Ast::void())
-       }]
+       }
 }
 
 define_form! {
     Import(sexpr, src_map, env):
-       [(_ . import_sets) => {
+       (_ . import_sets) => {
            let mut import_ast = Ast::void();
            for import_set in lists::iter(import_sets) {
                let set_ast = Self::process_import_set(&import_set, env, src_map)?;
                import_ast = Ast::sequence(import_ast, set_ast)
            }
            Ok(import_ast)
-       }]
+       }
 }
 
 impl Import {
@@ -515,17 +424,20 @@ pub struct SyntaxTransformer;
 
 impl SyntaxTransformer {
     fn build(&self, spec: &Scm, env: &Env, src_map: &SourceMap) -> Result<Rc<dyn SyntaxExpander>> {
-        match_sexpr![
-            [spec: ("simple-macro", args, body) => {
-                Ok(Rc::new(SimpleMacro::new(args, body, env, src_map)?) as Rc<dyn SyntaxExpander>)
-            }]
-            [spec: ("syntax-rules", ellipsis: Symbol, literals: List . rules) => {
-                Ok(Rc::new(SyntaxRules::new(ellipsis, literals, rules, env)?) as Rc<dyn SyntaxExpander>)
-            }]
-            [spec: ("syntax-rules", literals: List . rules) => {
-                Ok(Rc::new(SyntaxRules::new("...", literals, rules, env)?) as Rc<dyn SyntaxExpander>)
-            }]
-        ].unwrap_or_else(|| Err(src_map.get(spec).map_value(Error::InvalidForm)))
+        with_sexpr_matcher! {
+            match spec, {
+                ((:"simple-macro") args body) => {
+                    Ok(Rc::new(SimpleMacro::new(args, body, env, src_map)?) as Rc<dyn SyntaxExpander>)
+                }
+                ((:"syntax-rules") {ellipsis: Symbol} {literals: List} . rules) => {
+                    Ok(Rc::new(SyntaxRules::new(ellipsis, literals, rules, env)?) as Rc<dyn SyntaxExpander>)
+                }
+                ((:"syntax-rules") {literals: List} . rules) => {
+                    Ok(Rc::new(SyntaxRules::new("...", literals, rules, env)?) as Rc<dyn SyntaxExpander>)
+                }
+                _ => { Err(src_map.get(spec).map_value(Error::InvalidForm)) }
+            }
+        }
     }
 }
 
@@ -599,52 +511,54 @@ pub struct LibraryDefinition;
 
 impl SyntaxExpander for LibraryDefinition {
     fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode> {
-        match_sexpr![
-            [sexpr: (_, libname . statements) => {
-                let mut lib_env = base_environment(libname);
-                lib_env.use_libraries_from(env);
+        with_sexpr_matcher! {
+            match sexpr, {
+                (_ libname . statements) => {
+                    let mut lib_env = base_environment(libname);
+                    lib_env.use_libraries_from(env);
 
-                for stmt in lists::iter(statements) {
-                    match stmt.car().and_then(|s| s.as_symbol()) {
-                        Some("import") => {Import.expand(&stmt, src_map, &lib_env)?;}
-                        Some("export") => {}
-                        Some("begin") => {}
-                        _ => return Err(error_at(&src_map.get(&stmt), Error::UnexpectedStatement)),
-                    }
-                }
-
-                let mut body_parts = vec![];
-                for stmt in lists::iter(statements) {
-                    if let Some("begin") = stmt.car().and_then(|s| s.as_symbol()) {
-                        body_parts.push(Sequence.expand(stmt.cdr().unwrap(), src_map, &lib_env)?)
-                    }
-                }
-
-                let mut exports = vec![];
-                for stmt in lists::iter(statements) {
-                    if let Some("export") = stmt.car().and_then(|s| s.as_symbol()) {
-                        for export_item in lists::iter(stmt.cdr().unwrap()) {
-                            let export_name = export_item
-                                .as_symbol()
-                                .ok_or_else(|| error_at(&src_map.get(&export_item), Error::ExpectedSymbol))?;
-                            let binding = lib_env.lookup_global_variable(export_name).ok_or_else(||error_at(&src_map.get(&export_item), Error::UndefinedExport))?;
-                            exports.push(Export::new(export_name, binding));
+                    for stmt in lists::iter(statements) {
+                        match stmt.car().and_then(|s| s.as_symbol()) {
+                            Some("import") => {Import.expand(&stmt, src_map, &lib_env)?;}
+                            Some("export") => {}
+                            Some("begin") => {}
+                            _ => return Err(error_at(&src_map.get(&stmt), Error::UnexpectedStatement)),
                         }
                     }
+
+                    let mut body_parts = vec![];
+                    for stmt in lists::iter(statements) {
+                        if let Some("begin") = stmt.car().and_then(|s| s.as_symbol()) {
+                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), src_map, &lib_env)?)
+                        }
+                    }
+
+                    let mut exports = vec![];
+                    for stmt in lists::iter(statements) {
+                        if let Some("export") = stmt.car().and_then(|s| s.as_symbol()) {
+                            for export_item in lists::iter(stmt.cdr().unwrap()) {
+                                let export_name = export_item
+                                    .as_symbol()
+                                    .ok_or_else(|| error_at(&src_map.get(&export_item), Error::ExpectedSymbol))?;
+                                let binding = lib_env.lookup_global_variable(export_name).ok_or_else(||error_at(&src_map.get(&export_item), Error::UndefinedExport))?;
+                                exports.push(Export::new(export_name, binding));
+                            }
+                        }
+                    }
+
+                    let export_vars = exports.iter().filter(|exp| exp.binding.is_global()).cloned().collect();
+
+                    env.define_library(libname, exports);
+
+                    let mut body = body_parts.pop().unwrap_or_else(Ast::void);
+                    while let Some(prev_part) = body_parts.pop() {
+                        body = Ast::sequence(prev_part, body);
+                    }
+
+                    Ok(Ast::module(libname, body, export_vars))
                 }
-
-                let export_vars = exports.iter().filter(|exp| exp.binding.is_global()).cloned().collect();
-
-                env.define_library(libname, exports);
-
-                let mut body = body_parts.pop().unwrap_or_else(Ast::void);
-                while let Some(prev_part) = body_parts.pop() {
-                    body = Ast::sequence(prev_part, body);
-                }
-
-                Ok(Ast::module(libname, body, export_vars))
-            }]
-        ]
-            .unwrap_or_else(|| Err(src_map.get(sexpr).map_value(Error::InvalidForm)))
+                _ => { Err(src_map.get(sexpr).map_value(Error::InvalidForm)) }
+            }
+        }
     }
 }

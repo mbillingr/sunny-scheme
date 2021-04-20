@@ -5,6 +5,12 @@ use sexpr_generics::equality::{
 use sexpr_generics::prelude::*;
 use std::hash::Hasher;
 
+impl MaybeGeneric for Scm {
+    fn to_type<T: 'static>(&self) -> Option<&T> {
+        Scm::as_type(self)
+    }
+}
+
 impl Nullable for Scm {
     fn is_null(&self) -> bool {
         Scm::is_null(self)
@@ -69,14 +75,14 @@ impl NumberFactory<Scm> for StatelessFactory {
 }
 
 impl MaybePair for Scm {
-    type First = Scm;
-    type Second = Scm;
+    type Left = Scm;
+    type Right = Scm;
 
-    fn first(&self) -> Option<&Self::First> {
+    fn left(&self) -> Option<&Self::Left> {
         self.as_pair().map(|(car, _)| car)
     }
 
-    fn second(&self) -> Option<&Self::First> {
+    fn right(&self) -> Option<&Self::Left> {
         self.as_pair().map(|(_, cdr)| cdr)
     }
 }

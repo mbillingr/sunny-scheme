@@ -42,17 +42,17 @@
 //! }
 //!
 //! impl MaybePair for Value {
-//!     type First = Self;
-//!     type Second = Self;
+//!     type Left = Self;
+//!     type Right = Self;
 //!
-//!     fn first(&self) -> Option<&Self::First> {
+//!     fn left(&self) -> Option<&Self::Left> {
 //!         match self {
 //!             Value::Pair(x, _) => Some(x),
 //!             _ => None,
 //!         }
 //!     }
 //!
-//!     fn second(&self) -> Option<&Self::Second> {
+//!     fn right(&self) -> Option<&Self::Right> {
 //!         match self {
 //!             Value::Pair(_, x) => Some(x),
 //!             _ => None,

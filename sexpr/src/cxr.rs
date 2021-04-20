@@ -131,16 +131,16 @@ pub trait CxR {
 
 impl<S, T> CxR for T
 where
-    T: MaybePair<First = S, Second = S>,
-    S: MaybePair<First = S, Second = S>,
+    T: MaybePair<Left = S, Right = S>,
+    S: MaybePair<Left = S, Right = S>,
 {
     type Result = S;
 
     fn car(&self) -> Option<&S> {
-        self.first()
+        self.left()
     }
 
     fn cdr(&self) -> Option<&S> {
-        self.second()
+        self.right()
     }
 }

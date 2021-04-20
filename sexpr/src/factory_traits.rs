@@ -68,10 +68,10 @@ pub trait NumberFactory<T: MaybeNumber> {
 /// Construct Pair values
 pub trait PairFactory<T: MaybePair> {
     /// Construct a new pair from the input arguments.
-    fn pair(&mut self, first: T::First, second: T::Second) -> T;
+    fn pair(&mut self, first: T::Left, second: T::Right) -> T;
 
     /// Construct a new pair from the input arguments using Lisp's traditional name.
-    fn cons(&mut self, car: impl Into<T::First>, cdr: impl Into<T::Second>) -> T {
+    fn cons(&mut self, car: impl Into<T::Left>, cdr: impl Into<T::Right>) -> T {
         self.pair(car.into(), cdr.into())
     }
 }
