@@ -3,6 +3,7 @@ pub mod ast;
 pub mod environment;
 pub mod error;
 pub mod library;
+pub mod macros;
 pub mod syntactic_closure;
 pub mod syntax_forms;
 
@@ -39,6 +40,8 @@ mod tests {
         SyntaxDefinition,
     };
     use ast::Ast;
+    use sexpr_generics::prelude::*;
+    use sexpr_generics::sexpr;
     use sunny_scm::SourceLocation;
 
     fn minimal_syntax_environment(name: impl ToString) -> Env {
@@ -56,30 +59,6 @@ mod tests {
         Env::new(name.to_string(), global, Environment::Empty)
     }
 
-    macro_rules! sexpr {
-        ($t:ty:()) => { <$t>::null() };
-
-        ($t:ty:($x:tt . $y:tt)) => {
-            <$t>::cons(
-                sexpr![$t:$x],
-                sexpr![$t:$y],
-            )
-        };
-
-        ($t:ty:($x:tt $($rest:tt)*)) => {
-            <$t>::cons(
-                sexpr![$t:$x],
-                sexpr![$t:($($rest)*)],
-            )
-        };
-
-        ($t:ty:[$x:expr]) => { <$t>::symbol($x) };
-
-        ($t:ty:$x:ident) => { <$t>::symbol(stringify!($x)) };
-
-        ($t:ty:$x:expr) => { <$t>::from($x) };
-    }
-
     macro_rules! meaning_of {
         ($expr:tt) => {{
             let env = minimal_syntax_environment("test");
@@ -87,7 +66,7 @@ mod tests {
         }};
 
         ($env:tt @ $expr:tt) => {{
-            let sexpr = sexpr![Scm: $expr];
+            let sexpr = sexpr![$expr];
             Expression.expand(&sexpr.into(), &SourceMap::new(), &$env)
         }};
     }
@@ -118,7 +97,7 @@ mod tests {
     #[test]
     fn meaning_of_global_set() {
         assert_eq!(
-            meaning_of![(["set!"] x 42)],
+            meaning_of![({"set!"} x 42)],
             Ok(ast!(gset "test.x" (const 42)))
         );
     }
@@ -126,7 +105,7 @@ mod tests {
     #[test]
     fn meaning_of_local_set() {
         assert_eq!(
-            meaning_of![(lambda (x) ("set!" x 42))],
+            meaning_of![(lambda (x) ({"set!"} x 42))],
             Ok(ast!(lambda 1 (set 0 (const 42))))
         );
     }
@@ -235,7 +214,7 @@ mod tests {
 
     #[test]
     fn meaning_of_library_definition_without_exports() {
-        let meaning = meaning_of![("define-library" (foo bar) (begin 0))];
+        let meaning = meaning_of![({"define-library"} (foo bar) (begin 0))];
         let expected = Ok(ast!(module "(foo bar)" (const 0)));
         assert_eq!(meaning, expected);
     }
@@ -243,7 +222,7 @@ mod tests {
     #[test]
     fn import_produces_no_code() {
         let env = base_environment("test");
-        meaning_of![env @ ("define-library" (foo bar) (export baz) (begin (define baz 42)))]
+        meaning_of![env @ ({"define-library"} (foo bar) (export baz) (begin (define baz 42)))]
             .unwrap();
 
         assert_eq!(meaning_of![env @ (import (foo bar))], Ok(ast!(void)));
@@ -252,7 +231,7 @@ mod tests {
     #[test]
     fn import_extends_the_environment_with_existing_variables() {
         let env = base_environment("test");
-        meaning_of![env @ ("define-library" (foo bar) (export baz) (begin (define baz 42)))]
+        meaning_of![env @ ({"define-library"} (foo bar) (export baz) (begin (define baz 42)))]
             .unwrap();
         meaning_of![env @ (import (foo bar))].unwrap();
 

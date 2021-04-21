@@ -136,7 +136,8 @@ impl Scm {
     }
 
     pub fn as_string(&self) -> Option<&str> {
-        self.as_type::<string::ConstantString>().map(string::ConstantString::as_str)
+        self.as_type::<string::ConstantString>()
+            .map(string::ConstantString::as_str)
     }
 
     pub fn is_pair(&self) -> bool {

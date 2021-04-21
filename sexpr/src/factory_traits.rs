@@ -37,6 +37,12 @@ pub trait NullFactory<T: Nullable> {
     fn null(&mut self) -> T;
 }
 
+/// Construct generic values
+pub trait GenericFactory<S, T> {
+    /// Construct a new value.
+    fn build_from(&mut self, value: S) -> T;
+}
+
 /// Construct Boolean values
 pub trait BoolFactory<T: MaybeBool> {
     /// Construct a new boolean value.

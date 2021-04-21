@@ -439,30 +439,31 @@ mod tests {
 
     #[test]
     fn length_of_arbitrary_list_is_equal_to_number_of_items() {
-        let result = length(&list![1, 2, 3]);
+        let list: MyList<i32> = list![1, 2, 3];
+        let result = length(&list);
         assert_eq!(result, 3);
     }
 
     #[test]
     fn append_to_empty_list_produces_second_list() {
-        let list1 = list![];
-        let list2 = list![4, 5, 6];
+        let list1: MyList<i32> = list![];
+        let list2: MyList<i32> = list![4, 5, 6];
         let result = append(&list1, &list2);
         assert_eq!(result, list2)
     }
 
     #[test]
     fn append_an_empty_list_produces_first_list() {
-        let list1 = list![1, 2, 3];
-        let list2 = list![];
+        let list1: MyList<i32> = list![1, 2, 3];
+        let list2: MyList<i32> = list![];
         let result = append(&list1, &list2);
         assert_eq!(result, list1)
     }
 
     #[test]
     fn append_two_lists() {
-        let list1 = list![1, 2, 3];
-        let list2 = list![4, 5, 6];
+        let list1: MyList<i32> = list![1, 2, 3];
+        let list2: MyList<i32> = list![4, 5, 6];
         let result = append(&list1, &list2);
         assert_eq!(result, list![1, 2, 3, 4, 5, 6])
     }
@@ -476,97 +477,98 @@ mod tests {
 
     #[test]
     fn reverse_single_element_list_produces_same_list() {
-        let list = list![42];
+        let list: MyList<i32> = list![42];
         let result = reverse(&list);
         assert_eq!(result, list);
     }
 
     #[test]
     fn reverse_list() {
-        let result = reverse(&list![1, 2, 3]);
+        let list: MyList<i32> = list![1, 2, 3];
+        let result = reverse(&list);
         assert_eq!(result, list![3, 2, 1]);
     }
 
     #[test]
     fn list_tail_zero_is_same_list() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = tail(&list, 0);
         assert_eq!(result, Some(&list));
     }
 
     #[test]
     fn list_tail_omits_k_items() {
-        let list = list![1, 2, 3, 4];
+        let list: MyList<i32> = list![1, 2, 3, 4];
         let result = tail(&list, 2);
         assert_eq!(result, Some(&list![3, 4]));
     }
 
     #[test]
     fn list_tail_returns_none_if_k_above_list_length() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = tail(&list, 4);
         assert_eq!(result, None);
     }
 
     #[test]
     fn list_ref_returns_none_if_k_is_list_length() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = get(&list, 3);
         assert_eq!(result, None);
     }
 
     #[test]
     fn list_ref_returns_kth_element() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = get(&list, 1);
         assert_eq!(result, Some(&2));
     }
 
     #[test]
     fn list_head_zero_creates_empty_list() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = head(&list, 0);
         assert_eq!(result, Some(list![]));
     }
 
     #[test]
     fn list_head_returns_same_list_if_k_equals_list_length() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = head(&list, 4);
         assert_eq!(result, None);
     }
 
     #[test]
     fn list_head_returns_none_if_k_exceeds_list_length() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = head(&list, 3);
         assert_eq!(result, Some(list));
     }
 
     #[test]
     fn list_head_returns_k_elements() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = head(&list, 2);
         assert_eq!(result, Some(list![1, 2]));
     }
 
     #[test]
     fn map_list() {
-        let list = list![1, 2, 3];
-        let result = map(&list, |&x| x * x);
+        let list: MyList<i32> = list![1, 2, 3];
+        let result: MyList<i32> = map(&list, |&x| x * x);
         assert_eq!(result, list![1, 4, 9]);
     }
 
     #[test]
     fn find_in_list() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = find(&list, |&x| x == 2);
         assert_eq!(result, Some(&list![2, 3]));
     }
 
     #[test]
     fn find_in_list_returns_none_if_not_found() {
-        let list = list![1, 2, 3];
+        let list: MyList<i32> = list![1, 2, 3];
         let result = find(&list, |_| false);
         assert_eq!(result, None);
     }

@@ -11,6 +11,12 @@ impl MaybeGeneric for Scm {
     }
 }
 
+impl GenericFactory<i64, Scm> for StatelessFactory {
+    fn build_from(&mut self, value: i64) -> Scm {
+        Scm::number(value)
+    }
+}
+
 impl Nullable for Scm {
     fn is_null(&self) -> bool {
         Scm::is_null(self)
