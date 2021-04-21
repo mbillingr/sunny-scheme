@@ -8,10 +8,10 @@ use std::hash::Hash;
 
 #[derive(Debug, Clone, Hash)]
 #[repr(transparent)]
-pub struct String(Box<str>);
+pub struct ConstantString(Box<str>);
 
-impl String {
-    pub fn interned(name: &str) -> Strong<String> {
+impl ConstantString {
+    pub fn interned(name: &str) -> Strong<ConstantString> {
         let string = interned_string(name);
         unsafe {
             // # Safety: converting to a repr(transparent) wrapper
@@ -25,7 +25,7 @@ impl String {
     }
 }
 
-impl ScmObject for String {
+impl ScmObject for ConstantString {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -54,7 +54,7 @@ impl ScmObject for String {
     }
 }
 
-impl Display for String {
+impl Display for ConstantString {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
     }

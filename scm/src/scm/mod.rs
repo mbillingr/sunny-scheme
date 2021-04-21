@@ -80,7 +80,7 @@ impl Scm {
     }
 
     pub fn string(content: &str) -> Self {
-        Scm(string::String::interned(content))
+        Scm(string::ConstantString::interned(content))
     }
 
     pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
@@ -136,7 +136,7 @@ impl Scm {
     }
 
     pub fn as_string(&self) -> Option<&str> {
-        self.as_type::<string::String>().map(string::String::as_str)
+        self.as_type::<string::ConstantString>().map(string::ConstantString::as_str)
     }
 
     pub fn is_pair(&self) -> bool {
