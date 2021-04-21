@@ -7,6 +7,8 @@ macro_rules! sexpr {
     ($factory:expr; {true}) => { $factory.bool(true) };
     ($factory:expr; {false}) => { $factory.bool(false) };
 
+    ($factory:expr; _) => { $factory.interned_symbol("_") };
+
     ($factory:expr; {$x:expr}) => { $factory.interned_symbol($x) };
 
     ($factory:expr; {@ $x:ident}) => { $factory.build_from($x) };
