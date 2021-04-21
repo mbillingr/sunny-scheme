@@ -30,9 +30,29 @@ impl MatchResult {
                 .collect(),
         }
     }
+
+    pub fn join(self, other: Self) -> Self {
+        let mut bindings = self.bindings;
+        bindings.extend(other.bindings);
+        MatchResult { bindings }
+    }
 }
 
-pub fn match_pattern(value: &Scm, pattern: &Scm) -> Option<MatchResult> {
+pub struct PatternMatcher {
+    pattern: Scm,
+}
+
+impl PatternMatcher {
+    pub fn new(pattern: Scm) -> Self {
+        PatternMatcher { pattern }
+    }
+
+    pub fn match_value(&self, value: &Scm) -> Option<MatchResult> {
+        recursive_matcher(&self.pattern, value)
+    }
+}
+
+fn recursive_matcher(pattern: &Scm, value: &Scm) -> Option<MatchResult> {
     if pattern.is_null() && value.is_null() {
         return Some(MatchResult::empty());
     }
@@ -44,9 +64,9 @@ pub fn match_pattern(value: &Scm, pattern: &Scm) -> Option<MatchResult> {
     }
 
     if pattern.is_pair() && value.is_pair() {
-        let left_match = match_pattern(pattern.left().unwrap(), value.left().unwrap());
-        let right_match = match_pattern(pattern.right().unwrap(), value.right().unwrap());
-        unimplemented!()
+        let left_match = recursive_matcher(pattern.left().unwrap(), value.left().unwrap())?;
+        let right_match = recursive_matcher(pattern.right().unwrap(), value.right().unwrap())?;
+        return Some(left_match.join(right_match));
     }
 
     None
@@ -62,7 +82,7 @@ mod tests {
         let pattern = sexpr![_];
         let value = sexpr![foo];
 
-        let result = match_pattern(&value, &pattern);
+        let result = PatternMatcher::new(pattern).match_value(&value);
 
         assert_eq!(result, Some(MatchResult::empty()));
     }
@@ -72,7 +92,10 @@ mod tests {
         let pattern = sexpr![()];
         let mismatch_value = sexpr![foo];
 
-        assert_eq!(match_pattern(&mismatch_value, &pattern), None);
+        assert_eq!(
+            PatternMatcher::new(pattern).match_value(&mismatch_value),
+            None
+        );
     }
 
     #[test]
@@ -81,7 +104,7 @@ mod tests {
         let matching_value = sexpr![()];
 
         assert_eq!(
-            match_pattern(&matching_value, &pattern),
+            PatternMatcher::new(pattern).match_value(&matching_value),
             Some(MatchResult::empty())
         );
     }
@@ -91,7 +114,7 @@ mod tests {
         let pattern = sexpr![foo];
         let value = sexpr![42];
 
-        let result = match_pattern(&value, &pattern);
+        let result = PatternMatcher::new(pattern).match_value(&value);
 
         assert_eq!(
             result,
@@ -104,19 +127,34 @@ mod tests {
 
     #[test]
     fn match_pair() {
-        let pattern = sexpr![(foo.bar)];
+        let pattern = sexpr![(foo . bar)];
         let value = sexpr![(1/*car*/./*cdr*/2)]; // workaround to keep rustfmt changing this
 
-        println!("{}", value);
-
-        let result = match_pattern(&value, &pattern);
+        let result = PatternMatcher::new(pattern).match_value(&value);
 
         assert_eq!(
             result,
-            Some(MatchResult::from_sequence(vec![(
-                Scm::symbol("foo"),
-                Scm::int(42)
-            )]))
+            Some(MatchResult::from_sequence(vec![
+                (Scm::symbol("foo"), Scm::int(1)),
+                (Scm::symbol("bar"), Scm::int(2))
+            ]))
+        );
+    }
+
+    #[test]
+    fn match_list() {
+        let pattern = sexpr![(foo bar . baz)];
+        let value = sexpr![(1 2 3 4)]; // workaround to keep rustfmt changing this
+
+        let result = PatternMatcher::new(pattern).match_value(&value);
+
+        assert_eq!(
+            result,
+            Some(MatchResult::from_sequence(vec![
+                (sexpr![foo], sexpr![1]),
+                (sexpr![bar], sexpr![2]),
+                (sexpr![baz], sexpr![(3 4)]),
+            ]))
         );
     }
 }
