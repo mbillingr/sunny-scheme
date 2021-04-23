@@ -1,4 +1,4 @@
-use crate::frontend::macros::pattern::MatchBindings;
+use crate::frontend::macros::bindings::MatchBindings;
 use sexpr_generics::prelude::*;
 use sexpr_generics::with_sexpr_matcher;
 use sunny_scm::Scm;
