@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use sunny_scm::Scm;
 
 #[derive(Debug, PartialEq)]
-pub struct MatchResult {
+pub struct MatchBindings {
     bindings: HashMap<PointerKey<Scm>, Binding>,
 }
 
@@ -17,21 +17,21 @@ pub enum Binding {
     Repeated(Vec<Binding>),
 }
 
-impl MatchResult {
+impl MatchBindings {
     pub fn empty() -> Self {
-        MatchResult {
+        MatchBindings {
             bindings: HashMap::new(),
         }
     }
 
     fn new(binding: Scm, value: Scm) -> Self {
-        MatchResult {
+        MatchBindings {
             bindings: hashmap![binding.into() => Binding::Simple(value)],
         }
     }
 
     fn empty_repetition(identifiers: impl IntoIterator<Item = PointerKey<Scm>>) -> Self {
-        MatchResult {
+        MatchBindings {
             bindings: identifiers
                 .into_iter()
                 .map(|k| (k, Binding::Repeated(vec![])))
@@ -41,13 +41,13 @@ impl MatchResult {
 
     pub fn repeated(binding: Scm, values: impl IntoIterator<Item = impl Into<Binding>>) -> Self {
         let bindings = values.into_iter().map(Into::into).collect();
-        MatchResult {
+        MatchBindings {
             bindings: hashmap![binding.into() => Binding::Repeated(bindings)],
         }
     }
 
     fn from_sequence(bindings: impl IntoIterator<Item = (Scm, Scm)>) -> Self {
-        MatchResult {
+        MatchBindings {
             bindings: bindings
                 .into_iter()
                 .map(|(key, value)| (key.into(), Binding::Simple(value)))
@@ -59,7 +59,7 @@ impl MatchResult {
     fn join(self, other: Self) -> Self {
         let mut bindings = self.bindings;
         bindings.extend(other.bindings);
-        MatchResult { bindings }
+        MatchBindings { bindings }
     }
 
     /// Attach a new repetition to existing bindings
@@ -96,7 +96,7 @@ impl MatchResult {
                     Binding::Repeated(reps) => (name.clone(), reps[i].clone()),
                 })
                 .collect();
-            MatchResult { bindings }
+            MatchBindings { bindings }
         }))
     }
 
@@ -145,18 +145,18 @@ impl PatternMatcher {
         }
     }
 
-    pub fn match_value(&self, value: &Scm) -> Option<MatchResult> {
+    pub fn match_value(&self, value: &Scm) -> Option<MatchBindings> {
         self.match_pattern(&self.pattern, value)
     }
 
-    fn match_pattern(&self, pattern: &Scm, value: &Scm) -> Option<MatchResult> {
+    fn match_pattern(&self, pattern: &Scm, value: &Scm) -> Option<MatchBindings> {
         if pattern.is_null() && value.is_null() {
-            return Some(MatchResult::empty());
+            return Some(MatchBindings::empty());
         }
 
         match pattern.to_symbol() {
-            Some("_") => return Some(MatchResult::empty()),
-            Some(_) => return Some(MatchResult::new(pattern.clone(), value.clone())),
+            Some("_") => return Some(MatchBindings::empty()),
+            Some(_) => return Some(MatchBindings::new(pattern.clone(), value.clone())),
             None => {}
         }
 
@@ -180,15 +180,15 @@ impl PatternMatcher {
         }
     }
 
-    fn match_pair(&self, pattern: &Scm, value: &Scm) -> Option<MatchResult> {
+    fn match_pair(&self, pattern: &Scm, value: &Scm) -> Option<MatchBindings> {
         let left_match = self.match_pattern(pattern.left()?, value.left()?)?;
         let right_match = self.match_pattern(pattern.right()?, value.right()?)?;
         return Some(left_match.join(right_match));
     }
 
-    fn match_simple_ellipsis(&self, pattern: &Scm, mut value: &Scm) -> Option<MatchResult> {
+    fn match_simple_ellipsis(&self, pattern: &Scm, mut value: &Scm) -> Option<MatchBindings> {
         let identifiers = self.identifiers(pattern);
-        let mut result = MatchResult::empty_repetition(identifiers);
+        let mut result = MatchBindings::empty_repetition(identifiers);
         while !value.is_null() {
             let res = self.match_pattern(pattern, value.left()?)?;
             result.attach(res);
@@ -202,14 +202,14 @@ impl PatternMatcher {
         pattern: &Scm,
         mut value: &'a Scm,
         tail_length: usize,
-    ) -> Option<(MatchResult, &'a Scm)> {
+    ) -> Option<(MatchBindings, &'a Scm)> {
         let mut remaining_length = length(value);
         if remaining_length < tail_length {
             return None;
         }
 
         let identifiers = self.identifiers(pattern);
-        let mut result = MatchResult::empty_repetition(identifiers);
+        let mut result = MatchBindings::empty_repetition(identifiers);
         while remaining_length > tail_length {
             let res = self.match_pattern(pattern, value.left()?)?;
             result.attach(res);
@@ -248,7 +248,7 @@ mod tests {
 
         let result = PatternMatcher::new(pattern).match_value(&value);
 
-        assert_eq!(result, Some(MatchResult::empty()));
+        assert_eq!(result, Some(MatchBindings::empty()));
     }
 
     #[test]
@@ -269,7 +269,7 @@ mod tests {
 
         assert_eq!(
             PatternMatcher::new(pattern).match_value(&matching_value),
-            Some(MatchResult::empty())
+            Some(MatchBindings::empty())
         );
     }
 
@@ -282,7 +282,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::from_sequence(vec![(
+            Some(MatchBindings::from_sequence(vec![(
                 Scm::symbol("foo"),
                 Scm::int(42)
             )]))
@@ -298,7 +298,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::from_sequence(vec![
+            Some(MatchBindings::from_sequence(vec![
                 (Scm::symbol("foo"), Scm::int(1)),
                 (Scm::symbol("bar"), Scm::int(2))
             ]))
@@ -314,7 +314,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::from_sequence(vec![
+            Some(MatchBindings::from_sequence(vec![
                 (sexpr![foo], sexpr![1]),
                 (sexpr![bar], sexpr![2]),
                 (sexpr![baz], sexpr![(3 4)]),
@@ -331,7 +331,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::repeated(sexpr![p], vec![1, 2, 3, 4])),
+            Some(MatchBindings::repeated(sexpr![p], vec![1, 2, 3, 4])),
         );
     }
 
@@ -343,7 +343,7 @@ mod tests {
         let result = PatternMatcher::new(pattern).match_value(&value);
 
         let expected: Vec<i64> = vec![];
-        assert_eq!(result, Some(MatchResult::repeated(sexpr![p], expected)),);
+        assert_eq!(result, Some(MatchBindings::repeated(sexpr![p], expected)),);
     }
 
     #[test]
@@ -355,9 +355,9 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::join(
-                MatchResult::repeated(sexpr![p], vec![1, 3]),
-                MatchResult::repeated(sexpr![q], vec![2, 4])
+            Some(MatchBindings::join(
+                MatchBindings::repeated(sexpr![p], vec![1, 3]),
+                MatchBindings::repeated(sexpr![q], vec![2, 4])
             )),
         );
     }
@@ -371,7 +371,7 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::repeated(
+            Some(MatchBindings::repeated(
                 sexpr![p],
                 vec![vec![1, 2], vec![3, 4]]
             )),
@@ -387,9 +387,9 @@ mod tests {
 
         assert_eq!(
             result,
-            Some(MatchResult::join(
-                MatchResult::repeated(sexpr![p], vec![1, 2]),
-                MatchResult::from_sequence(vec![(sexpr![x], sexpr![3]), (sexpr![y], sexpr![4])])
+            Some(MatchBindings::join(
+                MatchBindings::repeated(sexpr![p], vec![1, 2]),
+                MatchBindings::from_sequence(vec![(sexpr![x], sexpr![3]), (sexpr![y], sexpr![4])])
             ))
         );
     }

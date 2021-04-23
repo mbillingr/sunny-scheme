@@ -1,4 +1,4 @@
-use crate::frontend::macros::pattern::MatchResult;
+use crate::frontend::macros::pattern::MatchBindings;
 use sexpr_generics::prelude::*;
 use sexpr_generics::with_sexpr_matcher;
 use sunny_scm::Scm;
@@ -14,7 +14,7 @@ impl Transcriber {
         }
     }
 
-    pub fn transcribe(&self, template: &Scm, bindings: &MatchResult) -> Option<Scm> {
+    pub fn transcribe(&self, template: &Scm, bindings: &MatchBindings) -> Option<Scm> {
         with_sexpr_matcher! {
             match template, {
                 (t {self.ellipsis} . tail) => {
@@ -48,22 +48,24 @@ mod tests {
     #[test]
     fn transcribe_simple_template() {
         let template = sexpr![42];
-        let result = Transcriber::new().transcribe(&template, &MatchResult::empty());
+        let result = Transcriber::new().transcribe(&template, &MatchBindings::empty());
         assert_eq!(result, Some(sexpr![42]));
     }
 
     #[test]
     fn transcribe_list_template() {
         let template = sexpr![(1 2 3)];
-        let result = Transcriber::new().transcribe(&template, &MatchResult::empty());
+        let result = Transcriber::new().transcribe(&template, &MatchBindings::empty());
         assert_eq!(result, Some(sexpr![(1 2 3)]));
     }
 
     #[test]
     fn transcribe_repetition() {
         let template = sexpr![(x ...)];
-        let result = Transcriber::new()
-            .transcribe(&template, &MatchResult::repeated(sexpr![x], vec![1, 2, 3]));
+        let result = Transcriber::new().transcribe(
+            &template,
+            &MatchBindings::repeated(sexpr![x], vec![1, 2, 3]),
+        );
         assert_eq!(result, Some(sexpr![(1 2 3)]));
     }
 }
