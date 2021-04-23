@@ -8,6 +8,7 @@ use sunny_scm::Scm;
 
 use crate::frontend::macros::bindings::MatchBindings;
 
+#[derive(Debug)]
 pub struct PatternMatcher {
     pattern: Scm,
     ellipsis: Scm,

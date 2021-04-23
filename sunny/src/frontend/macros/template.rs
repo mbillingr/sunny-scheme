@@ -3,15 +3,20 @@ use sexpr_generics::prelude::*;
 use sexpr_generics::with_sexpr_matcher;
 use sunny_scm::Scm;
 
+#[derive(Debug)]
 pub struct Transcriber {
     ellipsis: Scm,
 }
 
+impl Default for Transcriber {
+    fn default() -> Self {
+        Self::new(Scm::symbol("..."))
+    }
+}
+
 impl Transcriber {
-    pub fn new() -> Self {
-        Transcriber {
-            ellipsis: Scm::symbol("..."),
-        }
+    pub fn new(ellipsis: Scm) -> Self {
+        Transcriber { ellipsis }
     }
 
     pub fn transcribe(&self, template: &Scm, bindings: &MatchBindings) -> Option<Scm> {
@@ -29,7 +34,7 @@ impl Transcriber {
                     Some(Scm::cons(self.transcribe(head, bindings)?,
                                    self.transcribe(tail, bindings)?))
                 }
-                {_: Symbol} => { bindings.lookup(template).cloned() }
+                {_: Symbol} => { Some(bindings.lookup(template).unwrap_or(template).clone()) }
                 _ => { Some(template.clone()) }
             }
         }
@@ -48,24 +53,31 @@ mod tests {
     #[test]
     fn transcribe_simple_template() {
         let template = sexpr![42];
-        let result = Transcriber::new().transcribe(&template, &MatchBindings::empty());
+        let result = Transcriber::default().transcribe(&template, &MatchBindings::empty());
         assert_eq!(result, Some(sexpr![42]));
     }
 
     #[test]
     fn transcribe_list_template() {
         let template = sexpr![(1 2 3)];
-        let result = Transcriber::new().transcribe(&template, &MatchBindings::empty());
+        let result = Transcriber::default().transcribe(&template, &MatchBindings::empty());
         assert_eq!(result, Some(sexpr![(1 2 3)]));
     }
 
     #[test]
     fn transcribe_repetition() {
         let template = sexpr![(x ...)];
-        let result = Transcriber::new().transcribe(
+        let result = Transcriber::default().transcribe(
             &template,
             &MatchBindings::repeated(sexpr![x], vec![1, 2, 3]),
         );
         assert_eq!(result, Some(sexpr![(1 2 3)]));
+    }
+
+    #[test]
+    fn transcribe_unbound_symbol() {
+        let template = sexpr![x];
+        let result = Transcriber::default().transcribe(&template, &MatchBindings::empty());
+        assert_eq!(result, Some(sexpr![x]));
     }
 }

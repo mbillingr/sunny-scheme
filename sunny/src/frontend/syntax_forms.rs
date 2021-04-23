@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::frontend::macros::pattern::PatternMatcher;
+use crate::frontend::macros::template::Transcriber;
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
@@ -496,19 +497,29 @@ impl SimpleMacro {
 #[derive(Debug)]
 pub struct SyntaxRules {
     rules: Vec<(PatternMatcher, Scm)>,
+    transcriber: Transcriber,
 }
 
 impl SyntaxExpander for SyntaxRules {
-    fn expand(&self, _sexpr: &Scm, _src_map: &SourceMap, _env: &Env) -> Result<AstNode> {
-
-        unimplemented!()
+    fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode> {
+        for (matcher, template) in &self.rules {
+            if let Some(bindings) = matcher.match_value(sexpr) {
+                let expanded_sexpr = self
+                    .transcriber
+                    .transcribe(template, &bindings)
+                    .ok_or_else(|| error_at(&src_map.get(template), Error::InvalidTemplate))?;
+                return Expression.expand(&expanded_sexpr, src_map, env);
+            }
+        }
+        Err(error_at(&src_map.get(sexpr), Error::InvalidForm))
     }
 }
 
 impl SyntaxRules {
     pub fn new(ellipsis: &Scm, _literals: &Scm, rules: &Scm, _env: &Env) -> Result<Self> {
         let rules = Self::parse_rules(ellipsis, rules).ok_or_else(|| Error::InvalidForm)?;
-        Ok(SyntaxRules { rules })
+        let transcriber = Transcriber::new(ellipsis.clone());
+        Ok(SyntaxRules { rules, transcriber })
     }
 
     fn parse_rules(ellipsis: &Scm, rules: &Scm) -> Option<Vec<(PatternMatcher, Scm)>> {
