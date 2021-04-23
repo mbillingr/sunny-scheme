@@ -297,7 +297,7 @@ impl SyntaxExpander for Body {
 fn is_definition(expr: &Scm) -> bool {
     with_sexpr_matcher! {
         match expr, {
-            ((:define) . _) => { true }
+            ({:define} . _) => { true }
             _ => { false }
         }
     }
@@ -426,13 +426,13 @@ impl SyntaxTransformer {
     fn build(&self, spec: &Scm, env: &Env, src_map: &SourceMap) -> Result<Rc<dyn SyntaxExpander>> {
         with_sexpr_matcher! {
             match spec, {
-                ((:"simple-macro") args body) => {
+                ({:"simple-macro"} args body) => {
                     Ok(Rc::new(SimpleMacro::new(args, body, env, src_map)?) as Rc<dyn SyntaxExpander>)
                 }
-                ((:"syntax-rules") {ellipsis: Symbol} {literals: List} . rules) => {
+                ({:"syntax-rules"} {ellipsis: Symbol} {literals: List} . rules) => {
                     Ok(Rc::new(SyntaxRules::new(ellipsis, literals, rules, env)?) as Rc<dyn SyntaxExpander>)
                 }
-                ((:"syntax-rules") {literals: List} . rules) => {
+                ({:"syntax-rules"} {literals: List} . rules) => {
                     Ok(Rc::new(SyntaxRules::new("...", literals, rules, env)?) as Rc<dyn SyntaxExpander>)
                 }
                 _ => { Err(src_map.get(spec).map_value(Error::InvalidForm)) }

@@ -59,12 +59,12 @@ macro_rules! match_sexpr_pattern {
     };
 
     // match literal symbol - identifier version
-    ((:$name:ident), $expr:expr, $then:block, $else:block) => {{
-        $crate::match_sexpr_pattern![(:stringify!($name)), $expr, $then, $else]
+    ({:$name:ident}, $expr:expr, $then:block, $else:block) => {{
+        $crate::match_sexpr_pattern![{:stringify!($name)}, $expr, $then, $else]
     }};
 
     // match literal symbol - string version
-    ((:$name:expr), $expr:expr, $then:block, $else:block) => {{
+    ({:$name:expr}, $expr:expr, $then:block, $else:block) => {{
         if let Some($name) = $expr.to_symbol() $then else $else
     }};
 
@@ -362,7 +362,7 @@ mod tests {
         let value: S = Rc::new(Symbol::from("foo"));
         let did_match = with_sexpr_matcher! {
             match value, {
-                (:foo) => { true }
+                {:foo} => { true }
                 _ => { false }
             }
         };
@@ -371,7 +371,7 @@ mod tests {
         let value: S = Rc::new(Symbol::from("bar"));
         let did_match = with_sexpr_matcher! {
             match value, {
-                (:foo) => { true }
+                {:foo} => { true }
                 _ => { false }
             }
         };
@@ -383,7 +383,7 @@ mod tests {
         let value: S = Rc::new(Symbol::from("$&[{} !]+"));
         let did_match = with_sexpr_matcher! {
             match value, {
-                (:"$&[{} !]+") => { true }
+                {:"$&[{} !]+"} => { true }
                 _ => { false }
             }
         };
@@ -392,7 +392,7 @@ mod tests {
         let value: S = Rc::new(Symbol::from(" + + + "));
         let did_match = with_sexpr_matcher! {
             match value, {
-                (:"$&[{} !]+") => { true }
+                {:"$&[{} !]+"} => { true }
                 _ => { false }
             }
         };
