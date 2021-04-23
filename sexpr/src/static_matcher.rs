@@ -103,6 +103,11 @@ macro_rules! match_sexpr_pattern {
         } else $else
     }};
 
+    // match dynamic value
+    ({$pattern:expr}, $expr:expr, $then:block, $else:block) => {{
+        if $pattern.val_eq($expr) $then else $else
+    }};
+
     // match a pair
     (($first:tt . $second:tt), $expr:expr, $then:block, $else:block) => {
         match (if $expr.is_pair() {
@@ -183,6 +188,23 @@ mod tests {
     type Symbol = &'static str;
     type Str = String;
     type Num = i32;
+
+    impl ValueEq for S {
+        fn val_eq(&self, other: &Self) -> bool {
+            if Rc::ptr_eq(self, other) {
+                return true;
+            }
+
+            if let (Some(a), Some(b)) = (
+                self.downcast_ref::<Symbol>(),
+                other.downcast_ref::<Symbol>(),
+            ) {
+                return a == b;
+            }
+
+            false
+        }
+    }
 
     impl Nullable for S {
         fn is_null(&self) -> bool {
@@ -510,5 +532,28 @@ mod tests {
             }
         };
         assert_eq!(result, true);
+    }
+
+    #[test]
+    fn match_dynamic_literal() {
+        let literal: S = Rc::new(Symbol::from("foo"));
+
+        let foo_val: S = Rc::new(Symbol::from("foo"));
+        let did_match = with_sexpr_matcher! {
+            match &foo_val, {
+                {literal} => { true }
+                _ => { false }
+            }
+        };
+        assert!(did_match);
+
+        let bar_val: S = Rc::new(Symbol::from("bar"));
+        let did_match = with_sexpr_matcher! {
+            match &bar_val, {
+                {literal} => { true }
+                _ => { false }
+            }
+        };
+        assert!(!did_match);
     }
 }
