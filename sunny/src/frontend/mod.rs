@@ -97,7 +97,7 @@ mod tests {
     #[test]
     fn meaning_of_global_set() {
         assert_eq!(
-            meaning_of![({"set!"} x 42)],
+            meaning_of![({:"set!"} x 42)],
             Ok(ast!(gset "test.x" (const 42)))
         );
     }
@@ -105,7 +105,7 @@ mod tests {
     #[test]
     fn meaning_of_local_set() {
         assert_eq!(
-            meaning_of![(lambda (x) ({"set!"} x 42))],
+            meaning_of![(lambda (x) ({:"set!"} x 42))],
             Ok(ast!(lambda 1 (set 0 (const 42))))
         );
     }
@@ -214,7 +214,7 @@ mod tests {
 
     #[test]
     fn meaning_of_library_definition_without_exports() {
-        let meaning = meaning_of![({"define-library"} (foo bar) (begin 0))];
+        let meaning = meaning_of![({:"define-library"} (foo bar) (begin 0))];
         let expected = Ok(ast!(module "(foo bar)" (const 0)));
         assert_eq!(meaning, expected);
     }
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn import_produces_no_code() {
         let env = base_environment("test");
-        meaning_of![env @ ({"define-library"} (foo bar) (export baz) (begin (define baz 42)))]
+        meaning_of![env @ ({:"define-library"} (foo bar) (export baz) (begin (define baz 42)))]
             .unwrap();
 
         assert_eq!(meaning_of![env @ (import (foo bar))], Ok(ast!(void)));
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn import_extends_the_environment_with_existing_variables() {
         let env = base_environment("test");
-        meaning_of![env @ ({"define-library"} (foo bar) (export baz) (begin (define baz 42)))]
+        meaning_of![env @ ({:"define-library"} (foo bar) (export baz) (begin (define baz 42)))]
             .unwrap();
         meaning_of![env @ (import (foo bar))].unwrap();
 

@@ -1,20 +1,25 @@
 #[macro_export]
 macro_rules! sexpr {
+    // Use StatelessFactory if no factory provided
     ($sexpr:tt) => { sexpr!{$crate::prelude::StatelessFactory; $sexpr} };
 
+    // some special cases
     ($factory:expr; ()) => { $factory.null() };
-
-    ($factory:expr; {true}) => { $factory.bool(true) };
-    ($factory:expr; {false}) => { $factory.bool(false) };
-
+    ($factory:expr; true) => { $factory.bool(true) };
+    ($factory:expr; false) => { $factory.bool(false) };
     ($factory:expr; _) => { $factory.interned_symbol("_") };
+    ($factory:expr; ...) => { $factory.interned_symbol("...") };
 
-    ($factory:expr; {$x:expr}) => { $factory.interned_symbol($x) };
+    // construct symbol from expression
+    ($factory:expr; {: $x:expr}) => { $factory.interned_symbol($x) };
 
-    ($factory:expr; {@ $x:ident}) => { $factory.build_from($x) };
+    // construct value dynamically from expression
+    ($factory:expr; {$x:expr}) => { $factory.build_from($x) };
 
+    // construct symbol from identifier name
     ($factory:expr; $x:ident) => { $factory.interned_symbol(stringify!($x)) };
 
+    // construct a pair
     ($factory:expr; ($x:tt . $y:tt)) => {
         $factory.pair(
             sexpr![$factory; $x],
@@ -22,6 +27,7 @@ macro_rules! sexpr {
         )
     };
 
+    // construct a list as linked pairs
     ($factory:expr; ($x:tt $($rest:tt)*)) => {
         $factory.pair(
             sexpr![$factory; $x],
@@ -29,6 +35,7 @@ macro_rules! sexpr {
         )
     };
 
+    // otherwise construct value from arbitrary expression
     ($factory:expr; $x:expr) => { $factory.build_from($x) };
 }
 
@@ -143,13 +150,13 @@ mod tests {
 
     #[test]
     fn build_true() {
-        let expr: Value = sexpr![{ true }];
+        let expr: Value = sexpr![true];
         assert_eq!(expr, True);
     }
 
     #[test]
     fn build_false() {
-        let expr: Value = sexpr![{ false }];
+        let expr: Value = sexpr![false];
         assert_eq!(expr, False);
     }
 
@@ -167,7 +174,7 @@ mod tests {
 
     #[test]
     fn build_special_symbol() {
-        let expr: Value = sexpr![{ "foo-bar" }];
+        let expr: Value = sexpr![{:"foo-bar"}];
         assert_eq!(expr, Symbol("foo-bar"));
     }
 
@@ -180,7 +187,7 @@ mod tests {
     #[test]
     fn build_variable() {
         let foo = 1 + 2;
-        let expr: Value = sexpr![{@foo}];
+        let expr: Value = sexpr![{ foo }];
         assert_eq!(expr, Int(3));
     }
 
