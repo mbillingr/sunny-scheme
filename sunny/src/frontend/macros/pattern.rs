@@ -14,11 +14,8 @@ pub struct PatternMatcher {
 }
 
 impl PatternMatcher {
-    pub fn new(pattern: Scm) -> Self {
-        PatternMatcher {
-            pattern,
-            ellipsis: Scm::symbol("..."),
-        }
+    pub fn new(pattern: Scm, ellipsis: Scm) -> Self {
+        PatternMatcher { pattern, ellipsis }
     }
 
     pub fn match_value(&self, value: &Scm) -> Option<MatchBindings> {
@@ -123,7 +120,7 @@ mod tests {
         let pattern = sexpr![_];
         let value = sexpr![foo];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(result, Some(MatchBindings::empty()));
     }
@@ -134,7 +131,7 @@ mod tests {
         let mismatch_value = sexpr![foo];
 
         assert_eq!(
-            PatternMatcher::new(pattern).match_value(&mismatch_value),
+            PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&mismatch_value),
             None
         );
     }
@@ -145,7 +142,7 @@ mod tests {
         let matching_value = sexpr![()];
 
         assert_eq!(
-            PatternMatcher::new(pattern).match_value(&matching_value),
+            PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&matching_value),
             Some(MatchBindings::empty())
         );
     }
@@ -155,7 +152,7 @@ mod tests {
         let pattern = sexpr![foo];
         let value = sexpr![42];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,
@@ -171,7 +168,7 @@ mod tests {
         let pattern = sexpr![(foo.bar)];
         let value = sexpr![(1/*car*/./*cdr*/2)]; // workaround to keep rustfmt changing this
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,
@@ -187,7 +184,7 @@ mod tests {
         let pattern = sexpr![(foo bar . baz)];
         let value = sexpr![(1 2 3 4)];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,
@@ -204,7 +201,7 @@ mod tests {
         let pattern = sexpr![(p ...)];
         let value = sexpr![(1 2 3 4)];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,
@@ -217,7 +214,7 @@ mod tests {
         let pattern = sexpr![(p ...)];
         let value = sexpr![()];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         let expected: Vec<i64> = vec![];
         assert_eq!(result, Some(MatchBindings::repeated(sexpr![p], expected)),);
@@ -228,7 +225,7 @@ mod tests {
         let pattern = sexpr![((p q) ...)];
         let value = sexpr![((1 2) (3 4))];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,
@@ -244,7 +241,7 @@ mod tests {
         let pattern = sexpr![((p ...) ...)];
         let value = sexpr![((1 2) (3 4))];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,
@@ -260,7 +257,7 @@ mod tests {
         let pattern = sexpr![(p ... x y)];
         let value = sexpr![(1 2 3 4)];
 
-        let result = PatternMatcher::new(pattern).match_value(&value);
+        let result = PatternMatcher::new(pattern, Scm::symbol("...")).match_value(&value);
 
         assert_eq!(
             result,

@@ -75,6 +75,14 @@ macro_rules! match_sexpr_pattern {
 
     // match any symbol and bind it
     ({$var:ident: Symbol}, $expr:expr, $then:block, $else:block) => {{
+        if $expr.is_symbol() {
+            let $var = $expr;
+            $then
+        } else $else
+    }};
+
+    // match any symbol and bind its name as &str
+    ({$var:ident: SymbolName}, $expr:expr, $then:block, $else:block) => {{
         if let Some($var) = $expr.to_symbol() $then else $else
     }};
 
@@ -443,11 +451,42 @@ mod tests {
     }
 
     #[test]
+    fn match_symbol_bind_obj() {
+        let empty: S = Rc::new(Symbol::from(""));
+        let value: S = Rc::new(Symbol::from("foo"));
+        let result = with_sexpr_matcher! {
+            match value, {
+                {s: Symbol} => { s }
+                _ => { empty.clone() }
+            }
+        };
+        assert_eq!(result.to_symbol(), Some("foo"));
+
+        let value: S = Rc::new(Symbol::from("bar"));
+        let result = with_sexpr_matcher! {
+            match value, {
+                {s: Symbol} => { s }
+                _ => { empty.clone() }
+            }
+        };
+        assert_eq!(result.to_symbol(), Some("bar"));
+
+        let value: S = Rc::new(42);
+        let result = with_sexpr_matcher! {
+            match value, {
+                {s: Symbol} => { s }
+                _ => { empty.clone() }
+            }
+        };
+        assert_eq!(result.to_symbol(), Some(""));
+    }
+
+    #[test]
     fn match_symbol_bind_name() {
         let value: S = Rc::new(Symbol::from("foo"));
         let result = with_sexpr_matcher! {
             match value, {
-                {name: Symbol} => { name }
+                {name: SymbolName} => { name }
                 _ => { "" }
             }
         };
@@ -456,7 +495,7 @@ mod tests {
         let value: S = Rc::new(Symbol::from("bar"));
         let result = with_sexpr_matcher! {
             match value, {
-                {name: Symbol} => { name }
+                {name: SymbolName} => { name }
                 _ => { "" }
             }
         };
@@ -465,7 +504,7 @@ mod tests {
         let value: S = Rc::new(42);
         let result = with_sexpr_matcher! {
             match value, {
-                {name: Symbol} => { name }
+                {name: SymbolName} => { name }
                 _ => { "" }
             }
         };

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use crate::frontend::macros::pattern::PatternMatcher;
 use crate::frontend::{
     ast::{Ast, AstNode},
     base_environment,
@@ -35,7 +36,7 @@ macro_rules! define_form {
 
 define_form! {
     Expression(sexpr, src_map, env):
-        ({f: Symbol} . _) => {
+        ({f: SymbolName} . _) => {
             match env.lookup_variable(f) {
                 Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, src_map, env),
                 Some(EnvBinding::Intrinsic(name, n_params, _)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, src_map),
@@ -48,7 +49,7 @@ define_form! {
         {list: List} => {
             Expression.expand_application(list, src_map, env)
         }
-        {name: Symbol} => {
+        {name: SymbolName} => {
             use EnvBinding::*;
             let context = src_map.get(sexpr);
             match env.lookup_variable(name) {
@@ -131,7 +132,7 @@ define_form! {
 
 define_form! {
     Assignment(sexpr, src_map, env):
-        (_ {name: Symbol} value) => {
+        (_ {name: SymbolName} value) => {
             let context = src_map.get(sexpr);
             env.ensure_variable(name);
             let value = Expression.expand(value, src_map, env)?;
@@ -146,14 +147,14 @@ define_form! {
 
 define_form! {
     Definition(sexpr, src_map, env):
-        (_ {name: Symbol} value) => {
+        (_ {name: SymbolName} value) => {
             let value = Expression.expand(value, src_map, env)?;
             env.ensure_global_variable(name);
             let binding = env.lookup_global_variable(name).unwrap();
             let full_name = binding.as_global().unwrap();
             Ok(Ast::store_global(src_map.get(sexpr), full_name, value))
         }
-        (_ ({name: Symbol} . args) . body) => {
+        (_ ({name: SymbolName} . args) . body) => {
             env.ensure_global_variable(name);
 
             let function = Lambda::build_ast(src_map.get(sexpr), args, body, env, src_map)?;
@@ -166,12 +167,12 @@ define_form! {
 
 define_form! {
     LocalDefinition(sexpr, src_map, env):
-        (_ {name: Symbol} value) => {
+        (_ {name: SymbolName} value) => {
             let value = Expression.expand(value, src_map, env)?;
             let idx = env.lookup_variable_index(name).unwrap();
             Ok(Ast::store(src_map.get(sexpr), idx, value))
         }
-        (_ ({name: Symbol} . args) . body) => {
+        (_ ({name: SymbolName} . args) . body) => {
             let function = Lambda::build_ast(src_map.get(sexpr), args, body, env, src_map)?;
             let idx = env.lookup_variable_index(name).unwrap();
             Ok(Ast::store(src_map.get(sexpr), idx, function))
@@ -213,7 +214,7 @@ define_form! {
             for binding in lists::iter(bindings) {
                 with_sexpr_matcher! {
                     match binding, {
-                        ({var: Symbol} val) => {
+                        ({var: SymbolName} val) => {
                             vars.push(var);
                             values.push(val);
                         }
@@ -306,8 +307,8 @@ fn is_definition(expr: &Scm) -> bool {
 fn definition_name(expr: &Scm) -> Option<&str> {
     with_sexpr_matcher! {
         match expr, {
-            (_ {name: Symbol} _) => { Some(name) }
-            (_ ({name: Symbol} . _) . _) => { Some(name) }
+            (_ {name: SymbolName} _) => { Some(name) }
+            (_ ({name: SymbolName} . _) . _) => { Some(name) }
             _ => { None }
         }
     }
@@ -370,7 +371,7 @@ impl LetRec {
 
 define_form! {
     SyntaxDefinition(sexpr, src_map, env):
-       (_ {keyword: Symbol} transformer_spec) => {
+       (_ {keyword: SymbolName} transformer_spec) => {
             let transformer = SyntaxTransformer.build(transformer_spec, env, src_map)?;
             env.add_global_binding(keyword, transformer);
             Ok(Ast::void())
@@ -433,7 +434,8 @@ impl SyntaxTransformer {
                     Ok(Rc::new(SyntaxRules::new(ellipsis, literals, rules, env)?) as Rc<dyn SyntaxExpander>)
                 }
                 ({:"syntax-rules"} {literals: List} . rules) => {
-                    Ok(Rc::new(SyntaxRules::new("...", literals, rules, env)?) as Rc<dyn SyntaxExpander>)
+                    let ellipsis = Scm::symbol("...");
+                    Ok(Rc::new(SyntaxRules::new(&ellipsis, literals, rules, env)?) as Rc<dyn SyntaxExpander>)
                 }
                 _ => { Err(src_map.get(spec).map_value(Error::InvalidForm)) }
             }
@@ -492,17 +494,34 @@ impl SimpleMacro {
 }
 
 #[derive(Debug)]
-pub struct SyntaxRules {}
+pub struct SyntaxRules {
+    rules: Vec<(PatternMatcher, Scm)>,
+}
 
 impl SyntaxExpander for SyntaxRules {
     fn expand(&self, _sexpr: &Scm, _src_map: &SourceMap, _env: &Env) -> Result<AstNode> {
+
         unimplemented!()
     }
 }
 
 impl SyntaxRules {
-    pub fn new(_ellipsis: &str, _literals: &Scm, _rules: &Scm, _env: &Env) -> Result<Self> {
-        Ok(SyntaxRules {})
+    pub fn new(ellipsis: &Scm, _literals: &Scm, rules: &Scm, _env: &Env) -> Result<Self> {
+        let rules = Self::parse_rules(ellipsis, rules).ok_or_else(|| Error::InvalidForm)?;
+        Ok(SyntaxRules { rules })
+    }
+
+    fn parse_rules(ellipsis: &Scm, rules: &Scm) -> Option<Vec<(PatternMatcher, Scm)>> {
+        let mut matchers = vec![];
+        for rule in lists::iter(rules) {
+            let pattern = rule.car()?.clone();
+            let template = rule.cadr()?.clone();
+
+            let matcher = PatternMatcher::new(pattern, ellipsis.clone());
+
+            matchers.push((matcher, template));
+        }
+        Some(matchers)
     }
 }
 
