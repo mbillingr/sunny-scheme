@@ -11,14 +11,14 @@ pub struct MatchResult {
     bindings: HashMap<PointerKey<Scm>, Binding>,
 }
 
-#[derive(Debug, PartialEq)]
-enum Binding {
+#[derive(Debug, Clone, PartialEq)]
+pub enum Binding {
     Simple(Scm),
     Repeated(Vec<Binding>),
 }
 
 impl MatchResult {
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         MatchResult {
             bindings: HashMap::new(),
         }
@@ -39,7 +39,7 @@ impl MatchResult {
         }
     }
 
-    fn repeated(binding: Scm, values: impl IntoIterator<Item = impl Into<Binding>>) -> Self {
+    pub fn repeated(binding: Scm, values: impl IntoIterator<Item = impl Into<Binding>>) -> Self {
         let bindings = values.into_iter().map(Into::into).collect();
         MatchResult {
             bindings: hashmap![binding.into() => Binding::Repeated(bindings)],
@@ -69,6 +69,41 @@ impl MatchResult {
                 .entry(name)
                 .or_insert(Binding::Repeated(vec![]))
                 .attach(value)
+        }
+    }
+
+    pub fn unwrap_ellipsis(&self) -> Option<impl Iterator<Item = Self> + '_> {
+        let n_reps: HashSet<usize> = self
+            .bindings
+            .values()
+            .filter_map(|b| match b {
+                Binding::Simple(_) => None,
+                Binding::Repeated(r) => Some(r.len()),
+            })
+            .collect();
+
+        if n_reps.len() != 1 {
+            return None;
+        }
+        let n_reps = n_reps.into_iter().next().unwrap();
+
+        Some((0..n_reps).map(move |i| {
+            let bindings = self
+                .bindings
+                .iter()
+                .map(|(name, b)| match b {
+                    Binding::Simple(_) => (name.clone(), b.clone()),
+                    Binding::Repeated(reps) => (name.clone(), reps[i].clone()),
+                })
+                .collect();
+            MatchResult { bindings }
+        }))
+    }
+
+    pub fn lookup(&self, key: &Scm) -> Option<&Scm> {
+        match self.bindings.get(PointerKey::from_ref(key))? {
+            Binding::Simple(value) => Some(value),
+            Binding::Repeated(_) => None,
         }
     }
 }
