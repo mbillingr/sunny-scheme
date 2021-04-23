@@ -20,6 +20,10 @@ impl SyntacticClosure {
     pub fn raw_expr(&self) -> &Scm {
         &self.sexpr
     }
+
+    pub fn env(&self) -> &Env {
+        &self.env
+    }
 }
 
 impl ScmObject for SyntacticClosure {

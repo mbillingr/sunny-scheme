@@ -1,4 +1,5 @@
 use crate::frontend::macros::bindings::MatchBindings;
+use crate::frontend::syntactic_closure::SyntacticClosure;
 use sexpr_generics::prelude::*;
 use sexpr_generics::with_sexpr_matcher;
 use sunny_scm::Scm;
@@ -35,6 +36,10 @@ impl Transcriber {
                                    self.transcribe(tail, bindings)?))
                 }
                 {_: Symbol} => { Some(bindings.lookup(template).unwrap_or(template).clone()) }
+                {sc: Obj<SyntacticClosure>} => {
+                    let sexpr = self.transcribe(sc.raw_expr(), bindings)?;
+                    Some(Scm::from(SyntacticClosure::new(sexpr, sc.env().clone())))
+                }
                 _ => { Some(template.clone()) }
             }
         }

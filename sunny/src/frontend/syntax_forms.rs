@@ -516,19 +516,20 @@ impl SyntaxExpander for SyntaxRules {
 }
 
 impl SyntaxRules {
-    pub fn new(ellipsis: &Scm, _literals: &Scm, rules: &Scm, _env: &Env) -> Result<Self> {
-        let rules = Self::parse_rules(ellipsis, rules).ok_or_else(|| Error::InvalidForm)?;
+    pub fn new(ellipsis: &Scm, _literals: &Scm, rules: &Scm, env: &Env) -> Result<Self> {
+        let rules = Self::parse_rules(ellipsis, rules, env).ok_or_else(|| Error::InvalidForm)?;
         let transcriber = Transcriber::new(ellipsis.clone());
         Ok(SyntaxRules { rules, transcriber })
     }
 
-    fn parse_rules(ellipsis: &Scm, rules: &Scm) -> Option<Vec<(PatternMatcher, Scm)>> {
+    fn parse_rules(ellipsis: &Scm, rules: &Scm, env: &Env) -> Option<Vec<(PatternMatcher, Scm)>> {
         let mut matchers = vec![];
         for rule in lists::iter(rules) {
             let pattern = rule.car()?.clone();
             let template = rule.cadr()?.clone();
 
             let matcher = PatternMatcher::new(pattern, ellipsis.clone());
+            let template = Scm::from(SyntacticClosure::new(template, env.clone()));
 
             matchers.push((matcher, template));
         }
