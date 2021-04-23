@@ -13,6 +13,10 @@ impl SyntacticClosure {
         SyntacticClosure { sexpr: expr, env }
     }
 
+    pub fn new_scm(expr: Scm, env: Env) -> Scm {
+        Scm::obj(Self::new(expr, env))
+    }
+
     pub fn expand(&self, expander: &impl SyntaxExpander, src_map: &SourceMap) -> Result<AstNode> {
         expander.expand(&self.sexpr, src_map, &self.env)
     }

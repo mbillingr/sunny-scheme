@@ -66,3 +66,17 @@ fn syntax_rules_hygiene_template_uses_bindings_from_definition_env() {
         EvaluatesTo::the_integer(42)
     );
 }
+
+#[test]
+fn syntax_rules_hygiene_template_uses_bound_bindings_from_usage_env() {
+    assert_that!(
+        vec![
+            "(define x 42)",
+            "(define-syntax foo
+              (syntax-rules ()
+                ((foo x) x)))",
+            "(let ((x 123)) (foo x))"
+        ],
+        EvaluatesTo::the_integer(123)
+    );
+}
