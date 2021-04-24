@@ -78,6 +78,17 @@ fn can_import_standard_libraries() {
     assert_that!("(import (sunny time))", EvaluatesTo::void());
 }
 
+#[test]
+fn imports_from_library_definitions_are_resolved_correctly() {
+    assert_that!(
+        given()
+            .file_contains("lib/b.sld", LIB_B.as_bytes())
+            .file_contains("lib/a.sld", LIB_A.as_bytes())
+            .then("(import (lib b))"),
+        EvaluatesTo::void()
+    );
+}
+
 const SIMPLE_LIBRARY_DEFINITION: &str = "
 (define-library (foo bar)
     (import (sunny core))
@@ -86,5 +97,23 @@ const SIMPLE_LIBRARY_DEFINITION: &str = "
         (define baz 42)
         (define private 123)
         (define-syntax get-private (simple-macro () private))
+    )
+)";
+
+const LIB_A: &str = "
+(define-library (lib a)
+    (import (sunny core))
+    (export foo)
+    (begin
+        (define foo 42)
+    )
+)";
+
+const LIB_B: &str = "
+(define-library (lib b)
+    (import (sunny core) (lib a))
+    (export foo bar)
+    (begin
+        (define bar 123)
     )
 )";

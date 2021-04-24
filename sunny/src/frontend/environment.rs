@@ -155,6 +155,7 @@ impl Env {
     }
 
     pub fn use_libraries_from(&mut self, other: &Env) {
+        self.library_filesystem = other.library_filesystem.clone();
         self.libraries = other.libraries.clone();
     }
 

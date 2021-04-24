@@ -82,28 +82,19 @@ mod tests {
         assert!(path.exists().unwrap());
     }
 
-    /*#[test]
-    fn build_empty_filesystem() {
-        let lfs = LibraryFileSystem::new(&[]);
-        assert!(fs.exists("").unwrap());
+    #[test]
+    fn lfs_with_virtual_file() {
+        let lfs = LibraryFileSystem::new(vec![]);
+        lfs.add_virtual_file("lib/a.txt", b"A");
+        assert_eq!(lfs.load_string("lib/a.txt"), Some("A".to_string()));
     }
 
     #[test]
-    fn build_physical_filesystem() {
-        let lfs = LibraryFileSystem::new(&["src"]);
-        for d in lfs.read_dir("").unwrap() {
-            println!("{}", d);
-        }
-        assert!(fs.exists("/library_filesystem.rs").unwrap());
+    fn lfs_with_multiple_virtual_files() {
+        let lfs = LibraryFileSystem::new(vec![]);
+        lfs.add_virtual_file("lib/a.txt", b"A");
+        lfs.add_virtual_file("lib/b.txt", b"B");
+        assert_eq!(lfs.load_string("lib/b.txt"), Some("B".to_string()));
+        assert_eq!(lfs.load_string("lib/a.txt"), Some("A".to_string()));
     }
-
-    #[test]
-    fn build_physical_filesystem_with_virtual_file() {
-        let lfs = LibraryFileSystem::new(&["src"]);
-        lfs.add_virtual_file("/foo/bar.txt", b"Hello, World!");
-        for d in fs.read_dir("").unwrap() {
-            println!("{}", d);
-        }
-        assert!(fs.exists("/foo/bar.txt").unwrap());
-    }*/
 }
