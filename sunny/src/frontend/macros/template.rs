@@ -25,11 +25,13 @@ impl Transcriber {
             match template, {
                 (t {self.ellipsis} . tail) => {
                     let mut sub_transcriptions = vec![];
-                    for sub_binding in bindings.unwrap_ellipsis()? {
+                    for sub_binding in bindings.filter_needed(t).unwrap_ellipsis()? {
                         let trans = self.transcribe(t, &sub_binding)?;
                         sub_transcriptions.push(trans);
                     }
-                    Some(sub_transcriptions.into_iter().rfold(tail.clone(), swap_args(Scm::cons)))
+                    Some(sub_transcriptions.into_iter()
+                                           .rfold(self.transcribe(tail, bindings)?,
+                                                  swap_args(Scm::cons)))
                 }
                 (head . tail) => {
                     Some(Scm::cons(self.transcribe(head, bindings)?,
@@ -84,5 +86,18 @@ mod tests {
         let template = sexpr![x];
         let result = Transcriber::default().transcribe(&template, &MatchBindings::empty());
         assert_eq!(result, Some(sexpr![x]));
+    }
+
+    #[test]
+    fn transcribe_multiple_repetitions() {
+        let template = sexpr![(x ... y ...)];
+        let result = Transcriber::default().transcribe(
+            &template,
+            &MatchBindings::join(
+                MatchBindings::repeated(sexpr![x], vec![1, 2]),
+                MatchBindings::repeated(sexpr![y], vec![3]),
+            ),
+        );
+        assert_eq!(result, Some(sexpr![(1 2 3)]));
     }
 }

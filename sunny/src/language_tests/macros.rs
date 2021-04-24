@@ -108,3 +108,17 @@ fn syntax_rules_respect_literals_list() {
         EvaluatesTo::the_integer(2)
     );
 }
+
+#[test]
+fn syntax_rules_cond_case() {
+    assert_that!(
+        vec![
+            "(define-syntax foo
+              (syntax-rules ()
+                ((_ (a b ...) z ...)
+                 (begin a b ...))))",
+            "(foo (1 2 3))"
+        ],
+        EvaluatesTo::the_integer(3)
+    );
+}

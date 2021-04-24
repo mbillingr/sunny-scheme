@@ -324,4 +324,20 @@ mod tests {
 
         assert_eq!(result, None);
     }
+
+    #[test]
+    fn match_indirect_ellipsis_nesting() {
+        let pattern = sexpr![((p ...) q ...)];
+        let value = sexpr![((1 2) 3 4)];
+
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
+
+        assert_eq!(
+            result,
+            Some(MatchBindings::join(
+                MatchBindings::repeated(sexpr![p], vec![1, 2],),
+                MatchBindings::repeated(sexpr![q], vec![3, 4],)
+            )),
+        );
+    }
 }

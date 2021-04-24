@@ -1,5 +1,7 @@
 use maplit::hashmap;
-use sexpr_generics::equality::PointerKey;
+use maplit::hashset;
+use sexpr_generics::prelude::*;
+use sexpr_generics::with_sexpr_matcher;
 use std::collections::{HashMap, HashSet};
 use sunny_scm::Scm;
 
@@ -69,6 +71,18 @@ impl MatchBindings {
         }
     }
 
+    pub fn filter_needed(&self, template: &Scm) -> Self {
+        let needed_identifiers = self.bound_in(template);
+        MatchBindings {
+            bindings: self
+                .bindings
+                .iter()
+                .filter(|&(k, _)| needed_identifiers.contains(k))
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+        }
+    }
+
     pub fn unwrap_ellipsis(&self) -> Option<impl Iterator<Item = Self> + '_> {
         let n_reps: HashSet<usize> = self
             .bindings
@@ -103,6 +117,26 @@ impl MatchBindings {
             Binding::Repeated(_) => None,
         }
     }
+
+    fn bound_in(&self, template: &Scm) -> HashSet<PointerKey<Scm>> {
+        with_sexpr_matcher! {
+            match template, {
+                {s: Symbol} => {
+                    if self.bindings.contains_key(PointerKey::from_ref(s)) {
+                        hashset![s.clone().into()]
+                    } else {
+                        hashset![]
+                    }
+                }
+                (left . right) => {
+                    let mut set = self.bound_in(left);
+                    set.extend(self.bound_in(right));
+                    set
+                }
+                _ => { hashset![] },
+            }
+        }
+    }
 }
 
 impl Binding {
@@ -126,5 +160,73 @@ where
 impl From<i64> for Binding {
     fn from(x: i64) -> Binding {
         Binding::Simple(x.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sexpr_generics::sexpr;
+
+    #[test]
+    fn symbol_bound_in_template() {
+        let bindings = MatchBindings::new(sexpr![x], sexpr![0]);
+        let idents = bindings.bound_in(&sexpr![x]);
+        assert_eq!(idents, hashset![sexpr![x].into()]);
+    }
+
+    #[test]
+    fn symbol_not_bound_in_template() {
+        let bindings = MatchBindings::new(sexpr![x], sexpr![0]);
+        let idents = bindings.bound_in(&sexpr![y]);
+        assert_eq!(idents, hashset![]);
+    }
+
+    #[test]
+    fn symbols_bound_in_list_template() {
+        let bindings = MatchBindings::join(
+            MatchBindings::new(sexpr![x], sexpr![0]),
+            MatchBindings::new(sexpr![y], sexpr![0]),
+        );
+        let idents = bindings.bound_in(&sexpr![(z x z y z)]);
+        assert_eq!(idents, hashset![sexpr![x].into(), sexpr![y].into()]);
+    }
+
+    #[test]
+    fn filter_needed_one_symbol() {
+        let bindings = MatchBindings::join(
+            MatchBindings::new(sexpr![x], sexpr![0]),
+            MatchBindings::new(sexpr![y], sexpr![0]),
+        );
+
+        let needed = bindings.filter_needed(&sexpr![x]);
+
+        let expected = MatchBindings::new(sexpr![x], sexpr![0]);
+        assert_eq!(needed, expected);
+    }
+
+    #[test]
+    fn filter_needed_both_symbols() {
+        let bindings = MatchBindings::join(
+            MatchBindings::new(sexpr![x], sexpr![0]),
+            MatchBindings::new(sexpr![y], sexpr![0]),
+        );
+
+        let needed = bindings.filter_needed(&sexpr![(x y)]);
+
+        assert_eq!(needed, bindings);
+    }
+
+    #[test]
+    fn filter_needed_extra_symbol_ignored() {
+        let bindings = MatchBindings::join(
+            MatchBindings::new(sexpr![x], sexpr![0]),
+            MatchBindings::new(sexpr![y], sexpr![0]),
+        );
+
+        let needed = bindings.filter_needed(&sexpr![(x z)]);
+
+        let expected = MatchBindings::new(sexpr![x], sexpr![0]);
+        assert_eq!(needed, expected);
     }
 }
