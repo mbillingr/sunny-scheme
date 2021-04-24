@@ -146,6 +146,10 @@ impl Env {
         Env::new(name.to_string(), Environment::Empty, Environment::Empty)
     }
 
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+
     pub fn set_libfs(&mut self, libfs: LibraryFileSystem) {
         self.library_filesystem = libfs;
     }

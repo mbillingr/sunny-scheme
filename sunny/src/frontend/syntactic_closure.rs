@@ -65,6 +65,11 @@ impl std::fmt::Display for SyntacticClosure {
 
 impl std::fmt::Debug for SyntacticClosure {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "<syntactic closure @{:p}>", self)
+        write!(
+            f,
+            "<syntactic closure @{}: {}>",
+            self.env.name(),
+            self.sexpr
+        )
     }
 }

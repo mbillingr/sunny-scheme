@@ -80,3 +80,17 @@ fn syntax_rules_hygiene_template_uses_bound_bindings_from_usage_env() {
         EvaluatesTo::the_integer(123)
     );
 }
+
+#[test]
+fn syntax_rules_expand_recursively() {
+    assert_that!(
+        vec![
+            "(define-syntax foo
+              (syntax-rules ()
+                ((foo) '())
+                ((foo x1 x2 ...) (cons x1 (foo x2 ...))) ))",
+            "(foo 1 2 3)"
+        ],
+        EvaluatesTo::the_list(vec![1, 2, 3])
+    );
+}

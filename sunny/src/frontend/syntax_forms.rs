@@ -44,6 +44,17 @@ define_form! {
                 _ => Expression.expand_application(sexpr, src_map, env),
             }
         }
+        ({sc: Obj<SyntacticClosure>} . _) => {
+            if let Some(f) = sc.raw_expr().to_symbol() {
+                match sc.env().lookup_variable(f) {
+                    Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, src_map, env),
+                    Some(EnvBinding::Intrinsic(name, n_params, _)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, src_map),
+                    _ => Expression.expand_application(sexpr, src_map, env),
+                }
+            } else {
+                Expression.expand_application(sexpr, src_map, env)
+            }
+        }
         () => {
             Err(src_map.get(sexpr).map(|_|Error::InvalidForm))
         }
