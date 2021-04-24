@@ -27,7 +27,7 @@ pub enum ErrorKind {
     Halted,
     StackUnderflow,
     NotCallable,
-    TypeError,
+    TypeError(&'static str, Scm),
     UndefinedVariable,
     TooFewArgs,
     TooManyArgs,
@@ -46,7 +46,9 @@ impl std::fmt::Display for ErrorKind {
             ErrorKind::Halted => write!(f, "Halted"),
             ErrorKind::StackUnderflow => write!(f, "Stack underflow."),
             ErrorKind::NotCallable => write!(f, "Not callable"),
-            ErrorKind::TypeError => write!(f, "Type Error"),
+            ErrorKind::TypeError(expect, value) => {
+                write!(f, "Type Error: expected {} but got {}", expect, value)
+            }
             ErrorKind::UndefinedVariable => write!(f, "Undefined Variable"),
             ErrorKind::TooFewArgs => write!(f, "Not enough arguments"),
             ErrorKind::TooManyArgs => write!(f, "Too many arguments"),

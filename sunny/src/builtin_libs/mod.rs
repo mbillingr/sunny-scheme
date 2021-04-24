@@ -42,7 +42,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity(">", 2, gt)
         .define_primitive_fixed_arity("<=", 2, le)
         .define_primitive_fixed_arity(">=", 2, ge)
-        .define_primitive_fixed_arity("=", 2, ne)
+        .define_primitive_fixed_arity("=", 2, neq)
         .define_primitive_fixed_arity("null?", 1, is_null)
         .define_intrinsic("apply", 2)
         .define_intrinsic("cons", 2)
@@ -70,24 +70,24 @@ pub fn define_standard_libraries(ctx: &mut Context) {
 
 primitive! {
     fn dec(num: Scm) -> Result<Scm> {
-        let x = num.as_int().ok_or(ErrorKind::TypeError)?;
+        let x = num.as_int().ok_or(ErrorKind::TypeError("number", num))?;
         Ok(Scm::number(x - 1))
     }
 
     varfn add([args]) -> Result<Scm> {
-        numbers::sum(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::sum(args.iter()).map_err(|x|ErrorKind::TypeError("numbers", x.clone()))
     }
 
     varfn sub([args]) -> Result<Scm> {
-        numbers::diff(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::diff(args.iter()).map_err(|x|ErrorKind::TypeError("numbers", x.clone()))
     }
 
     varfn mul([args]) -> Result<Scm> {
-        numbers::prod(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::prod(args.iter()).map_err(|x|ErrorKind::TypeError("numbers", x.clone()))
     }
 
     varfn div([args]) -> Result<Scm> {
-        numbers::quot(args.iter()).ok_or(ErrorKind::TypeError)
+        numbers::quot(args.iter()).map_err(|x|ErrorKind::TypeError("numbers", x.clone()))
     }
 
     fn is_equal(a: Scm, b: Scm) -> Result<Scm> {
@@ -99,23 +99,33 @@ primitive! {
     }
 
     fn lt(a: Scm, b: Scm) -> Result<Scm> {
-        Scm::try_is_less(&a, &b).ok_or(ErrorKind::TypeError)
+        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
+        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
+        Ok(Scm::bool(a < b))
     }
 
     fn gt(a: Scm, b: Scm) -> Result<Scm> {
-        Scm::try_is_greater(&a, &b).ok_or(ErrorKind::TypeError)
+        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
+        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
+        Ok(Scm::bool(a > b))
     }
 
     fn le(a: Scm, b: Scm) -> Result<Scm> {
-        Scm::try_is_less_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
+        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
+        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
+        Ok(Scm::bool(a <= b))
     }
 
     fn ge(a: Scm, b: Scm) -> Result<Scm> {
-        Scm::try_is_greater_or_equal(&a, &b).ok_or(ErrorKind::TypeError)
+        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
+        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
+        Ok(Scm::bool(a >= b))
     }
 
-    fn ne(a: Scm, b: Scm) -> Result<Scm> {
-        Scm::try_is_numeq(&a, &b).ok_or(ErrorKind::TypeError)
+    fn neq(a: Scm, b: Scm) -> Result<Scm> {
+        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
+        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
+        Ok(Scm::bool(a == b))
     }
 
     fn is_null(obj: Scm) -> Result<Scm> {
@@ -171,7 +181,7 @@ fn proc_arity(n_args: usize, vm: &mut Vm) -> Result<()> {
     } else if let Some(cnt) = proc.as_continuation() {
         cnt.arity()
     } else {
-        return Err(ErrorKind::TypeError);
+        return Err(ErrorKind::TypeError("callable", proc));
     };
     let max = max.map(Scm::from).unwrap_or_else(|| Scm::bool(false));
     let arity = Scm::cons(min, max);

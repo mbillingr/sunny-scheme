@@ -27,14 +27,18 @@ primitive! {
     }
 
     fn hashtable_set(obj: Scm, key: Scm, value: Scm) -> Result<Scm> {
-        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
+        let table = obj
+            .as_type::<MutableTable>()
+            .ok_or_else(||ErrorKind::TypeError("hash-table", obj.clone()))?;
 
         table.0.borrow_mut().table_set(key, value);
         Ok(Scm::void())
     }
 
     fn hashtable_ref_default(obj: Scm, key: Scm, default: Scm) -> Result<Scm> {
-        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
+        let table = obj
+            .as_type::<MutableTable>()
+            .ok_or_else(||ErrorKind::TypeError("hash-table", obj.clone()))?;
 
         if let Some(value) = table.0.borrow().table_ref(key) {
             Ok(value.clone())
@@ -44,13 +48,17 @@ primitive! {
     }
 
     fn hashtable_delete(obj: Scm, key: Scm) -> Result<Scm> {
-        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
+        let table = obj
+            .as_type::<MutableTable>()
+            .ok_or_else(||ErrorKind::TypeError("hash-table", obj.clone()))?;
         table.0.borrow_mut().table_del(key);
         Ok(Scm::void())
     }
 
     fn hashtable_clear(obj: Scm) -> Result<Scm> {
-        let table = obj.as_type::<MutableTable>().ok_or(ErrorKind::TypeError)?;
+        let table = obj
+            .as_type::<MutableTable>()
+            .ok_or_else(||ErrorKind::TypeError("hash-table", obj.clone()))?;
         table.0.borrow_mut().table_clear();
         Ok(Scm::void())
     }

@@ -181,12 +181,13 @@ impl Vm {
             self.push_value(x.clone());
             Ok(n + 1)
         } else {
-            Err(ErrorKind::TypeError)
+            Err(ErrorKind::TypeError("list", list.clone()))
         }
     }
 
     fn pop_int(&mut self) -> Result<i64> {
-        self.pop_value()?.as_int().ok_or(ErrorKind::TypeError)
+        let x = self.pop_value()?;
+        x.as_int().ok_or(ErrorKind::TypeError("int", x))
     }
 
     fn pop_values(&mut self, n: usize) -> Result<Vec<Scm>> {
@@ -279,12 +280,13 @@ impl Vm {
     }
 
     fn peek_closure(&mut self, idx: usize) -> Result<()> {
-        if let Some(cls) = self.pop_value()?.as_closure() {
+        let x = self.pop_value()?;
+        if let Some(cls) = x.as_closure() {
             let x = cls.parent.as_ref().unwrap().get_local(idx).clone();
             self.push_value(x);
             Ok(())
         } else {
-            Err(ErrorKind::TypeError)
+            Err(ErrorKind::TypeError("closure", x))
         }
     }
 
@@ -351,7 +353,7 @@ impl Vm {
         } else if let Some(cnt) = func.as_continuation() {
             self.call_continuation(cnt, n_args)
         } else {
-            Err(ErrorKind::TypeError)
+            Err(ErrorKind::TypeError("callable", func))
         }
     }
 
@@ -364,7 +366,7 @@ impl Vm {
         } else if let Some(cnt) = func.as_continuation() {
             self.call_continuation(cnt, n_args)
         } else {
-            Err(ErrorKind::TypeError)
+            Err(ErrorKind::TypeError("callable", func))
         }
     }
 
@@ -502,16 +504,16 @@ impl Vm {
     }
 
     fn car(&mut self) -> Result<()> {
-        self.pop_value()?
-            .car()
-            .ok_or(ErrorKind::TypeError)
+        let x = self.pop_value()?;
+        x.car()
+            .ok_or(ErrorKind::TypeError("pair", x.clone()))
             .map(|x| self.push_value(x.clone()))
     }
 
     fn cdr(&mut self) -> Result<()> {
-        self.pop_value()?
-            .cdr()
-            .ok_or(ErrorKind::TypeError)
+        let x = self.pop_value()?;
+        x.cdr()
+            .ok_or(ErrorKind::TypeError("pair", x.clone()))
             .map(|x| self.push_value(x.clone()))
     }
 
@@ -699,7 +701,7 @@ mod tests {
             .with_value_stack(vec![Scm::number(0)])
             .run_code(CodeBuilder::new().op(Op::Call { n_args: 0 }));
 
-        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert_eq!(ret, Err(ErrorKind::TypeError("callable", Scm::number(0))));
     }
 
     #[test]
@@ -968,7 +970,7 @@ mod tests {
             .with_value_stack(vec![Scm::null()])
             .run_code(CodeBuilder::new().op(Op::Car));
 
-        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert_eq!(ret, Err(ErrorKind::TypeError("pair", Scm::null())));
         assert!(vm.value_stack.is_empty());
     }
 
@@ -978,7 +980,7 @@ mod tests {
             .with_value_stack(vec![Scm::null()])
             .run_code(CodeBuilder::new().op(Op::Cdr));
 
-        assert_eq!(ret, Err(ErrorKind::TypeError));
+        assert_eq!(ret, Err(ErrorKind::TypeError("pair", Scm::null())));
         assert!(vm.value_stack.is_empty());
     }
 
