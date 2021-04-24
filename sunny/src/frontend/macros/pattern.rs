@@ -1,5 +1,5 @@
 use maplit::hashset;
-use sexpr_generics::lists::length;
+use sexpr_generics::lists::{length, memq};
 use sexpr_generics::prelude::PointerKey;
 use sexpr_generics::prelude::*;
 use sexpr_generics::with_sexpr_matcher;
@@ -14,11 +14,20 @@ use crate::frontend::syntactic_closure::SyntacticClosure;
 pub struct PatternMatcher {
     pattern: Scm,
     ellipsis: Scm,
+    literals: Scm,
 }
 
 impl PatternMatcher {
-    pub fn new(pattern: Scm, ellipsis: Scm) -> Self {
-        PatternMatcher { pattern, ellipsis }
+    pub fn new(pattern: Scm, ellipsis: Scm, literals: Scm) -> Self {
+        PatternMatcher {
+            pattern,
+            ellipsis,
+            literals,
+        }
+    }
+
+    pub fn default(pattern: Scm) -> Self {
+        PatternMatcher::new(pattern, Scm::symbol("..."), Scm::null())
     }
 
     pub fn match_value(&self, value: &Scm, env: &Env) -> Option<MatchBindings> {
@@ -32,6 +41,14 @@ impl PatternMatcher {
 
         match pattern.to_symbol() {
             Some("_") => return Some(MatchBindings::empty()),
+            Some(_) if memq(&self.literals, pattern).is_some() => {
+                if value.ptr_eq(pattern) {
+                    return Some(MatchBindings::empty());
+                } else {
+                    return None;
+                }
+            }
+
             Some(_) => {
                 if value.is_symbol() {
                     return Some(MatchBindings::new(
@@ -138,8 +155,7 @@ mod tests {
         let pattern = sexpr![_];
         let value = sexpr![foo];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(result, Some(MatchBindings::empty()));
     }
@@ -150,8 +166,7 @@ mod tests {
         let mismatch_value = sexpr![foo];
 
         assert_eq!(
-            PatternMatcher::new(pattern, Scm::symbol("..."))
-                .match_value(&mismatch_value, &Env::empty("env")),
+            PatternMatcher::default(pattern).match_value(&mismatch_value, &Env::empty("env")),
             None
         );
     }
@@ -162,8 +177,7 @@ mod tests {
         let matching_value = sexpr![()];
 
         assert_eq!(
-            PatternMatcher::new(pattern, Scm::symbol("..."))
-                .match_value(&matching_value, &Env::empty("env")),
+            PatternMatcher::default(pattern).match_value(&matching_value, &Env::empty("env")),
             Some(MatchBindings::empty())
         );
     }
@@ -173,8 +187,7 @@ mod tests {
         let pattern = sexpr![foo];
         let value = sexpr![42];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -190,8 +203,7 @@ mod tests {
         let pattern = sexpr![(foo.bar)];
         let value = sexpr![(1/*car*/./*cdr*/2)]; // workaround to keep rustfmt changing this
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -207,8 +219,7 @@ mod tests {
         let pattern = sexpr![(foo bar . baz)];
         let value = sexpr![(1 2 3 4)];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -225,8 +236,7 @@ mod tests {
         let pattern = sexpr![(p ...)];
         let value = sexpr![(1 2 3 4)];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -239,8 +249,7 @@ mod tests {
         let pattern = sexpr![(p ...)];
         let value = sexpr![()];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         let expected: Vec<i64> = vec![];
         assert_eq!(result, Some(MatchBindings::repeated(sexpr![p], expected)),);
@@ -251,8 +260,7 @@ mod tests {
         let pattern = sexpr![((p q) ...)];
         let value = sexpr![((1 2) (3 4))];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -268,8 +276,7 @@ mod tests {
         let pattern = sexpr![((p ...) ...)];
         let value = sexpr![((1 2) (3 4))];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -285,8 +292,7 @@ mod tests {
         let pattern = sexpr![(p ... x y)];
         let value = sexpr![(1 2 3 4)];
 
-        let result = PatternMatcher::new(pattern, Scm::symbol("..."))
-            .match_value(&value, &Env::empty("env"));
+        let result = PatternMatcher::default(pattern).match_value(&value, &Env::empty("env"));
 
         assert_eq!(
             result,
@@ -295,5 +301,27 @@ mod tests {
                 MatchBindings::from_sequence(vec![(sexpr![x], sexpr![3]), (sexpr![y], sexpr![4])])
             ))
         );
+    }
+
+    #[test]
+    fn match_pattern_literal_symbol() {
+        let pattern = sexpr![foo];
+        let value = sexpr![foo];
+
+        let result = PatternMatcher::new(pattern, Scm::symbol("..."), sexpr![(foo)])
+            .match_value(&value, &Env::empty("env"));
+
+        assert_eq!(result, Some(MatchBindings::from_sequence(vec![])));
+    }
+
+    #[test]
+    fn mismatch_pattern_literal_symbol() {
+        let pattern = sexpr![foo];
+        let value = sexpr![bar];
+
+        let result = PatternMatcher::new(pattern, Scm::symbol("..."), sexpr![(foo)])
+            .match_value(&value, &Env::empty("env"));
+
+        assert_eq!(result, None);
     }
 }

@@ -94,3 +94,17 @@ fn syntax_rules_expand_recursively() {
         EvaluatesTo::the_list(vec![1, 2, 3])
     );
 }
+
+#[test]
+fn syntax_rules_respect_literals_list() {
+    assert_that!(
+        vec![
+            "(define-syntax foo
+              (syntax-rules (a b)
+                ((foo a) 1)
+                ((foo b) 2) ))",
+            "(foo b)"
+        ],
+        EvaluatesTo::the_integer(2)
+    );
+}
