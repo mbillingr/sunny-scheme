@@ -40,10 +40,8 @@ impl Vm {
         match self.run() {
             Ok(x) => {
                 if !self.value_stack.is_empty() {
-                    panic!(
-                        "Scm stack should be empty but contains {:?}",
-                        self.value_stack
-                    )
+                    eprintln!("WARNING Value stack not empty:\n    {:?}", self.value_stack);
+                    self.value_stack.clear();
                 }
                 Ok(x)
             }
