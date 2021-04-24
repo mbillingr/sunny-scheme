@@ -28,12 +28,16 @@ impl<T> SourceLocation<T> {
     }
 
     pub fn in_string(mut self, s: impl Into<SharedStr>) -> Self {
-        self.source.string = Some(s.into());
+        if self.source.string.is_none() {
+            self.source.string = Some(s.into());
+        }
         self
     }
 
     pub fn in_file(mut self, path: impl Into<PathBuf>) -> Self {
-        self.source.file = Some(Arc::new(path.into()));
+        if self.source.file.is_none() {
+            self.source.file = Some(Arc::new(path.into()));
+        }
         self
     }
 
