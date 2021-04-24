@@ -110,7 +110,7 @@ fn syntax_rules_respect_literals_list() {
 }
 
 #[test]
-fn syntax_rules_cond_case() {
+fn syntax_rules_multiple_repetitions() {
     assert_that!(
         vec![
             "(define-syntax foo
@@ -120,5 +120,19 @@ fn syntax_rules_cond_case() {
             "(foo (1 2 3))"
         ],
         EvaluatesTo::the_integer(3)
+    );
+}
+
+#[test]
+fn syntax_rules_use_local_as_call_argument_in_expansion() {
+    assert_that!(
+        vec![
+            "(define-syntax foo
+              (syntax-rules ()
+                ((foo x) x)))",
+            "(define (use-foo y) (foo (- y)))",
+            "(use-foo 42)"
+        ],
+        EvaluatesTo::the_integer(-42)
     );
 }
