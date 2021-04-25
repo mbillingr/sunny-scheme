@@ -1,8 +1,10 @@
 use crate::frontend::{ast::AstNode, environment::Env, error::Result, SyntaxExpander};
+use sexpr_generics::prelude::*;
 use std::any::Any;
 use std::collections::HashMap;
 use sunny_scm::{Scm, ScmHasher, ScmObject, SourceMap};
 
+#[derive(Clone)]
 pub struct SyntacticClosure {
     sexpr: Scm,
     env: Env,
@@ -10,11 +12,19 @@ pub struct SyntacticClosure {
 
 impl SyntacticClosure {
     pub fn new(expr: Scm, env: Env) -> Self {
-        SyntacticClosure { sexpr: expr, env }
+        if let Some(sc) = expr.to_type::<SyntacticClosure>() {
+            sc.clone()
+        } else {
+            SyntacticClosure { sexpr: expr, env }
+        }
     }
 
     pub fn new_scm(expr: Scm, env: Env) -> Scm {
-        Scm::obj(Self::new(expr, env))
+        if expr.is_of_type::<SyntacticClosure>() {
+            expr.clone()
+        } else {
+            Scm::obj(SyntacticClosure { sexpr: expr, env })
+        }
     }
 
     pub fn expand(&self, expander: &impl SyntaxExpander, src_map: &SourceMap) -> Result<AstNode> {
@@ -35,12 +45,16 @@ impl ScmObject for SyntacticClosure {
         self
     }
 
-    fn is_eqv(&self, _other: &dyn ScmObject) -> bool {
-        false
+    fn is_eqv(&self, other: &dyn ScmObject) -> bool {
+        self.sexpr.as_dyn().is_eqv(other)
     }
 
-    fn eqv_hash(&self, state: &mut ScmHasher) {
-        std::ptr::hash(self, state)
+    fn is_equal(&self, other: &dyn ScmObject) -> bool {
+        self.sexpr.as_dyn().is_equal(other)
+    }
+
+    fn eqv_hash(&self, _state: &mut ScmHasher) {
+        unimplemented!()
     }
 
     fn equal_hash(&self, _state: &mut ScmHasher) {

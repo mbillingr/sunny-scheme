@@ -50,14 +50,10 @@ impl PatternMatcher {
             }
 
             Some(_) => {
-                if value.is_symbol() {
-                    return Some(MatchBindings::new(
-                        pattern.clone(),
-                        SyntacticClosure::new_scm(value.clone(), env.clone()),
-                    ));
-                } else {
-                    return Some(MatchBindings::new(pattern.clone(), value.clone()));
-                }
+                return Some(MatchBindings::new(
+                    pattern.clone(),
+                    SyntacticClosure::new_scm(value.clone(), env.clone()),
+                ));
             }
             None => {}
         }

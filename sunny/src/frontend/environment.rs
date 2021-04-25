@@ -164,11 +164,6 @@ impl Env {
         *globals = globals.add_binding(name, binding);
     }
 
-    pub fn add_binding(&self, name: impl ToString, binding: impl Into<EnvBinding>) {
-        let mut globals = self.global.borrow_mut();
-        *globals = globals.add_binding(name, binding);
-    }
-
     pub fn extend_from_sexpr(&self, vars: &Scm, src_map: &SourceMap) -> Result<Self> {
         let mut names = vec![];
         for v in lists::iter(vars) {

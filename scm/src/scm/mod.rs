@@ -95,6 +95,10 @@ impl Scm {
         Scm(Rc::new(obj))
     }
 
+    pub fn as_dyn(&self) -> &dyn ScmObject {
+        &*self.0
+    }
+
     pub fn is_like_true(&self) -> bool {
         self.as_bool().unwrap_or(true) && !self.is_void()
     }

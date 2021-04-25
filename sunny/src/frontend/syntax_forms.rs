@@ -514,7 +514,7 @@ pub struct SyntaxRules {
 impl SyntaxExpander for SyntaxRules {
     fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode> {
         for (matcher, template) in &self.rules {
-            if let Some(bindings) = matcher.match_value(&sexpr, env) {
+            if let Some(bindings) = matcher.match_value(sexpr, env) {
                 let expanded_sexpr = self
                     .transcriber
                     .transcribe(template, &bindings)
