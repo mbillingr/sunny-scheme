@@ -512,17 +512,19 @@ pub struct SyntaxRules {
 }
 
 impl SyntaxExpander for SyntaxRules {
-    fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode> {
+    fn expand(&self, expr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode> {
+        let sexpr = SyntacticClosure::new_scm(expr.clone(), env.clone());
         for (matcher, template) in &self.rules {
-            if let Some(bindings) = matcher.match_value(sexpr, env) {
+            if let Some(bindings) = matcher.match_value(&sexpr, env) {
                 let expanded_sexpr = self
                     .transcriber
                     .transcribe(template, &bindings)
                     .ok_or_else(|| error_at(&src_map.get(template), Error::InvalidTemplate))?;
+                //println!("{} => {}", sexpr, expanded_sexpr);
                 return Expression.expand(&expanded_sexpr, src_map, env);
             }
         }
-        Err(error_at(&src_map.get(sexpr), Error::InvalidForm))
+        Err(error_at(&src_map.get(expr), Error::InvalidForm))
     }
 }
 

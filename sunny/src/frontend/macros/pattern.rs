@@ -35,6 +35,10 @@ impl PatternMatcher {
     }
 
     fn match_pattern(&self, pattern: &Scm, value: &Scm, env: &Env) -> Option<MatchBindings> {
+        if let Some(sc) = value.to_type::<SyntacticClosure>() {
+            return self.match_pattern(pattern, sc.raw_expr(), sc.env());
+        }
+
         if pattern.is_null() && value.is_null() {
             return Some(MatchBindings::empty());
         }

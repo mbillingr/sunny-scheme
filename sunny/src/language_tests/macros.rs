@@ -113,13 +113,14 @@ fn syntax_rules_respect_literals_list() {
 fn syntax_rules_multiple_repetitions() {
     assert_that!(
         vec![
+            "(define (list . x) x)",
             "(define-syntax foo
               (syntax-rules ()
                 ((_ (a b ...) z ...)
-                 (begin a b ...))))",
-            "(foo (1 2 3))"
+                 (list a b ... z ...))))",
+            "(foo (1 2) 3 4)"
         ],
-        EvaluatesTo::the_integer(3)
+        EvaluatesTo::the_list(vec![1, 2, 3, 4])
     );
 }
 
@@ -134,5 +135,22 @@ fn syntax_rules_use_local_as_call_argument_in_expansion() {
             "(use-foo 42)"
         ],
         EvaluatesTo::the_integer(-42)
+    );
+}
+
+#[test]
+fn syntax_rules_recursion_with_multiple_repetitions() {
+    assert_that!(
+        vec![
+            "(define-syntax last
+              (syntax-rules ()
+                ((last (x))
+                 x)
+                ((last (x) rest ...)
+                 (last rest ...))
+              ))",
+            "(last (1) (2))"
+        ],
+        EvaluatesTo::the_integer(2)
     );
 }
