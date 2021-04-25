@@ -95,3 +95,15 @@ fn can_use_callcc_to_return_repeatedly() {
         EvaluatesTo::the_integer(3)
     );
 }
+
+#[test]
+fn can_wrap_callcc() {
+    assert_that!(
+        vec![
+            "(define (identity x) x)",
+            "(((call/cc identity) identity) 42)"
+        ],
+        EvaluatesTo::the_integer(42)
+    );
+    unimplemented!("there's no wrapping, yet...")
+}

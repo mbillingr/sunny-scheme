@@ -1,6 +1,7 @@
 (define-library (sunny dynwind)
-  (import (sunny core))
-  (export dynamic-wind call/cc)
+  (import (sunny core)
+          (sunny derived-syntax))
+  (export dynamic-wind call/cc dummy/cc)
   (begin
     (define builtin-call/cc call/cc)
 
@@ -8,6 +9,9 @@
 
     (define (make-winder in out)
       (cons in out))
+
+    (define winder-in car)
+    (define winder-out cdr)
 
     (define (push-winder winder)
       (set! *TOP* (cons winder *TOP*)))
@@ -20,8 +24,12 @@
         (builtin-call/cc
           (lambda (cont)
             (proc (lambda (arg)
-                    (wind-to *TOP* current)
+                    (wind *TOP* current)
                     (cont arg)))))))
+
+    (define (dummy/cc proc)
+      (builtin-call/cc
+        proc))
 
     (define (dynamic-wind before body after)
       (before)
@@ -31,14 +39,14 @@
         (after)
         result))
 
-    (define (wind-to from to)
+    (define (wind from to)
       (set! *TOP* from)
       (cond ((eq? from to) 'ok)
-            ((null? from) (wind-to from (cdr to))
+            ((null? from) (wind from (cdr to))
                           ((winder-in to)))
             ((null? to) ((winder-out from))
-                        (wind-to (cdr from) to))
+                        (wind (cdr from) to))
             (else (winder-out from)
-                  (wind-to (cdr from) (cdr to))
+                  (wind (cdr from) (cdr to))
                   (winder-in to)))
       (set! *TOP* to))))
