@@ -88,9 +88,9 @@ impl<T: ?Sized> PartialEq for Weak<T> {
     }
 }
 
-impl<T: ?Sized> std::fmt::Debug for Ref<T> {
+impl<T: ?Sized + std::fmt::Debug> std::fmt::Debug for Ref<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}@{:?}", std::any::type_name::<T>(), self.as_ptr())
+        self.0.fmt(f)
     }
 }
 
