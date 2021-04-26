@@ -84,6 +84,9 @@ impl Vm {
     fn run(&mut self) -> Result<Scm> {
         let mut arg: usize = 0;
         loop {
+            //println!("VM state: {:?}", self.current_activation);
+            //println!("VM state: {:?}", self.value_stack);
+            //print!("{}", self.current_activation.code.pretty_fmt(0, 0));
             let op = self.fetch_op();
             match op {
                 Op::Nop => {}
@@ -396,7 +399,6 @@ impl Vm {
         }
 
         let args = self.pop_values(n_args)?;
-        self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
         self.current_activation = Ref::new(cnt.activation.duplicate());
         Ok(())
@@ -531,13 +533,7 @@ impl Vm {
         activation.code = activation.code.offset(code_offset as isize);
         let activation = Ref::new(activation);
 
-        let mut value_stack = self.value_stack.clone();
-        value_stack.pop().ok_or(ErrorKind::StackUnderflow)?; // remove the function called by call/cc
-
-        let continuation = Continuation {
-            activation,
-            value_stack,
-        };
+        let continuation = Continuation { activation };
         self.push_value(Scm::continuation(continuation));
 
         Ok(())

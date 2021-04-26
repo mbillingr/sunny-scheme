@@ -7,7 +7,6 @@ use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 pub struct Continuation {
     pub(crate) activation: Ref<Activation>,
-    pub(crate) value_stack: Vec<Scm>,
 }
 
 impl std::fmt::Debug for Continuation {
