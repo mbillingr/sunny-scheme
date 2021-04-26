@@ -101,9 +101,9 @@ fn can_wrap_callcc() {
     assert_that!(
         vec![
             "(define (identity x) x)",
-            "(((call/cc identity) identity) 42)"
+            "(define (wrap/cc proc) (call/cc proc))",
+            "(((wrap/cc identity) identity) 42)"
         ],
         EvaluatesTo::the_integer(42)
     );
-    unimplemented!("there's no wrapping, yet...")
 }
