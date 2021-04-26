@@ -15,7 +15,7 @@ pub struct Activation {
 
 impl std::fmt::Debug for Activation {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "<activation record @ {:p}>", self)
+        write!(f, "<activation record @ {:p}> -> {:?}", self, self.caller)
     }
 }
 
