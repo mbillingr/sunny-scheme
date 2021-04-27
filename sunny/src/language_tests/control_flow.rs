@@ -97,12 +97,11 @@ fn can_use_callcc_to_return_repeatedly() {
 }
 
 #[test]
-fn can_wrap_callcc() {
+fn callcc_identity_magic_works_correctly() {
     assert_that!(
         vec![
             "(define (identity x) x)",
-            "(define (wrap/cc proc) (call/cc proc))",
-            "(((wrap/cc identity) identity) 42)"
+            "(((call/cc identity) identity) 42)"
         ],
         EvaluatesTo::the_integer(42)
     );
@@ -114,6 +113,25 @@ fn call_cc_works_in_args() {
         vec![
             "(define re 0)",
             "(* 2 (call/cc (lambda (c) (set! re c) (c 0))) 4)",
+            "(re 3)",
+        ],
+        EvaluatesTo::the_integer(24)
+    );
+}
+
+#[test]
+fn can_wrap_callcc() {
+    panic!(
+        "I think the problem is that the code pointer is modified in shared activations.
+    Possible solution: keep current code pointer in VM and store the *return* pointer in
+    activations. This should be rather constant
+    "
+    );
+    assert_that!(
+        vec![
+            "(define re 0)",
+            "(define (wrap/cc proc) (call/cc proc))",
+            "(* 2 (wrap/cc (lambda (c) (set! re c) (c 0))) 4)",
             "(re 3)",
         ],
         EvaluatesTo::the_integer(24)
