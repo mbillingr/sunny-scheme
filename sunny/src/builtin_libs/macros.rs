@@ -16,7 +16,7 @@ macro_rules! primitive {
                 std::cmp::Ordering::Equal => {}
             }
 
-            $($a = vm.pop_value().unwrap();)*
+            $($a = vm.pop_value()?;)*
             // wrap body in closure, so `return`ing from the body works as expected
             let body_fn = ||$body;
             let ret = body_fn();
@@ -35,12 +35,12 @@ macro_rules! primitive {
                 _ => {}
             }
 
-            $($a = vm.pop_value().unwrap();)*
+            $($a = vm.pop_value()?;)*
 
             let n_varargs = n_args - n_expect;
             let mut $vararg = vec![];
             for _ in 0..n_varargs {
-                $vararg.push(vm.pop_value().unwrap());
+                $vararg.push(vm.pop_value()?);
             }
 
             // wrap body in closure, so `return`ing from the body works as expected
