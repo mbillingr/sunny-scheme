@@ -107,3 +107,15 @@ fn can_wrap_callcc() {
         EvaluatesTo::the_integer(42)
     );
 }
+
+#[test]
+fn call_cc_works_in_args() {
+    assert_that!(
+        vec![
+            "(define re 0)",
+            "(* 2 (call/cc (lambda (c) (set! re c) (c 0))) 4)",
+            "(re 3)",
+        ],
+        EvaluatesTo::the_integer(24)
+    );
+}

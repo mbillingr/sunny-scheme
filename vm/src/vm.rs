@@ -395,6 +395,7 @@ impl Vm {
         }
 
         let args = self.pop_values(n_args)?;
+        self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
         self.current_activation = Ref::new(cnt.activation.duplicate());
         Ok(())
@@ -529,7 +530,13 @@ impl Vm {
         activation.code = activation.code.offset(code_offset as isize);
         let activation = Ref::new(activation);
 
-        let continuation = Continuation { activation };
+        let mut value_stack = self.value_stack.clone();
+        value_stack.pop(); // pop the function passed to call/cc
+
+        let continuation = Continuation {
+            activation,
+            value_stack,
+        };
         self.push_value(Scm::continuation(continuation));
 
         Ok(())
