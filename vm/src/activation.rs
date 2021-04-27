@@ -26,12 +26,12 @@ impl std::fmt::Display for Activation {
 }
 
 impl Activation {
-    pub fn from_closure(caller: Ref<Activation>, cls: &Closure, args: Vec<Scm>) -> Self {
+    pub fn from_closure(caller: Option<Ref<Activation>>, cls: &Closure, args: Vec<Scm>) -> Self {
         let tmp = std::mem::ManuallyDrop::new(args);
         let args = unsafe { Vec::from_raw_parts(tmp.as_ptr() as _, tmp.len(), tmp.capacity()) };
 
         Activation {
-            caller: Some(caller),
+            caller: caller,
             parent: cls.parent.clone(),
             code: cls.code.clone(),
             locals: args,

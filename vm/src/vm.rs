@@ -373,19 +373,15 @@ impl Vm {
 
     fn call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
-        let act = Activation::from_closure(self.current_activation.clone(), cls, args);
+        let act = Activation::from_closure(Some(self.current_activation.clone()), cls, args);
         self.current_activation = Ref::new(act);
         Ok(())
     }
 
     fn tail_call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
-        let caller = self
-            .current_activation
-            .caller
-            .as_ref()
-            .unwrap_or(&self.current_activation);
-        let act = Activation::from_closure(caller.clone(), &cls, args);
+        let caller = self.current_activation.caller.take();
+        let act = Activation::from_closure(caller, &cls, args);
         self.current_activation = Ref::new(act);
         Ok(())
     }
