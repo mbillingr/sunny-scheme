@@ -45,7 +45,7 @@ impl Context {
 
     pub fn eval(&mut self, src: SharedStr) -> Result<Scm, Error> {
         let sexprs =
-            parse_with_map(src.clone(), &mut self.src_map).map_err(|e| e.in_string(src.clone()))?;
+            parse_with_map(src.clone(), &self.src_map).map_err(|e| e.in_string(src.clone()))?;
 
         if sexprs.is_empty() {
             return Ok(Scm::void());

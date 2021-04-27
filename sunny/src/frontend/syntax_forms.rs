@@ -333,7 +333,7 @@ fn definition_value_expr(expr: &Scm) -> Option<Scm> {
             (_ (_ . args) . body) => {
                 Some(Scm::cons(Scm::symbol("lambda"),
                                Scm::cons(args.clone(),
-                                         body.clone())).into())
+                                         body.clone())))
             }
             _ => { None }
         }
@@ -359,7 +359,7 @@ impl LetRec {
 
         let body = body.rfold(Scm::null(), |acc, stmt| Scm::cons(stmt, acc));
 
-        let mut body_ast = Sequence.expand(&body.into(), src_map, &body_env)?;
+        let mut body_ast = Sequence.expand(&body, src_map, &body_env)?;
 
         for (name, exp) in names.iter().zip(defs) {
             let idx = body_env.lookup_variable_index(name).unwrap();
@@ -530,8 +530,7 @@ impl SyntaxExpander for SyntaxRules {
 
 impl SyntaxRules {
     pub fn new(ellipsis: &Scm, literals: &Scm, rules: &Scm, env: &Env) -> Result<Self> {
-        let rules =
-            Self::parse_rules(ellipsis, literals, rules, env).ok_or_else(|| Error::InvalidForm)?;
+        let rules = Self::parse_rules(ellipsis, literals, rules, env).ok_or(Error::InvalidForm)?;
         let transcriber = Transcriber::new(ellipsis.clone());
         Ok(SyntaxRules { rules, transcriber })
     }

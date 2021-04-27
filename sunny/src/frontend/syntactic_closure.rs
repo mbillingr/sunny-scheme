@@ -21,7 +21,7 @@ impl SyntacticClosure {
 
     pub fn new_scm(expr: Scm, env: Env) -> Scm {
         if expr.is_of_type::<SyntacticClosure>() {
-            expr.clone()
+            expr
         } else {
             Scm::obj(SyntacticClosure { sexpr: expr, env })
         }

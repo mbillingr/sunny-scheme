@@ -46,10 +46,10 @@ impl PatternMatcher {
         match pattern.to_symbol() {
             Some("_") => return Some(MatchBindings::empty()),
             Some(_) if memq(&self.literals, pattern).is_some() => {
-                if value.ptr_eq(pattern) {
-                    return Some(MatchBindings::empty());
+                return if value.ptr_eq(pattern) {
+                    Some(MatchBindings::empty())
                 } else {
-                    return None;
+                    None
                 }
             }
 
@@ -85,7 +85,7 @@ impl PatternMatcher {
     fn match_pair(&self, pattern: &Scm, value: &Scm, env: &Env) -> Option<MatchBindings> {
         let left_match = self.match_pattern(pattern.left()?, value.left()?, env)?;
         let right_match = self.match_pattern(pattern.right()?, value.right()?, env)?;
-        return Some(left_match.join(right_match));
+        Some(left_match.join(right_match))
     }
 
     fn match_simple_ellipsis(

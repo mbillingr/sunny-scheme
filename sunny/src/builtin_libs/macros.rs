@@ -44,8 +44,8 @@ macro_rules! primitive {
             }
 
             // wrap body in closure, so `return`ing from the body works as expected
-            let ret = (||$body)();
-            vm.push_value(ret?);
+            let body = ||$body;
+            vm.push_value(body()?);
             Ok(())
         }
     };

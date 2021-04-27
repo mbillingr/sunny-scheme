@@ -332,7 +332,7 @@ mod tests {
 
         assert_eq!(
             cs.code_slice(),
-            &[
+            &vec![
                 Op::MakeClosure { offset: 1 },
                 Op::Jump { forward: 3 },
                 Op::PrepareVarArgs(0),

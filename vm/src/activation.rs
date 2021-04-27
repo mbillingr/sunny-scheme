@@ -31,7 +31,7 @@ impl Activation {
         let args = unsafe { Vec::from_raw_parts(tmp.as_ptr() as _, tmp.len(), tmp.capacity()) };
 
         Activation {
-            caller: caller,
+            caller,
             parent: cls.parent.clone(),
             code: cls.code.clone(),
             locals: args,

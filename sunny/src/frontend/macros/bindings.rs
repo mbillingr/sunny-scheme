@@ -66,7 +66,7 @@ impl MatchBindings {
         for (name, value) in repetition.bindings {
             self.bindings
                 .entry(name)
-                .or_insert(Binding::Repeated(vec![]))
+                .or_insert_with(|| Binding::Repeated(vec![]))
                 .attach(value)
         }
     }
