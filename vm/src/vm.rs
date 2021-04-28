@@ -11,6 +11,7 @@ pub struct Vm {
     globals: Vec<Scm>,
 
     current_activation: Ref<Activation>,
+    code_ptr: CodePointer,
 }
 
 impl Vm {
@@ -29,13 +30,14 @@ impl Vm {
         Ok(Vm {
             value_stack: vec![],
             globals: vec![],
+            code_ptr: root_activation.code.clone(),
             current_activation: root_activation,
         })
     }
 
     pub fn eval_repl(&mut self, code: Ref<CodeSegment>) -> RuntimeResult<Scm> {
         let mut root_activation = self.current_activation.clone();
-        root_activation.code = CodePointer::new(code);
+        self.code_ptr = CodePointer::new(code);
 
         match self.run() {
             Ok(x) => {
@@ -72,21 +74,22 @@ impl Vm {
             locals: vec![],
         };
         self.current_activation = Ref::new(activation);
+        self.code_ptr = closure.code.clone();
     }
 
     fn add_error_context(&mut self, kind: ErrorKind) -> Error {
         Error {
             kind,
-            location: self.current_activation.code.offset(-1),
+            location: self.code_ptr.offset(-1),
         }
     }
 
     fn run(&mut self) -> Result<Scm> {
         let mut arg: usize = 0;
         loop {
-            //println!("VM state: {:?}", self.current_activation);
-            //println!("VM state: {:?}", self.value_stack);
-            //print!("{}", self.current_activation.code.pretty_fmt(0, 0));
+            println!("VM state: {:?}", self.current_activation);
+            println!("VM state: {:?}", self.value_stack);
+            print!("{}", self.code_ptr.pretty_fmt(0, 0));
             let op = self.fetch_op();
             match op {
                 Op::Nop => {}
@@ -112,6 +115,7 @@ impl Vm {
                 }
                 Op::Return => {
                     if let Some(act) = self.current_activation.caller.take() {
+                        self.code_ptr = act.code.clone();
                         self.current_activation = act;
                     } else {
                         let ret_val = self.pop_value()?;
@@ -160,7 +164,7 @@ impl Vm {
     }
 
     fn fetch_op(&mut self) -> Op {
-        self.current_activation.code.fetch()
+        self.code_ptr.fetch()
     }
 
     pub fn push_value(&mut self, val: Scm) {
@@ -200,7 +204,7 @@ impl Vm {
     }
 
     fn push_const(&mut self, idx: usize) {
-        let x = self.current_activation.code.get_constant(idx).clone();
+        let x = self.code_ptr.get_constant(idx).clone();
         self.push_value(x);
     }
 
@@ -292,7 +296,7 @@ impl Vm {
     }
 
     fn jump(&mut self, amount: usize) {
-        self.current_activation.code.jump_forward(amount)
+        self.code_ptr.jump_forward(amount)
     }
 
     fn jump_if_true(&mut self, amount: usize) -> Result<()> {
@@ -314,7 +318,7 @@ impl Vm {
     }
 
     fn rjump(&mut self, amount: usize) {
-        self.current_activation.code.jump_backward(amount)
+        self.code_ptr.jump_backward(amount)
     }
 
     fn rjump_if_true(&mut self, amount: usize) -> Result<()> {
@@ -373,8 +377,10 @@ impl Vm {
 
     fn call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
+        self.current_activation.code = self.code_ptr.clone();
         let act = Activation::from_closure(Some(self.current_activation.clone()), cls, args);
         self.current_activation = Ref::new(act);
+        self.code_ptr = cls.code.clone();
         Ok(())
     }
 
@@ -383,6 +389,7 @@ impl Vm {
         let caller = self.current_activation.caller.take();
         let act = Activation::from_closure(caller, &cls, args);
         self.current_activation = Ref::new(act);
+        self.code_ptr = cls.code.clone();
         Ok(())
     }
 
@@ -398,6 +405,7 @@ impl Vm {
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
         self.current_activation = Ref::new(cnt.activation.duplicate());
+        self.code_ptr = self.current_activation.code.clone();
         Ok(())
     }
 
@@ -515,7 +523,7 @@ impl Vm {
     }
 
     fn make_closure(&mut self, code_offset: usize) {
-        let code = self.current_activation.code.offset(code_offset as isize);
+        let code = self.code_ptr.offset(code_offset as isize);
 
         let closure = Closure {
             code,
@@ -527,7 +535,8 @@ impl Vm {
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
         let mut activation = self.current_activation.duplicate();
-        activation.code = activation.code.offset(code_offset as isize);
+        let code_ptr = self.code_ptr.offset(code_offset as isize);
+        activation.code = code_ptr.clone();
         let activation = Ref::new(activation);
 
         let mut value_stack = self.value_stack.clone();
@@ -536,6 +545,7 @@ impl Vm {
         let continuation = Continuation {
             activation,
             value_stack,
+            code_ptr,
         };
         self.push_value(Scm::continuation(continuation));
 

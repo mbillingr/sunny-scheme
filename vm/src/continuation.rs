@@ -1,4 +1,5 @@
 use crate::activation::Activation;
+use crate::bytecode::CodePointer;
 use crate::mem::Ref;
 use std::any::Any;
 use std::collections::HashMap;
@@ -8,11 +9,12 @@ use sunny_scm::{Scm, ScmHasher, ScmObject};
 pub struct Continuation {
     pub(crate) activation: Ref<Activation>,
     pub(crate) value_stack: Vec<Scm>,
+    pub(crate) code_ptr: CodePointer,
 }
 
 impl std::fmt::Debug for Continuation {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "<continuation {:p}> {:?}", self, self.activation.code)
+        write!(f, "<continuation {:p}> {:?}", self, self.code_ptr)
     }
 }
 
