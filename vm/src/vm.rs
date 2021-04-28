@@ -22,7 +22,7 @@ impl Vm {
         let root_activation = Activation {
             caller: None,
             parent: None,
-            code: code_ptr,
+            return_addr: code_ptr.clone(),
             locals: vec![],
         };
         let root_activation = Ref::new(root_activation);
@@ -30,13 +30,13 @@ impl Vm {
         Ok(Vm {
             value_stack: vec![],
             globals: vec![],
-            code_ptr: root_activation.code.clone(),
+            code_ptr,
             current_activation: root_activation,
         })
     }
 
     pub fn eval_repl(&mut self, code: Ref<CodeSegment>) -> RuntimeResult<Scm> {
-        let mut root_activation = self.current_activation.clone();
+        let root_activation = self.current_activation.clone();
         self.code_ptr = CodePointer::new(code);
 
         match self.run() {
@@ -67,10 +67,13 @@ impl Vm {
     }
 
     fn load_closure(&mut self, closure: &Closure) {
+        let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
+        let return_addr = CodePointer::new(Ref::new(code_segment));
+
         let activation = Activation {
             caller: None,
             parent: closure.parent.clone(),
-            code: closure.code.clone(),
+            return_addr,
             locals: vec![],
         };
         self.current_activation = Ref::new(activation);
@@ -87,9 +90,9 @@ impl Vm {
     fn run(&mut self) -> Result<Scm> {
         let mut arg: usize = 0;
         loop {
-            println!("VM state: {:?}", self.current_activation);
-            println!("VM state: {:?}", self.value_stack);
-            print!("{}", self.code_ptr.pretty_fmt(0, 0));
+            //println!("VM state: {:?}", self.current_activation);
+            //println!("VM state: {:?}", self.value_stack);
+            //print!("{}", self.code_ptr.pretty_fmt(0, 0));
             let op = self.fetch_op();
             match op {
                 Op::Nop => {}
@@ -115,7 +118,7 @@ impl Vm {
                 }
                 Op::Return => {
                     if let Some(act) = self.current_activation.caller.take() {
-                        self.code_ptr = act.code.clone();
+                        self.code_ptr = self.current_activation.return_addr.clone();
                         self.current_activation = act;
                     } else {
                         let ret_val = self.pop_value()?;
@@ -377,8 +380,12 @@ impl Vm {
 
     fn call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
-        self.current_activation.code = self.code_ptr.clone();
-        let act = Activation::from_closure(Some(self.current_activation.clone()), cls, args);
+        let act = Activation::from_closure(
+            Some(self.current_activation.clone()),
+            self.code_ptr.clone(),
+            cls,
+            args,
+        );
         self.current_activation = Ref::new(act);
         self.code_ptr = cls.code.clone();
         Ok(())
@@ -387,7 +394,12 @@ impl Vm {
     fn tail_call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
         let caller = self.current_activation.caller.take();
-        let act = Activation::from_closure(caller, &cls, args);
+        let act = Activation::from_closure(
+            caller,
+            self.current_activation.return_addr.clone(),
+            &cls,
+            args,
+        );
         self.current_activation = Ref::new(act);
         self.code_ptr = cls.code.clone();
         Ok(())
@@ -405,7 +417,7 @@ impl Vm {
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
         self.current_activation = Ref::new(cnt.activation.duplicate());
-        self.code_ptr = self.current_activation.code.clone();
+        self.code_ptr = cnt.code_ptr.clone();
         Ok(())
     }
 
@@ -534,13 +546,12 @@ impl Vm {
     }
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
-        let mut activation = self.current_activation.duplicate();
-        let code_ptr = self.code_ptr.offset(code_offset as isize);
-        activation.code = code_ptr.clone();
-        let activation = Ref::new(activation);
+        let activation = Ref::new(self.current_activation.duplicate());
 
         let mut value_stack = self.value_stack.clone();
         value_stack.pop(); // pop the function passed to call/cc
+
+        let code_ptr = self.code_ptr.offset(code_offset as isize);
 
         let continuation = Continuation {
             activation,
@@ -1098,7 +1109,7 @@ mod tests {
         let act = Activation {
             caller: None,
             parent: None,
-            code: CodePointer::new(code_segment.clone()).at(999),
+            return_addr: CodePointer::new(code_segment.clone()).at(999),
             locals: vec![Scm::number(1), Scm::number(2)],
         };
         let act = Ref::new(act);

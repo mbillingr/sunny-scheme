@@ -121,12 +121,6 @@ fn call_cc_works_in_args() {
 
 #[test]
 fn can_wrap_callcc() {
-    panic!(
-        "I think the problem is that the code pointer is modified in shared activations.
-    Possible solution: keep current code pointer in VM and store the immutable *return* pointer
-    in activations.
-    "
-    );
     assert_that!(
         vec![
             "(define re 0)",
