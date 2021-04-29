@@ -117,7 +117,7 @@ impl Vm {
                     self.rjump_if_void(Op::extend_arg(backward, arg))?
                 }
                 Op::Return => {
-                    if let Some(act) = self.current_activation.caller.take() {
+                    if let Some(act) = self.current_activation.caller.clone() {
                         self.code_ptr = self.current_activation.return_addr.clone();
                         self.current_activation = act;
                     } else {
@@ -393,7 +393,7 @@ impl Vm {
 
     fn tail_call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
-        let caller = self.current_activation.caller.take();
+        let caller = self.current_activation.caller.clone();
         let act = Activation::from_closure(
             caller,
             self.current_activation.return_addr.clone(),
