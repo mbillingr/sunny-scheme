@@ -1,7 +1,7 @@
 (define-library (sunny dynwind)
   (import (sunny core)
           (sunny derived-syntax))
-  (export dynamic-wind call/cc *TOP*)
+  (export dynamic-wind call/cc)
   (begin
     (define primitive-call/cc call/cc)
 
@@ -10,19 +10,15 @@
     (define make-winder cons)
 
     (define (enter winder)
-      (display "ENTER")
       ((car winder)))
 
     (define (leave winder)
-      (display "LEAVE")
       ((cdr winder)))
 
     (define (push-winder winder)
-      (display "PUSH")
       (set! *TOP* (cons winder *TOP*)))
 
     (define (pop-winder)
-      (display "POP")
       (set! *TOP* (cdr *TOP*)))
 
     (define (call/cc proc)
@@ -30,12 +26,6 @@
         (primitive-call/cc
           (lambda (cont)
             (proc (lambda (arg)
-                    (display "TOP ")
-                    (display *TOP*)
-                    (newline)
-                    (display "old-top ")
-                    (display old-top)
-                    (newline)
                     (wind *TOP* old-top)
                     (cont arg)))))))
 
@@ -48,12 +38,6 @@
         result))
 
     (define (wind from to)
-      (display "(wind ")
-      (display from)
-      (display " ")
-      (display to)
-      (display ")")
-      (newline)
       (set! *TOP* from)
       (cond ((eq? from to) 'ok)
             ((null? from) (wind from (cdr to))
@@ -63,7 +47,6 @@
             (else (leave (car from))
                   (wind (cdr from) (cdr to))
                   (enter (car to))))
-      (display "done")
       (set! *TOP* to))
 
     '(tests
