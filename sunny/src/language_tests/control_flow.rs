@@ -137,14 +137,30 @@ fn call_cc_returns_through_complete_call_chain() {
     assert_that!(
         vec![
             "(define re 0)",
-            "(define (wrap/cc proc) (call/cc proc))",
             "(define (a) (b) 'a)",
             "(define (b) (c) 'b)",
             "(define (c) (d) 'c)",
-            "(define (d) (call/cc (lambda (c) (set! re c))) 'd)",
+            "(define (d) (call/cc (lambda (k) (set! re k))) 'd)",
             "(a)",
             "(re 0)",
         ],
         EvaluatesTo::the_symbol("a")
+    );
+}
+
+#[test]
+fn continuations_can_mutate_closed_locals() {
+    assert_that!(
+        vec![
+            "(define count '())",
+            "(define (make-counter n)
+               (call/cc (lambda (k) (set! count k)))
+               (set! n (+ n 1))
+               n)",
+            "(make-counter 1)",
+            "(count 'ignored)",
+            "(count 'ignored)",
+        ],
+        EvaluatesTo::the_integer(4)
     );
 }

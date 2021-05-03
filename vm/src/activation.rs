@@ -10,7 +10,7 @@ pub struct Activation {
     pub(crate) caller: Option<Ref<Activation>>,
     pub(crate) parent: Option<Ref<Activation>>,
     pub(crate) return_addr: CodePointer,
-    pub(crate) locals: Vec<Scm>,
+    pub(crate) locals: Ref<Vec<Scm>>,
 }
 
 impl std::fmt::Debug for Activation {
@@ -39,7 +39,7 @@ impl Activation {
             caller,
             parent: cls.parent.clone(),
             return_addr,
-            locals: args,
+            locals: Ref::new(args),
         }
     }
 

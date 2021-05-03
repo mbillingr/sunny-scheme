@@ -23,7 +23,7 @@ impl Vm {
             caller: None,
             parent: None,
             return_addr: code_ptr.clone(),
-            locals: vec![],
+            locals: Ref::new(vec![]),
         };
         let root_activation = Ref::new(root_activation);
 
@@ -74,7 +74,7 @@ impl Vm {
             caller: None,
             parent: closure.parent.clone(),
             return_addr,
-            locals: vec![],
+            locals: Ref::new(vec![]),
         };
         self.current_activation = Ref::new(activation);
         self.code_ptr = closure.code.clone();
@@ -1110,7 +1110,7 @@ mod tests {
             caller: None,
             parent: None,
             return_addr: CodePointer::new(code_segment.clone()).at(999),
-            locals: vec![Scm::number(1), Scm::number(2)],
+            locals: Ref::new(vec![Scm::number(1), Scm::number(2)]),
         };
         let act = Ref::new(act);
 
