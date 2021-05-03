@@ -2,15 +2,16 @@ use crate::bytecode::CodePointer;
 use crate::closure::Closure;
 use crate::mem::Ref;
 use std::any::Any;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 #[derive(Clone)]
 pub struct Activation {
-    pub(crate) caller: Option<Ref<Activation>>,
-    pub(crate) parent: Option<Ref<Activation>>,
-    pub(crate) return_addr: CodePointer,
-    pub(crate) locals: Ref<Vec<Scm>>,
+    caller: Option<Ref<Activation>>,
+    parent: Option<Ref<Activation>>,
+    return_addr: CodePointer,
+    locals: Ref<RefCell<Vec<Scm>>>,
 }
 
 impl std::fmt::Debug for Activation {
@@ -26,6 +27,20 @@ impl std::fmt::Display for Activation {
 }
 
 impl Activation {
+    pub fn new(
+        caller: Option<Ref<Activation>>,
+        parent: Option<Ref<Activation>>,
+        return_addr: CodePointer,
+        locals: Vec<Scm>,
+    ) -> Self {
+        Activation {
+            caller,
+            parent,
+            return_addr,
+            locals: Ref::new(RefCell::new(locals)),
+        }
+    }
+
     pub fn from_closure(
         caller: Option<Ref<Activation>>,
         return_addr: CodePointer,
@@ -39,7 +54,7 @@ impl Activation {
             caller,
             parent: cls.parent.clone(),
             return_addr,
-            locals: Ref::new(args),
+            locals: Ref::new(RefCell::new(args)),
         }
     }
 
@@ -47,23 +62,40 @@ impl Activation {
         self.clone()
     }
 
-    pub fn push_local(&mut self, value: Scm) {
-        self.locals.push(value)
+    pub fn clone_caller(&self) -> Option<Ref<Activation>> {
+        self.caller.clone()
     }
 
-    pub fn pop_local(&mut self) -> Option<Scm> {
-        self.locals.pop()
+    pub fn parent(&self) -> Option<&Activation> {
+        self.parent.as_deref()
     }
 
-    pub fn get_local(&self, idx: usize) -> &Scm {
-        &self.locals[idx]
+    pub fn return_addr(&self) -> &CodePointer {
+        &self.return_addr
     }
 
-    pub fn set_local(&mut self, idx: usize, value: Scm) {
-        if idx >= self.locals.len() {
-            self.locals.resize(idx + 1, Scm::void());
+    pub fn push_local(&self, value: Scm) {
+        self.locals.borrow_mut().push(value)
+    }
+
+    pub fn pop_local(&self) -> Option<Scm> {
+        self.locals.borrow_mut().pop()
+    }
+
+    pub fn get_local(&self, idx: usize) -> Scm {
+        self.locals.borrow_mut()[idx].clone()
+    }
+
+    pub fn set_local(&self, idx: usize, value: Scm) {
+        let mut locals = self.locals.borrow_mut();
+        if idx >= locals.len() {
+            locals.resize(idx + 1, Scm::void());
         }
-        self.locals[idx] = value
+        locals[idx] = value
+    }
+
+    pub fn n_locals(&self) -> usize {
+        self.locals.borrow().len()
     }
 }
 

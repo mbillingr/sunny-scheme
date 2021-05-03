@@ -19,12 +19,7 @@ impl Vm {
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let code_ptr = CodePointer::new(Ref::new(code_segment));
 
-        let root_activation = Activation {
-            caller: None,
-            parent: None,
-            return_addr: code_ptr.clone(),
-            locals: Ref::new(vec![]),
-        };
+        let root_activation = Activation::new(None, None, code_ptr.clone(), vec![]);
         let root_activation = Ref::new(root_activation);
 
         Ok(Vm {
@@ -70,12 +65,7 @@ impl Vm {
         let code_segment = CodeBuilder::new().op(Op::Halt).build().unwrap();
         let return_addr = CodePointer::new(Ref::new(code_segment));
 
-        let activation = Activation {
-            caller: None,
-            parent: closure.parent.clone(),
-            return_addr,
-            locals: Ref::new(vec![]),
-        };
+        let activation = Activation::new(None, closure.parent.clone(), return_addr, vec![]);
         self.current_activation = Ref::new(activation);
         self.code_ptr = closure.code.clone();
     }
@@ -117,8 +107,8 @@ impl Vm {
                     self.rjump_if_void(Op::extend_arg(backward, arg))?
                 }
                 Op::Return => {
-                    if let Some(act) = self.current_activation.caller.clone() {
-                        self.code_ptr = self.current_activation.return_addr.clone();
+                    if let Some(act) = self.current_activation.clone_caller() {
+                        self.code_ptr = self.current_activation.return_addr().clone();
                         self.current_activation = act;
                     } else {
                         let ret_val = self.pop_value()?;
@@ -263,13 +253,13 @@ impl Vm {
     }
 
     fn get_local(&mut self, mut idx: usize) -> Result<()> {
-        let mut act = &self.current_activation;
-        while idx >= act.locals.len() {
-            idx -= act.locals.len();
-            act = act.parent.as_ref().ok_or(ErrorKind::UndefinedVariable)?;
+        let mut act = &*self.current_activation;
+        while idx >= act.n_locals() {
+            idx -= act.n_locals();
+            act = act.parent().ok_or(ErrorKind::UndefinedVariable)?;
         }
 
-        let x = act.get_local(idx).clone();
+        let x = act.get_local(idx);
         if x.is_void() {
             return Err(ErrorKind::UndefinedVariable);
         }
@@ -277,11 +267,11 @@ impl Vm {
         Ok(())
     }
 
-    fn set_local(&mut self, mut idx: usize, value: Scm) {
-        let mut act = &mut self.current_activation;
-        while idx >= act.locals.len() && act.parent.is_some() {
-            idx -= act.locals.len();
-            act = act.parent.as_mut().unwrap();
+    fn set_local(&self, mut idx: usize, value: Scm) {
+        let mut act = &*self.current_activation;
+        while idx >= act.n_locals() && act.parent().is_some() {
+            idx -= act.n_locals();
+            act = act.parent().unwrap();
         }
 
         act.set_local(idx, value)
@@ -393,10 +383,10 @@ impl Vm {
 
     fn tail_call_closure(&mut self, cls: &Closure, n_args: usize) -> Result<()> {
         let args = self.pop_values(n_args)?;
-        let caller = self.current_activation.caller.clone();
+        let caller = self.current_activation.clone_caller();
         let act = Activation::from_closure(
             caller,
-            self.current_activation.return_addr.clone(),
+            self.current_activation.return_addr().clone(),
             &cls,
             args,
         );
@@ -444,11 +434,11 @@ impl Vm {
     }
 
     fn prepare_args(&mut self, n_args: usize) -> Result<()> {
-        if self.current_activation.locals.len() < n_args {
+        if self.current_activation.n_locals() < n_args {
             return Err(ErrorKind::TooFewArgs);
         }
 
-        if self.current_activation.locals.len() > n_args {
+        if self.current_activation.n_locals() > n_args {
             return Err(ErrorKind::TooManyArgs);
         }
 
@@ -456,11 +446,11 @@ impl Vm {
     }
 
     fn prepare_varargs(&mut self, n_args: usize) -> Result<()> {
-        if self.current_activation.locals.len() < n_args {
+        if self.current_activation.n_locals() < n_args {
             return Err(ErrorKind::TooFewArgs);
         }
 
-        let n_varargs = self.current_activation.locals.len() - n_args;
+        let n_varargs = self.current_activation.n_locals() - n_args;
 
         let mut vararg = Scm::null();
         for _ in 0..n_varargs {
@@ -775,9 +765,9 @@ mod tests {
         );
 
         assert_eq!(ret, Err(ErrorKind::Halted));
-        assert_eq!(&vm.current_activation.locals[0], &Scm::number(12));
-        assert_eq!(&vm.current_activation.locals[1], &Scm::number(11));
-        assert_eq!(&vm.current_activation.locals[2], &Scm::number(10));
+        assert_eq!(vm.current_activation.get_local(0), Scm::number(12));
+        assert_eq!(vm.current_activation.get_local(1), Scm::number(11));
+        assert_eq!(vm.current_activation.get_local(2), Scm::number(10));
     }
 
     #[test]
@@ -1106,12 +1096,12 @@ mod tests {
             parent: None,
         };
 
-        let act = Activation {
-            caller: None,
-            parent: None,
-            return_addr: CodePointer::new(code_segment.clone()).at(999),
-            locals: Ref::new(vec![Scm::number(1), Scm::number(2)]),
-        };
+        let act = Activation::new(
+            None,
+            None,
+            CodePointer::new(code_segment.clone()).at(999),
+            vec![Scm::number(1), Scm::number(2)],
+        );
         let act = Ref::new(act);
 
         let callee = Closure {
