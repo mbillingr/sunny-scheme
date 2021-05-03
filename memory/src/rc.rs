@@ -1,6 +1,6 @@
 use std::any::Any;
 use std::hash::{Hash, Hasher};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::rc;
 
 pub struct Ref<T: ?Sized>(rc::Rc<T>);
@@ -47,16 +47,6 @@ impl<T: ?Sized> Deref for Ref<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &*self.0
-    }
-}
-
-impl<T: ?Sized> DerefMut for Ref<T> {
-    fn deref_mut(&mut self) -> &mut T {
-        unsafe {
-            let ptr = &*self.0 as *const T;
-            let mutptr = ptr as *mut T;
-            &mut *mutptr
-        }
     }
 }
 
