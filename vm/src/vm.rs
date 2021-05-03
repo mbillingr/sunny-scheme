@@ -406,7 +406,7 @@ impl Vm {
         let args = self.pop_values(n_args)?;
         self.value_stack = cnt.value_stack.clone();
         self.value_stack.extend(args);
-        self.current_activation = Ref::new(cnt.activation.duplicate());
+        self.current_activation = cnt.activation.clone();
         self.code_ptr = cnt.code_ptr.clone();
         Ok(())
     }
@@ -536,7 +536,7 @@ impl Vm {
     }
 
     fn capture_continuation(&mut self, code_offset: usize) -> Result<()> {
-        let activation = Ref::new(self.current_activation.duplicate());
+        let activation = self.current_activation.clone();
 
         let mut value_stack = self.value_stack.clone();
         value_stack.pop(); // pop the function passed to call/cc

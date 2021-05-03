@@ -58,10 +58,6 @@ impl Activation {
         }
     }
 
-    pub fn duplicate(&self) -> Self {
-        self.clone()
-    }
-
     pub fn clone_caller(&self) -> Option<Ref<Activation>> {
         self.caller.clone()
     }
