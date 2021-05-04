@@ -1,5 +1,6 @@
 mod arithmetic;
 mod bool;
+mod bytevector;
 mod int;
 mod interner;
 mod null;
@@ -91,6 +92,10 @@ impl Scm {
         items.rfold(Self::null(), |acc, x| Self::cons(x, acc))
     }
 
+    pub fn bytevector(data: impl Into<bytevector::ByteVector>) -> Scm {
+        Scm::obj(data.into())
+    }
+
     pub fn obj(obj: impl ScmObject) -> Self {
         Scm(Rc::new(obj))
     }
@@ -156,6 +161,15 @@ impl Scm {
         self.as_pair()
             .map(|(_, cdr)| cdr.last_cdr())
             .unwrap_or(self)
+    }
+
+    pub fn is_bytevector(&self) -> bool {
+        self.as_bytevector().is_some()
+    }
+
+    pub fn as_bytevector(&self) -> Option<&[u8]> {
+        self.as_type::<bytevector::ByteVector>()
+            .map(bytevector::ByteVector::as_slice)
     }
 
     pub fn as_ref(&self) -> &dyn ScmObject {

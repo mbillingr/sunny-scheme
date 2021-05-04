@@ -1,7 +1,6 @@
 #[macro_use]
 mod macros;
 mod hash_table;
-
 use crate::context::Context;
 use crate::frontend::syntax_forms::{
     Assignment, Begin, Branch, Definition, Import, Lambda, Let, LibraryDefinition, Quotation,
@@ -47,6 +46,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("null?", 1, is_null)
         .define_intrinsic("apply", 2)
         .define_primitive_fixed_arity("boolean?", 1, is_boolean)
+        .define_primitive_fixed_arity("bytevector?", 1, is_bytevector)
+        .define_primitive_vararg("bytevector", 0, bytevector)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
@@ -132,6 +133,19 @@ primitive! {
 
     fn is_boolean(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_bool()))
+    }
+
+    fn is_bytevector(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_bytevector()))
+    }
+
+    varfn bytevector([args]) -> Result<Scm> {
+        let mut byte_data = Vec::with_capacity(args.len());
+        for x in args {
+            let x = x.as_int().filter(|&x| x >= 0 && x <= 255).ok_or(ErrorKind::TypeError("byte-valued number", x))?;
+            byte_data.push(x as u8);
+        }
+        Ok(Scm::bytevector(byte_data))
     }
 
     fn is_null(obj: Scm) -> Result<Scm> {
