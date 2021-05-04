@@ -56,6 +56,7 @@ Datum: Scm = {
 RawSexpr: Scm = {
     <b:Bool> => Scm::bool(b),
     <n:Num> => Scm::int(n),
+    <ch:Char> => Scm::char(ch),
     <s:Sym> => Scm::symbol(&s),
     <s:Str> => Scm::string(s),
     <l:List> => <>,
@@ -68,6 +69,57 @@ Bool: bool = {
 }
 
 Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
+
+Char: char = {
+    <s:r"#\\[xX][0-9A-Fa-f]+"> =>? u32::from_str_radix(&s[3..], 16)
+                                    .ok()
+                                    .and_then(std::char::from_u32)
+                                    .ok_or(ParseError::User { error: "invalid unicode character" }),
+    <l:@L><s:r"#\\[xX][^0-9A-Fa-f]+"><r:@R> =>? match &s[2..] {
+                                    "xi" => Ok('ξ'),       "Xi" => Ok('Ξ'),
+                                    _ => Err(ParseError::User { error: "invalid named character" })
+                                },
+    <l:@L><s:r"#\\[^xX][a-zA-Z]+"><r:@R> =>? match &s[2..] {
+                                    "alarm" => Ok('\u{0007}'),
+                                    "backspace" => Ok('\u{0008}'),
+                                    "delete" => Ok('\u{007f}'),
+                                    "escape" => Ok('\u{001b}'),
+                                    "newline" => Ok('\n'),
+                                    "null" => Ok('\u{0000}'),
+                                    "return" => Ok('\r'),
+                                    "space" => Ok(' '),
+                                    "tab" => Ok('\t'),
+
+                                    "alpha" => Ok('α'),    "Alpha" => Ok('Α'),
+                                    "beta" => Ok('β'),     "Beta" => Ok('Β'),
+                                    "gamma" => Ok('γ'),    "Gamma" => Ok('Γ'),
+                                    "delta" => Ok('δ'),    "Delta" => Ok('Δ'),
+                                    "epsilon" => Ok('ε'),  "Epsilon" => Ok('Ε'),
+                                    "zeta" => Ok('ζ'),     "Zeta" => Ok('Ζ'),
+                                    "eta" => Ok('η'),      "Eta" => Ok('Η'),
+                                    "theta" => Ok('θ'),    "Theta" => Ok('Θ'),
+                                    "iota" => Ok('ι'),     "Iota" => Ok('Ι'),
+                                    "kappa" => Ok('κ'),    "Kappa" => Ok('Κ'),
+                                    "lambda" => Ok('λ'),   "Lambda" => Ok('Λ'),
+                                    "mu" => Ok('μ'),       "Mu" => Ok('Μ'),
+                                    "nu" => Ok('ν'),       "Nu" => Ok('Ν'),
+                                    // xi is treated specially because of the leading x
+                                    "omicron" => Ok('ο'),  "Omicron" => Ok('Ο'),
+                                    "pi" => Ok('π'),       "Pi" => Ok('Π'),
+                                    "rho" => Ok('ρ'),      "Rho" => Ok('Ρ'),
+                                    "2sigma" => Ok('ς'),
+                                    "sigma" => Ok('σ'),    "Sigma" => Ok('Σ'),
+                                    "tau" => Ok('τ'),      "Tau" => Ok('Τ'),
+                                    "upsilon" => Ok('υ'),  "Upsilon" => Ok('Υ'),
+                                    "phi" => Ok('φ'),      "Phi" => Ok('Φ'),
+                                    "chi" => Ok('χ'),      "Chi" => Ok('Χ'),
+                                    "psi" => Ok('ψ'),      "Psi" => Ok('Ψ'),
+                                    "omega" => Ok('ω'),    "Omega" => Ok('Ω'),
+
+                                    _ => Err(ParseError::User { error: "invalid named character" })
+                                },
+    <s:r"#\\."> => s[2..].chars().next().unwrap(),
+};
 
 Sym: Cow<'input, str> = {
     <s:IDENTIFIER> => Cow::Borrowed(s),

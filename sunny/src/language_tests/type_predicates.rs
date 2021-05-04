@@ -20,3 +20,12 @@ fn bytevector_predicate_is_true_only_for_bytevector_types() {
     assert_that!("(bytevector? '())", EvaluatesTo::the_boolean(false));
     assert_that!("(bytevector? 0)", EvaluatesTo::the_boolean(false));
 }
+
+#[test]
+fn char_predicate_is_true_only_for_character_types() {
+    assert_that!(r"(char? #\a)", EvaluatesTo::the_boolean(true));
+    assert_that!(r"(char? #\x03bb)", EvaluatesTo::the_boolean(true));
+    assert_that!(r"(char? #\alarm)", EvaluatesTo::the_boolean(true));
+    assert_that!("(char? '())", EvaluatesTo::the_boolean(false));
+    assert_that!("(char? 0)", EvaluatesTo::the_boolean(false));
+}

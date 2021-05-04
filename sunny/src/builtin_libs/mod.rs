@@ -48,6 +48,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("boolean?", 1, is_boolean)
         .define_primitive_fixed_arity("bytevector?", 1, is_bytevector)
         .define_primitive_vararg("bytevector", 0, bytevector)
+        .define_primitive_fixed_arity("char?", 1, is_char)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
@@ -146,6 +147,10 @@ primitive! {
             byte_data.push(x as u8);
         }
         Ok(Scm::bytevector(byte_data))
+    }
+
+    fn is_char(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_char()))
     }
 
     fn is_null(obj: Scm) -> Result<Scm> {

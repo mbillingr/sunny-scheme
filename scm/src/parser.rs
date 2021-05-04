@@ -226,6 +226,94 @@ mod tests {
     }
 
     #[test]
+    fn can_parse_characters() {
+        assert_eq!(parse_str(r"#\A").unwrap(), vec![Scm::char('A')]);
+        assert_eq!(parse_str(r"#\x").unwrap(), vec![Scm::char('x')]);
+        assert_eq!(parse_str(r"#\(").unwrap(), vec![Scm::char('(')]);
+        assert_eq!(
+            parse_str(r"#\ #\5").unwrap(),
+            vec![Scm::char(' '), Scm::char('5')]
+        );
+        assert_eq!(parse_str(r"#\x03bb").unwrap(), vec![Scm::char('λ')]);
+        assert_eq!(parse_str(r"#\X03bb").unwrap(), vec![Scm::char('\u{03bb}')]);
+    }
+
+    #[test]
+    fn can_parse_required_named_characters() {
+        for (repr, ch) in vec![
+            (r"#\alarm", '\u{0007}'),
+            (r"#\backspace", '\u{0008}'),
+            (r"#\delete", '\u{007f}'),
+            (r"#\escape", '\u{001b}'),
+            (r"#\newline", '\u{000a}'),
+            (r"#\null", '\u{0000}'),
+            (r"#\return", '\u{000d}'),
+            (r"#\space", '\u{0020}'),
+            (r"#\tab", '\u{0009}'),
+            (r"#\alarm", '\u{0007}'),
+        ] {
+            assert_eq!(parse_str(repr).unwrap(), vec![Scm::char(ch)]);
+        }
+    }
+
+    #[test]
+    fn can_extra_required_named_characters() {
+        for (repr, ch) in vec![
+            (r"#\alpha", '\u{03b1}'),
+            (r"#\beta", '\u{03b2}'),
+            (r"#\gamma", '\u{03b3}'),
+            (r"#\delta", '\u{03b4}'),
+            (r"#\epsilon", '\u{03b5}'),
+            (r"#\zeta", '\u{03b6}'),
+            (r"#\eta", '\u{03b7}'),
+            (r"#\theta", '\u{03b8}'),
+            (r"#\iota", '\u{03b9}'),
+            (r"#\kappa", '\u{03ba}'),
+            (r"#\lambda", '\u{03bb}'),
+            (r"#\mu", '\u{03bc}'),
+            (r"#\nu", '\u{03bd}'),
+            (r"#\xi", '\u{03be}'),
+            (r"#\omicron", '\u{03bf}'),
+            (r"#\pi", '\u{03c0}'),
+            (r"#\rho", '\u{03c1}'),
+            (r"#\2sigma", '\u{03c2}'),
+            (r"#\sigma", '\u{03c3}'),
+            (r"#\tau", '\u{03c4}'),
+            (r"#\upsilon", '\u{03c5}'),
+            (r"#\phi", '\u{03c6}'),
+            (r"#\chi", '\u{03c7}'),
+            (r"#\psi", '\u{03c8}'),
+            (r"#\omega", '\u{03c9}'),
+            (r"#\Alpha", '\u{0391}'),
+            (r"#\Beta", '\u{0392}'),
+            (r"#\Gamma", '\u{0393}'),
+            (r"#\Delta", '\u{0394}'),
+            (r"#\Epsilon", '\u{0395}'),
+            (r"#\Zeta", '\u{0396}'),
+            (r"#\Eta", '\u{0397}'),
+            (r"#\Theta", '\u{0398}'),
+            (r"#\Iota", '\u{0399}'),
+            (r"#\Kappa", '\u{039a}'),
+            (r"#\Lambda", '\u{039b}'),
+            (r"#\Mu", '\u{039c}'),
+            (r"#\Nu", '\u{039d}'),
+            (r"#\Xi", '\u{039e}'),
+            (r"#\Omicron", '\u{039f}'),
+            (r"#\Pi", '\u{03a0}'),
+            (r"#\Rho", '\u{03a1}'),
+            (r"#\Sigma", '\u{03a3}'),
+            (r"#\Tau", '\u{03a4}'),
+            (r"#\Upsilon", '\u{03a5}'),
+            (r"#\Phi", '\u{03a6}'),
+            (r"#\Chi", '\u{03a7}'),
+            (r"#\Psi", '\u{03a8}'),
+            (r"#\Omega", '\u{03a9}'),
+        ] {
+            assert_eq!(parse_str(repr).unwrap(), vec![Scm::char(ch)]);
+        }
+    }
+
+    #[test]
     fn can_parse_symbol() {
         let sexpr = parse_str("foo");
         assert_eq!(sexpr.unwrap(), vec![Scm::symbol("foo")]);

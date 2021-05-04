@@ -1,6 +1,7 @@
 mod arithmetic;
 mod bool;
 mod bytevector;
+mod char;
 mod int;
 mod interner;
 mod null;
@@ -66,6 +67,10 @@ impl Scm {
 
     pub fn int(i: i64) -> Self {
         int::Int::new(i).into()
+    }
+
+    pub fn char(ch: char) -> Self {
+        ch.into()
     }
 
     pub fn number(i: impl Into<i64>) -> Self {

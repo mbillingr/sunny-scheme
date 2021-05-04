@@ -43,11 +43,11 @@ impl BoolFactory<Scm> for StatelessFactory {
 
 impl MaybeChar for Scm {
     fn to_char(&self) -> Option<char> {
-        unimplemented!()
+        self.as_type::<char>().copied()
     }
 
     fn to_ascii(&self) -> Option<u8> {
-        unimplemented!()
+        self.to_char().filter(char::is_ascii).map(|ch| ch as u8)
     }
 }
 
