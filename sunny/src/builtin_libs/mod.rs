@@ -9,6 +9,7 @@ use crate::frontend::syntax_forms::{
 };
 use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
+use sexpr_generics::prelude::*;
 use sexpr_generics::{lists, numbers};
 use sunny_scm::Scm;
 use sunny_vm::scm_extension::ScmExt;
@@ -45,6 +46,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("=", 2, neq)
         .define_primitive_fixed_arity("null?", 1, is_null)
         .define_intrinsic("apply", 2)
+        .define_primitive_fixed_arity("boolean?", 1, is_boolean)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
@@ -126,6 +128,10 @@ primitive! {
         let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
         let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
         Ok(Scm::bool(a == b))
+    }
+
+    fn is_boolean(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_bool()))
     }
 
     fn is_null(obj: Scm) -> Result<Scm> {

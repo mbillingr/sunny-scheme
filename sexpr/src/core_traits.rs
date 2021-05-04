@@ -34,6 +34,11 @@ pub trait MaybeBool {
         self.to_bool().map(|b| !b).unwrap_or(false)
     }
 
+    /// Return true if `self` represents a boolean value.
+    fn is_bool(&self) -> bool {
+        self.to_bool().is_some()
+    }
+
     /// Return boolean value; returns `None` if `self` does not represent a boolean.
     fn to_bool(&self) -> Option<bool>;
 }

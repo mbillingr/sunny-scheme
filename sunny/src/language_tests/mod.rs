@@ -10,6 +10,7 @@ mod pattern_language;
 mod procedures;
 mod program_structure;
 mod scoping;
+mod type_predicates;
 
 use crate::builtin_libs::define_standard_libraries;
 use crate::context::{Context, Error};
