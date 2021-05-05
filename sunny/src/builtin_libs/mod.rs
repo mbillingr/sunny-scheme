@@ -68,6 +68,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("reverse", 1, list_reverse)
         .define_primitive_fixed_arity("string?", 1, is_string)
         .define_primitive_vararg("string", 0, string)
+        .define_primitive_fixed_arity("symbol?", 1, is_symbol)
         .define_primitive_vararg("values", 0, values)
         .define_value("foo", Scm::cons(1, 2))
         .build();
@@ -195,6 +196,10 @@ primitive! {
             string_data.push(ch);
         }
         Ok(Scm::string(&string_data))
+    }
+
+    fn is_symbol(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_symbol()))
     }
 
     fn now() -> Result<Scm> {

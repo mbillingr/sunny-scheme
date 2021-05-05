@@ -106,3 +106,13 @@ fn string_predicate_is_true_only_for_strings() {
     assert_that!("(string? 0)", EvaluatesTo::the_boolean(false));
     assert_that!("(string? 'x)", EvaluatesTo::the_boolean(false));
 }
+
+#[test]
+fn symbol_predicate_is_true_only_for_symbols() {
+    assert_that!("(symbol? 'x)", EvaluatesTo::the_boolean(true));
+    assert_that!("(symbol? '!-?)", EvaluatesTo::the_boolean(true));
+    assert_that!("(symbol? '|two words|)", EvaluatesTo::the_boolean(true));
+    assert_that!("(symbol? \"foo\")", EvaluatesTo::the_boolean(false));
+    assert_that!("(symbol? 0)", EvaluatesTo::the_boolean(false));
+    assert_that!("(symbol? '())", EvaluatesTo::the_boolean(false));
+}
