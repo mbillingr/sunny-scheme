@@ -62,6 +62,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("null?", 1, is_null)
         .define_primitive_fixed_arity("number?", 1, is_number)
+        .define_primitive_fixed_arity("pair?", 1, is_pair)
+        .define_primitive_fixed_arity("procedure?", 1, is_procedure)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
         .define_primitive_fixed_arity("reverse", 1, list_reverse)
         .define_primitive_vararg("values", 0, values)
@@ -170,6 +172,14 @@ primitive! {
 
     fn is_number(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_number()))
+    }
+
+    fn is_pair(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_pair()))
+    }
+
+    fn is_procedure(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_procedure()))
     }
 
     fn now() -> Result<Scm> {
