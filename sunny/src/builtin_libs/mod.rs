@@ -54,6 +54,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_intrinsic("cdr", 1)
         .define_primitive_fixed_arity("display", 1, display)
         .define_primitive_fixed_arity("dec", 1, dec)
+        .define_primitive_fixed_arity("eof-object?", 1, is_eof_object)
+        .define_primitive_fixed_arity("eof-object", 0, eof_object)
         .define_intrinsic("eq?", 2)
         .define_primitive_fixed_arity("equal?", 2, is_equal)
         .define_primitive_fixed_arity("eqv?", 2, is_eqv)
@@ -151,6 +153,14 @@ primitive! {
 
     fn is_char(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_char()))
+    }
+
+    fn is_eof_object(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_eof()))
+    }
+
+    fn eof_object() -> Result<Scm> {
+        Ok(Scm::eof())
     }
 
     fn is_null(obj: Scm) -> Result<Scm> {

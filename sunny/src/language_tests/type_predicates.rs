@@ -29,3 +29,13 @@ fn char_predicate_is_true_only_for_character_types() {
     assert_that!("(char? '())", EvaluatesTo::the_boolean(false));
     assert_that!("(char? 0)", EvaluatesTo::the_boolean(false));
 }
+
+#[test]
+fn eof_predicate_is_true_only_for_eof_objects() {
+    assert_that!(
+        r"(eof-object? (eof-object))",
+        EvaluatesTo::the_boolean(true)
+    );
+    assert_that!("(eof-object? '())", EvaluatesTo::the_boolean(false));
+    assert_that!("(eof-object? 0)", EvaluatesTo::the_boolean(false));
+}

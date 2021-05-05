@@ -2,6 +2,7 @@ mod arithmetic;
 mod bool;
 mod bytevector;
 mod char;
+mod eof;
 mod int;
 mod interner;
 mod null;
@@ -101,6 +102,10 @@ impl Scm {
         Scm::obj(data.into())
     }
 
+    pub fn eof() -> Self {
+        EOF.with(Clone::clone)
+    }
+
     pub fn obj(obj: impl ScmObject) -> Self {
         Scm(Rc::new(obj))
     }
@@ -175,6 +180,10 @@ impl Scm {
     pub fn as_bytevector(&self) -> Option<&[u8]> {
         self.as_type::<bytevector::ByteVector>()
             .map(bytevector::ByteVector::as_slice)
+    }
+
+    pub fn is_eof(&self) -> bool {
+        self.is::<eof::Eof>()
     }
 
     pub fn as_ref(&self) -> &dyn ScmObject {
@@ -314,4 +323,5 @@ thread_local! {
     static NULL: Scm = null::Null.into();
     static TRUE: Scm = bool::Bool::new(true).into();
     static FALSE: Scm = bool::Bool::new(false).into();
+    static EOF: Scm = eof::Eof.into();
 }
