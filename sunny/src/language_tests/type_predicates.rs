@@ -46,3 +46,12 @@ fn null_predicate_is_true_only_for_null_the_empty_list() {
     assert_that!("(null? 0)", EvaluatesTo::the_boolean(false));
     assert_that!("(null? '(1 . 2))", EvaluatesTo::the_boolean(false));
 }
+
+#[test]
+fn number_predicate_is_true_only_for_numbers() {
+    assert_that!("(number? 0)", EvaluatesTo::the_boolean(true));
+    assert_that!("(number? 1)", EvaluatesTo::the_boolean(true));
+    assert_that!("(number? 2.3)", EvaluatesTo::the_boolean(true));
+    assert_that!("(number? '())", EvaluatesTo::the_boolean(false));
+    assert_that!("(number? 'x)", EvaluatesTo::the_boolean(false));
+}

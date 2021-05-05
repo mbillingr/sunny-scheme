@@ -3,9 +3,9 @@ mod bool;
 mod bytevector;
 mod char;
 mod eof;
-mod int;
 mod interner;
 mod null;
+pub mod number;
 mod pair;
 mod sexpr_impls;
 mod string;
@@ -67,15 +67,19 @@ impl Scm {
     }
 
     pub fn int(i: i64) -> Self {
-        int::Int::new(i).into()
+        number::Number::int(i).into()
+    }
+
+    pub fn float(x: f64) -> Self {
+        number::Number::float(x).into()
     }
 
     pub fn char(ch: char) -> Self {
         ch.into()
     }
 
-    pub fn number(i: impl Into<i64>) -> Self {
-        int::Int::new(i.into()).into()
+    pub fn number(i: impl Into<number::Number>) -> Self {
+        i.into().into()
     }
 
     pub fn symbol(name: &str) -> Self {
@@ -139,11 +143,11 @@ impl Scm {
     }
 
     pub fn as_int(&self) -> Option<i64> {
-        self.as_type::<int::Int>().map(int::Int::as_int).copied()
+        self.as_number().and_then(number::Number::as_int).copied()
     }
 
-    pub fn as_number(&self) -> Option<&i64> {
-        self.as_type::<int::Int>().map(int::Int::as_int)
+    pub fn as_number(&self) -> Option<&number::Number> {
+        self.as_type::<number::Number>()
     }
 
     pub fn as_usize(&self) -> Option<usize> {

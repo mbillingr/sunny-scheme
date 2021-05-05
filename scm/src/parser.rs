@@ -226,6 +226,12 @@ mod tests {
     }
 
     #[test]
+    fn can_parse_floats() {
+        let sexpr = parse_str("1.2");
+        assert_eq!(sexpr.unwrap(), vec![Scm::float(1.2)]);
+    }
+
+    #[test]
     fn can_parse_characters() {
         assert_eq!(parse_str(r"#\A").unwrap(), vec![Scm::char('A')]);
         assert_eq!(parse_str(r"#\x").unwrap(), vec![Scm::char('x')]);

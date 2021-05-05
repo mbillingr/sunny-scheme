@@ -6,6 +6,7 @@ use crate::parser::unescape;
 use crate::Scm;
 use crate::source_location::SourceLocation;
 use crate::source_map::SourceMap;
+use crate::scm::number::Number;
 
 grammar<'a>(context: &'a SourceLocation<()>, source_map: &SourceMap, datum_labels: &mut HashMap<&'input str, Scm>);
 
@@ -55,7 +56,7 @@ Datum: Scm = {
 
 RawSexpr: Scm = {
     <b:Bool> => Scm::bool(b),
-    <n:Num> => Scm::int(n),
+    <n:Num> => Scm::number(n),
     <ch:Char> => Scm::char(ch),
     <s:Sym> => Scm::symbol(&s),
     <s:Str> => Scm::string(s),
@@ -68,7 +69,10 @@ Bool: bool = {
     "#f" => false,
 }
 
-Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
+Num: Number = {
+    <s:r"[0-9]+"> => Number::int(i64::from_str(s).unwrap()),
+    <s:r"[0-9]+\.[0-9]*"> => Number::float(f64::from_str(s).unwrap()),
+}
 
 Char: char = {
     <s:r"#\\[xX][0-9A-Fa-f]+"> =>? u32::from_str_radix(&s[3..], 16)

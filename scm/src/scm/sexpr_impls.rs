@@ -1,4 +1,4 @@
-use crate::Scm;
+use crate::{scm::number, Scm};
 use sexpr_generics::equality::{
     IdentityEq, IdentityHash, PointerEq, PointerHash, ValueEq, ValueHash,
 };
@@ -62,21 +62,23 @@ impl CharFactory<Scm> for StatelessFactory {
 }
 
 impl MaybeNumber for Scm {
-    type Number = i64;
-    fn to_number(&self) -> Option<&i64> {
+    type Number = number::Number;
+    fn to_number(&self) -> Option<&number::Number> {
         Scm::as_number(self)
     }
 }
 
 impl NumberFactory<Scm> for StatelessFactory {
-    fn number(&mut self, n: i64) -> Scm {
-        Scm::int(n)
+    fn number(&mut self, n: number::Number) -> Scm {
+        Scm::number(n)
     }
-    fn raw_zero(&mut self) -> i64 {
-        0
+
+    fn raw_zero(&mut self) -> number::Number {
+        number::Number::zero()
     }
-    fn raw_one(&mut self) -> i64 {
-        1
+
+    fn raw_one(&mut self) -> number::Number {
+        number::Number::one()
     }
 }
 
