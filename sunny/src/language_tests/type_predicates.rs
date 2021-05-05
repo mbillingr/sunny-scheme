@@ -39,3 +39,10 @@ fn eof_predicate_is_true_only_for_eof_objects() {
     assert_that!("(eof-object? '())", EvaluatesTo::the_boolean(false));
     assert_that!("(eof-object? 0)", EvaluatesTo::the_boolean(false));
 }
+
+#[test]
+fn null_predicate_is_true_only_for_null_the_empty_list() {
+    assert_that!("(null? '())", EvaluatesTo::the_boolean(true));
+    assert_that!("(null? 0)", EvaluatesTo::the_boolean(false));
+    assert_that!("(null? '(1 . 2))", EvaluatesTo::the_boolean(false));
+}
