@@ -60,6 +60,8 @@ RawSexpr: Scm = {
     <ch:Char> => Scm::char(ch),
     <s:Sym> => Scm::symbol(&s),
     <s:Str> => Scm::string(s),
+    <bv:ByteVec> => Scm::bytevector(bv),
+    <v:Vec> => Scm::vector(v),
     <l:List> => <>,
     <q:Quotation> => <>,
 };
@@ -158,3 +160,27 @@ Quotation: Scm = {
         Scm::list(vec![quote, x].into_iter())
     }
 };
+
+Vec: Vec<Scm> = {
+    "#(" ")" => vec![],
+    "#(" <VecSequence> ")" => <>,
+}
+
+VecSequence: Vec<Scm> = {
+    <singleton:Datum> => vec![singleton],
+    <mut head:VecSequence> <last:Datum> => { head.push(last); head },
+};
+
+ByteVec: Vec<u8> = {
+    "#u8(" ")" => vec![],
+    "#u8(" <ByteSequence> ")" => <>,
+}
+
+ByteSequence: Vec<u8> = {
+    <singleton:ByteNum> => vec![singleton],
+    <mut head:ByteSequence> <last:ByteNum> => { head.push(last); head },
+}
+
+ByteNum: u8 = {
+    r"[0-9]+" =>? u8::from_str(<>).map_err(|_|ParseError::User { error: "invalid byte constant" })
+}

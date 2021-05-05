@@ -3,6 +3,7 @@ use crate::{Scm, ScmObject};
 use std::any::Any;
 use std::collections::HashMap;
 use std::fmt;
+use std::iter::FromIterator;
 
 #[derive(Debug)]
 pub struct Vector(Box<[Scm]>);
@@ -10,6 +11,12 @@ pub struct Vector(Box<[Scm]>);
 impl<T: Into<Box<[Scm]>>> From<T> for Vector {
     fn from(data: T) -> Self {
         Vector(data.into())
+    }
+}
+
+impl<A: Into<Scm>> FromIterator<A> for Vector {
+    fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
+        Vector(iter.into_iter().map(Into::into).collect())
     }
 }
 

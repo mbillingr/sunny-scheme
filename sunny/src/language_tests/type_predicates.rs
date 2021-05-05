@@ -17,6 +17,7 @@ fn bytevector_predicate_is_true_only_for_bytevector_types() {
         "(bytevector? (bytevector 1 2 3))",
         EvaluatesTo::the_boolean(true)
     );
+    assert_that!("(bytevector? #u8(1 2 3))", EvaluatesTo::the_boolean(true));
     assert_that!("(bytevector? '())", EvaluatesTo::the_boolean(false));
     assert_that!("(bytevector? 0)", EvaluatesTo::the_boolean(false));
 }
@@ -121,6 +122,7 @@ fn symbol_predicate_is_true_only_for_symbols() {
 fn vector_predicate_is_true_only_for_vectors() {
     assert_that!("(vector? (vector))", EvaluatesTo::the_boolean(true));
     assert_that!("(vector? (vector 1 2 3))", EvaluatesTo::the_boolean(true));
+    assert_that!("(vector? #(1 2 3))", EvaluatesTo::the_boolean(true));
     assert_that!("(vector? (bytevector))", EvaluatesTo::the_boolean(false));
     assert_that!("(vector? '())", EvaluatesTo::the_boolean(false));
     assert_that!("(vector? '(1 2 3))", EvaluatesTo::the_boolean(false));

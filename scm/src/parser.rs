@@ -438,4 +438,29 @@ mod tests {
         let sexpr = parse_str("|hello\\    \n     world|");
         assert_eq!(sexpr.unwrap(), vec![Scm::symbol("helloworld")]);
     }
+
+    #[test]
+    fn can_parse_vectors() {
+        assert_eq!(parse_str("#()").unwrap(), vec![Scm::vector(vec![])]);
+        assert_eq!(parse_str("#(0)").unwrap(), vec![Scm::vector([Scm::int(0)])]);
+        assert_eq!(
+            parse_str("#(1 2 3 4)").unwrap(),
+            vec![Scm::vector([
+                Scm::int(1),
+                Scm::int(2),
+                Scm::int(3),
+                Scm::int(4)
+            ])]
+        );
+    }
+
+    #[test]
+    fn can_parse_bytevectors() {
+        assert_eq!(parse_str("#u8()").unwrap(), vec![Scm::bytevector(vec![])]);
+        assert_eq!(parse_str("#u8(0)").unwrap(), vec![Scm::bytevector(vec![0])]);
+        assert_eq!(
+            parse_str("#u8(1 2 3 4)").unwrap(),
+            vec![Scm::bytevector(vec![1, 2, 3, 4])]
+        );
+    }
 }
