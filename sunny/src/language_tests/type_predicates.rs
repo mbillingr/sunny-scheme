@@ -116,3 +116,14 @@ fn symbol_predicate_is_true_only_for_symbols() {
     assert_that!("(symbol? 0)", EvaluatesTo::the_boolean(false));
     assert_that!("(symbol? '())", EvaluatesTo::the_boolean(false));
 }
+
+#[test]
+fn vector_predicate_is_true_only_for_vectors() {
+    assert_that!("(vector? (vector))", EvaluatesTo::the_boolean(true));
+    assert_that!("(vector? (vector 1 2 3))", EvaluatesTo::the_boolean(true));
+    assert_that!("(vector? (bytevector))", EvaluatesTo::the_boolean(false));
+    assert_that!("(vector? '())", EvaluatesTo::the_boolean(false));
+    assert_that!("(vector? '(1 2 3))", EvaluatesTo::the_boolean(false));
+    assert_that!("(vector? 0)", EvaluatesTo::the_boolean(false));
+    assert_that!("(vector? 'x)", EvaluatesTo::the_boolean(false));
+}

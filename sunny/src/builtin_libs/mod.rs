@@ -70,6 +70,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_vararg("string", 0, string)
         .define_primitive_fixed_arity("symbol?", 1, is_symbol)
         .define_primitive_vararg("values", 0, values)
+        .define_primitive_fixed_arity("vector?", 1, is_vector)
+        .define_primitive_vararg("vector", 0, vector)
         .define_value("foo", Scm::cons(1, 2))
         .build();
 
@@ -200,6 +202,14 @@ primitive! {
 
     fn is_symbol(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_symbol()))
+    }
+
+    fn is_vector(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_vector()))
+    }
+
+    varfn vector([args]) -> Result<Scm> {
+        Ok(Scm::vector(args))
     }
 
     fn now() -> Result<Scm> {

@@ -10,6 +10,7 @@ mod pair;
 mod sexpr_impls;
 mod string;
 mod symbol;
+mod vector;
 mod void;
 
 use std::any::Any;
@@ -110,6 +111,10 @@ impl Scm {
         EOF.with(Clone::clone)
     }
 
+    pub fn vector(data: impl Into<vector::Vector>) -> Scm {
+        Scm::obj(data.into())
+    }
+
     pub fn obj(obj: impl ScmObject) -> Self {
         Scm(Rc::new(obj))
     }
@@ -188,6 +193,15 @@ impl Scm {
 
     pub fn is_eof(&self) -> bool {
         self.is::<eof::Eof>()
+    }
+
+    pub fn is_vector(&self) -> bool {
+        self.as_vector().is_some()
+    }
+
+    pub fn as_vector(&self) -> Option<&[Scm]> {
+        self.as_type::<vector::Vector>()
+            .map(vector::Vector::as_slice)
     }
 
     pub fn as_ref(&self) -> &dyn ScmObject {
