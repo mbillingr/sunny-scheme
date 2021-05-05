@@ -44,8 +44,8 @@ fn eqv() {
     assert_equivalence!("eqv?", "#f", "#f");
     assert_equivalence!("eqv?", "'foo", "'foo");
     assert_equivalence!("eqv?", "2", "2");
-    //assert_equivalence!("eqv?", "2.0", "2.0");
-    //assert_equivalence!("eqv?", r"#\b", r"#\b");
+    assert_equivalence!("eqv?", "2.0", "2.0");
+    assert_equivalence!("eqv?", r"#\b", r"#\b");
     assert_equivalence!("eqv?", "'()", "'()");
     assert_that!(
         r"(let ((x (cons 1 2))) (eqv? x x))",
@@ -64,13 +64,13 @@ fn eqv() {
     assert_different!("eqv?", "'()", "#f");
     assert_different!("eqv?", "#t", "#f");
     assert_different!("eqv?", "'foo", "'bar");
-    //assert_different!("eqv?", "2", "2.0");
+    assert_different!("eqv?", "2", "2.0");
     assert_different!("eqv?", "2", "3");
-    //assert_different!("eqv?", "2.0", "3.0");
-    //assert_equivalence!("eqv?", r"#\b", r"#\c");
+    assert_different!("eqv?", "2.0", "3.0");
+    assert_different!("eqv?", r"#\b", r"#\c");
     assert_different!("eqv?", "'()", "'(())");
     assert_different!("eqv?", "(cons 1 2)", "(cons 1 2)");
-    //assert_different!("eqv?", "(vector 1 2)", "(vector 1 2)");
+    assert_different!("eqv?", "(vector 1 2)", "(vector 1 2)");
     assert_different!("eqv?", "\"foo\"", "\"bar\"");
     assert_different!("eqv?", "(lambda () 1)", "(lambda () 2)");
 
@@ -114,13 +114,13 @@ fn eq() {
     assert_different!("eq?", "'()", "#f");
     assert_different!("eq?", "#t", "#f");
     assert_different!("eq?", "'foo", "'bar");
-    //assert_different!("eq?", "2", "2.0");
+    assert_different!("eq?", "2", "2.0");
     assert_different!("eq?", "2", "3");
-    //assert_different!("eq?", "2.0", "3.0");
-    //assert_equivalence!("eq?", r"#\b", r"#\c");
+    assert_different!("eq?", "2.0", "3.0");
+    assert_different!("eq?", r"#\b", r"#\c");
     assert_different!("eq?", "'()", "'(())");
     assert_different!("eq?", "(cons 1 2)", "(cons 1 2)");
-    //assert_different!("eq?", "(vector 1 2)", "(vector 1 2)");
+    assert_different!("eq?", "(vector 1 2)", "(vector 1 2)");
     assert_different!("eq?", "\"foo\"", "\"bar\"");
     assert_different!("eq?", "(lambda () 1)", "(lambda () 2)");
 
@@ -148,11 +148,11 @@ fn equal() {
     assert_equivalence!("equal?", "'foo", "'foo");
     assert_equivalence!("equal?", "\"foo\"", "\"foo\"");
     assert_equivalence!("equal?", "2", "2");
-    //assert_equivalence!("equal?", "2.0", "2.0");
-    //assert_equivalence!("equal?", r"#\b", r"#\b");
+    assert_equivalence!("equal?", "2.0", "2.0");
+    assert_equivalence!("equal?", r"#\b", r"#\b");
     assert_equivalence!("equal?", "'()", "'()");
     assert_equivalence!("equal?", "(cons 1 2)", "(cons 1 2)");
-    //assert_equivalence!("equal?", "(vector 1 2)", "(vector 1 2)");
+    assert_equivalence!("equal?", "(vector 1 2)", "(vector 1 2)");
     assert_that!(
         "(let ((x \"foo\")) (equal? x x))",
         EvaluatesTo::the_boolean(true)
@@ -166,10 +166,10 @@ fn equal() {
     assert_different!("equal?", "'()", "#f");
     assert_different!("equal?", "#t", "#f");
     assert_different!("equal?", "'foo", "'bar");
-    //assert_different!("equal?", "2", "2.0");
+    assert_different!("equal?", "2", "2.0");
     assert_different!("equal?", "2", "3");
-    //assert_different!("equal?", "2.0", "3.0");
-    //assert_equivalence!("equal?", r"#\b", r"#\c");
+    assert_different!("equal?", "2.0", "3.0");
+    assert_different!("equal?", r"#\b", r"#\c");
     assert_different!("equal?", "'()", "'(())");
     assert_different!("equal?", "\"foo\"", "\"bar\"");
     assert_different!("equal?", "(lambda () 1)", "(lambda () 2)");
