@@ -94,3 +94,15 @@ fn procedure_predicate_is_true_for_continuations() {
         EvaluatesTo::the_boolean(true)
     );
 }
+
+#[test]
+fn string_predicate_is_true_only_for_strings() {
+    assert_that!("(string? \"\")", EvaluatesTo::the_boolean(true));
+    assert_that!("(string? \"foo\")", EvaluatesTo::the_boolean(true));
+    assert_that!(
+        "(string? (string #\\f #\\o #\\o))",
+        EvaluatesTo::the_boolean(true)
+    );
+    assert_that!("(string? 0)", EvaluatesTo::the_boolean(false));
+    assert_that!("(string? 'x)", EvaluatesTo::the_boolean(false));
+}

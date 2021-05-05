@@ -66,6 +66,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("procedure?", 1, is_procedure)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
         .define_primitive_fixed_arity("reverse", 1, list_reverse)
+        .define_primitive_fixed_arity("string?", 1, is_string)
+        .define_primitive_vararg("string", 0, string)
         .define_primitive_vararg("values", 0, values)
         .define_value("foo", Scm::cons(1, 2))
         .build();
@@ -180,6 +182,19 @@ primitive! {
 
     fn is_procedure(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_procedure()))
+    }
+
+    fn is_string(obj: Scm) -> Result<Scm> {
+        Ok(Scm::bool(obj.is_str()))
+    }
+
+    varfn string([args]) -> Result<Scm> {
+        let mut string_data = String::with_capacity(args.len());
+        for x in args {
+            let ch = x.to_char().ok_or(ErrorKind::TypeError("character", x))?;
+            string_data.push(ch);
+        }
+        Ok(Scm::string(&string_data))
     }
 
     fn now() -> Result<Scm> {
