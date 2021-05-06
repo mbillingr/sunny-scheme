@@ -7,7 +7,7 @@ thread_local! {
     static STRING_INTERNER: RefCell<Interner<Box<str>>> = RefCell::new(Interner::new());
 }
 
-pub fn interned_string(s: &str) -> Strong<Box<str>> {
+pub fn interned_string(s: impl Internable<Box<str>>) -> Strong<Box<str>> {
     STRING_INTERNER.with(|si| si.borrow_mut().get_interned(s))
 }
 

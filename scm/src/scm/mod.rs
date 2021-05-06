@@ -13,6 +13,7 @@ mod symbol;
 mod vector;
 mod void;
 
+use crate::scm::interner::Internable;
 use std::any::Any;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
@@ -92,6 +93,10 @@ impl Scm {
     }
 
     pub fn string(content: &str) -> Self {
+        Self::raw_string(string::escape(content))
+    }
+
+    pub fn raw_string(content: impl Internable<Box<str>>) -> Self {
         Scm(string::ConstantString::interned(content))
     }
 

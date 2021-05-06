@@ -1,4 +1,4 @@
-use crate::scm::interner::{interned_string, Strong};
+use crate::scm::interner::{interned_string, Internable, Strong};
 use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
 use std::any::Any;
@@ -6,12 +6,12 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::hash::Hash;
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Hash)]
 #[repr(transparent)]
 pub struct ConstantString(Box<str>);
 
 impl ConstantString {
-    pub fn interned(name: &str) -> Strong<ConstantString> {
+    pub fn interned(name: impl Internable<Box<str>>) -> Strong<ConstantString> {
         let string = interned_string(name);
         unsafe {
             // # Safety: converting to a repr(transparent) wrapper
@@ -57,5 +57,123 @@ impl ScmObject for ConstantString {
 impl Display for ConstantString {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
+    }
+}
+
+pub fn escape(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut chars = s.char_indices();
+    while let Some((_, ch)) = chars.next() {
+        if ch == '\\' {
+            match chars.next().map(|(_, ch)| ch) {
+                Some('a') => result.push(0x07 as char),
+                Some('b') => result.push(0x08 as char),
+                Some('t') => result.push('\t'),
+                Some('n') => result.push('\n'),
+                Some('r') => result.push('\r'),
+                Some(ch) if ch.is_whitespace() => {
+                    while let Some((_, ch)) = chars.next() {
+                        if ch.is_whitespace() {
+                            continue;
+                        }
+                        result.push(ch);
+                        break;
+                    }
+                }
+                Some('x') => {
+                    if let Some((start, _)) = chars.next() {
+                        while let Some((i, ch)) = chars.next() {
+                            if ch == ';' {
+                                if let Ok(n) = u32::from_str_radix(&s[start..i], 16) {
+                                    if let Some(ch) = std::char::from_u32(n) {
+                                        result.push(ch);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                Some(other) => result.push(other),
+                None => break,
+            }
+        } else {
+            result.push(ch);
+        }
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn escape_does_not_change_unescaped_strings() {
+        let original = "foo-bar";
+        assert_eq!(escape(original), original);
+    }
+
+    #[test]
+    fn escape_alarm() {
+        let original = r"\a";
+        let expected = "\u{0007}";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_backspace() {
+        let original = r"foo\bbar";
+        let expected = "foo\u{0008}bar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_tabulator() {
+        let original = r"foo\tbar";
+        let expected = "foo\tbar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_linefeed() {
+        let original = r"foo\nbar";
+        let expected = "foo\nbar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_return() {
+        let original = r"foo\rbar";
+        let expected = "foo\rbar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_backslash() {
+        let original = r"foo\\bar";
+        let expected = "foo\u{005c}bar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_pipe() {
+        let original = r"foo\|bar";
+        let expected = "foo\u{007c}bar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_line_ending() {
+        let original = "foo\\    \n   bar";
+        let expected = "foobar";
+        assert_eq!(escape(original), expected);
+    }
+
+    #[test]
+    fn escape_unicode_literal() {
+        let original = r"foo \x03bb; bar";
+        let expected = "foo λ bar";
+        assert_eq!(escape(original), expected);
     }
 }
