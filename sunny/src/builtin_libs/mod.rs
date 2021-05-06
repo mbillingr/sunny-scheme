@@ -42,7 +42,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity(">", 2, gt)
         .define_primitive_fixed_arity("<=", 2, le)
         .define_primitive_fixed_arity(">=", 2, ge)
-        .define_primitive_fixed_arity("=", 2, neq)
+        .define_primitive_vararg("=", 2, neq)
         .define_intrinsic("apply", 2)
         .define_primitive_fixed_arity("boolean?", 1, is_boolean)
         .define_primitive_fixed_arity("bytevector?", 1, is_bytevector)
@@ -112,34 +112,49 @@ primitive! {
         Ok(Scm::bool(a.is_eqv(&b)))
     }
 
-    fn lt(a: Scm, b: Scm) -> Result<Scm> {
-        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
-        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
-        Ok(Scm::bool(a < b))
+    varfn neq([args]) -> Result<Scm> {
+        let cmp = match args.as_slice() {
+            [a, b, extra@..] => numbers::all_equal(a, b, extra.iter())
+                                    .map_err(|x|ErrorKind::TypeError("numbers", x.clone())),
+            _ => Err(ErrorKind::TooFewArgs),
+        }?;
+        Ok(Scm::bool(cmp))
     }
 
-    fn gt(a: Scm, b: Scm) -> Result<Scm> {
-        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
-        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
-        Ok(Scm::bool(a > b))
+    varfn lt([args]) -> Result<Scm> {
+        let cmp = match args.as_slice() {
+            [a, b, extra@..] => numbers::all_strictly_increasing(a, b, extra.iter())
+                                    .map_err(|x|ErrorKind::TypeError("numbers", x.clone())),
+            _ => Err(ErrorKind::TooFewArgs),
+        }?;
+        Ok(Scm::bool(cmp))
     }
 
-    fn le(a: Scm, b: Scm) -> Result<Scm> {
-        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
-        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
-        Ok(Scm::bool(a <= b))
+    varfn gt([args]) -> Result<Scm> {
+        let cmp = match args.as_slice() {
+            [a, b, extra@..] => numbers::all_strictly_decreasing(a, b, extra.iter())
+                                    .map_err(|x|ErrorKind::TypeError("numbers", x.clone())),
+            _ => Err(ErrorKind::TooFewArgs),
+        }?;
+        Ok(Scm::bool(cmp))
     }
 
-    fn ge(a: Scm, b: Scm) -> Result<Scm> {
-        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
-        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
-        Ok(Scm::bool(a >= b))
+    varfn le([args]) -> Result<Scm> {
+        let cmp = match args.as_slice() {
+            [a, b, extra@..] => numbers::all_increasing(a, b, extra.iter())
+                                    .map_err(|x|ErrorKind::TypeError("numbers", x.clone())),
+            _ => Err(ErrorKind::TooFewArgs),
+        }?;
+        Ok(Scm::bool(cmp))
     }
 
-    fn neq(a: Scm, b: Scm) -> Result<Scm> {
-        let a = a.as_int().ok_or(ErrorKind::TypeError("number", a))?;
-        let b = b.as_int().ok_or(ErrorKind::TypeError("number", b))?;
-        Ok(Scm::bool(a == b))
+    varfn ge([args]) -> Result<Scm> {
+        let cmp = match args.as_slice() {
+            [a, b, extra@..] => numbers::all_decreasing(a, b, extra.iter())
+                                    .map_err(|x|ErrorKind::TypeError("numbers", x.clone())),
+            _ => Err(ErrorKind::TooFewArgs),
+        }?;
+        Ok(Scm::bool(cmp))
     }
 
     fn is_boolean(obj: Scm) -> Result<Scm> {

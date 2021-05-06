@@ -2,6 +2,7 @@ use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
 use std::any::Any;
 use std::borrow::Cow;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::hash::Hash;
@@ -173,6 +174,21 @@ impl Div for &Number {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
                 Div::div(&*a, &*b)
+            }
+        }
+    }
+}
+
+impl PartialOrd for Number {
+    fn partial_cmp(&self, rhs: &Number) -> Option<Ordering> {
+        use Number::*;
+        match (self, rhs) {
+            (Int(a), Int(b)) => PartialOrd::partial_cmp(a, b),
+            (Float(a), Float(b)) => PartialOrd::partial_cmp(a, b),
+            _ => {
+                let a = self.upcast(rhs);
+                let b = rhs.upcast(self);
+                PartialOrd::partial_cmp(&*a, &*b)
             }
         }
     }

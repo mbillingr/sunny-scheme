@@ -2,6 +2,7 @@
 
 use crate::core_traits::MaybeNumber;
 use crate::factory_traits::{NumberFactory, StatelessFactory};
+use std::cmp::Ordering;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 macro_rules! define_binary_operations {
@@ -69,7 +70,124 @@ define_binary_operations!(
     BitXor::bitxor;
 );
 
-/// Sum multiple numbers. Returns `None` if any value is not a number.
+/// Compare two numbers. Returns `Err` if any value is not a number.
+pub fn num_compare<'a, N: 'a, S>(a: &'a S, b: &'a S) -> Result<Option<Ordering>, &'a S>
+where
+    S: MaybeNumber<Number = N>,
+    N: PartialOrd,
+{
+    let a = to_number(a)?;
+    let b = to_number(b)?;
+    Ok(PartialOrd::partial_cmp(a, b))
+}
+
+/// Compare multiple numbers for equality. Returns `Err` if any value is not a number.
+pub fn all_equal<'a, N: 'a, S: 'a>(
+    a: &'a S,
+    b: &'a S,
+    extra_values: impl Iterator<Item = &'a S>,
+) -> Result<bool, &'a S>
+where
+    S: MaybeNumber<Number = N>,
+    N: PartialOrd,
+{
+    all_pairwise(a, b, extra_values, |x, y| {
+        Ok(matches!(num_compare(x, y)?, Some(Ordering::Equal)))
+    })
+}
+
+/// Compare multiple numbers and return `True` if they form a strictly increasing sequence.
+/// Returns `Err` if any value is not a number.
+pub fn all_strictly_increasing<'a, N: 'a, S: 'a>(
+    a: &'a S,
+    b: &'a S,
+    extra_values: impl Iterator<Item = &'a S>,
+) -> Result<bool, &'a S>
+where
+    S: MaybeNumber<Number = N>,
+    N: PartialOrd,
+{
+    all_pairwise(a, b, extra_values, |x, y| {
+        Ok(matches!(num_compare(x, y)?, Some(Ordering::Less)))
+    })
+}
+
+/// Compare multiple numbers and return `True` if they form a weakly increasing sequence.
+/// Returns `Err` if any value is not a number.
+pub fn all_increasing<'a, N: 'a, S: 'a>(
+    a: &'a S,
+    b: &'a S,
+    extra_values: impl Iterator<Item = &'a S>,
+) -> Result<bool, &'a S>
+where
+    S: MaybeNumber<Number = N>,
+    N: PartialOrd,
+{
+    all_pairwise(a, b, extra_values, |x, y| {
+        Ok(matches!(
+            num_compare(x, y)?,
+            Some(Ordering::Less) | Some(Ordering::Equal)
+        ))
+    })
+}
+
+/// Compare multiple numbers and return `True` if they form a strictly decreasing sequence.
+/// Returns `Err` if any value is not a number.
+pub fn all_strictly_decreasing<'a, N: 'a, S: 'a>(
+    a: &'a S,
+    b: &'a S,
+    extra_values: impl Iterator<Item = &'a S>,
+) -> Result<bool, &'a S>
+where
+    S: MaybeNumber<Number = N>,
+    N: PartialOrd,
+{
+    all_pairwise(a, b, extra_values, |x, y| {
+        Ok(matches!(num_compare(x, y)?, Some(Ordering::Greater)))
+    })
+}
+
+/// Compare multiple numbers and return `True` if they form a weakly decreasing sequence.
+/// Returns `Err` if any value is not a number.
+pub fn all_decreasing<'a, N: 'a, S: 'a>(
+    a: &'a S,
+    b: &'a S,
+    extra_values: impl Iterator<Item = &'a S>,
+) -> Result<bool, &'a S>
+where
+    S: MaybeNumber<Number = N>,
+    N: PartialOrd,
+{
+    all_pairwise(a, b, extra_values, |x, y| {
+        Ok(matches!(
+            num_compare(x, y)?,
+            Some(Ordering::Greater) | Some(Ordering::Equal)
+        ))
+    })
+}
+
+/// Pairwise comparison of multiple numbers.
+/// Returns `Err` if any value is not a number.
+pub fn all_pairwise<'a, S: 'a>(
+    mut a: &'a S,
+    mut b: &'a S,
+    mut extra_values: impl Iterator<Item = &'a S>,
+    predicate: impl Fn(&'a S, &'a S) -> Result<bool, &'a S>,
+) -> Result<bool, &'a S> {
+    loop {
+        if !predicate(a, b)? {
+            return Ok(false);
+        }
+        a = b;
+        if let Some(x) = extra_values.next() {
+            b = x;
+        } else {
+            return Ok(true);
+        }
+    }
+}
+
+/// Sum multiple numbers. Returns `Err` if any value is not a number.
 pub fn sum<'a, N: 'a, S: 'a>(values: impl Iterator<Item = &'a S>) -> Result<S, &'a S>
 where
     for<'b> &'b N: Add<Output = N>,
@@ -394,5 +512,86 @@ mod tests {
     fn quot_divides_multiple_argument() {
         let d = quot([N(24), N(3), N(4)].iter());
         assert_eq!(d, Ok(N(2)));
+    }
+
+    #[test]
+    fn compare_two_numbers() {
+        assert_eq!(num_compare(&N(1), &N(2)), Ok(Some(Ordering::Less)));
+        assert_eq!(num_compare(&N(2), &N(2)), Ok(Some(Ordering::Equal)));
+        assert_eq!(num_compare(&N(3), &N(2)), Ok(Some(Ordering::Greater)));
+        assert_eq!(num_compare(&N(f64::NAN), &N(f64::NAN)), Ok(None));
+    }
+
+    #[test]
+    fn compare_equal_multiple_numbers() {
+        assert_eq!(all_equal(&N(1), &N(1), [N(1), N(1)].iter()), Ok(true));
+        assert_eq!(all_equal(&N(0), &N(1), [N(2), N(3)].iter()), Ok(false));
+        assert_eq!(all_equal(&N(3), &N(2), [N(1), N(0)].iter()), Ok(false));
+    }
+
+    #[test]
+    fn compare_strictly_increasing() {
+        assert_eq!(
+            all_strictly_increasing(&N(0), &N(1), [N(2), N(3)].iter()),
+            Ok(true)
+        );
+        assert_eq!(
+            all_strictly_increasing(&N(0), &N(1), [N(1), N(2)].iter()),
+            Ok(false)
+        );
+        assert_eq!(
+            all_strictly_increasing(&N(0), &N(2), [N(1), N(3)].iter()),
+            Ok(false)
+        );
+        assert_eq!(
+            all_strictly_increasing(&N(1), &N(1), [N(1), N(1)].iter()),
+            Ok(false)
+        );
+        assert_eq!(
+            all_strictly_increasing(&N(3), &N(2), [N(1), N(0)].iter()),
+            Ok(false)
+        );
+    }
+
+    #[test]
+    fn compare_increasing() {
+        assert_eq!(all_increasing(&N(0), &N(1), [N(2), N(3)].iter()), Ok(true));
+        assert_eq!(all_increasing(&N(0), &N(1), [N(1), N(2)].iter()), Ok(true));
+        assert_eq!(all_increasing(&N(1), &N(1), [N(1), N(1)].iter()), Ok(true));
+        assert_eq!(all_increasing(&N(0), &N(2), [N(1), N(3)].iter()), Ok(false));
+        assert_eq!(all_increasing(&N(3), &N(2), [N(1), N(0)].iter()), Ok(false));
+    }
+
+    #[test]
+    fn compare_strictly_decreasing() {
+        assert_eq!(
+            all_strictly_decreasing(&N(3), &N(2), [N(1), N(0)].iter()),
+            Ok(true)
+        );
+        assert_eq!(
+            all_strictly_decreasing(&N(2), &N(1), [N(1), N(0)].iter()),
+            Ok(false)
+        );
+        assert_eq!(
+            all_strictly_decreasing(&N(3), &N(1), [N(2), N(0)].iter()),
+            Ok(false)
+        );
+        assert_eq!(
+            all_strictly_decreasing(&N(1), &N(1), [N(1), N(1)].iter()),
+            Ok(false)
+        );
+        assert_eq!(
+            all_strictly_decreasing(&N(0), &N(1), [N(2), N(3)].iter()),
+            Ok(false)
+        );
+    }
+
+    #[test]
+    fn compare_decreasing() {
+        assert_eq!(all_decreasing(&N(3), &N(2), [N(1), N(0)].iter()), Ok(true));
+        assert_eq!(all_decreasing(&N(2), &N(1), [N(1), N(0)].iter()), Ok(true));
+        assert_eq!(all_decreasing(&N(1), &N(1), [N(1), N(1)].iter()), Ok(true));
+        assert_eq!(all_decreasing(&N(3), &N(1), [N(2), N(0)].iter()), Ok(false));
+        assert_eq!(all_decreasing(&N(0), &N(1), [N(2), N(3)].iter()), Ok(false));
     }
 }
