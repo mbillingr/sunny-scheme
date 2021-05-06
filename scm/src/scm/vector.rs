@@ -46,6 +46,11 @@ impl ScmObject for Vector {
     fn substitute(&self, _mapping: &HashMap<&str, Scm>) -> Scm {
         unimplemented!()
     }
+
+    fn quote(&self, _: &Scm) -> Scm {
+        let items: Vec<_> = self.0.iter().map(|x| x.quote()).collect();
+        Scm::vector(items)
+    }
 }
 
 impl fmt::Display for Vector {

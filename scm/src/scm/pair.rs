@@ -55,10 +55,14 @@ impl ScmObject for Pair {
     }
 
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm {
-        Scm::cons(
+        Scm::cons_const(
             self.first.substitute(mapping),
             self.second.substitute(mapping),
         )
+    }
+
+    fn quote(&self, _: &Scm) -> Scm {
+        Scm::cons_const(self.first.quote(), self.second.quote())
     }
 }
 

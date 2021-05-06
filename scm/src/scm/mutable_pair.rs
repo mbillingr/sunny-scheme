@@ -74,6 +74,10 @@ impl ScmObject for MutablePair {
             self.second.substitute(mapping),
         )
     }
+
+    fn quote(&self, _: &Scm) -> Scm {
+        Scm::cons(self.first.quote(), self.second.quote())
+    }
 }
 
 impl Display for MutablePair {

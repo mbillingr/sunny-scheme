@@ -69,6 +69,10 @@ impl ScmObject for SyntacticClosure {
         }
         .into()
     }
+
+    fn quote(&self, _: &Scm) -> Scm {
+        self.raw_expr().clone()
+    }
 }
 
 impl std::fmt::Display for SyntacticClosure {

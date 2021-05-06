@@ -154,3 +154,18 @@ fn syntax_rules_recursion_with_multiple_repetitions() {
         EvaluatesTo::the_integer(2)
     );
 }
+
+#[test]
+fn syntax_rules_quote_syntactic_closure() {
+    assert_that!(
+        vec![
+            "(define-syntax items
+              (syntax-rules ()
+                ((items (x))
+                 '(x))
+              ))",
+            "(items (1))"
+        ],
+        EvaluatesTo::the_list(vec![1])
+    );
+}

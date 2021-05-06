@@ -34,6 +34,13 @@ pub trait ScmObject: Any + Debug + Display {
     }
     fn equal_hash(&self, state: &mut ScmHasher);
     fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Scm;
+    fn quote(&self, scm: &Scm) -> Scm {
+        debug_assert!(std::ptr::eq(
+            self as *const _ as *const u8,
+            Rc::as_ptr(&scm.0) as *const u8
+        ));
+        scm.clone()
+    }
 }
 
 impl dyn ScmObject {
@@ -270,6 +277,10 @@ impl Scm {
 
     pub fn substitute(&self, mapping: &HashMap<&str, Scm>) -> Self {
         self.0.substitute(mapping)
+    }
+
+    pub fn quote(&self) -> Scm {
+        self.0.quote(self)
     }
 }
 
