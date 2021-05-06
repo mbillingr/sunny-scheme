@@ -199,13 +199,13 @@ pub mod factory {
         Ok(factory.number(acc))
     }
 
-    /// Subtract multiple numbers.
+    /// Divide multiple numbers.
     /// If any value is not a number returns `Err` with the first non-number.
     ///
-    /// This function follows the semantics of Scheme's `-` procedure:
-    ///   - no arguments returns 0
-    ///   - a single argument is negated
-    ///   - more than one argument returns the first minus the sum of all others
+    /// This function follows the semantics of Scheme's `/` procedure:
+    ///   - no arguments returns 1
+    ///   - a single argument is inverted
+    ///   - more than one argument returns the first divided the product of all others
     pub fn quot<'a, N: 'a, S: 'a, F>(
         mut values: impl Iterator<Item = &'a S>,
         factory: &mut F,
