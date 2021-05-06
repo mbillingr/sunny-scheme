@@ -94,9 +94,24 @@ impl Display for Number {
     }
 }
 
+impl From<i32> for Number {
+    fn from(i: i32) -> Self {
+        Number::Int(i as i64)
+    }
+}
+
 impl From<i64> for Number {
     fn from(i: i64) -> Self {
         Number::Int(i)
+    }
+}
+
+impl From<usize> for Number {
+    fn from(i: usize) -> Self {
+        if i > i64::MAX as usize {
+            unimplemented!("integer values greater than i64")
+        }
+        Number::Int(i as i64)
     }
 }
 
