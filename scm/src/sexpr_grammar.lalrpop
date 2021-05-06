@@ -146,10 +146,10 @@ Sequence: Scm = {
     <car:Datum> <l:@L> <cdr:Sequence> <r:@R> => {
         let src = context.clone().with_span(l..r);
         source_map.insert(cdr.clone(), src);
-        Scm::cons(car, cdr)
+        Scm::cons_const(car, cdr)
     },
-    <car:Datum> "." <cdr:Datum> => Scm::cons(car, cdr),
-    <car:Datum> => Scm::cons(car, Scm::null()),
+    <car:Datum> "." <cdr:Datum> => Scm::cons_const(car, cdr),
+    <car:Datum> => Scm::cons_const(car, Scm::null()),
 };
 
 Quotation: Scm = {

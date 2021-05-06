@@ -1,4 +1,4 @@
-use super::mutable_pair;
+use super::pair;
 use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
 use std::any::Any;
@@ -6,14 +6,14 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Debug, Clone)]
-pub struct Pair {
+pub struct MutablePair {
     first: Scm,
     second: Scm,
 }
 
-impl Pair {
+impl MutablePair {
     pub fn new(first: impl Into<Scm>, second: impl Into<Scm>) -> Self {
-        Pair {
+        MutablePair {
             first: first.into(),
             second: second.into(),
         }
@@ -22,9 +22,23 @@ impl Pair {
     pub fn as_tuple(&self) -> (&Scm, &Scm) {
         (&self.first, &self.second)
     }
+
+    pub fn set_first(&self, value: Scm) {
+        unsafe {
+            let mut_ptr = self as *const Self as *mut Self;
+            (*mut_ptr).first = value;
+        }
+    }
+
+    pub fn set_second(&self, value: Scm) {
+        unsafe {
+            let mut_ptr = self as *const Self as *mut Self;
+            (*mut_ptr).second = value;
+        }
+    }
 }
 
-impl ScmObject for Pair {
+impl ScmObject for MutablePair {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -39,7 +53,7 @@ impl ScmObject for Pair {
             .map(|other| self.first == other.first && self.second == other.second)
             .unwrap_or(false)
             || other
-                .downcast_ref::<mutable_pair::MutablePair>()
+                .downcast_ref::<pair::Pair>()
                 .map(|p| p.as_tuple())
                 .map(|(car, cdr)| &self.first == car && &self.second == cdr)
                 .unwrap_or(false)
@@ -62,7 +76,7 @@ impl ScmObject for Pair {
     }
 }
 
-impl Display for Pair {
+impl Display for MutablePair {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         if !f.alternate() {
             write!(f, "({:#})", self)

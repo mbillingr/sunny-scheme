@@ -4,6 +4,7 @@ mod bytevector;
 mod char;
 mod eof;
 mod interner;
+mod mutable_pair;
 mod null;
 pub mod number;
 mod pair;
@@ -100,8 +101,12 @@ impl Scm {
         Scm(string::ConstantString::interned(content))
     }
 
-    pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
+    pub fn cons_const(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
         pair::Pair::new(car, cdr).into()
+    }
+
+    pub fn cons(car: impl Into<Scm>, cdr: impl Into<Scm>) -> Self {
+        mutable_pair::MutablePair::new(car, cdr).into()
     }
 
     pub fn list<T: Into<Scm>>(items: impl DoubleEndedIterator<Item = T>) -> Self {
@@ -178,7 +183,19 @@ impl Scm {
     }
 
     pub fn as_pair(&self) -> Option<(&Scm, &Scm)> {
-        self.as_type::<pair::Pair>().map(pair::Pair::as_tuple)
+        self.as_type::<mutable_pair::MutablePair>()
+            .map(mutable_pair::MutablePair::as_tuple)
+            .or_else(|| self.as_type::<pair::Pair>().map(pair::Pair::as_tuple))
+    }
+
+    pub fn set_car(&self, value: Scm) -> Option<()> {
+        self.as_type::<mutable_pair::MutablePair>()
+            .map(|p| p.set_first(value))
+    }
+
+    pub fn set_cdr(&self, value: Scm) -> Option<()> {
+        self.as_type::<mutable_pair::MutablePair>()
+            .map(|p| p.set_second(value))
     }
 
     pub fn last_cdr(&self) -> &Self {

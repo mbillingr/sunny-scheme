@@ -152,6 +152,7 @@ fn equal() {
     assert_equivalence!("equal?", r"#\b", r"#\b");
     assert_equivalence!("equal?", "'()", "'()");
     assert_equivalence!("equal?", "(cons 1 2)", "(cons 1 2)");
+    assert_equivalence!("equal?", "'(1 . 2)", "(cons 1 2)");
     assert_equivalence!("equal?", "(vector 1 2)", "(vector 1 2)");
     assert_that!(
         "(let ((x \"foo\")) (equal? x x))",

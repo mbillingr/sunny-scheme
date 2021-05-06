@@ -66,6 +66,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("procedure?", 1, is_procedure)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
         .define_primitive_fixed_arity("reverse", 1, list_reverse)
+        .define_primitive_fixed_arity("set-car!", 2, set_car)
+        .define_primitive_fixed_arity("set-cdr!", 2, set_cdr)
         .define_primitive_fixed_arity("string?", 1, is_string)
         .define_primitive_vararg("string", 0, string)
         .define_primitive_vararg("string-append", 0, string_append)
@@ -235,6 +237,16 @@ primitive! {
 
     varfn vector([args]) -> Result<Scm> {
         Ok(Scm::vector(args))
+    }
+
+    fn set_car(pair: Scm, car: Scm) -> Result<Scm> {
+        pair.set_car(car).ok_or_else(||ErrorKind::TypeError("mutable pair", pair))?;
+        Ok(Scm::void())
+    }
+
+    fn set_cdr(pair: Scm, cdr: Scm) -> Result<Scm> {
+        pair.set_cdr(cdr).ok_or_else(||ErrorKind::TypeError("mutable pair", pair))?;
+        Ok(Scm::void())
     }
 
     fn now() -> Result<Scm> {
