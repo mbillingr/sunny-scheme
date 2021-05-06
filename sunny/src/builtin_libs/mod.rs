@@ -71,6 +71,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("string?", 1, is_string)
         .define_primitive_vararg("string", 0, string)
         .define_primitive_vararg("string-append", 0, string_append)
+        .define_primitive_fixed_arity("string->list", 1, string_to_list)
         .define_primitive_fixed_arity("symbol?", 1, is_symbol)
         .define_primitive_vararg("values", 0, values)
         .define_primitive_fixed_arity("vector?", 1, is_vector)
@@ -225,6 +226,15 @@ primitive! {
             string_data.push_str(s);
         }
         Ok(Scm::string(string_data))
+    }
+
+    fn string_to_list(obj: Scm) -> Result<Scm> {
+        let string = obj.to_str().ok_or_else(||ErrorKind::TypeError("string", obj.clone()))?;
+        let mut list = Scm::null();
+        for ch in string.chars().rev() {
+            list = Scm::cons(ch, list);
+        }
+        Ok(list)
     }
 
     fn is_symbol(obj: Scm) -> Result<Scm> {
