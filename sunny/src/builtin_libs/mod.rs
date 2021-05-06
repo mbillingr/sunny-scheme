@@ -59,6 +59,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("equal?", 2, is_equal)
         .define_primitive_fixed_arity("eqv?", 2, is_eqv)
         .define_primitive_fixed_arity("error", 1, error)
+        .define_primitive_fixed_arity("memv", 2, memv)
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("null?", 1, is_null)
         .define_primitive_fixed_arity("number?", 1, is_number)
@@ -286,6 +287,13 @@ primitive! {
 
     fn list_append(left: Scm, right: Scm) -> Result<Scm> {
         Ok(lists::append(&left, &right))
+    }
+
+    fn memv(obj: Scm, list: Scm) -> Result<Scm> {
+        match lists::memv(&list, &obj) {
+            Some(m) => Ok(m.clone()),
+            None => Ok(Scm::bool(false))
+        }
     }
 }
 
