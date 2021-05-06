@@ -50,7 +50,7 @@ impl ScmObject for ConstantString {
         //       It looks up the string in the interner...
         //       Would be better if we had the original Scm available to return.
         //       Actually, substitution should probably be not a member of ScmObject anyway.
-        Scm::string(&self.0)
+        Scm::string(&*self.0)
     }
 }
 

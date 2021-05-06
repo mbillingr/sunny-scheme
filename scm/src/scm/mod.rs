@@ -93,11 +93,11 @@ impl Scm {
         Scm(symbol::Symbol::uninterned(name))
     }
 
-    pub fn string(content: &str) -> Self {
-        Self::raw_string(string::escape(content))
+    pub fn escaped_string(content: &str) -> Self {
+        Self::string(string::escape(content))
     }
 
-    pub fn raw_string(content: impl Internable<Box<str>>) -> Self {
+    pub fn string(content: impl Internable<Box<str>>) -> Self {
         Scm(string::ConstantString::interned(content))
     }
 

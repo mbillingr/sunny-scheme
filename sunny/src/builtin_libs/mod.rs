@@ -215,7 +215,7 @@ primitive! {
             let ch = x.to_char().ok_or_else(||ErrorKind::TypeError("character", x))?;
             string_data.push(ch);
         }
-        Ok(Scm::string(&string_data))
+        Ok(Scm::string(string_data))
     }
 
     varfn string_append([args]) -> Result<Scm> {
@@ -224,7 +224,7 @@ primitive! {
             let s = x.to_str().ok_or_else(||ErrorKind::TypeError("string", x.clone()))?;
             string_data.push_str(s);
         }
-        Ok(Scm::string(&string_data))
+        Ok(Scm::string(string_data))
     }
 
     fn is_symbol(obj: Scm) -> Result<Scm> {
