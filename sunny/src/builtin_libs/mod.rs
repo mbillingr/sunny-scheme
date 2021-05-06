@@ -68,6 +68,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("reverse", 1, list_reverse)
         .define_primitive_fixed_arity("string?", 1, is_string)
         .define_primitive_vararg("string", 0, string)
+        .define_primitive_vararg("string-append", 0, string_append)
         .define_primitive_fixed_arity("symbol?", 1, is_symbol)
         .define_primitive_vararg("values", 0, values)
         .define_primitive_fixed_arity("vector?", 1, is_vector)
@@ -209,8 +210,17 @@ primitive! {
     varfn string([args]) -> Result<Scm> {
         let mut string_data = String::with_capacity(args.len());
         for x in args {
-            let ch = x.to_char().ok_or(ErrorKind::TypeError("character", x))?;
+            let ch = x.to_char().ok_or_else(||ErrorKind::TypeError("character", x))?;
             string_data.push(ch);
+        }
+        Ok(Scm::string(&string_data))
+    }
+
+    varfn string_append([args]) -> Result<Scm> {
+        let mut string_data = String::with_capacity(args.len());
+        for x in args {
+            let s = x.to_str().ok_or_else(||ErrorKind::TypeError("string", x.clone()))?;
+            string_data.push_str(s);
         }
         Ok(Scm::string(&string_data))
     }
