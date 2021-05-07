@@ -32,6 +32,9 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("quote", Quotation)
         .define_syntax("set!", Assignment)
         .define_primitive_fixed_arity("append", 2, list_append)
+        .define_primitive_fixed_arity("assoc", 2, assoc)
+        .define_primitive_fixed_arity("assq", 2, assq)
+        .define_primitive_fixed_arity("assv", 2, assv)
         .define_intrinsic("call/cc", 1)
         .define_intrinsic("call-with-values", 2)
         .define_primitive_vararg("+", 0, add)
@@ -59,6 +62,8 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("equal?", 2, is_equal)
         .define_primitive_fixed_arity("eqv?", 2, is_eqv)
         .define_primitive_fixed_arity("error", 1, error)
+        .define_primitive_fixed_arity("member", 2, member)
+        .define_primitive_fixed_arity("memq", 2, memq)
         .define_primitive_fixed_arity("memv", 2, memv)
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("null?", 1, is_null)
@@ -295,8 +300,43 @@ primitive! {
         Ok(lists::append(&left, &right))
     }
 
+    fn assoc(obj: Scm, list: Scm) -> Result<Scm> {
+        match lists::assoc(&list, &obj) {
+            Some(m) => Ok(m.clone()),
+            None => Ok(Scm::bool(false))
+        }
+    }
+
+    fn assq(obj: Scm, list: Scm) -> Result<Scm> {
+        match lists::assq(&list, &obj) {
+            Some(m) => Ok(m.clone()),
+            None => Ok(Scm::bool(false))
+        }
+    }
+
+    fn assv(obj: Scm, list: Scm) -> Result<Scm> {
+        match lists::assv(&list, &obj) {
+            Some(m) => Ok(m.clone()),
+            None => Ok(Scm::bool(false))
+        }
+    }
+
+    fn memq(obj: Scm, list: Scm) -> Result<Scm> {
+        match lists::memq(&list, &obj) {
+            Some(m) => Ok(m.clone()),
+            None => Ok(Scm::bool(false))
+        }
+    }
+
     fn memv(obj: Scm, list: Scm) -> Result<Scm> {
         match lists::memv(&list, &obj) {
+            Some(m) => Ok(m.clone()),
+            None => Ok(Scm::bool(false))
+        }
+    }
+
+    fn member(obj: Scm, list: Scm) -> Result<Scm> {
+        match lists::member(&list, &obj) {
             Some(m) => Ok(m.clone()),
             None => Ok(Scm::bool(false))
         }
