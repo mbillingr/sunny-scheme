@@ -169,3 +169,21 @@ fn syntax_rules_quote_syntactic_closure() {
         EvaluatesTo::the_list(vec![1])
     );
 }
+
+#[test]
+fn syntactic_closure_captures_local_variable() {
+    assert_that!(
+        vec![
+            "(define-syntax strange-let
+               (syntax-rules ()
+                 ((_ val result)
+                  ((lambda (ignore) result) val))
+                 ))",
+            "(define (foo x)
+               (strange-let (+ x 1)
+                 x))",
+            "(foo 0)"
+        ],
+        EvaluatesTo::the_integer(0)
+    )
+}
