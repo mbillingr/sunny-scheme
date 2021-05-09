@@ -130,9 +130,10 @@ pub struct Env {
     global: RefCell<Environment>,
     lexical: Environment,
 
-    /// this is the reference (current lexical) environment in which a
-    /// syntactic syntactic closure is expanded.
-    reference_env: Option<Environment>,
+    /// This is the innermost lexical environment; the one currently operated on by the compiler.
+    /// Syntactic closures can look up identifiers in other environments, but binding constructs
+    /// will always extend this environment.
+    compilation_env: Option<Environment>,
 }
 
 impl Env {
@@ -143,7 +144,7 @@ impl Env {
             libraries: Rc::new(RefCell::new(HashMap::new())),
             global: RefCell::new(global),
             lexical,
-            reference_env: None,
+            compilation_env: None,
         }
     }
 
@@ -152,10 +153,10 @@ impl Env {
     }
 
     pub fn prepare_sc_expansion(&self, mut sc_env: Env) -> Env {
-        if self.reference_env.is_some() {
-            sc_env.reference_env = self.reference_env.clone();
+        if self.compilation_env.is_some() {
+            sc_env.compilation_env = self.compilation_env.clone();
         } else {
-            sc_env.reference_env = Some(self.lexical.clone())
+            sc_env.compilation_env = Some(self.lexical.clone())
         }
 
         sc_env
@@ -206,7 +207,7 @@ impl Env {
     pub fn extend_vars<T: ToString>(&self, names: impl DoubleEndedIterator<Item = T>) -> Env {
         let mut env = self.clone();
 
-        if let Some(renv) = env.reference_env.take() {
+        if let Some(renv) = env.compilation_env.take() {
             env.lexical = renv;
         }
 
@@ -261,7 +262,7 @@ impl Env {
 
     pub fn lookup_variable_index(&self, name: &str) -> Option<usize> {
         if let Some(mut index) = self.lexical.lookup_variable_index(name) {
-            if let Some(refenv) = &self.reference_env {
+            if let Some(refenv) = &self.compilation_env {
                 let mut refenv = refenv;
                 while !refenv.is_same(&self.lexical) {
                     match refenv {
