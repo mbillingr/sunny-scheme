@@ -34,7 +34,6 @@ impl SyntacticClosure {
         env: &Env,
     ) -> Result<AstNode> {
         let sc_env = env.prepare_sc_expansion(self.env.clone());
-        println!("expanding:\n  {}\n  in {:?}", self.sexpr, sc_env);
         expander.expand(&self.sexpr, src_map, &sc_env)
     }
 

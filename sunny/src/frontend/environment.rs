@@ -205,6 +205,11 @@ impl Env {
 
     pub fn extend_vars<T: ToString>(&self, names: impl DoubleEndedIterator<Item = T>) -> Env {
         let mut env = self.clone();
+
+        if let Some(renv) = env.reference_env.take() {
+            env.lexical = renv;
+        }
+
         for name in names.rev() {
             env.lexical = env.lexical.add_binding(name, EnvBinding::Variable);
         }
