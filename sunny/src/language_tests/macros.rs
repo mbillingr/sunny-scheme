@@ -172,6 +172,10 @@ fn syntax_rules_quote_syntactic_closure() {
 
 #[test]
 fn syntactic_closure_captures_local_variable() {
+    panic!(
+        "The (lambda (ignore)) is expanded in the top 'main' environment instead of inside foo's.\
+            I'm not sure if this is related to the present issue or another bug..."
+    );
     assert_that!(
         vec![
             "(define-syntax strange-let

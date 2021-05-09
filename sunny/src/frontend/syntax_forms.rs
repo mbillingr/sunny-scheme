@@ -88,7 +88,7 @@ define_form! {
             }
         }
         {sc: Obj<SyntacticClosure>} => {
-            sc.expand(&Expression, src_map)
+            sc.expand(&Expression, src_map, env)
         }
         _ => {
             Ok(Ast::constant(src_map.get(sexpr), sexpr.clone()))
@@ -248,6 +248,7 @@ define_form! {
 define_form! {
     Lambda(sexpr, src_map, env):
         (_ params . body) => {
+            println!("expanding lambda: {}\n in {:?}", sexpr, env);
             Self::build_ast(src_map.get(sexpr), params, body, env, src_map)
         }
 }

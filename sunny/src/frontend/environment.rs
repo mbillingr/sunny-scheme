@@ -129,6 +129,10 @@ pub struct Env {
     libraries: Rc<RefCell<HashMap<String, LibraryBinding>>>,
     global: RefCell<Environment>,
     lexical: Environment,
+
+    /// this is the reference (current lexical) environment in which a
+    /// syntactic syntactic closure is expanded.
+    reference_env: Option<Environment>,
 }
 
 impl Env {
@@ -139,11 +143,22 @@ impl Env {
             libraries: Rc::new(RefCell::new(HashMap::new())),
             global: RefCell::new(global),
             lexical,
+            reference_env: None,
         }
     }
 
     pub fn empty(name: impl ToString) -> Self {
         Env::new(name.to_string(), Environment::Empty, Environment::Empty)
+    }
+
+    pub fn prepare_sc_expansion(&self, mut sc_env: Env) -> Env {
+        if self.reference_env.is_some() {
+            sc_env.reference_env = self.reference_env.clone();
+        } else {
+            sc_env.reference_env = Some(self.lexical.clone())
+        }
+
+        sc_env
     }
 
     pub fn name(&self) -> &str {
@@ -240,7 +255,18 @@ impl Env {
     }
 
     pub fn lookup_variable_index(&self, name: &str) -> Option<usize> {
-        if let Some(index) = self.lexical.lookup_variable_index(name) {
+        if let Some(mut index) = self.lexical.lookup_variable_index(name) {
+            if let Some(refenv) = &self.reference_env {
+                let mut refenv = refenv;
+                while !refenv.is_same(&self.lexical) {
+                    match refenv {
+                        Environment::Empty => panic!("cannot reach closed env from current"),
+                        Environment::Entry(_) => refenv = refenv.next().unwrap(),
+                    }
+                    index += 1;
+                }
+            }
+
             return Some(index);
         }
 
@@ -312,6 +338,15 @@ impl Environment {
         matches!(self, Environment::Empty)
     }
 
+    pub fn is_same(&self, other: &Self) -> bool {
+        use Environment::*;
+        match (self, other) {
+            (Empty, Empty) => true,
+            (Entry(a), Entry(b)) => Rc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
+
     pub fn len(&self) -> usize {
         match self {
             Environment::Empty => 0,
@@ -349,6 +384,13 @@ impl Environment {
             Environment::Empty => None,
             Environment::Entry(entry) if entry.0 == name => Some(self),
             Environment::Entry(entry) => entry.2.find(name),
+        }
+    }
+
+    pub fn next(&self) -> Option<&Self> {
+        match self {
+            Environment::Empty => None,
+            Environment::Entry(entry) => Some(&entry.2),
         }
     }
 }
