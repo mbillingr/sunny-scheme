@@ -69,6 +69,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("newline", 0, newline)
         .define_primitive_fixed_arity("null?", 1, is_null)
         .define_primitive_fixed_arity("number?", 1, is_number)
+        .define_primitive_fixed_arity("number->string", 1, number_to_string)
         .define_primitive_fixed_arity("pair?", 1, is_pair)
         .define_primitive_fixed_arity("procedure?", 1, is_procedure)
         .define_primitive_fixed_arity("procedure-arity", 1, proc_arity)
@@ -210,6 +211,11 @@ primitive! {
 
     fn is_number(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_number()))
+    }
+
+    fn number_to_string(x: Scm) -> Result<Scm> {
+        let x = x.to_number().ok_or_else(||ErrorKind::TypeError("number", x.clone()))?;
+        Ok(Scm::string(format!("{}", x)))
     }
 
     fn is_pair(obj: Scm) -> Result<Scm> {
