@@ -51,6 +51,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("bytevector?", 1, is_bytevector)
         .define_primitive_vararg("bytevector", 0, bytevector)
         .define_primitive_fixed_arity("char?", 1, is_char)
+        .define_primitive_fixed_arity("char=?", 2, char_eq)
         .define_intrinsic("cons", 2)
         .define_intrinsic("car", 1)
         .define_intrinsic("cdr", 1)
@@ -187,6 +188,12 @@ primitive! {
 
     fn is_char(obj: Scm) -> Result<Scm> {
         Ok(Scm::bool(obj.is_char()))
+    }
+
+    fn char_eq(a: Scm, b: Scm) -> Result<Scm> {
+        let a = a.to_char().ok_or(ErrorKind::TypeError("character", a))?;
+        let b = b.to_char().ok_or(ErrorKind::TypeError("character", b))?;
+        Ok(Scm::bool(a == b))
     }
 
     fn is_eof_object(obj: Scm) -> Result<Scm> {
