@@ -8,8 +8,8 @@
       ((lambda (start)
          (thunk)
          (- (now) start))
-       (now))
-    )
+       (now)))
+
 
     (define (report-time t)
       (define (report t unit)
@@ -23,9 +23,7 @@
 
     (define (time-unit->string unit)
       (if (= unit 1) "µs"
-      (if (= unit 1000) "ms"
-      (if (= unit 1000000) "s"
-      (if (= unit 1000000000) "ks"
-          "oo")))))
-  )
-)
+       (if (= unit 1000) "ms"
+        (if (= unit 1000000) "s"
+         (if (= unit 1000000000) "ks"
+             "oo")))))))
