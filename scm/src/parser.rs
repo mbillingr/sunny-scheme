@@ -1,5 +1,6 @@
 lalrpop_mod!(pub sexpr_grammar); // synthesized by LALRPOP
 
+use crate::lexer::{self, Lexer, LexicalError};
 use crate::scm::Scm;
 use crate::shared_string::SharedStr;
 use crate::source_map::SourceMap;
@@ -24,6 +25,7 @@ pub enum Error {
     User {
         error: &'static str,
     },
+    Lexical(LexicalError),
 }
 
 impl std::fmt::Display for Error {
@@ -43,6 +45,7 @@ impl std::fmt::Display for Error {
             ),
             Error::ExtraToken => write!(f, "Extra token."),
             Error::User { error } => write!(f, "{}", error),
+            Error::Lexical(error) => write!(f, "{:?}", error),
         }
     }
 }
@@ -82,6 +85,31 @@ impl From<lalrpop_util::ParseError<usize, lalrpop_util::lexer::Token<'_>, &'stat
     }
 }
 
+impl From<lalrpop_util::ParseError<usize, lexer::Tok<'_>, LexicalError>> for SourceLocation<Error> {
+    fn from(pe: lalrpop_util::ParseError<usize, lexer::Tok<'_>, LexicalError>) -> Self {
+        match pe {
+            lalrpop_util::ParseError::InvalidToken { location } => {
+                SourceLocation::new(Error::InvalidToken).with_span(location..location + 1)
+            }
+            lalrpop_util::ParseError::UnrecognizedEOF { location, expected } => {
+                SourceLocation::new(Error::UnexpectedEof { expected }).with_span(location..location)
+            }
+            lalrpop_util::ParseError::UnrecognizedToken {
+                token: (l, t, r),
+                expected,
+            } => SourceLocation::new(Error::UnrecognizedToken {
+                token: format!("{:?}", t),
+                expected,
+            })
+            .with_span(l..r),
+            lalrpop_util::ParseError::ExtraToken { token: (l, _, r) } => {
+                SourceLocation::new(Error::ExtraToken).with_span(l..r)
+            }
+            lalrpop_util::ParseError::User { error } => SourceLocation::new(Error::Lexical(error)),
+        }
+    }
+}
+
 pub fn parse_str(src: impl Into<SharedStr>) -> Result<Vec<Scm>> {
     let src = src.into();
     let src_map = SourceMap::new();
@@ -91,11 +119,12 @@ pub fn parse_str(src: impl Into<SharedStr>) -> Result<Vec<Scm>> {
 pub fn parse_with_map(src: impl Into<SharedStr>, src_map: &SourceMap) -> Result<Vec<Scm>> {
     let src = src.into();
     let context = SourceLocation::new(()).in_string(src.clone());
+    let lexer = Lexer::new(&src);
     Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(
         &context,
         src_map,
         &mut HashMap::new(),
-        &src,
+        lexer,
     )?)
 }
 
@@ -211,24 +240,28 @@ mod tests {
     fn can_parse_true() {
         let sexpr = parse_str("#t");
         assert_eq!(sexpr.unwrap(), vec![Scm::bool(true)]);
+        let sexpr = parse_str("#true");
+        assert_eq!(sexpr.unwrap(), vec![Scm::bool(true)]);
     }
 
     #[test]
     fn can_parse_false() {
         let sexpr = parse_str("#f");
         assert_eq!(sexpr.unwrap(), vec![Scm::bool(false)]);
+        let sexpr = parse_str("#false");
+        assert_eq!(sexpr.unwrap(), vec![Scm::bool(false)]);
     }
 
     #[test]
     fn can_parse_integer() {
-        let sexpr = parse_str("0");
-        assert_eq!(sexpr.unwrap(), vec![Scm::int(0)]);
+        assert_eq!(parse_str("0").unwrap(), vec![Scm::int(0)]);
+        assert_eq!(parse_str("-1").unwrap(), vec![Scm::int(-1)]);
     }
 
     #[test]
     fn can_parse_floats() {
-        let sexpr = parse_str("1.2");
-        assert_eq!(sexpr.unwrap(), vec![Scm::float(1.2)]);
+        assert_eq!(parse_str("1.2").unwrap(), vec![Scm::float(1.2)]);
+        assert_eq!(parse_str("-0.3").unwrap(), vec![Scm::float(-0.3)]);
     }
 
     #[test]
@@ -355,6 +388,12 @@ mod tests {
         assert_eq!(sexpr.car().unwrap(), &Scm::int(1));
         assert_eq!(sexpr.cadr().unwrap(), &Scm::int(2));
         assert_eq!(sexpr.cddr().unwrap(), &Scm::int(3));
+    }
+
+    #[test]
+    fn can_parse_symbol_that_almost_looks_like_a_number() {
+        let sexpr = parse_str("-1x2");
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("-1x2")]);
     }
 
     #[test]

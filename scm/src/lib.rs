@@ -6,6 +6,7 @@ pub use shared_string::SharedStr;
 pub use source_location::{SourceKind, SourceLocation};
 pub use source_map::SourceMap;
 
+mod lexer;
 pub mod parser;
 mod scm;
 mod shared_string;
