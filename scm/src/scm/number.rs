@@ -1,5 +1,6 @@
 use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
+use num::{BigInt, ToPrimitive};
 use std::any::Any;
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -9,16 +10,18 @@ use std::hash::Hash;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use std::str::FromStr;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Number {
     Int(i64),
     Float(f64),
+    BigInt(BigInt),
 }
 
 impl Number {
     pub fn int(x: i64) -> Self {
         Number::Int(x)
     }
+
     pub fn float(x: f64) -> Self {
         Number::Float(x)
     }
@@ -48,8 +51,10 @@ impl Number {
     pub fn upcast(&self, target: &Self) -> Cow<Number> {
         use Number::*;
         match (self, target) {
+            (Int(i), BigInt(_)) => Cow::Owned(Number::BigInt((*i).into())),
             (Int(i), Float(_)) => Cow::Owned(Number::float(*i as f64)),
-            (Int(_), _) | (Float(_), _) => Cow::Borrowed(self),
+            (BigInt(i), Float(_)) => Cow::Owned(Number::float(i.to_f64().unwrap())),
+            (Int(_), _) | (Float(_), _) | (BigInt(_), _) => Cow::Borrowed(self),
         }
     }
 
@@ -64,6 +69,7 @@ impl Number {
                 std::mem::transmute::<f64, u64>(*x)
             }
             .hash(state),
+            Number::BigInt(x) => x.hash(state),
         }
     }
 }
@@ -89,7 +95,7 @@ impl ScmObject for Number {
     }
 
     fn substitute(&self, _: &HashMap<&str, Scm>) -> Scm {
-        (*self).into()
+        self.clone().into()
     }
 }
 
@@ -98,6 +104,7 @@ impl Display for Number {
         match self {
             Number::Int(x) => write!(f, "{}", x),
             Number::Float(x) => write!(f, "{}", x),
+            Number::BigInt(x) => write!(f, "{}", x),
         }
     }
 }
@@ -114,12 +121,23 @@ impl From<i64> for Number {
     }
 }
 
+impl From<u64> for Number {
+    fn from(i: u64) -> Self {
+        if i > i64::MAX as u64 {
+            Number::BigInt(i.into())
+        } else {
+            Number::Int(i as i64)
+        }
+    }
+}
+
 impl From<usize> for Number {
     fn from(i: usize) -> Self {
         if i > i64::MAX as usize {
-            unimplemented!("integer values greater than i64")
+            Number::BigInt(i.into())
+        } else {
+            Number::Int(i as i64)
         }
-        Number::Int(i as i64)
     }
 }
 
@@ -130,6 +148,8 @@ impl FromStr for Number {
         println!("parsing {}", s);
         if let Ok(x) = i64::from_str(s) {
             Ok(Number::int(x))
+        } else if let Ok(x) = BigInt::from_str(s) {
+            Ok(Number::BigInt(x))
         } else if let Ok(x) = f64::from_str(s) {
             Ok(Number::float(x))
         } else {
@@ -145,6 +165,7 @@ impl Neg for &Number {
         match self {
             Number::Int(x) => Number::Int(-*x),
             Number::Float(x) => Number::Float(-*x),
+            Number::BigInt(x) => Number::BigInt(-x.clone()),
         }
     }
 }
@@ -155,8 +176,16 @@ impl Add for &Number {
     fn add(self, rhs: &Number) -> Self::Output {
         use Number::*;
         match (self, rhs) {
-            (Int(a), Int(b)) => Number::Int(a + b),
+            (Int(a), Int(b)) => {
+                if let Some(c) = i64::checked_add(*a, *b) {
+                    Number::Int(c)
+                } else {
+                    let a = num::BigInt::from(*a);
+                    Number::BigInt(a + b)
+                }
+            }
             (Float(a), Float(b)) => Number::Float(a + b),
+            (BigInt(a), BigInt(b)) => Number::BigInt(a + b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -172,8 +201,16 @@ impl Sub for &Number {
     fn sub(self, rhs: &Number) -> Self::Output {
         use Number::*;
         match (self, rhs) {
-            (Int(a), Int(b)) => Number::Int(a - b),
+            (Int(a), Int(b)) => {
+                if let Some(c) = i64::checked_sub(*a, *b) {
+                    Number::Int(c)
+                } else {
+                    let a = num::BigInt::from(*a);
+                    Number::BigInt(a - b)
+                }
+            }
             (Float(a), Float(b)) => Number::Float(a - b),
+            (BigInt(a), BigInt(b)) => Number::BigInt(a - b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -189,8 +226,16 @@ impl Mul for &Number {
     fn mul(self, rhs: &Number) -> Self::Output {
         use Number::*;
         match (self, rhs) {
-            (Int(a), Int(b)) => Number::Int(a * b),
+            (Int(a), Int(b)) => {
+                if let Some(c) = i64::checked_mul(*a, *b) {
+                    Number::Int(c)
+                } else {
+                    let a = num::BigInt::from(*a);
+                    Number::BigInt(a * b)
+                }
+            }
             (Float(a), Float(b)) => Number::Float(a * b),
+            (BigInt(a), BigInt(b)) => Number::BigInt(a * b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -208,6 +253,7 @@ impl Div for &Number {
         match (self, rhs) {
             (Int(a), Int(b)) => Number::Float(*a as f64 / *b as f64),
             (Float(a), Float(b)) => Number::Float(a / b),
+            (BigInt(a), BigInt(b)) => Number::Float(a.to_f64().unwrap() / b.to_f64().unwrap()),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -223,11 +269,19 @@ impl PartialOrd for Number {
         match (self, rhs) {
             (Int(a), Int(b)) => PartialOrd::partial_cmp(a, b),
             (Float(a), Float(b)) => PartialOrd::partial_cmp(a, b),
+            (BigInt(a), BigInt(b)) => PartialOrd::partial_cmp(a, b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
                 PartialOrd::partial_cmp(&*a, &*b)
             }
         }
+    }
+}
+
+impl Add<i64> for Number {
+    type Output = Number;
+    fn add(self, rhs: i64) -> Self::Output {
+        &self + &Number::int(rhs)
     }
 }

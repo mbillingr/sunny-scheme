@@ -11,5 +11,6 @@ lalrpop = "0.19"
 
 [dependencies]
 lalrpop-util = "0.19"
+num = "0.4"
 regex = "1"
 sexpr-generics = {path = "../sexpr" }

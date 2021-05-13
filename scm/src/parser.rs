@@ -198,6 +198,7 @@ fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &
 #[cfg(test)]
 mod tests {
     use crate::parser::parse_str;
+    use crate::scm::number::Number;
     use crate::*;
     use sexpr_generics::prelude::*;
 
@@ -223,6 +224,13 @@ mod tests {
     fn can_parse_integer() {
         let sexpr = parse_str("0");
         assert_eq!(sexpr.unwrap(), vec![Scm::int(0)]);
+    }
+
+    #[test]
+    fn can_parse_big_integer() {
+        let sexpr = parse_str("18446744073709551616");
+        let expected = Number::from(u64::MAX) + 1;
+        assert_eq!(sexpr.unwrap(), vec![Scm::number(expected)]);
     }
 
     #[test]
