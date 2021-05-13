@@ -8,6 +8,7 @@ macro_rules! regex {
     ((repeat $n:tt $x:tt)) => {Regex::Repeat($n, Some($n), Box::new(regex!($x)))};
     ((repeat $min:tt .. $max:tt $x:tt)) => {Regex::Repeat($min, Some($max), Box::new(regex!($x)))};
     ((repeat $min:tt .. $x:tt)) => {Regex::Repeat($min, None, Box::new(regex!($x)))};
+    ((opt $x:tt)) => {Regex::Repeat(0, Some(1), Box::new(regex!($x)))};
     ((from $chars:expr)) => {Regex::char_from($chars)};
     ((not-from $chars:expr)) => {Regex::complement($chars)};
     ($quote:expr) => {Regex::from($quote.clone())}
@@ -15,7 +16,7 @@ macro_rules! regex {
 
 fn main() {
     let boolean = regex!((alt "#t" "#f" "#true" "#false"));
-    println!("{}", boolean.build());
+    println!("<boolean> = {}", boolean.build());
 
     let letter = regex! {(from r"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")};
     let digit = regex! {(from r"0123456789")};
@@ -51,6 +52,63 @@ fn main() {
     println!("<normal identifier> = {}", normal_identifier.build());
     println!("<verbatim identifier> = {}", verbatim_identifier.build());
     println!("<peculiar identifier> = {}", peculiar_identifier.build());
+
+    let exponent_marker = "e";
+    let sign = regex! {(opt (alt "+" "-"))};
+    let exactness = regex! {(opt (alt "#i" "#e"))};
+    let infnan = regex! {(alt "+inf.0" "-inf.0" "+nan.0" "-nan.0")};
+    for &r in &[2, 8, 10, 16] {
+        let prefix = regex! {(alt (seq (radix(r)) exactness) (seq exactness (radix(r))))};
+        let uinteger = regex! {(repeat 1.. (num_digit(r)))};
+        let suffix = regex! {(opt(seq exponent_marker sign uinteger))};
+        let decimal = regex! {
+            (alt (seq uinteger "." (repeat 0.. (num_digit(r))) suffix)
+                 (seq "." uinteger suffix)
+                 (seq uinteger suffix))
+        };
+        let ureal = regex! {
+            (alt (seq uinteger "/" uinteger)
+                 decimal
+                 uinteger)  // note that the <uinteger> alternative is also matched by <decimal> because <suffix> is optional
+        };
+        let real = regex! {(alt (seq sign ureal) infnan)};
+        let complex = regex! {
+            (alt (seq real "@" real)
+                 (seq real "+" ureal "i")
+                 (seq real "-" ureal "i")
+                 (seq real "+i")
+                 (seq real "-i")
+                 (seq real infnan "i")
+                 (seq "+" ureal "i")
+                 (seq "-" ureal "i")
+                 (seq infnan "i")
+                 (seq "+i")
+                 (seq "-i")
+                 real)
+        };
+        let num = regex! {(seq prefix complex)};
+        println!("<num {}> = {}", r, num.build());
+    }
+}
+
+fn radix(r: u8) -> Regex {
+    match r {
+        2 => regex! {"#b"},
+        8 => regex! {"#o"},
+        10 => regex! {(opt "#d")},
+        16 => regex! {"#x"},
+        _ => panic!("Invalid number base: {}", r),
+    }
+}
+
+fn num_digit(r: u8) -> Regex {
+    match r {
+        2 => regex! {(from "01")},
+        8 => regex! {(from "01234567")},
+        10 => regex! {(from "0123456789")},
+        16 => regex! {(from "0123456789abcdef")},
+        _ => panic!("Invalid number base: {}", r),
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -118,6 +176,15 @@ impl Regex {
                 .map(|re| re.recursive_build(self.precedence_level()))
                 .collect::<Vec<_>>()
                 .join("|"),
+            Regex::Repeat(0, None, re) => {
+                format!("{}*", re.recursive_build(self.precedence_level()),)
+            }
+            Regex::Repeat(1, None, re) => {
+                format!("{}+", re.recursive_build(self.precedence_level()),)
+            }
+            Regex::Repeat(0, Some(1), re) => {
+                format!("{}?", re.recursive_build(self.precedence_level()),)
+            }
             Regex::Repeat(min, Some(max), re) if min == max => {
                 format!("{}{{{}}}", re.recursive_build(self.precedence_level()), min)
             }
@@ -127,12 +194,6 @@ impl Regex {
                 min,
                 max
             ),
-            Regex::Repeat(0, None, re) => {
-                format!("{}*", re.recursive_build(self.precedence_level()),)
-            }
-            Regex::Repeat(1, None, re) => {
-                format!("{}+", re.recursive_build(self.precedence_level()),)
-            }
             Regex::Repeat(min, None, re) => format!(
                 "{}{{{},}}",
                 re.recursive_build(self.precedence_level()),
@@ -265,6 +326,7 @@ mod tests {
         assert_eq!(regex! {(repeat 2 .)}, Repeat(2, Some(2), Box::new(Any)));
         assert_eq!(regex! {(repeat 2..3 .)}, Repeat(2, Some(3), Box::new(Any)));
         assert_eq!(regex! {(repeat 2.. .)}, Repeat(2, None, Box::new(Any)));
+        assert_eq!(regex! {(opt .)}, Repeat(0, Some(1), Box::new(Any)));
     }
 
     #[test]
@@ -317,6 +379,7 @@ mod tests {
         assert_eq!(Repeat(2, None, Box::new(Any)).build(), ".{2,}");
         assert_eq!(Repeat(0, None, Box::new(Any)).build(), ".*");
         assert_eq!(Repeat(1, None, Box::new(Any)).build(), ".+");
+        assert_eq!(Repeat(0, Some(1), Box::new(Any)).build(), ".?");
     }
 
     #[test]

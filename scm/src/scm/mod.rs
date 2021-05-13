@@ -165,7 +165,7 @@ impl Scm {
     }
 
     pub fn as_int(&self) -> Option<i64> {
-        self.as_number().and_then(number::Number::as_int).copied()
+        self.as_number().and_then(number::Number::to_i64).copied()
     }
 
     pub fn as_number(&self) -> Option<&number::Number> {

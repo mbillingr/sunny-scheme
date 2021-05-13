@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::hash::Hash;
 use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Number {
@@ -30,7 +31,14 @@ impl Number {
         Number::Int(1)
     }
 
-    pub fn as_int(&self) -> Option<&i64> {
+    pub fn to_u8(&self) -> Option<u8> {
+        match *self {
+            Number::Int(i) if i >= u8::MIN as i64 && i <= u8::MAX as i64 => Some(i as u8),
+            _ => None,
+        }
+    }
+
+    pub fn to_i64(&self) -> Option<&i64> {
         match self {
             Number::Int(i) => Some(i),
             _ => None,
@@ -112,6 +120,21 @@ impl From<usize> for Number {
             unimplemented!("integer values greater than i64")
         }
         Number::Int(i as i64)
+    }
+}
+
+impl FromStr for Number {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        println!("parsing {}", s);
+        if let Ok(x) = i64::from_str(s) {
+            Ok(Number::int(x))
+        } else if let Ok(x) = f64::from_str(s) {
+            Ok(Number::float(x))
+        } else {
+            Err(format!("number format not implemented: {}", s))
+        }
     }
 }
 
