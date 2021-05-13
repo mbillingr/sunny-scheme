@@ -234,6 +234,12 @@ mod tests {
     }
 
     #[test]
+    fn can_parse_rationals() {
+        let sexpr = parse_str("4/8");
+        assert_eq!(sexpr.unwrap(), vec![Scm::number(Number::rational(1, 2))]);
+    }
+
+    #[test]
     fn can_parse_floats() {
         let sexpr = parse_str("1.2");
         assert_eq!(sexpr.unwrap(), vec![Scm::float(1.2)]);

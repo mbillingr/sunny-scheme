@@ -1,6 +1,6 @@
 use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
-use num::{BigInt, ToPrimitive};
+use num::{BigInt, BigRational, One, ToPrimitive};
 use std::any::Any;
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -13,8 +13,9 @@ use std::str::FromStr;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Number {
     Int(i64),
-    Float(f64),
     BigInt(BigInt),
+    Rational(BigRational),
+    Float(f64),
 }
 
 impl Number {
@@ -24,6 +25,10 @@ impl Number {
 
     pub fn float(x: f64) -> Self {
         Number::Float(x)
+    }
+
+    pub fn rational(num: impl Into<BigInt>, den: impl Into<BigInt>) -> Self {
+        Number::Rational(BigRational::new(num.into(), den.into()))
     }
 
     pub fn zero() -> Self {
@@ -52,15 +57,26 @@ impl Number {
         use Number::*;
         match (self, target) {
             (Int(i), BigInt(_)) => Cow::Owned(Number::BigInt((*i).into())),
+            (Int(i), Rational(_)) => Cow::Owned(Number::rational(*i, 1)),
             (Int(i), Float(_)) => Cow::Owned(Number::float(*i as f64)),
+
+            (BigInt(i), Rational(_)) => Cow::Owned(Number::Rational(BigRational::new_raw(
+                i.clone(),
+                num::BigInt::one(),
+            ))),
             (BigInt(i), Float(_)) => Cow::Owned(Number::float(i.to_f64().unwrap())),
-            (Int(_), _) | (Float(_), _) | (BigInt(_), _) => Cow::Borrowed(self),
+
+            (Rational(r), Float(_)) => Cow::Owned(Number::float(r.to_f64().unwrap())),
+
+            (Int(_), _) | (BigInt(_), _) | (Rational(_), _) | (Float(_), _) => Cow::Borrowed(self),
         }
     }
 
     fn hash(&self, state: &mut ScmHasher) {
         match self {
             Number::Int(x) => x.hash(state),
+            Number::BigInt(x) => x.hash(state),
+            Number::Rational(x) => x.hash(state),
             Number::Float(x) => unsafe {
                 // Safety: (it's probably UB to cast a float to an int)
                 // Hashing a float based on its bit pattern is probably
@@ -69,7 +85,6 @@ impl Number {
                 std::mem::transmute::<f64, u64>(*x)
             }
             .hash(state),
-            Number::BigInt(x) => x.hash(state),
         }
     }
 }
@@ -103,8 +118,9 @@ impl Display for Number {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
             Number::Int(x) => write!(f, "{}", x),
-            Number::Float(x) => write!(f, "{}", x),
             Number::BigInt(x) => write!(f, "{}", x),
+            Number::Rational(x) => write!(f, "{}", x),
+            Number::Float(x) => write!(f, "{}", x),
         }
     }
 }
@@ -150,6 +166,8 @@ impl FromStr for Number {
             Ok(Number::int(x))
         } else if let Ok(x) = BigInt::from_str(s) {
             Ok(Number::BigInt(x))
+        } else if let Ok(x) = BigRational::from_str(s) {
+            Ok(Number::Rational(x))
         } else if let Ok(x) = f64::from_str(s) {
             Ok(Number::float(x))
         } else {
@@ -164,8 +182,9 @@ impl Neg for &Number {
     fn neg(self) -> Self::Output {
         match self {
             Number::Int(x) => Number::Int(-*x),
-            Number::Float(x) => Number::Float(-*x),
             Number::BigInt(x) => Number::BigInt(-x.clone()),
+            Number::Rational(x) => Number::Rational(-x.clone()),
+            Number::Float(x) => Number::Float(-*x),
         }
     }
 }
@@ -184,8 +203,9 @@ impl Add for &Number {
                     Number::BigInt(a + b)
                 }
             }
-            (Float(a), Float(b)) => Number::Float(a + b),
             (BigInt(a), BigInt(b)) => Number::BigInt(a + b),
+            (Rational(a), Rational(b)) => Number::Rational(a + b),
+            (Float(a), Float(b)) => Number::Float(a + b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -209,8 +229,9 @@ impl Sub for &Number {
                     Number::BigInt(a - b)
                 }
             }
-            (Float(a), Float(b)) => Number::Float(a - b),
             (BigInt(a), BigInt(b)) => Number::BigInt(a - b),
+            (Rational(a), Rational(b)) => Number::Rational(a - b),
+            (Float(a), Float(b)) => Number::Float(a - b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -234,8 +255,9 @@ impl Mul for &Number {
                     Number::BigInt(a * b)
                 }
             }
-            (Float(a), Float(b)) => Number::Float(a * b),
             (BigInt(a), BigInt(b)) => Number::BigInt(a * b),
+            (Rational(a), Rational(b)) => Number::Rational(a * b),
+            (Float(a), Float(b)) => Number::Float(a * b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
@@ -251,9 +273,24 @@ impl Div for &Number {
     fn div(self, rhs: &Number) -> Self::Output {
         use Number::*;
         match (self, rhs) {
-            (Int(a), Int(b)) => Number::Float(*a as f64 / *b as f64),
+            (Int(a), Int(b)) => {
+                let c = a / b;
+                if c * b == *a {
+                    Number::Int(c)
+                } else {
+                    Number::rational(*a, *b)
+                }
+            }
+            (BigInt(a), BigInt(b)) => {
+                let c = BigRational::new(a.clone(), b.clone());
+                if c.is_integer() {
+                    Number::BigInt(c.to_integer())
+                } else {
+                    Number::Rational(c)
+                }
+            }
+            (Rational(a), Rational(b)) => Number::Rational(a / b),
             (Float(a), Float(b)) => Number::Float(a / b),
-            (BigInt(a), BigInt(b)) => Number::Float(a.to_f64().unwrap() / b.to_f64().unwrap()),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
