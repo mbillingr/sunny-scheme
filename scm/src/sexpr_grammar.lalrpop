@@ -14,9 +14,13 @@ match {
     r"\s*" => { }, // The default whitespace skipping is disabled an `ignore pattern` is specified
     r";[^\n\r]*[\n\r]*" => LINE_COMMENT,
     r"#\|[^|]*\|+([^|#][^|]*\|+)*#" => BLOCK_COMMENT,
+} else {
+    r"#t|#true" => BOOLEAN_TRUE,
+    r"#f|#false" => BOOLEAN_FALSE,
     ".",
-    r"\|(\\\||[^|])*\|" => VERBATIM_SYMBOL,
-    r"[a-zA-Z!$%&*+./:<=>?@^_~-]([^\s\(\)])*" => IDENTIFIER,
+    r"\|(?:[^\|]|\\x(?:[0-9]|[a-f])+;|\\a|\\b|\\t|\\n|\\r|\\\|)*\|" => VERBATIM_IDENTIFIER,
+    r"(?:[A-Za-z]|[!$-&*/:<-@_~^])(?:[A-Za-z]|[!$-&*/:<-@_~^]|[0-9]|[+-]|\.|@)*" => NORMAL_IDENTIFIER,
+    r"[+-]|[+-](?:[A-Za-z]|[!$-&*/:<-@_~^]|[+-]|@)(?:[A-Za-z]|[!$-&*/:<-@_~^]|[0-9]|[+-]|\.|@)*|[+-]\.(?:[A-Za-z]|[!$-&*/:<-@_~^]|[+-]|@|\.)(?:[A-Za-z]|[!$-&*/:<-@_~^]|[0-9]|[+-]|\.|@)*|\.(?:[A-Za-z]|[!$-&*/:<-@_~^]|[+-]|@|\.)(?:[A-Za-z]|[!$-&*/:<-@_~^]|[0-9]|[+-]|\.|@)*" => PECULIAR_IDENTIFIER,
 } else {
     _
 }
@@ -67,8 +71,8 @@ RawSexpr: Scm = {
 };
 
 Bool: bool = {
-    "#t" => true,
-    "#f" => false,
+    BOOLEAN_TRUE => true,
+    BOOLEAN_FALSE => false,
 }
 
 Num: Number = {
@@ -128,8 +132,9 @@ Char: char = {
 };
 
 Sym: Cow<'input, str> = {
-    <s:IDENTIFIER> => Cow::Borrowed(s),
-    <s:VERBATIM_SYMBOL> =>? unescape(&s[1..s.len()-1]),
+    <s:NORMAL_IDENTIFIER> => Cow::Borrowed(s),
+    <s:PECULIAR_IDENTIFIER> => Cow::Borrowed(s),
+    <s:VERBATIM_IDENTIFIER> =>? unescape(&s[1..s.len()-1]),
 }
 
 Str: &'input str = {

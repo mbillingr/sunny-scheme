@@ -1,5 +1,7 @@
 [workspace]
 
+default-members = ["sunny"]
+
 members = [
     "memory",
     "scm",
