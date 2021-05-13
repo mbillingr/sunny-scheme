@@ -44,10 +44,10 @@ fn main() {
     let sign_subsequent = regex! {(alt initial explicit_sign "@")};
     let dot_subsequent = regex! {(alt sign_subsequent ".")};
     let peculiar_identifier = regex! {
-        (alt explicit_sign
-             (seq explicit_sign sign_subsequent (repeat 0.. subsequent))
+        (alt (seq explicit_sign sign_subsequent (repeat 0.. subsequent))
              (seq explicit_sign "." dot_subsequent (repeat 0.. subsequent))
-             (seq "." dot_subsequent (repeat 0.. subsequent)))
+             (seq "." dot_subsequent (repeat 0.. subsequent))
+             explicit_sign)
     };
     println!("<normal identifier> = {}", normal_identifier.build());
     println!("<verbatim identifier> = {}", verbatim_identifier.build());
