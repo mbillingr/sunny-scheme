@@ -1,4 +1,4 @@
-use maplit::hashset;
+use maplit::{hashmap, hashset};
 use std::collections::HashSet;
 
 #[macro_export]
@@ -313,7 +313,11 @@ impl Regex {
             Regex::BoL => FiniteAutomaton::make_trivial_nfa(vec![Char::BoL]),
             Regex::EoL => FiniteAutomaton::make_trivial_nfa(vec![Char::EoL]),
             Regex::Quote(chars) | Regex::CharSet(chars) => {
-                FiniteAutomaton::make_trivial_nfa(chars.chars().map(|ch| Char::Ch(ch)))
+                let mut nfa = FiniteAutomaton::singleton();
+                for ch in chars.chars().map(Char::Ch) {
+                    nfa.chain(FiniteAutomaton::make_trivial_nfa(vec![ch]));
+                }
+                nfa
             }
             Regex::Complement(unchars) => FiniteAutomaton::make_trivial_nfa(
                 alphabet
@@ -321,7 +325,7 @@ impl Regex {
                     .copied(),
             ),
             Regex::Seq(exprs) => {
-                let mut nfa = FiniteAutomaton::new();
+                let mut nfa = FiniteAutomaton::singleton();
                 for expr in exprs {
                     nfa.chain(expr.to_nfa_recursive(alphabet));
                 }
@@ -337,7 +341,7 @@ impl Regex {
             Regex::Repeat(min, max, expr) => {
                 let nfa = expr.to_nfa_recursive(alphabet);
 
-                let mut min_nfa = FiniteAutomaton::new();
+                let mut min_nfa = FiniteAutomaton::singleton();
                 for _ in 0..*min {
                     min_nfa.chain(nfa.clone());
                 }
@@ -346,7 +350,7 @@ impl Regex {
                     let mut nfa = nfa;
                     nfa.make_optional();
 
-                    let mut max_nfa = FiniteAutomaton::new();
+                    let mut max_nfa = FiniteAutomaton::singleton();
                     for _ in 0..(max - min) {
                         max_nfa.chain(nfa.clone());
                     }
@@ -389,15 +393,15 @@ enum Char {
 #[derive(Debug, Clone)]
 struct FiniteAutomaton {
     entry: Node,
-    exit: Node,
+    exits: HashSet<Node>,
     nodes: Vec<NodeData>,
     edges: Vec<EdgeData>,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct Node(usize);
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 struct Edge(usize);
 
 #[derive(Debug, Clone)]
@@ -440,7 +444,16 @@ impl FiniteAutomaton {
     fn new() -> Self {
         FiniteAutomaton {
             entry: Node(0),
-            exit: Node(0),
+            exits: hashset![],
+            nodes: vec![],
+            edges: vec![],
+        }
+    }
+
+    fn singleton() -> Self {
+        FiniteAutomaton {
+            entry: Node(0),
+            exits: hashset![Node(0)],
             nodes: vec![NodeData::new()],
             edges: vec![],
         }
@@ -449,14 +462,14 @@ impl FiniteAutomaton {
     fn new_disconnected() -> Self {
         FiniteAutomaton {
             entry: Node(0),
-            exit: Node(1),
+            exits: hashset![Node(1)],
             nodes: vec![NodeData::new(), NodeData::new()],
             edges: vec![],
         }
     }
 
     fn make_trivial_nfa<'a>(chars: impl IntoIterator<Item = Char>) -> Self {
-        let mut nfa = Self::new();
+        let mut nfa = Self::singleton();
         let source = nfa.entry();
         let sink = nfa.add_node();
         nfa.set_exit(sink);
@@ -509,7 +522,8 @@ impl FiniteAutomaton {
     }
 
     fn exit(&self) -> Node {
-        self.exit
+        assert_eq!(self.exits.len(), 1);
+        *self.exits.iter().next().unwrap()
     }
 
     fn set_entry(&mut self, entry: Node) {
@@ -517,7 +531,7 @@ impl FiniteAutomaton {
     }
 
     fn set_exit(&mut self, exit: Node) {
-        self.exit = exit;
+        self.exits = hashset![exit];
     }
 
     fn make_optional(&mut self) {
@@ -560,6 +574,86 @@ impl FiniteAutomaton {
 
         (other_entry, other_exit)
     }
+
+    fn subset(&self, alphabet: &HashSet<Char>) -> Self {
+        let n0 = self.entry();
+        let q0 = self.epsilon_closure(hashset![n0]);
+        let mut states = vec![q0.clone()];
+        let mut transitions = hashmap![];
+        let mut worklist = vec![0];
+        while let Some(i) = worklist.pop() {
+            for &ch in alphabet {
+                let t = self.epsilon_closure(self.delta(&states[i], ch));
+                if t.is_empty() {
+                    continue;
+                }
+                if let Some(j) = states.iter().position(|s| s == &t) {
+                    transitions.insert((i, ch), j);
+                } else {
+                    worklist.push(states.len());
+                    transitions.insert((i, ch), states.len());
+                    states.push(t.clone());
+                }
+            }
+        }
+
+        let mut dfa = Self::new();
+        for q in states {
+            let d = dfa.add_node();
+            if q.contains(&self.exit()) {
+                dfa.exits.insert(d);
+            }
+        }
+
+        for ((i, ch), j) in transitions {
+            let source = Node(i);
+            let sink = Node(j);
+            dfa.add_edge(source, sink, ch);
+        }
+
+        dfa
+    }
+
+    fn epsilon_closure(&self, nodes: HashSet<Node>) -> HashSet<Node> {
+        let mut closure = hashset![];
+        let mut nodes: Vec<_> = nodes.into_iter().collect();
+        while let Some(n) = nodes.pop() {
+            closure.insert(n);
+            for out in self.outgoing(n).filter(|out| out.char == Char::Epsilon) {
+                let successor = out.sink;
+                if closure.contains(&successor) {
+                    panic!("Ran into epsilon-loop!")
+                }
+                nodes.push(successor);
+            }
+        }
+        closure
+    }
+
+    fn delta(&self, nodes: &HashSet<Node>, ch: Char) -> HashSet<Node> {
+        nodes
+            .iter()
+            .filter_map(|&source| self.transition(source, ch))
+            .collect()
+    }
+
+    fn outgoing(&self, source: Node) -> impl Iterator<Item = &EdgeData> {
+        let mut edge = self.node(source).first_outgoing;
+        (0..)
+            .map(move |_| {
+                let edge_data = self.edge(edge?);
+                edge = edge_data.next_outgoing;
+                Some(edge_data)
+            })
+            .take_while(Option::is_some)
+            .map(Option::unwrap)
+    }
+
+    fn transition(&self, source: Node, ch: Char) -> Option<Node> {
+        self.outgoing(source)
+            .find(|edge| edge.char == ch)
+            .map(|edge| edge.sink)
+    }
 }
 
 impl std::fmt::Display for Node {
@@ -571,7 +665,6 @@ impl std::fmt::Display for Node {
 impl std::fmt::Display for FiniteAutomaton {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         writeln!(f, "     -> {}", self.entry())?;
-        writeln!(f, "{} ---->", self.exit())?;
         for edge in &self.edges {
             let ch = match edge.char {
                 Char::Ch(ch) => ch.to_string(),
@@ -581,6 +674,9 @@ impl std::fmt::Display for FiniteAutomaton {
                 Char::Other => "??".to_string(),
             };
             writeln!(f, "{} --{}-> {}", edge.source, ch, edge.sink)?
+        }
+        for ex in &self.exits {
+            writeln!(f, "{} ---->", ex)?;
         }
         writeln!(f)
     }
@@ -799,8 +895,16 @@ mod tests {
 
     #[test]
     fn to_nfa() {
-        let re = regex!((from "ab"));
-        println!("{:?}", re.build_alphabet());
-        println!("{}", re.to_nfa());
+        let re = regex!((alt (seq "foo" (opt "bar")) "baz"));
+        println!("{:?}", re);
+
+        let alphabet = re.build_alphabet();
+        println!("{:?}", alphabet);
+
+        let nfa = re.to_nfa();
+        println!("{}", nfa);
+
+        let dfa = nfa.subset(&alphabet);
+        println!("{}", dfa);
     }
 }
