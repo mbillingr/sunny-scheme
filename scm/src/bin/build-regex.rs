@@ -1,3 +1,6 @@
+use maplit::hashset;
+use std::collections::HashSet;
+
 #[macro_export]
 macro_rules! regex {
     (.) => {Regex::Any};
@@ -279,6 +282,91 @@ impl Regex {
 
         escaped_string
     }
+
+    fn build_alphabet(&self) -> HashSet<Char> {
+        match self {
+            Regex::Any => hashset![Char::Other],
+            Regex::BoL => hashset![Char::BoL],
+            Regex::EoL => hashset![Char::EoL],
+            Regex::Quote(s) => s.chars().map(Char::Ch).collect(),
+            Regex::Seq(res) | Regex::Alt(res) => {
+                res.iter().flat_map(Regex::build_alphabet).collect()
+            }
+            Regex::Repeat(_, _, expr) => expr.build_alphabet(),
+            Regex::CharSet(chars) => chars.chars().map(Char::Ch).collect(),
+            Regex::Complement(chars) => chars
+                .chars()
+                .map(Char::Ch)
+                .chain(std::iter::once(Char::Other))
+                .collect(),
+        }
+    }
+
+    fn to_nfa(&self) -> FiniteAutomaton {
+        let alphabet = self.build_alphabet();
+        self.to_nfa_recursive(&alphabet)
+    }
+
+    fn to_nfa_recursive(&self, alphabet: &HashSet<Char>) -> FiniteAutomaton {
+        match self {
+            Regex::Any => FiniteAutomaton::make_trivial_nfa(alphabet.iter().copied()),
+            Regex::BoL => FiniteAutomaton::make_trivial_nfa(vec![Char::BoL]),
+            Regex::EoL => FiniteAutomaton::make_trivial_nfa(vec![Char::EoL]),
+            Regex::Quote(chars) | Regex::CharSet(chars) => {
+                FiniteAutomaton::make_trivial_nfa(chars.chars().map(|ch| Char::Ch(ch)))
+            }
+            Regex::Complement(unchars) => FiniteAutomaton::make_trivial_nfa(
+                alphabet
+                    .difference(&unchars.chars().map(Char::Ch).collect())
+                    .copied(),
+            ),
+            Regex::Seq(exprs) => {
+                let mut nfa = FiniteAutomaton::new();
+                for expr in exprs {
+                    nfa.chain(expr.to_nfa_recursive(alphabet));
+                }
+                nfa
+            }
+            Regex::Alt(exprs) => {
+                let mut nfa = FiniteAutomaton::new_disconnected();
+                for expr in exprs {
+                    nfa.alternate(expr.to_nfa_recursive(alphabet));
+                }
+                nfa
+            }
+            Regex::Repeat(min, max, expr) => {
+                let nfa = expr.to_nfa_recursive(alphabet);
+
+                let mut min_nfa = FiniteAutomaton::new();
+                for _ in 0..*min {
+                    min_nfa.chain(nfa.clone());
+                }
+
+                let max_nfa = if let Some(max) = *max {
+                    let mut nfa = nfa;
+                    nfa.make_optional();
+
+                    let mut max_nfa = FiniteAutomaton::new();
+                    for _ in 0..(max - min) {
+                        max_nfa.chain(nfa.clone());
+                    }
+
+                    max_nfa
+                } else {
+                    let mut max_nfa = FiniteAutomaton::make_trivial_nfa(vec![Char::Epsilon]);
+
+                    let mut nfa = nfa;
+                    nfa.loop_back();
+
+                    max_nfa.alternate(nfa);
+                    max_nfa
+                };
+
+                min_nfa.chain(max_nfa);
+                min_nfa
+            }
+        }
+    }
 }
 
 impl From<&str> for Regex {
@@ -288,6 +376,215 @@ impl From<&str> for Regex {
 }
 
 const CHARS_NEEDING_ESCAPE: &str = r".\^$*+?|()[]";
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+enum Char {
+    Epsilon,
+    Ch(char),
+    BoL,
+    EoL,
+    Other,
+}
+
+#[derive(Debug, Clone)]
+struct FiniteAutomaton {
+    entry: Node,
+    exit: Node,
+    nodes: Vec<NodeData>,
+    edges: Vec<EdgeData>,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+struct Node(usize);
+
+#[derive(Debug, Copy, Clone)]
+struct Edge(usize);
+
+#[derive(Debug, Clone)]
+struct NodeData {
+    first_incoming: Option<Edge>,
+    first_outgoing: Option<Edge>,
+}
+
+impl NodeData {
+    fn new() -> Self {
+        NodeData {
+            first_incoming: None,
+            first_outgoing: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct EdgeData {
+    char: Char,
+    source: Node,
+    sink: Node,
+    next_outgoing: Option<Edge>,
+    next_incoming: Option<Edge>,
+}
+
+impl EdgeData {
+    fn new(source: Node, sink: Node, char: Char) -> Self {
+        EdgeData {
+            char,
+            source,
+            sink,
+            next_incoming: None,
+            next_outgoing: None,
+        }
+    }
+}
+
+impl FiniteAutomaton {
+    fn new() -> Self {
+        FiniteAutomaton {
+            entry: Node(0),
+            exit: Node(0),
+            nodes: vec![NodeData::new()],
+            edges: vec![],
+        }
+    }
+
+    fn new_disconnected() -> Self {
+        FiniteAutomaton {
+            entry: Node(0),
+            exit: Node(1),
+            nodes: vec![NodeData::new(), NodeData::new()],
+            edges: vec![],
+        }
+    }
+
+    fn make_trivial_nfa<'a>(chars: impl IntoIterator<Item = Char>) -> Self {
+        let mut nfa = Self::new();
+        let source = nfa.entry();
+        let sink = nfa.add_node();
+        nfa.set_exit(sink);
+        for ch in chars {
+            nfa.add_edge(source, sink, ch);
+        }
+        nfa
+    }
+
+    fn add_node(&mut self) -> Node {
+        let node = Node(self.nodes.len());
+        self.nodes.push(NodeData::new());
+        node
+    }
+
+    fn add_edge(&mut self, source: Node, sink: Node, char: Char) -> Edge {
+        let edge = Edge(self.edges.len());
+        let mut edge_data = EdgeData::new(source, sink, char);
+
+        let source_data = self.node_mut(source);
+        edge_data.next_outgoing = source_data.first_outgoing;
+        source_data.first_outgoing = Some(edge);
+
+        let sink_data = self.node_mut(sink);
+        edge_data.next_incoming = sink_data.first_incoming;
+        sink_data.first_incoming = Some(edge);
+
+        self.edges.push(edge_data);
+        edge
+    }
+
+    fn node_mut(&mut self, node: Node) -> &mut NodeData {
+        &mut self.nodes[node.0]
+    }
+
+    fn edge_mut(&mut self, edge: Edge) -> &mut EdgeData {
+        &mut self.edges[edge.0]
+    }
+
+    fn node(&self, node: Node) -> &NodeData {
+        &self.nodes[node.0]
+    }
+
+    fn edge(&self, edge: Edge) -> &EdgeData {
+        &self.edges[edge.0]
+    }
+
+    fn entry(&self) -> Node {
+        self.entry
+    }
+
+    fn exit(&self) -> Node {
+        self.exit
+    }
+
+    fn set_entry(&mut self, entry: Node) {
+        self.entry = entry;
+    }
+
+    fn set_exit(&mut self, exit: Node) {
+        self.exit = exit;
+    }
+
+    fn make_optional(&mut self) {
+        self.add_edge(self.entry(), self.exit(), Char::Epsilon);
+    }
+
+    fn loop_back(&mut self) {
+        self.add_edge(self.exit(), self.entry(), Char::Epsilon);
+    }
+
+    fn alternate(&mut self, next: Self) {
+        let (next_entry, next_exit) = self.merge(next);
+        self.add_edge(self.entry(), next_entry, Char::Epsilon);
+        self.add_edge(next_exit, self.exit(), Char::Epsilon);
+    }
+
+    fn chain(&mut self, next: Self) {
+        let (next_entry, next_exit) = self.merge(next);
+        self.add_edge(self.exit(), next_entry, Char::Epsilon);
+        self.set_exit(next_exit);
+    }
+
+    fn merge(&mut self, other: Self) -> (Node, Node) {
+        let node_offset = self.nodes.len();
+        let other_entry = Node(other.entry().0 + node_offset);
+        let other_exit = Node(other.exit().0 + node_offset);
+
+        for (n, _data) in other.nodes.into_iter().enumerate() {
+            let old_node = Node(n);
+            let new_node = self.add_node();
+            assert_eq!(new_node.0, old_node.0 + node_offset);
+        }
+
+        for edge in other.edges {
+            let new_source = Node(edge.source.0 + node_offset);
+            let new_sink = Node(edge.sink.0 + node_offset);
+            let ch = edge.char;
+            self.add_edge(new_source, new_sink, ch);
+        }
+
+        (other_entry, other_exit)
+    }
+}
+
+impl std::fmt::Display for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl std::fmt::Display for FiniteAutomaton {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "     -> {}", self.entry())?;
+        writeln!(f, "{} ---->", self.exit())?;
+        for edge in &self.edges {
+            let ch = match edge.char {
+                Char::Ch(ch) => ch.to_string(),
+                Char::BoL => "|>".to_string(),
+                Char::EoL => "<|".to_string(),
+                Char::Epsilon => "ε".to_string(),
+                Char::Other => "??".to_string(),
+            };
+            writeln!(f, "{} --{}-> {}", edge.source, ch, edge.sink)?
+        }
+        writeln!(f)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -478,5 +775,32 @@ mod tests {
 
         let operand = regex!((alt register number));
         assert_eq!(operand.build(), "r[0-9]+|[0-9]+");
+    }
+
+    #[test]
+    fn can_build_alphabet() {
+        use Char::*;
+        let re = regex!((seq (alt . "foo" (from "baz")) "bar"));
+        let alphabet = re.build_alphabet();
+        assert_eq!(
+            alphabet,
+            hashset![
+                Ch('f'),
+                Ch('o'),
+                Ch('o'),
+                Ch('b'),
+                Ch('a'),
+                Ch('z'),
+                Ch('r'),
+                Other
+            ]
+        )
+    }
+
+    #[test]
+    fn to_nfa() {
+        let re = regex!((from "ab"));
+        println!("{:?}", re.build_alphabet());
+        println!("{}", re.to_nfa());
     }
 }
