@@ -114,38 +114,90 @@ fn num_digit(r: u8) -> Regex {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Regex {
     Any,
     BoL,
     EoL,
     Quote(String),
-    Seq(Vec<Regex>),
-    Alt(Vec<Regex>),
+    Seq(Box<Regex>, Box<Regex>),
+    Alt(Box<Regex>, Box<Regex>),
     Repeat(usize, Option<usize>, Box<Regex>),
     CharSet(String),
     Complement(String),
 }
 
 impl Regex {
+    fn is_empty(&self) -> bool {
+        match self {
+            Regex::Quote(s) => s.is_empty(),
+            Regex::Repeat(_, _, re) => re.is_empty(),
+            _ => false,
+        }
+    }
+
+    fn is_quote(&self) -> bool {
+        match self {
+            Regex::Quote(_) => true,
+            _ => false,
+        }
+    }
+
+    fn is_seq(&self) -> bool {
+        match self {
+            Regex::Seq(_, _) => true,
+            _ => false,
+        }
+    }
+
+    fn is_alt(&self) -> bool {
+        match self {
+            Regex::Alt(_, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self::Quote("".to_string())
+    }
+
     pub fn quote(s: impl ToString) -> Self {
         Self::Quote(s.to_string())
     }
 
-    pub fn seq(x: impl Into<Vec<Self>>) -> Self {
-        let x = x.into();
+    pub fn seq(x: Vec<Self>) -> Self {
+        let mut x: Vec<_> = x.into_iter().filter(|r| !r.is_empty()).collect();
         match x.len() {
+            0 => Self::empty(),
             1 => x.into_iter().next().unwrap(),
-            _ => Self::Seq(x),
+            _ => {
+                x.reverse();
+                let first = x.pop().unwrap();
+                x.reverse();
+                Self::Seq(Box::new(first), Box::new(Self::seq(x)))
+            }
         }
     }
 
-    pub fn alt(x: impl Into<Vec<Self>>) -> Self {
-        let x = x.into();
+    pub fn alt(x: Vec<Self>) -> Self {
+        let x: HashSet<_> = x.into_iter().collect();
+        let mut x: Vec<_> = x.into_iter().collect();
+        x.sort();
         match x.len() {
+            0 => Self::empty(),
             1 => x.into_iter().next().unwrap(),
-            _ => Self::Alt(x),
+            _ => {
+                let last = x.pop().unwrap();
+                Self::Alt(Box::new(last), Box::new(Self::alt(x)))
+            }
         }
+    }
+
+    pub fn star(expr: Self) -> Self {
+        if expr.is_empty() {
+            return Self::empty();
+        }
+        Regex::Repeat(0, None, Box::new(expr))
     }
 
     pub fn char_from(chars: &str) -> Self {
@@ -170,15 +222,16 @@ impl Regex {
             Regex::BoL => format!("^"),
             Regex::EoL => format!("$"),
             Regex::Quote(s) => self.escape_quote(s),
-            Regex::Seq(res) => res
-                .iter()
-                .map(|re| re.recursive_build(self.precedence_level()))
-                .collect(),
-            Regex::Alt(res) => res
-                .iter()
-                .map(|re| re.recursive_build(self.precedence_level()))
-                .collect::<Vec<_>>()
-                .join("|"),
+            Regex::Seq(a, b) => format!(
+                "{}{}",
+                a.recursive_build(self.precedence_level()),
+                b.recursive_build(self.precedence_level())
+            ),
+            Regex::Alt(a, b) => format!(
+                "{}|{}",
+                a.recursive_build(self.precedence_level()),
+                b.recursive_build(self.precedence_level())
+            ),
             Regex::Repeat(0, None, re) => {
                 format!("{}*", re.recursive_build(self.precedence_level()),)
             }
@@ -214,9 +267,9 @@ impl Regex {
 
     fn precedence_level(&self) -> usize {
         match self {
-            Regex::Alt(_) => 1,
+            Regex::Alt(_, _) => 1,
             Regex::BoL | Regex::EoL => 2,
-            Regex::Seq(_) | Regex::Quote(_) => 3,
+            Regex::Seq(_, _) | Regex::Quote(_) => 3,
             Regex::Repeat(_, _, _) => 4,
             Regex::CharSet(_) | Regex::Complement(_) => 5,
             Regex::Any => 99,
@@ -289,9 +342,11 @@ impl Regex {
             Regex::BoL => hashset![Char::BoL],
             Regex::EoL => hashset![Char::EoL],
             Regex::Quote(s) => s.chars().map(Char::Ch).collect(),
-            Regex::Seq(res) | Regex::Alt(res) => {
-                res.iter().flat_map(Regex::build_alphabet).collect()
-            }
+            Regex::Seq(a, b) | Regex::Alt(a, b) => a
+                .build_alphabet()
+                .union(&b.build_alphabet())
+                .copied()
+                .collect(),
             Regex::Repeat(_, _, expr) => expr.build_alphabet(),
             Regex::CharSet(chars) => chars.chars().map(Char::Ch).collect(),
             Regex::Complement(chars) => chars
@@ -324,18 +379,14 @@ impl Regex {
                     .difference(&unchars.chars().map(Char::Ch).collect())
                     .copied(),
             ),
-            Regex::Seq(exprs) => {
-                let mut nfa = FiniteAutomaton::singleton();
-                for expr in exprs {
-                    nfa.chain(expr.to_nfa_recursive(alphabet));
-                }
+            Regex::Seq(a, b) => {
+                let mut nfa = a.to_nfa_recursive(alphabet);
+                nfa.chain(b.to_nfa_recursive(alphabet));
                 nfa
             }
-            Regex::Alt(exprs) => {
-                let mut nfa = FiniteAutomaton::new_disconnected();
-                for expr in exprs {
-                    nfa.alternate(expr.to_nfa_recursive(alphabet));
-                }
+            Regex::Alt(a, b) => {
+                let mut nfa = a.to_nfa_recursive(alphabet);
+                nfa.alternate(b.to_nfa_recursive(alphabet));
                 nfa
             }
             Regex::Repeat(min, max, expr) => {
@@ -369,6 +420,82 @@ impl Regex {
                 min_nfa.chain(max_nfa);
                 min_nfa
             }
+        }
+    }
+
+    fn from_char(ch: Char, alphabet: &HashSet<Char>) -> Self {
+        match ch {
+            Char::Epsilon => Regex::empty(),
+            Char::Ch(ch) => Regex::quote(ch),
+            Char::BoL => Regex::BoL,
+            Char::EoL => Regex::EoL,
+            Char::Other => Regex::Complement(
+                alphabet
+                    .iter()
+                    .filter_map(|ch| if let Char::Ch(c) = ch { Some(*c) } else { None })
+                    .collect(),
+            ),
+        }
+    }
+
+    fn simplify(self) -> Self {
+        self.expand_quotes().contract_quotes()
+    }
+
+    fn expand_quotes(self) -> Self {
+        match self {
+            Self::Quote(s) => Self::seq(s.chars().map(Self::quote).collect()),
+            Self::Seq(a, b) => {
+                Self::seq(vec![*a, *b].into_iter().map(Self::expand_quotes).collect())
+            }
+            Self::Alt(a, b) => {
+                Self::alt(vec![*a, *b].into_iter().map(Self::expand_quotes).collect())
+            }
+            Self::Repeat(min, max, expr) => Self::Repeat(min, max, Box::new(expr.expand_quotes())),
+            _ => self,
+        }
+    }
+
+    fn contract_quotes(self) -> Self {
+        match self {
+            Self::Seq(a, b) => match (*a, *b) {
+                (Self::Quote(a), Self::Quote(b)) => Self::Quote(a + &b),
+                (a @ Self::Quote(_), b) => {
+                    Self::Seq(Box::new(a), Box::new(b.contract_quotes())).contract_quotes()
+                }
+                (a, b @ Self::Quote(_)) => {
+                    Self::Seq(Box::new(a.contract_quotes()), Box::new(b)).contract_quotes()
+                }
+                (a, b) => Self::Seq(Box::new(a.contract_quotes()), Box::new(b.contract_quotes())),
+            },
+            Self::Alt(a, b) => {
+                Self::Alt(Box::new(a.contract_quotes()), Box::new(b.contract_quotes()))
+            }
+            Self::Repeat(min, max, expr) => {
+                Self::Repeat(min, max, Box::new(expr.contract_quotes()))
+            }
+            _ => self,
+        }
+    }
+
+    fn flatten(self) -> Self {
+        match self {
+            Self::Seq(ab, c) if ab.is_seq() => {
+                if let Self::Seq(a, b) = *ab {
+                    Self::Seq(a, Box::new(Self::Seq(b, c)))
+                } else {
+                    unreachable!()
+                }
+            }
+            Self::Alt(ab, c) if ab.is_alt() => {
+                if let Self::Alt(a, b) = *ab {
+                    Self::Alt(a, Box::new(Self::Alt(b, c)))
+                } else {
+                    unreachable!()
+                }
+            }
+            Self::Repeat(min, max, expr) => Self::Repeat(min, max, Box::new(expr.flatten())),
+            _ => self,
         }
     }
 }
@@ -654,6 +781,68 @@ impl FiniteAutomaton {
             .find(|edge| edge.char == ch)
             .map(|edge| edge.sink)
     }
+
+    fn to_regex(&self, alphabet: &HashSet<Char>) -> Regex {
+        let mut res = hashmap![-1 => hashmap![]];
+        for i in (0..self.nodes.len()).map(Node) {
+            for j in (0..self.nodes.len()).map(Node) {
+                let mut r = hashset![];
+                for edge in self.outgoing(i).filter(|e| e.sink == j) {
+                    r.insert(edge.char);
+                }
+                if i == j {
+                    r.insert(Char::Epsilon);
+                }
+                if !r.is_empty() {
+                    res.get_mut(&-1).unwrap().insert(
+                        [i, j],
+                        Regex::alt(
+                            r.into_iter()
+                                .map(|ch| Regex::from_char(ch, alphabet))
+                                .collect(),
+                        ),
+                    );
+                }
+            }
+        }
+        for k in 0isize..self.nodes.len() as isize {
+            res.insert(k, hashmap![]);
+            let nk = Node(k as usize);
+            for i in (0..self.nodes.len()).map(Node) {
+                for j in (0..self.nodes.len()).map(Node) {
+                    let r_ik = res[&(k - 1)].get(&[i, nk]).cloned();
+                    let r_kk = res[&(k - 1)].get(&[nk, nk]).cloned();
+                    let r_kj = res[&(k - 1)].get(&[nk, j]).cloned();
+                    let r_ij = res[&(k - 1)].get(&[i, j]).cloned();
+
+                    let mut r = vec![];
+
+                    match (r_ik, r_kk, r_kj) {
+                        (Some(r_ik), Some(r_kk), Some(r_kj)) => {
+                            r.push(Regex::seq(vec![r_ik, Regex::star(r_kk), r_kj]))
+                        }
+                        (Some(r_ik), None, Some(r_kj)) => r.push(Regex::seq(vec![r_ik, r_kj])),
+                        _ => {}
+                    };
+
+                    r.extend(r_ij);
+
+                    res.get_mut(&k).unwrap().insert([i, j], Regex::alt(r));
+                }
+            }
+        }
+
+        let mut final_alternatives = vec![];
+        for &j in &self.exits {
+            final_alternatives.extend(
+                res[&((self.nodes.len() - 1) as isize)]
+                    .get(&[self.entry(), j])
+                    .cloned(),
+            )
+        }
+
+        Regex::alt(final_alternatives)
+    }
 }
 
 impl std::fmt::Display for Node {
@@ -702,16 +891,20 @@ mod tests {
 
     #[test]
     fn construct_sequences() {
-        assert_eq!(regex! {(seq)}, Seq(vec![]));
+        assert_eq!(regex! {(seq)}, Regex::empty());
         assert_eq!(regex! {(seq .)}, Any);
-        assert_eq!(regex! {(seq . .)}, Seq(vec![Any, Any]));
+        assert_eq!(regex! {(seq . .)}, Seq(Box::new(Any), Box::new(Any)));
     }
 
     #[test]
     fn construct_alternatives() {
-        assert_eq!(regex! {(alt)}, Alt(vec![]));
+        assert_eq!(regex! {(alt)}, Regex::empty());
         assert_eq!(regex! {(alt .)}, Any);
-        assert_eq!(regex! {(alt . .)}, Alt(vec![Any, Any]));
+        assert_eq!(regex! {(alt . .)}, Any);
+        assert_eq!(
+            regex! {(alt "a" "b")},
+            Alt(Box::new(Regex::quote("b")), Box::new(Regex::quote("a")))
+        );
     }
 
     #[test]
@@ -753,16 +946,19 @@ mod tests {
 
     #[test]
     fn build_sequences() {
-        assert_eq!(Seq(vec![]).build(), "");
-        assert_eq!(Seq(vec![Any]).build(), ".");
-        assert_eq!(Seq(vec![Any, Any]).build(), "..");
+        assert_eq!(Regex::seq(vec![]).build(), "");
+        assert_eq!(Regex::seq(vec![Any]).build(), ".");
+        assert_eq!(Regex::seq(vec![Any, Any]).build(), "..");
     }
 
     #[test]
     fn build_alternatives() {
-        assert_eq!(Alt(vec![]).build(), "");
-        assert_eq!(Alt(vec![Any]).build(), ".");
-        assert_eq!(Alt(vec![Any, Any]).build(), ".|.");
+        assert_eq!(Regex::alt(vec![]).build(), "");
+        assert_eq!(Regex::alt(vec![Any]).build(), ".");
+        assert_eq!(
+            Regex::alt(vec![Regex::quote("a"), Regex::quote("b")]).build(),
+            "b|a"
+        );
     }
 
     #[test]
@@ -791,7 +987,7 @@ mod tests {
     #[test]
     fn quote_precedes_alternative() {
         assert_eq!(
-            Alt(vec![Regex::quote("foo"), Regex::quote("bar")]).build(),
+            Regex::alt(vec![Regex::quote("foo"), Regex::quote("bar")]).build(),
             "foo|bar"
         );
     }
@@ -799,20 +995,20 @@ mod tests {
     #[test]
     fn sequence_precedes_alternative() {
         assert_eq!(
-            Alt(vec![
-                Seq(vec![Regex::quote("a"), Regex::quote("b")]),
-                Seq(vec![Regex::quote("c"), Regex::quote("d")])
+            Regex::alt(vec![
+                Regex::seq(vec![Regex::quote("a"), Regex::quote("b")]),
+                Regex::seq(vec![Regex::quote("c"), Regex::quote("d")])
             ])
             .build(),
-            "ab|cd"
+            "cd|ab"
         );
         assert_eq!(
-            Seq(vec![
-                Alt(vec![Regex::quote("a"), Regex::quote("b")]),
-                Alt(vec![Regex::quote("c"), Regex::quote("d")])
+            Regex::seq(vec![
+                Regex::alt(vec![Regex::quote("a"), Regex::quote("b")]),
+                Regex::alt(vec![Regex::quote("c"), Regex::quote("d")])
             ])
             .build(),
-            "(?:a|b)(?:c|d)"
+            "(?:b|a)(?:d|c)"
         );
     }
 
@@ -822,7 +1018,7 @@ mod tests {
             Repeat(
                 2,
                 None,
-                Box::new(Seq(vec![Regex::quote("a"), Regex::quote("b")]))
+                Box::new(Regex::seq(vec![Regex::quote("a"), Regex::quote("b")]))
             )
             .build(),
             "(?:ab){2,}"
@@ -835,10 +1031,10 @@ mod tests {
             Repeat(
                 2,
                 None,
-                Box::new(Alt(vec![Regex::quote("a"), Regex::quote("b")]))
+                Box::new(Regex::alt(vec![Regex::quote("a"), Regex::quote("b")]))
             )
             .build(),
-            "(?:a|b){2,}"
+            "(?:b|a){2,}"
         );
     }
 
@@ -870,7 +1066,7 @@ mod tests {
         assert_eq!(register.build(), "r[0-9]+");
 
         let operand = regex!((alt register number));
-        assert_eq!(operand.build(), "r[0-9]+|[0-9]+");
+        assert_eq!(operand.build(), "[0-9]+|r[0-9]+");
     }
 
     #[test]
@@ -895,7 +1091,7 @@ mod tests {
 
     #[test]
     fn to_nfa() {
-        let re = regex!((alt (seq "foo" (opt "bar")) "baz"));
+        let re = regex!((alt (seq "a" "b") "c"));
         println!("{:?}", re);
 
         let alphabet = re.build_alphabet();
@@ -906,5 +1102,57 @@ mod tests {
 
         let dfa = nfa.subset(&alphabet);
         println!("{}", dfa);
+
+        let re2 = dfa.to_regex(&alphabet);
+        println!("{:?}", re2);
+        println!("{}", re2.build());
+    }
+
+    #[test]
+    fn expand_quotes_converts_quote_to_sequence() {
+        let re = Regex::quote("abc");
+        let ex = regex! {(seq "a" "b" "c")};
+        assert_eq!(re.expand_quotes(), ex);
+    }
+
+    #[test]
+    fn expand_quotes_converts_nested_quotes() {
+        let re = regex! {(repeat 1..2 (seq (alt "abc")))};
+        let ex = regex! {(repeat 1..2 (seq (alt (seq "a" "b" "c"))))};
+        assert_eq!(re.expand_quotes(), ex);
+    }
+
+    #[test]
+    fn contract_quotes_converts_sequence_to_quote() {
+        let re = regex! {(seq "a" "b" "c")};
+        let ex = Regex::quote("abc");
+        assert_eq!(re.contract_quotes(), ex);
+    }
+
+    #[test]
+    fn contract_quotes_converts_nested_quotes() {
+        let re = regex! {(repeat 1..2 (seq (alt (seq "a" "b" "c"))))};
+        let ex = regex! {(repeat 1..2 (seq (alt "abc")))};
+        assert_eq!(re.contract_quotes(), ex);
+    }
+
+    #[test]
+    fn flatten_sequences() {
+        let re = regex! {(seq (seq "a" "b") (seq "c" "d"))};
+        let ex = regex! {(seq "a" "b" "c" "d")};
+        assert_eq!(re.flatten(), ex);
+    }
+
+    #[test]
+    fn flatten_alternative() {
+        let re = regex! {(alt (alt "a" "b") (alt "c" "d"))};
+        let ex = regex! {(alt "a" "b" "c" "d")};
+        assert_eq!(re.flatten(), ex);
+    }
+
+    #[test]
+    fn simplify_common_prefix() {
+        let re = regex! {(alt "ab" "ac")};
+        assert_eq!(re.simplify(), regex! {(seq "a" (alt "b" "c"))})
     }
 }
