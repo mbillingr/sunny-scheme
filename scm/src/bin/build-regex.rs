@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::ops::{BitOr, Mul};
 
 #[macro_export]
@@ -128,6 +128,13 @@ pub enum Regex {
 }
 
 impl Regex {
+    fn is_set(&self) -> bool {
+        match self {
+            Regex::CharSet(_) => true,
+            _ => false,
+        }
+    }
+
     fn is_empty(&self) -> bool {
         match self {
             Regex::Quote(s) => s.is_empty(),
@@ -158,16 +165,21 @@ impl Regex {
         }
     }
 
-    pub fn alt(x: Vec<Self>) -> Self {
-        let x: HashSet<_> = x.into_iter().collect();
-        let mut x: Vec<_> = x.into_iter().collect();
-        x.sort();
+    pub fn alt(exprs: Vec<Self>) -> Self {
+        let mut x = vec![];
+        for expr in exprs {
+            if !x.contains(&expr) {
+                x.push(expr);
+            }
+        }
         match x.len() {
             0 => Self::empty(),
             1 => x.into_iter().next().unwrap(),
             _ => {
-                let last = x.pop().unwrap();
-                Self::Alt(Box::new(last), Box::new(Self::alt(x)))
+                x.reverse();
+                let first = x.pop().unwrap();
+                x.reverse();
+                Self::Alt(Box::new(first), Box::new(Self::alt(x)))
             }
         }
     }
@@ -191,8 +203,8 @@ impl Regex {
         }
     }
 
-    pub fn build(&self) -> String {
-        self.recursive_build(0)
+    pub fn build(self) -> String {
+        self.simplify().recursive_build(0)
     }
 
     fn recursive_build(&self, current_precedence_level: usize) -> String {
@@ -314,6 +326,58 @@ impl Regex {
 
         escaped_string
     }
+
+    fn simplify(self) -> Self {
+        self.combine_alt_of_sets().unwrap()
+    }
+
+    fn combine_alt_of_sets(self) -> Value<Self> {
+        match self {
+            Regex::Alt(a, b) if a.is_set() && b.is_set() => {
+                if let (Regex::CharSet(a), Regex::CharSet(b)) = (*a, *b) {
+                    let chars: BTreeSet<_> = a.chars().chain(b.chars()).collect();
+                    Value::New(Regex::CharSet(chars.into_iter().collect()))
+                } else {
+                    unreachable!()
+                }
+            }
+            Regex::Alt(a, b) => (a.combine_alt_of_sets() | b.combine_alt_of_sets())
+                .map_new(Self::combine_alt_of_sets),
+            Regex::Seq(a, b) => (a.combine_alt_of_sets() * b.combine_alt_of_sets())
+                .map_new(Self::combine_alt_of_sets),
+            Regex::Repeat(min, max, expr) => expr
+                .combine_alt_of_sets()
+                .map(|x| Regex::Repeat(min, max, Box::new(x))),
+            _ => Value::Old(self),
+        }
+    }
+}
+
+enum Value<T> {
+    New(T),
+    Old(T),
+}
+
+impl<T> Value<T> {
+    pub fn unwrap(self) -> T {
+        match self {
+            Value::New(v) | Value::Old(v) => v,
+        }
+    }
+
+    pub fn map_new(self, f: impl Fn(T) -> Value<T>) -> Value<T> {
+        match self {
+            Value::New(v) => f(v),
+            Value::Old(v) => Value::Old(v),
+        }
+    }
+
+    pub fn map(self, f: impl Fn(T) -> T) -> Value<T> {
+        match self {
+            Value::New(v) => Value::New(f(v)),
+            Value::Old(v) => Value::Old(f(v)),
+        }
+    }
 }
 
 impl From<&str> for Regex {
@@ -352,6 +416,32 @@ impl BitOr for Box<Regex> {
     }
 }
 
+impl<T: BitOr<Output = T>> BitOr for Value<T> {
+    type Output = Value<T>;
+    fn bitor(self, rhs: Self) -> Self {
+        use Value::*;
+        match (self, rhs) {
+            (New(a), New(b)) => New(a | b),
+            (New(a), Old(b)) => New(a | b),
+            (Old(a), New(b)) => New(a | b),
+            (Old(a), Old(b)) => Old(a | b),
+        }
+    }
+}
+
+impl<T: Mul<Output = T>> Mul for Value<T> {
+    type Output = Value<T>;
+    fn mul(self, rhs: Self) -> Self {
+        use Value::*;
+        match (self, rhs) {
+            (New(a), New(b)) => New(a * b),
+            (New(a), Old(b)) => New(a * b),
+            (Old(a), New(b)) => New(a * b),
+            (Old(a), Old(b)) => Old(a * b),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -384,7 +474,7 @@ mod tests {
         assert_eq!(regex! {(alt . .)}, Any);
         assert_eq!(
             regex! {(alt "a" "b")},
-            Alt(Box::new(Regex::quote("b")), Box::new(Regex::quote("a")))
+            Alt(Box::new(Regex::quote("a")), Box::new(Regex::quote("b")))
         );
     }
 
@@ -438,7 +528,7 @@ mod tests {
         assert_eq!(Regex::alt(vec![Any]).build(), ".");
         assert_eq!(
             Regex::alt(vec![Regex::quote("a"), Regex::quote("b")]).build(),
-            "b|a"
+            "a|b"
         );
     }
 
@@ -481,7 +571,7 @@ mod tests {
                 Regex::seq(vec![Regex::quote("c"), Regex::quote("d")])
             ])
             .build(),
-            "cd|ab"
+            "ab|cd"
         );
         assert_eq!(
             Regex::seq(vec![
@@ -489,7 +579,7 @@ mod tests {
                 Regex::alt(vec![Regex::quote("c"), Regex::quote("d")])
             ])
             .build(),
-            "(?:b|a)(?:d|c)"
+            "(?:a|b)(?:c|d)"
         );
     }
 
@@ -515,7 +605,7 @@ mod tests {
                 Box::new(Regex::alt(vec![Regex::quote("a"), Regex::quote("b")]))
             )
             .build(),
-            "(?:b|a){2,}"
+            "(?:a|b){2,}"
         );
     }
 
@@ -541,12 +631,19 @@ mod tests {
     fn can_compose_regexes() {
         let digit = regex!((from "1234567890"));
         let number = regex!((repeat 1.. digit));
-        assert_eq!(number.build(), "[0-9]+");
+        assert_eq!(number.clone().build(), "[0-9]+");
 
         let register = regex!((seq "r" (number.clone())));
-        assert_eq!(register.build(), "r[0-9]+");
+        assert_eq!(register.clone().build(), "r[0-9]+");
 
         let operand = regex!((alt register number));
-        assert_eq!(operand.build(), "[0-9]+|r[0-9]+");
+        assert_eq!(operand.build(), "r[0-9]+|[0-9]+");
+    }
+
+    #[test]
+    fn shrink_alternative_of_sets() {
+        let re = regex!((alt (from "ac") (from "cb") (from "cd")));
+        let ex = regex!((from "abcd"));
+        assert_eq!(re.simplify(), ex);
     }
 }
