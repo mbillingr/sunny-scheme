@@ -1,5 +1,6 @@
 use maplit::{hashmap, hashset};
 use std::collections::HashSet;
+use std::ops::{BitOr, Mul};
 
 #[macro_export]
 macro_rules! regex {
@@ -132,13 +133,6 @@ impl Regex {
         match self {
             Regex::Quote(s) => s.is_empty(),
             Regex::Repeat(_, _, re) => re.is_empty(),
-            _ => false,
-        }
-    }
-
-    fn is_quote(&self) -> bool {
-        match self {
-            Regex::Quote(_) => true,
             _ => false,
         }
     }
@@ -438,10 +432,6 @@ impl Regex {
         }
     }
 
-    fn simplify(self) -> Self {
-        self.expand_quotes().contract_quotes()
-    }
-
     fn expand_quotes(self) -> Self {
         match self {
             Self::Quote(s) => Self::seq(s.chars().map(Self::quote).collect()),
@@ -482,21 +472,40 @@ impl Regex {
         match self {
             Self::Seq(ab, c) if ab.is_seq() => {
                 if let Self::Seq(a, b) = *ab {
-                    Self::Seq(a, Box::new(Self::Seq(b, c)))
+                    Self::Seq(a, Box::new(Self::Seq(b, c))).flatten()
                 } else {
                     unreachable!()
                 }
             }
             Self::Alt(ab, c) if ab.is_alt() => {
                 if let Self::Alt(a, b) = *ab {
-                    Self::Alt(a, Box::new(Self::Alt(b, c)))
+                    Self::Alt(a, Box::new(Self::Alt(b, c))).flatten()
                 } else {
                     unreachable!()
                 }
             }
+            Self::Seq(x, y) => x.flatten() * y.flatten(),
+            Self::Alt(a, b) => a.flatten() | b.flatten(),
             Self::Repeat(min, max, expr) => Self::Repeat(min, max, Box::new(expr.flatten())),
             _ => self,
         }
+    }
+
+    fn factorize(self) -> Self {
+        match self {
+            Self::Seq(x, y) => {
+                if let Self::Alt(a, b) = *x {
+                    (a * y.clone() | b * y).factorize()
+                } else if let Self::Alt(c, d) = *y {
+                    (x.clone() * c | x * d).factorize()
+                } else {
+                    x.factorize() * y.factorize()
+                }
+            }
+            Self::Alt(a, b) => a.factorize() | b.factorize(),
+            other => other,
+        }
+        .flatten()
     }
 }
 
@@ -507,6 +516,34 @@ impl From<&str> for Regex {
 }
 
 const CHARS_NEEDING_ESCAPE: &str = r".\^$*+?|()[]";
+
+impl Mul for Regex {
+    type Output = Regex;
+    fn mul(self, rhs: Self) -> Regex {
+        Regex::Seq(Box::new(self), Box::new(rhs))
+    }
+}
+
+impl Mul for Box<Regex> {
+    type Output = Regex;
+    fn mul(self, rhs: Self) -> Regex {
+        Regex::Seq(self, rhs)
+    }
+}
+
+impl BitOr for Regex {
+    type Output = Regex;
+    fn bitor(self, rhs: Self) -> Self {
+        Regex::Alt(Box::new(self), Box::new(rhs))
+    }
+}
+
+impl BitOr for Box<Regex> {
+    type Output = Regex;
+    fn bitor(self, rhs: Self) -> Regex {
+        Regex::Alt(self, rhs)
+    }
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 enum Char {
@@ -586,15 +623,6 @@ impl FiniteAutomaton {
         }
     }
 
-    fn new_disconnected() -> Self {
-        FiniteAutomaton {
-            entry: Node(0),
-            exits: hashset![Node(1)],
-            nodes: vec![NodeData::new(), NodeData::new()],
-            edges: vec![],
-        }
-    }
-
     fn make_trivial_nfa<'a>(chars: impl IntoIterator<Item = Char>) -> Self {
         let mut nfa = Self::singleton();
         let source = nfa.entry();
@@ -632,10 +660,6 @@ impl FiniteAutomaton {
         &mut self.nodes[node.0]
     }
 
-    fn edge_mut(&mut self, edge: Edge) -> &mut EdgeData {
-        &mut self.edges[edge.0]
-    }
-
     fn node(&self, node: Node) -> &NodeData {
         &self.nodes[node.0]
     }
@@ -651,10 +675,6 @@ impl FiniteAutomaton {
     fn exit(&self) -> Node {
         assert_eq!(self.exits.len(), 1);
         *self.exits.iter().next().unwrap()
-    }
-
-    fn set_entry(&mut self, entry: Node) {
-        self.entry = entry;
     }
 
     fn set_exit(&mut self, exit: Node) {
@@ -1106,6 +1126,10 @@ mod tests {
         let re2 = dfa.to_regex(&alphabet);
         println!("{:?}", re2);
         println!("{}", re2.build());
+
+        let re2 = dfa.to_regex(&alphabet).flatten();
+        println!("{:?}", re2);
+        println!("{}", re2.build());
     }
 
     #[test]
@@ -1151,8 +1175,23 @@ mod tests {
     }
 
     #[test]
-    fn simplify_common_prefix() {
-        let re = regex! {(alt "ab" "ac")};
-        assert_eq!(re.simplify(), regex! {(seq "a" (alt "b" "c"))})
+    fn factorize_idempodence() {
+        let re = regex! {(alt (seq "a" "b" "c") (seq "x" "y" (repeat 0..1 "z")))};
+        assert_eq!(re.clone().factorize(), re);
+    }
+
+    #[test]
+    fn factorize_pulls_alt_out_of_seq() {
+        let re = regex! {(seq (alt "a" "b") "x")};
+        let ex = regex! {(alt (seq "a" "x") (seq "b" "x"))};
+        assert_eq!(re.factorize(), ex);
+
+        let re = regex! {(seq "x" (alt "a" "b"))};
+        let ex = regex! {(alt (seq "x" "a") (seq "x" "b"))};
+        assert_eq!(re.factorize(), ex);
+
+        let re = regex! {(seq (alt "a" "b") (alt "x" "y"))};
+        let ex = regex! {(alt (seq "a" "x") (seq "b" "x") (seq "a" "y") (seq "b" "y"))};
+        assert_eq!(re.factorize(), ex);
     }
 }
