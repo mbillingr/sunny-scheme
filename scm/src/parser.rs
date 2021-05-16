@@ -5,10 +5,16 @@ use crate::shared_string::SharedStr;
 use crate::source_map::SourceMap;
 use crate::SourceLocation;
 use lalrpop_util::{lexer::Token, ParseError};
+use lazy_static::lazy_static;
 use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub type Result<T> = std::result::Result<T, SourceLocation<Error>>;
+
+lazy_static! {
+    static ref STATIC_PARSER: sexpr_grammar::ExplicitSequenceParser =
+        sexpr_grammar::ExplicitSequenceParser::new();
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
@@ -91,12 +97,7 @@ pub fn parse_str(src: impl Into<SharedStr>) -> Result<Vec<Scm>> {
 pub fn parse_with_map(src: impl Into<SharedStr>, src_map: &SourceMap) -> Result<Vec<Scm>> {
     let src = src.into();
     let context = SourceLocation::new(()).in_string(src.clone());
-    Ok(sexpr_grammar::ExplicitSequenceParser::new().parse(
-        &context,
-        src_map,
-        &mut HashMap::new(),
-        &src,
-    )?)
+    Ok(STATIC_PARSER.parse(&context, src_map, &mut HashMap::new(), &src)?)
 }
 
 fn unescape(s: &str) -> std::result::Result<Cow<str>, ParseError<usize, Token, &'static str>> {

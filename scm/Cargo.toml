@@ -10,6 +10,7 @@ edition = "2018"
 lalrpop = "0.19"
 
 [dependencies]
+lazy_static = "1.4"
 lalrpop-util = "0.19"
 maplit = "1.0"
 num = "0.4"
