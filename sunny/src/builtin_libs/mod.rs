@@ -10,7 +10,7 @@ use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
 use sexpr_generics::prelude::*;
 use sexpr_generics::{lists, numbers};
-use sunny_scm::Scm;
+use sunny_scm::{Number, Scm};
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{ErrorKind, Result, Vm};
 
@@ -63,6 +63,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("equal?", 2, is_equal)
         .define_primitive_fixed_arity("eqv?", 2, is_eqv)
         .define_primitive_fixed_arity("error", 1, error)
+        .define_primitive_fixed_arity("expt", 2, expt)
         .define_primitive_fixed_arity("member", 2, member)
         .define_primitive_fixed_arity("memq", 2, memq)
         .define_primitive_fixed_arity("memv", 2, memv)
@@ -354,6 +355,10 @@ primitive! {
             None => Ok(Scm::bool(false))
         }
     }
+
+    fn expt(b: Scm, e: Scm) -> Result<Scm>{
+        Ok(Scm::number(to_number(&b)?.expt(to_number(&e)?)))
+    }
 }
 
 fn values(n_args: usize, vm: &mut Vm) -> Result<()> {
@@ -381,6 +386,11 @@ fn proc_arity(n_args: usize, vm: &mut Vm) -> Result<()> {
     let arity = Scm::cons(min, max);
     vm.push_value(arity);
     Ok(())
+}
+
+fn to_number(x: &Scm) -> Result<&Number> {
+    x.to_number()
+        .ok_or_else(|| ErrorKind::TypeError("number", x.clone()))
 }
 
 lazy_static! {

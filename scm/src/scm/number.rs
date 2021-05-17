@@ -1,6 +1,7 @@
 use crate::scm::ScmHasher;
 use crate::{Scm, ScmObject};
-use num::{BigInt, BigRational, One, ToPrimitive};
+use num::traits::Pow;
+use num::{BigInt, BigRational, One, Signed, ToPrimitive, Zero};
 use std::any::Any;
 use std::borrow::Cow;
 use std::cmp::Ordering;
@@ -320,5 +321,38 @@ impl Add<i64> for Number {
     type Output = Number;
     fn add(self, rhs: i64) -> Self::Output {
         &self + &Number::int(rhs)
+    }
+}
+
+impl Number {
+    pub fn expt(&self, e: &Number) -> Number {
+        use Number::*;
+        match (self, e) {
+            (Float(b), Int(e)) => Number::Float(b.pow(*e as i32)),
+            (Float(b), Float(e)) => Number::Float(b.powf(*e)),
+            (b, Int(e)) if *e >= 0 => b.exptint(*e as u64),
+            (b, BigInt(e)) if e.is_positive() || e.is_zero() => b.exptbigint(e),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn exptint(&self, e: u64) -> Number {
+        use Number::*;
+        match (self, e) {
+            (_, 0) => Int(1),
+            (b, 1) => b.clone(),
+            (b, e) if e % 2 == 1 => b * &b.exptint(e - 1),
+            (b, e) => (b * b).exptint(e / 2),
+        }
+    }
+
+    pub fn exptbigint(&self, e: &BigInt) -> Number {
+        use Number::*;
+        match (self, e) {
+            (_, e) if e.is_zero() => Int(1),
+            (b, e) if e.is_one() => b.clone(),
+            (b, e) if (e % 2i32).is_one() => b * &b.exptbigint(&(e - 1)),
+            (b, e) => (b * b).exptbigint(&(e / 2)),
+        }
     }
 }
