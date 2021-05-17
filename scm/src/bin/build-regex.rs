@@ -19,6 +19,8 @@ macro_rules! regex {
 }
 
 fn main() {
+    let boolean = regex!((alt "#t" "#f" "#true" "#false"));
+    println!("<boolean> = {}", boolean.simplify().build());
     let boolean_true = regex!((alt "#t" "#true"));
     println!("<boolean true> = {}", boolean_true.simplify().build());
     let boolean_false = regex!((alt "#f" "#false"));
@@ -167,6 +169,17 @@ impl Regex {
             Regex::Quote(s) => s.is_empty(),
             Regex::Repeat(_, _, re) => re.is_empty(),
             _ => false,
+        }
+    }
+
+    fn is_quote(&self) -> bool {
+        self.as_quote_str().is_some()
+    }
+
+    pub fn as_quote_str(&self) -> Option<&str> {
+        match self {
+            Self::Quote(s) => Some(s),
+            _ => None,
         }
     }
 
@@ -359,6 +372,12 @@ impl Regex {
             .flatten()
             .extract_common_prefix()
             .unwrap()
+            .reverse()
+            .flatten()
+            .extract_common_prefix()
+            .unwrap()
+            .reverse()
+            .flatten()
             .combine_alt_of_sets()
             .unwrap()
             .replace_trivial_sets_with_quote()
@@ -422,6 +441,9 @@ impl Regex {
         use Value::*;
         match self {
             Self::Seq(a, b) => match (*a, *b) {
+                (Self::Quote(a), Self::Seq(c, d)) if c.is_quote() => {
+                    (Self::Quote(a + c.as_quote_str().unwrap()) * *d).contract_quotes()
+                }
                 (Self::Quote(a), Self::Quote(b)) => New(Self::Quote(a + &b)),
                 (a, b) => {
                     (a.contract_quotes() * b.contract_quotes()).map_new(Self::contract_quotes)
@@ -501,6 +523,16 @@ impl Regex {
                 (*r.clone(), Self::Repeat(min - 1, Some(max - 1), r))
             }
             _ => (self, Self::Quote("".to_string())),
+        }
+    }
+
+    fn reverse(self) -> Self {
+        match self {
+            Self::Quote(s) => Self::Quote(s.chars().rev().collect()),
+            Self::Seq(a, b) => b.reverse() * a.reverse(),
+            Self::Alt(a, b) => a.reverse() | b.reverse(),
+            Self::Repeat(min, max, r) => Self::Repeat(min, max, Box::new(r.reverse())),
+            _ => self,
         }
     }
 }
@@ -806,5 +838,19 @@ mod tests {
         let re = regex!((alt (from "ac") (from "cb") (from "cd")));
         let ex = regex!((from "abcd"));
         assert_eq!(re.simplify(), ex);
+    }
+
+    #[test]
+    fn simplify_extracts_common_prefix_and_suffix() {
+        let re = regex!((alt "foomehbar" "foolabar"));
+        let ex = regex!((seq "foo" (alt "meh" "la") "bar"));
+        assert_eq!(re.simplify(), ex);
+    }
+
+    #[test]
+    fn contract_quotes() {
+        let re = regex!((seq "f" (seq "o" "o")));
+        let ex = regex!("foo");
+        assert_eq!(re.contract_quotes().unwrap(), ex);
     }
 }
