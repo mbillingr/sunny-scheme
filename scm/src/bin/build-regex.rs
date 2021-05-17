@@ -74,7 +74,7 @@ fn main() {
     let exponent_marker = "e";
     let sign = regex! {(opt (alt "+" "-"))};
     let exactness = regex! {(opt (alt "#i" "#e"))};
-    let infnan = regex! {(alt "+inf.0" "-inf.0" "+nan.0" "-nan.0")};
+    let infnan = regex! {(seq sign (alt "inf.0" "nan.0"))};
     for &r in &[2, 8, 10, 16] {
         let prefix = regex! {(alt (seq (radix(r)) exactness) (seq exactness (radix(r))))};
         let uinteger = regex! {(repeat 1.. (num_digit(r)))};
@@ -83,27 +83,22 @@ fn main() {
             (alt (seq uinteger "." (repeat 0.. (num_digit(r))) suffix)
                  (seq "." uinteger suffix)
                  (seq uinteger suffix))
-        };
+        }.simplify();
         let ureal = regex! {
             (alt (seq uinteger "/" uinteger)
-                 decimal
-                 uinteger)  // note that the <uinteger> alternative is also matched by <decimal> because <suffix> is optional
+                 decimal)
         };
         let real = regex! {(alt (seq sign ureal) infnan)};
         let complex = regex! {
             (alt (seq real "@" real)
-                 (seq real "+" ureal "i")
-                 (seq real "-" ureal "i")
-                 (seq real "+i")
-                 (seq real "-i")
+                 (seq real sign ureal "i")
+                 (seq real sign "i")
                  (seq real infnan "i")
-                 (seq "+" ureal "i")
-                 (seq "-" ureal "i")
+                 (seq sign ureal "i")
                  (seq infnan "i")
-                 (seq "+i")
-                 (seq "-i")
+                 (seq sign "i")
                  real)
-        };
+        }.simplify();
         let num = regex! {(seq prefix complex)};
         println!("<num {}> = {}", r, num.simplify().build());
     }
@@ -517,7 +512,7 @@ impl Regex {
     fn extract_prefix(self) -> (Self, Self) {
         match self {
             Self::Seq(a, b) => (*a, *b),
-            Self::Repeat(0, _, _) => unimplemented!(),
+            Self::Repeat(0, _, _) => (self, Self::Quote("".to_string())),
             Self::Repeat(min, None, r) => (*r.clone(), Self::Repeat(min - 1, None, r)),
             Self::Repeat(min, Some(max), r) => {
                 (*r.clone(), Self::Repeat(min - 1, Some(max - 1), r))
