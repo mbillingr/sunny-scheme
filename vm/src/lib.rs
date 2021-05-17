@@ -12,7 +12,6 @@ pub mod bytecode;
 pub mod bytecode_loader;
 pub mod closure;
 mod continuation;
-pub mod number;
 pub mod optimizations;
 mod primitive;
 pub mod scm_extension;
