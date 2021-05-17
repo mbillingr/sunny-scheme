@@ -1,4 +1,5 @@
 use std::collections::BTreeSet;
+use std::fmt::Debug;
 use std::ops::{BitOr, Mul};
 
 #[macro_export]
@@ -18,8 +19,10 @@ macro_rules! regex {
 }
 
 fn main() {
-    let boolean = regex!((alt "#t" "#f" "#true" "#false"));
-    println!("<boolean> = {}", boolean.build());
+    let boolean_true = regex!((alt "#t" "#true"));
+    println!("<boolean true> = {}", boolean_true.simplify().build());
+    let boolean_false = regex!((alt "#f" "#false"));
+    println!("<boolean false> = {}", boolean_false.simplify().build());
 
     let letter = regex! {(from r"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")};
     let digit = regex! {(from r"0123456789")};
@@ -38,7 +41,8 @@ fn main() {
     let symbol_element = regex! {
         (alt (not-from r"|\")
              inline_hex_escape
-             mnemonic_escape r"\|")
+             mnemonic_escape
+             r"\|")
     };
 
     let normal_identifier = regex! {(seq initial (repeat 0.. subsequent))};
@@ -52,9 +56,18 @@ fn main() {
              (seq "." dot_subsequent (repeat 0.. subsequent))
              explicit_sign)
     };
-    println!("<normal identifier> = {}", normal_identifier.build());
-    println!("<verbatim identifier> = {}", verbatim_identifier.build());
-    println!("<peculiar identifier> = {}", peculiar_identifier.build());
+    println!(
+        "<normal identifier> = {}",
+        normal_identifier.simplify().build()
+    );
+    println!(
+        "<verbatim identifier> = {}",
+        verbatim_identifier.simplify().build()
+    );
+    println!(
+        "<peculiar identifier> = {}",
+        peculiar_identifier.simplify().build()
+    );
 
     let exponent_marker = "e";
     let sign = regex! {(opt (alt "+" "-"))};
@@ -90,7 +103,7 @@ fn main() {
                  real)
         };
         let num = regex! {(seq prefix complex)};
-        println!("<num {}> = {}", r, num.build());
+        println!("<num {}> = {}", r, num.simplify().build());
     }
 }
 
@@ -131,6 +144,20 @@ impl Regex {
     fn is_set(&self) -> bool {
         match self {
             Regex::CharSet(_) => true,
+            _ => false,
+        }
+    }
+
+    fn is_alt(&self) -> bool {
+        match self {
+            Regex::Alt(_, _) => true,
+            _ => false,
+        }
+    }
+
+    fn is_seq(&self) -> bool {
+        match self {
+            Regex::Seq(_, _) => true,
             _ => false,
         }
     }
@@ -204,7 +231,7 @@ impl Regex {
     }
 
     pub fn build(self) -> String {
-        self.simplify().recursive_build(0)
+        self.recursive_build(0)
     }
 
     fn recursive_build(&self, current_precedence_level: usize) -> String {
@@ -328,11 +355,20 @@ impl Regex {
     }
 
     fn simplify(self) -> Self {
-        self.combine_alt_of_sets().unwrap()
+        self.expand_quotes()
+            .flatten()
+            .extract_common_prefix()
+            .unwrap()
+            .combine_alt_of_sets()
+            .unwrap()
+            .replace_trivial_sets_with_quote()
+            .contract_quotes()
+            .unwrap()
     }
 
     fn combine_alt_of_sets(self) -> Value<Self> {
         match self {
+            Regex::Quote(s) if s.len() == 1 => Value::New(Regex::CharSet(s)),
             Regex::Alt(a, b) if a.is_set() && b.is_set() => {
                 if let (Regex::CharSet(a), Regex::CharSet(b)) = (*a, *b) {
                     let chars: BTreeSet<_> = a.chars().chain(b.chars()).collect();
@@ -351,8 +387,133 @@ impl Regex {
             _ => Value::Old(self),
         }
     }
+
+    fn replace_trivial_sets_with_quote(self) -> Self {
+        match self {
+            Self::CharSet(s) if s.len() == 1 => Self::Quote(s),
+            Self::Seq(x, y) => {
+                x.replace_trivial_sets_with_quote() * y.replace_trivial_sets_with_quote()
+            }
+            Self::Alt(a, b) => {
+                a.replace_trivial_sets_with_quote() | b.replace_trivial_sets_with_quote()
+            }
+            Self::Repeat(min, max, expr) => {
+                Self::Repeat(min, max, Box::new(expr.replace_trivial_sets_with_quote()))
+            }
+            other => other,
+        }
+    }
+
+    fn expand_quotes(self) -> Self {
+        match self {
+            Self::Quote(s) => Self::seq(s.chars().map(Self::quote).collect()),
+            Self::Seq(a, b) => {
+                Self::seq(vec![*a, *b].into_iter().map(Self::expand_quotes).collect())
+            }
+            Self::Alt(a, b) => {
+                Self::alt(vec![*a, *b].into_iter().map(Self::expand_quotes).collect())
+            }
+            Self::Repeat(min, max, expr) => Self::Repeat(min, max, Box::new(expr.expand_quotes())),
+            _ => self,
+        }
+    }
+
+    fn contract_quotes(self) -> Value<Self> {
+        use Value::*;
+        match self {
+            Self::Seq(a, b) => match (*a, *b) {
+                (Self::Quote(a), Self::Quote(b)) => New(Self::Quote(a + &b)),
+                (a, b) => {
+                    (a.contract_quotes() * b.contract_quotes()).map_new(Self::contract_quotes)
+                }
+            },
+            Self::Alt(a, b) => {
+                (a.contract_quotes() | b.contract_quotes()).map_new(Self::contract_quotes)
+            }
+            Self::Repeat(min, max, expr) => expr
+                .contract_quotes()
+                .map(|x| Regex::Repeat(min, max, Box::new(x))),
+            _ => Old(self),
+        }
+    }
+
+    fn flatten(self) -> Self {
+        match self {
+            Self::Seq(ab, c) if ab.is_seq() => {
+                if let Self::Seq(a, b) = *ab {
+                    Self::Seq(a, Box::new(Self::Seq(b, c))).flatten()
+                } else {
+                    unreachable!()
+                }
+            }
+            Self::Alt(ab, c) if ab.is_alt() => {
+                if let Self::Alt(a, b) = *ab {
+                    Self::Alt(a, Box::new(Self::Alt(b, c))).flatten()
+                } else {
+                    unreachable!()
+                }
+            }
+            Self::Seq(x, y) => x.flatten() * y.flatten(),
+            Self::Alt(a, b) => a.flatten() | b.flatten(),
+            Self::Repeat(min, max, expr) => Self::Repeat(min, max, Box::new(expr.flatten())),
+            _ => self,
+        }
+    }
+
+    fn extract_common_prefix(self) -> Value<Self> {
+        use Value::*;
+        match self {
+            Regex::Alt(a, b) => {
+                if a.prefix() == b.prefix() {
+                    let (pa, ra) = a.extract_prefix();
+                    let (pb, rb) = b.extract_prefix();
+                    assert_eq!(pa, pb);
+                    New((pa * (ra | rb)).extract_common_prefix().unwrap())
+                } else {
+                    (a.extract_common_prefix() | b.extract_common_prefix())
+                        .map_new(Self::extract_common_prefix)
+                }
+            }
+            Regex::Seq(a, b) => (a.extract_common_prefix() * b.extract_common_prefix())
+                .map_new(Self::extract_common_prefix),
+            Regex::Repeat(min, max, expr) => expr
+                .extract_common_prefix()
+                .map(|r| Regex::Repeat(min, max, Box::new(r))),
+            _ => Value::Old(self),
+        }
+    }
+
+    fn prefix(&self) -> &Self {
+        match self {
+            Self::Seq(a, _) => a,
+            Self::Repeat(0, _, _) => self,
+            Self::Repeat(_, _, r) => r,
+            _ => self,
+        }
+    }
+
+    fn extract_prefix(self) -> (Self, Self) {
+        match self {
+            Self::Seq(a, b) => (*a, *b),
+            Self::Repeat(0, _, _) => unimplemented!(),
+            Self::Repeat(min, None, r) => (*r.clone(), Self::Repeat(min - 1, None, r)),
+            Self::Repeat(min, Some(max), r) => {
+                (*r.clone(), Self::Repeat(min - 1, Some(max - 1), r))
+            }
+            _ => (self, Self::Quote("".to_string())),
+        }
+    }
 }
 
+/*fn debug_inspect<T: Debug+Clone, U: Debug>(prefix: &'static str, func: impl Fn(T)->U) -> impl Fn(T)->U {
+    |input: T| {
+        let output = func(input.clone());
+        println!("{} {:?} => {:?}", prefix, input, output);
+        output
+    }
+}*/
+
+#[derive(Debug)]
 enum Value<T> {
     New(T),
     Old(T),
