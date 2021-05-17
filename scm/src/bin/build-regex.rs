@@ -83,7 +83,8 @@ fn main() {
             (alt (seq uinteger "." (repeat 0.. (num_digit(r))) suffix)
                  (seq "." uinteger suffix)
                  (seq uinteger suffix))
-        }.simplify();
+        }
+        .simplify();
         let ureal = regex! {
             (alt (seq uinteger "/" uinteger)
                  decimal)
@@ -98,7 +99,8 @@ fn main() {
                  (seq infnan "i")
                  (seq sign "i")
                  real)
-        }.simplify();
+        }
+        .simplify();
         let num = regex! {(seq prefix complex)};
         println!("<num {}> = {}", r, num.simplify().build());
     }
