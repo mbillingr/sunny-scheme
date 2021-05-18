@@ -341,6 +341,12 @@ mod tests {
     }
 
     #[test]
+    fn i_is_parsed_as_symbol() {
+        let sexpr = parse_str("i");
+        assert_eq!(sexpr.unwrap(), vec![Scm::symbol("i")]);
+    }
+
+    #[test]
     fn can_parse_string() {
         let sexpr = parse_str("\"foo\"");
         assert_eq!(sexpr.unwrap(), vec![Scm::string("foo")]);

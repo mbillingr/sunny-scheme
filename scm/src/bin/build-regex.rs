@@ -92,12 +92,12 @@ fn main() {
         let real = regex! {(alt (seq sign ureal) infnan)};
         let complex = regex! {
             (alt (seq real "@" real)
-                 (seq real sign ureal "i")
-                 (seq real sign "i")
+                 (seq real explicit_sign ureal "i")
+                 (seq real explicit_sign "i")
                  (seq real infnan "i")
-                 (seq sign ureal "i")
+                 (seq explicit_sign ureal "i")
                  (seq infnan "i")
-                 (seq sign "i")
+                 (seq explicit_sign "i")
                  real)
         }
         .simplify();
