@@ -14,8 +14,13 @@ use crate::frontend::{
 };
 use sunny_scm::{Scm, SourceMap};
 
+#[derive(Default)]
+pub struct ExpansionContext {
+    pub src_map: SourceMap,
+}
+
 pub trait SyntaxExpander: std::fmt::Debug {
-    fn expand(&self, sexpr: &Scm, src_map: &SourceMap, env: &Env) -> Result<AstNode>;
+    fn expand(&self, sexpr: &Scm, ctx: &mut ExpansionContext, env: &Env) -> Result<AstNode>;
 
     fn description(&self) -> String {
         format!("<native syntax {:p}>", self)
@@ -67,7 +72,7 @@ mod tests {
 
         ($env:tt @ $expr:tt) => {{
             let sexpr = sexpr![$expr];
-            Expression.expand(&sexpr.into(), &SourceMap::new(), &$env)
+            Expression.expand(&sexpr.into(), &mut ExpansionContext::default(), &$env)
         }};
     }
 

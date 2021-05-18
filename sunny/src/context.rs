@@ -5,10 +5,10 @@ use crate::frontend::ast::Ast;
 use crate::frontend::environment::{Env, EnvBinding};
 use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
-use crate::frontend::{base_environment, error, SyntaxExpander};
+use crate::frontend::{base_environment, error, ExpansionContext, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
 use sunny_scm::parser::{parse_with_map, Error as ParseError};
-use sunny_scm::{Scm, SharedStr, SourceLocation, SourceMap};
+use sunny_scm::{Scm, SharedStr, SourceLocation};
 use sunny_vm::bytecode::{CodePointer, Op};
 use sunny_vm::closure::Closure;
 use sunny_vm::mem::Ref;
@@ -21,7 +21,7 @@ pub struct Context {
     env: Env,
     vm: Vm,
     globals: GlobalTable,
-    src_map: SourceMap,
+    expansion_context: ExpansionContext,
 }
 
 impl Default for Context {
@@ -39,13 +39,13 @@ impl Context {
             env: base_environment("main"),
             vm,
             globals,
-            src_map: SourceMap::default(),
+            expansion_context: Default::default(),
         }
     }
 
     pub fn eval(&mut self, src: SharedStr) -> Result<Scm, Error> {
-        let sexprs =
-            parse_with_map(src.clone(), &self.src_map).map_err(|e| e.in_string(src.clone()))?;
+        let sexprs = parse_with_map(src.clone(), &self.expansion_context.src_map)
+            .map_err(|e| e.in_string(src.clone()))?;
 
         if sexprs.is_empty() {
             return Ok(Scm::void());
@@ -56,7 +56,7 @@ impl Context {
         let mut ast_parts = vec![];
         for sx in sexprs {
             let part = Expression
-                .expand(&sx, &self.src_map, &self.env)
+                .expand(&sx, &mut self.expansion_context, &self.env)
                 .map_err(|e| e.in_string(src.clone()))?;
             ast_parts.push(part)
         }

@@ -1,8 +1,10 @@
-use crate::frontend::{ast::AstNode, environment::Env, error::Result, SyntaxExpander};
+use crate::frontend::{
+    ast::AstNode, environment::Env, error::Result, ExpansionContext, SyntaxExpander,
+};
 use sexpr_generics::prelude::*;
 use std::any::Any;
 use std::collections::HashMap;
-use sunny_scm::{Scm, ScmHasher, ScmObject, SourceMap};
+use sunny_scm::{Scm, ScmHasher, ScmObject};
 
 #[derive(Clone)]
 pub struct SyntacticClosure {
@@ -30,11 +32,11 @@ impl SyntacticClosure {
     pub fn expand(
         &self,
         expander: &impl SyntaxExpander,
-        src_map: &SourceMap,
+        ctx: &mut ExpansionContext,
         env: &Env,
     ) -> Result<AstNode> {
         let sc_env = env.prepare_sc_expansion(self.env.clone());
-        expander.expand(&self.sexpr, src_map, &sc_env)
+        expander.expand(&self.sexpr, ctx, &sc_env)
     }
 
     pub fn raw_expr(&self) -> &Scm {
