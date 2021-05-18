@@ -332,6 +332,11 @@ impl Number {
             (Float(b), Float(e)) => Number::Float(b.powf(*e)),
             (b, Int(e)) if *e >= 0 => b.exptint(*e as u64),
             (b, BigInt(e)) if e.is_positive() || e.is_zero() => b.exptbigint(e),
+            (b, Rational(e)) => {
+                let e = Float(e.to_f64().unwrap());
+                b.upcast(&e).expt(&e)
+            }
+            (b, Float(_)) => b.upcast(e).expt(e),
             _ => unimplemented!(),
         }
     }
