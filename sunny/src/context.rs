@@ -56,7 +56,7 @@ impl Context {
         let mut ast_parts = vec![];
         for sx in sexprs {
             let part = Expression
-                .expand(&sx, &mut self.expansion_context, &self.env)
+                .expand(&sx, &self.env, &mut self.expansion_context)
                 .map_err(|e| e.in_string(src.clone()))?;
             ast_parts.push(part)
         }

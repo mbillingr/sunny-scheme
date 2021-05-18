@@ -17,11 +17,11 @@ use sexpr_generics::{lists, with_sexpr_matcher};
 use sunny_scm::{Scm, SourceLocation, SourceMap};
 
 macro_rules! define_form {
-    ($t:ident($xpr:ident, $ctx:ident, $env:ident): $($rules:tt)*) => {
+    ($t:ident($xpr:ident, $env:ident, $ctx:ident): $($rules:tt)*) => {
         #[derive(Debug)]
         pub struct $t;
         impl SyntaxExpander for $t {
-            fn expand(&self, $xpr: &Scm, $ctx: &mut ExpansionContext, $env: &Env) -> Result<AstNode> {
+            fn expand(&self, $xpr: &Scm, $env: &Env, $ctx: &mut ExpansionContext) -> Result<AstNode> {
                 with_sexpr_matcher! {
                     match $xpr, {
                         $($rules)*
@@ -36,30 +36,30 @@ macro_rules! define_form {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 define_form! {
-    Expression(sexpr, ctx, env):
+    Expression(sexpr, env, ctx):
         ({f: SymbolName} . _) => {
             match env.lookup_variable(f) {
-                Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, ctx, env),
+                Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, env, ctx),
                 Some(EnvBinding::Intrinsic(name, n_params, _)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, ctx),
-                _ => Expression.expand_application(sexpr, ctx, env),
+                _ => Expression.expand_application(sexpr, env, ctx),
             }
         }
         ({sc: Obj<SyntacticClosure>} . _) => {
             if let Some(f) = sc.raw_expr().to_symbol() {
                 match sc.env().lookup_variable(f) {
-                    Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, ctx, env),
+                    Some(EnvBinding::Syntax(sx)) => sx.expand(sexpr, env, ctx),
                     Some(EnvBinding::Intrinsic(name, n_params, _)) => Expression.expand_intrinsic_application(name, n_params, sexpr, env, ctx),
-                    _ => Expression.expand_application(sexpr, ctx, env),
+                    _ => Expression.expand_application(sexpr, env, ctx),
                 }
             } else {
-                Expression.expand_application(sexpr, ctx, env)
+                Expression.expand_application(sexpr, env, ctx)
             }
         }
         () => {
             Err(ctx.src_map.get(sexpr).map(|_|Error::InvalidForm))
         }
         {list: List} => {
-            Expression.expand_application(list, ctx, env)
+            Expression.expand_application(list, env, ctx)
         }
         {name: SymbolName} => {
             use EnvBinding::*;
@@ -83,12 +83,12 @@ define_form! {
                 }
                 None => {
                     env.ensure_global_variable(name);
-                    Expression.expand(sexpr, ctx, env)
+                    Expression.expand(sexpr, env, ctx)
                 }
             }
         }
         {sc: Obj<SyntacticClosure>} => {
-            sc.expand(&Expression, ctx, env)
+            sc.expand(&Expression, env, ctx)
         }
         _ => {
             Ok(Ast::constant(ctx.src_map.get(sexpr), sexpr.clone()))
@@ -99,12 +99,12 @@ impl Expression {
     fn expand_application(
         &self,
         sexpr: &Scm,
-        ctx: &mut ExpansionContext,
         env: &Env,
+        ctx: &mut ExpansionContext,
     ) -> Result<AstNode> {
         let mut args = vec![];
         for a in lists::iter(sexpr) {
-            args.push(self.expand(&a, ctx, env)?);
+            args.push(self.expand(&a, env, ctx)?);
         }
         Ok(Ast::invoke(ctx.src_map.get(sexpr), args))
     }
@@ -119,7 +119,7 @@ impl Expression {
     ) -> Result<AstNode> {
         let mut args = vec![];
         for a in lists::iter(sexpr).skip(1) {
-            args.push(self.expand(&a, ctx, env)?);
+            args.push(self.expand(&a, env, ctx)?);
         }
         if args.len() != n_params {
             return Err(error_at(
@@ -132,23 +132,23 @@ impl Expression {
 }
 
 define_form! {
-    Begin(sexpr, ctx, env):
-        (_ . rest) => { Sequence.expand(rest, ctx, env) }
+    Begin(sexpr, env, ctx):
+        (_ . rest) => { Sequence.expand(rest, env, ctx) }
 }
 
 define_form! {
-    Quotation(sexpr, ctx, _env):
+    Quotation(sexpr, _env, ctx):
         (_ value) => {
             Ok(Ast::constant(ctx.src_map.get(value), value.quote()))
         }
 }
 
 define_form! {
-    Assignment(sexpr, ctx, env):
+    Assignment(sexpr, env, ctx):
         (_ {name: SymbolName} value) => {
             let context = ctx.src_map.get(sexpr);
             env.ensure_variable(name);
-            let value = Expression.expand(value, ctx, env)?;
+            let value = Expression.expand(value, env, ctx)?;
             if let Some(full_name) = env.lookup_variable(name).unwrap().as_global() {
                 Ok(Ast::store_global(context, full_name, value))
             } else {
@@ -159,9 +159,9 @@ define_form! {
 }
 
 define_form! {
-    Definition(sexpr, ctx, env):
+    Definition(sexpr, env, ctx):
         (_ {name: SymbolName} value) => {
-            let value = Expression.expand(value, ctx, env)?;
+            let value = Expression.expand(value, env, ctx)?;
             env.ensure_global_variable(name);
             let binding = env.lookup_global_variable(name).unwrap();
             let full_name = binding.as_global().unwrap();
@@ -179,9 +179,9 @@ define_form! {
 }
 
 define_form! {
-    LocalDefinition(sexpr, ctx, env):
+    LocalDefinition(sexpr, env, ctx):
         (_ {name: SymbolName} value) => {
-            let value = Expression.expand(value, ctx, env)?;
+            let value = Expression.expand(value, env, ctx)?;
             let idx = env.lookup_variable_index(name).unwrap();
             Ok(Ast::store(ctx.src_map.get(sexpr), idx, value))
         }
@@ -193,33 +193,33 @@ define_form! {
 }
 
 define_form! {
-    Sequence(sexpr, ctx, env):
-        (expr) => { Expression.expand(expr, ctx, env) }
+    Sequence(sexpr, env, ctx):
+        (expr) => { Expression.expand(expr, env, ctx) }
         (expr . rest) => {
-            let first = Expression.expand(expr, ctx, env)?;
-            let rest = Sequence.expand(rest, ctx, env)?;
+            let first = Expression.expand(expr, env, ctx)?;
+            let rest = Sequence.expand(rest, env, ctx)?;
             Ok(Ast::sequence(first, rest))
         }
 }
 
 define_form! {
-    Branch(sexpr, ctx, env):
+    Branch(sexpr, env, ctx):
         (_ condition consequence alternative) => {
-            let condition = Expression.expand(condition, ctx, env)?;
-            let consequence = Expression.expand(consequence, ctx, env)?;
-            let alternative = Expression.expand(alternative, ctx, env)?;
+            let condition = Expression.expand(condition, env, ctx)?;
+            let consequence = Expression.expand(consequence, env, ctx)?;
+            let alternative = Expression.expand(alternative, env, ctx)?;
             Ok(Ast::ifexpr(ctx.src_map.get(sexpr), condition, consequence, alternative))
         }
         (_ condition consequence) => {
-            let condition = Expression.expand(condition, ctx, env)?;
-            let consequence = Expression.expand(consequence, ctx, env)?;
+            let condition = Expression.expand(condition, env, ctx)?;
+            let consequence = Expression.expand(consequence, env, ctx)?;
             let alternative = Ast::void();
             Ok(Ast::ifexpr(ctx.src_map.get(sexpr), condition, consequence, alternative))
         }
 }
 
 define_form! {
-    Let(sexpr, ctx, env):
+    Let(sexpr, env, ctx):
         (_ bindings . body) => {
             let mut vars = vec![];
             let mut values = vec![];
@@ -237,13 +237,13 @@ define_form! {
             }
 
             let body_env = env.extend_vars(vars.into_iter());
-            let body = Body.expand(body, ctx, &body_env)?;
+            let body = Body.expand(body, &body_env, ctx)?;
 
             let func = Ast::lambda(ctx.src_map.get(sexpr), values.len(), body);
 
             let mut args = vec![func];
             for val in values {
-                args.push(Expression.expand(val, ctx, env).unwrap());
+                args.push(Expression.expand(val, env, ctx).unwrap());
             }
 
             Ok(Ast::invoke(ctx.src_map.get(sexpr), args))
@@ -251,7 +251,7 @@ define_form! {
 }
 
 define_form! {
-    Lambda(sexpr, ctx, env):
+    Lambda(sexpr, env, ctx):
         (_ params . body) => {
             Self::build_ast(ctx.src_map.get(sexpr), params, body, env, ctx)
         }
@@ -266,7 +266,7 @@ impl Lambda {
         ctx: &mut ExpansionContext,
     ) -> Result<AstNode> {
         let body_env = env.extend_from_sexpr(params, &ctx.src_map)?;
-        let body = Body.expand(body, ctx, &body_env)?;
+        let body = Body.expand(body, &body_env, ctx)?;
 
         if params.last_cdr().is_null() {
             Ok(Ast::lambda(context, lists::length(params), body))
@@ -280,7 +280,7 @@ impl Lambda {
 pub struct Body;
 
 impl SyntaxExpander for Body {
-    fn expand(&self, sexpr: &Scm, ctx: &mut ExpansionContext, env: &Env) -> Result<AstNode> {
+    fn expand(&self, sexpr: &Scm, env: &Env, ctx: &mut ExpansionContext) -> Result<AstNode> {
         let mut body = vec![];
         let mut definition_names = vec![];
         let mut definition_exprs = vec![];
@@ -294,7 +294,7 @@ impl SyntaxExpander for Body {
         }
 
         if definition_names.is_empty() {
-            Sequence.expand(sexpr, ctx, env)
+            Sequence.expand(sexpr, env, ctx)
         } else {
             LetRec::build_ast(
                 ctx.src_map.get(sexpr),
@@ -360,11 +360,11 @@ impl LetRec {
 
         let body = body.rfold(Scm::null(), |acc, stmt| Scm::cons(stmt, acc));
 
-        let mut body_ast = Sequence.expand(&body, ctx, &body_env)?;
+        let mut body_ast = Sequence.expand(&body, &body_env, ctx)?;
 
         for (name, exp) in names.iter().zip(defs) {
             let idx = body_env.lookup_variable_index(name).unwrap();
-            let def = Expression.expand(&exp, ctx, &body_env)?;
+            let def = Expression.expand(&exp, &body_env, ctx)?;
             let store = Ast::store(context.clone(), idx, def);
             body_ast = Ast::sequence(store, body_ast);
         }
@@ -383,7 +383,7 @@ impl LetRec {
 }
 
 define_form! {
-    SyntaxDefinition(sexpr, ctx, env):
+    SyntaxDefinition(sexpr, env, ctx):
        (_ {keyword: SymbolName} transformer_spec) => {
             let transformer = SyntaxTransformer.build(transformer_spec, env, ctx)?;
             env.add_global_binding(keyword, transformer);
@@ -392,7 +392,7 @@ define_form! {
 }
 
 define_form! {
-    Import(sexpr, ctx, env):
+    Import(sexpr, env, ctx):
        (_ . import_sets) => {
            let mut import_ast = Ast::void();
            for import_set in lists::iter(import_sets) {
@@ -419,7 +419,7 @@ impl Import {
         let libexpr = env
             .parse_library(&libstr, &ctx.src_map)?
             .ok_or_else(|| error_at(&ctx.src_map.get(libname), Error::UnknownLibrary))?;
-        let libast = LibraryDefinition.expand(&libexpr, ctx, env)?;
+        let libast = LibraryDefinition.expand(&libexpr, env, ctx)?;
 
         assert!(Self::import_all(&libstr, env));
 
@@ -472,7 +472,7 @@ pub struct SimpleMacro {
 }
 
 impl SyntaxExpander for SimpleMacro {
-    fn expand(&self, sexpr: &Scm, ctx: &mut ExpansionContext, env: &Env) -> Result<AstNode> {
+    fn expand(&self, sexpr: &Scm, env: &Env, ctx: &mut ExpansionContext) -> Result<AstNode> {
         let mut substitutions = HashMap::new();
         let mut more_args = sexpr
             .cdr()
@@ -490,7 +490,7 @@ impl SyntaxExpander for SimpleMacro {
         }
 
         let new_sexpr = Scm::substitute(&self.template, &substitutions);
-        Expression.expand(&new_sexpr, ctx, env)
+        Expression.expand(&new_sexpr, env, ctx)
     }
 }
 
@@ -522,7 +522,7 @@ pub struct SyntaxRules {
 }
 
 impl SyntaxExpander for SyntaxRules {
-    fn expand(&self, expr: &Scm, ctx: &mut ExpansionContext, env: &Env) -> Result<AstNode> {
+    fn expand(&self, expr: &Scm, env: &Env, ctx: &mut ExpansionContext) -> Result<AstNode> {
         let sexpr = SyntacticClosure::new_scm(expr.clone(), env.clone());
         for (matcher, template) in &self.rules {
             if let Some(bindings) = matcher.match_value(&sexpr, env) {
@@ -531,7 +531,7 @@ impl SyntaxExpander for SyntaxRules {
                     .transcribe(template, &bindings)
                     .ok_or_else(|| error_at(&ctx.src_map.get(template), Error::InvalidTemplate))?;
                 //println!("{} => {}", sexpr, expanded_sexpr);
-                return Expression.expand(&expanded_sexpr, ctx, env);
+                return Expression.expand(&expanded_sexpr, env, ctx);
             }
         }
         Err(error_at(&ctx.src_map.get(expr), Error::InvalidForm))
@@ -569,7 +569,7 @@ impl SyntaxRules {
 pub struct LibraryDefinition;
 
 impl SyntaxExpander for LibraryDefinition {
-    fn expand(&self, sexpr: &Scm, ctx: &mut ExpansionContext, env: &Env) -> Result<AstNode> {
+    fn expand(&self, sexpr: &Scm, env: &Env, ctx: &mut ExpansionContext) -> Result<AstNode> {
         with_sexpr_matcher! {
             match sexpr, {
                 (_ libname . statements) => {
@@ -578,7 +578,7 @@ impl SyntaxExpander for LibraryDefinition {
 
                     for stmt in lists::iter(statements) {
                         match stmt.car().and_then(|s| s.as_symbol()) {
-                            Some("import") => {Import.expand(&stmt, ctx, &lib_env)?;}
+                            Some("import") => {Import.expand(&stmt, &lib_env, ctx)?;}
                             Some("export") => {}
                             Some("begin") => {}
                             _ => return Err(error_at(&ctx.src_map.get(&stmt), Error::UnexpectedStatement)),
@@ -588,7 +588,7 @@ impl SyntaxExpander for LibraryDefinition {
                     let mut body_parts = vec![];
                     for stmt in lists::iter(statements) {
                         if let Some("begin") = stmt.car().and_then(|s| s.as_symbol()) {
-                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), ctx, &lib_env)?)
+                            body_parts.push(Sequence.expand(stmt.cdr().unwrap(), &lib_env, ctx)?)
                         }
                     }
 

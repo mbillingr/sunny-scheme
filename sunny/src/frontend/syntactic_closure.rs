@@ -32,11 +32,11 @@ impl SyntacticClosure {
     pub fn expand(
         &self,
         expander: &impl SyntaxExpander,
-        ctx: &mut ExpansionContext,
         env: &Env,
+        ctx: &mut ExpansionContext,
     ) -> Result<AstNode> {
         let sc_env = env.prepare_sc_expansion(self.env.clone());
-        expander.expand(&self.sexpr, ctx, &sc_env)
+        expander.expand(&self.sexpr, &sc_env, ctx)
     }
 
     pub fn raw_expr(&self) -> &Scm {

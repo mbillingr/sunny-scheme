@@ -20,7 +20,7 @@ pub struct ExpansionContext {
 }
 
 pub trait SyntaxExpander: std::fmt::Debug {
-    fn expand(&self, sexpr: &Scm, ctx: &mut ExpansionContext, env: &Env) -> Result<AstNode>;
+    fn expand(&self, sexpr: &Scm, env: &Env, ctx: &mut ExpansionContext) -> Result<AstNode>;
 
     fn description(&self) -> String {
         format!("<native syntax {:p}>", self)
@@ -72,7 +72,7 @@ mod tests {
 
         ($env:tt @ $expr:tt) => {{
             let sexpr = sexpr![$expr];
-            Expression.expand(&sexpr.into(), &mut ExpansionContext::default(), &$env)
+            Expression.expand(&sexpr.into(), &$env, &mut ExpansionContext::default())
         }};
     }
 
