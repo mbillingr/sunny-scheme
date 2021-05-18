@@ -35,6 +35,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_primitive_fixed_arity("assoc", 2, assoc)
         .define_primitive_fixed_arity("assq", 2, assq)
         .define_primitive_fixed_arity("assv", 2, assv)
+        .define_primitive_fixed_arity("atan", 2, atan)
         .define_intrinsic("call/cc", 1)
         .define_intrinsic("call-with-values", 2)
         .define_primitive_vararg("+", 0, add)
@@ -354,6 +355,10 @@ primitive! {
             Some(m) => Ok(m.clone()),
             None => Ok(Scm::bool(false))
         }
+    }
+
+    fn atan(a: Scm, b: Scm) -> Result<Scm>{
+        Ok(Scm::number(to_number(&a)?.atan(to_number(&b)?)))
     }
 
     fn expt(b: Scm, e: Scm) -> Result<Scm>{
