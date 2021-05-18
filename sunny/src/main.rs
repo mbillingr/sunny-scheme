@@ -21,6 +21,7 @@ use sunny_vm::Vm;
 pub mod backend;
 pub mod builtin_libs;
 pub mod context;
+mod filesystem;
 pub mod frontend;
 #[cfg(test)]
 mod language_tests;

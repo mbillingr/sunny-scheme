@@ -76,7 +76,15 @@ impl<T> SourceLocation<T> {
         }
     }
 
-    pub fn map<U>(&self, f: impl FnOnce(&T) -> U) -> SourceLocation<U> {
+    pub fn map<U>(self, f: impl FnOnce(T) -> U) -> SourceLocation<U> {
+        SourceLocation {
+            inner_value: f(self.inner_value),
+            span: self.span.clone(),
+            source: self.source.clone(),
+        }
+    }
+
+    pub fn map_ref<U>(&self, f: impl FnOnce(&T) -> U) -> SourceLocation<U> {
         SourceLocation {
             inner_value: f(&self.inner_value),
             span: self.span.clone(),

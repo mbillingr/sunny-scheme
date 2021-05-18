@@ -309,7 +309,7 @@ impl Env {
         let src = src.unwrap();
 
         parse_with_map(&src, src_map)
-            .map_err(|e| e.map(|pe| Error::ParseError(pe.clone())))
+            .map_err(|e| e.map_ref(|pe| Error::ParseError(pe.clone())))
             .and_then(|mut sexprs| match sexprs.len() {
                 0 => Err(SourceLocation::new(Error::InvalidForm)),
                 1 => Ok(Some(sexprs.pop().unwrap())),

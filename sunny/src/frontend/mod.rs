@@ -7,6 +7,7 @@ pub mod macros;
 pub mod syntactic_closure;
 pub mod syntax_forms;
 
+use crate::filesystem::FileSystem;
 use crate::frontend::environment::Environment;
 use crate::frontend::syntax_forms::Import;
 use crate::frontend::{
@@ -19,6 +20,7 @@ use sunny_scm::{Scm, SourceMap};
 pub struct ExpansionContext {
     pub src_map: SourceMap,
     pub current_source_file: Option<PathBuf>,
+    pub file_system: FileSystem,
 }
 
 pub trait SyntaxExpander: std::fmt::Debug {

@@ -14,6 +14,7 @@ use crate::frontend::{
 };
 use sexpr_generics::prelude::*;
 use sexpr_generics::{lists, with_sexpr_matcher};
+use std::path::Path;
 use sunny_scm::{Scm, SourceLocation, SourceMap};
 
 macro_rules! define_form {
@@ -56,7 +57,7 @@ define_form! {
             }
         }
         () => {
-            Err(ctx.src_map.get(sexpr).map(|_|Error::InvalidForm))
+            Err(ctx.src_map.get(sexpr).map_ref(|_|Error::InvalidForm))
         }
         {list: List} => {
             Expression.expand_application(list, env, ctx)
@@ -394,12 +395,12 @@ define_form! {
 define_form! {
     Import(sexpr, env, ctx):
        (_ . import_sets) => {
-           let mut import_ast = Ast::void();
-           for import_set in lists::iter(import_sets) {
-               let set_ast = Self::process_import_set(&import_set, env, ctx)?;
-               import_ast = Ast::sequence(import_ast, set_ast)
-           }
-           Ok(import_ast)
+            let mut import_ast = Ast::void();
+            for import_set in lists::iter(import_sets) {
+                let set_ast = Self::process_import_set(&import_set, env, ctx)?;
+                import_ast = Ast::sequence(import_ast, set_ast)
+            }
+            Ok(import_ast)
        }
 }
 
@@ -435,6 +436,37 @@ impl Import {
         } else {
             false
         }
+    }
+}
+
+define_form! {
+    Include(sexpr, env, ctx):
+       (_ file1 . file_names) => {
+            let mut include_ast = Include::expand_file(file1, env, ctx)?;
+            for filename in lists::iter(file_names) {
+                include_ast = Ast::sequence(include_ast, Include::expand_file(filename, env, ctx)?);
+            }
+            Ok(include_ast)
+       }
+}
+
+impl Include {
+    pub fn expand_file(filename: &Scm, env: &Env, ctx: &mut ExpansionContext) -> Result<AstNode> {
+        let path = ctx
+            .current_source_file
+            .as_ref()
+            .and_then(|f| f.parent())
+            .unwrap_or_else(|| Path::new(""));
+        let fname = filename
+            .to_str()
+            .ok_or_else(|| ctx.src_map.get(&filename).map_value(Error::ExpectedString))?;
+        let fullpath = path.join(fname);
+        let file_expr = ctx.file_system.read_with_map(&fullpath, &ctx.src_map)?;
+
+        let current_file = std::mem::replace(&mut ctx.current_source_file, Some(fullpath));
+        let ast = Sequence.expand(&file_expr, env, ctx);
+        ctx.current_source_file = current_file;
+        ast
     }
 }
 

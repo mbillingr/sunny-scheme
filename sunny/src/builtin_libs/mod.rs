@@ -3,8 +3,8 @@ mod macros;
 mod hash_table;
 use crate::context::Context;
 use crate::frontend::syntax_forms::{
-    Assignment, Begin, Branch, Definition, Import, Lambda, Let, LibraryDefinition, Quotation,
-    SyntaxDefinition,
+    Assignment, Begin, Branch, Definition, Import, Include, Lambda, Let, LibraryDefinition,
+    Quotation, SyntaxDefinition,
 };
 use hash_table::define_lib_sunny_hash_table;
 use lazy_static::lazy_static;
@@ -27,6 +27,7 @@ pub fn define_standard_libraries(ctx: &mut Context) {
         .define_syntax("define-syntax", SyntaxDefinition)
         .define_syntax("if", Branch)
         .define_syntax("import", Import)
+        .define_syntax("include", Include)
         .define_syntax("lambda", Lambda)
         .define_syntax("let", Let)
         .define_syntax("quote", Quotation)
