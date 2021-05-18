@@ -12,11 +12,13 @@ use crate::frontend::syntax_forms::Import;
 use crate::frontend::{
     ast::AstNode, environment::Env, error::Result, syntax_forms::LibraryDefinition,
 };
+use std::path::PathBuf;
 use sunny_scm::{Scm, SourceMap};
 
 #[derive(Default)]
 pub struct ExpansionContext {
     pub src_map: SourceMap,
+    pub current_source_file: Option<PathBuf>,
 }
 
 pub trait SyntaxExpander: std::fmt::Debug {

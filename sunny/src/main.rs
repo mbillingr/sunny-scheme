@@ -7,6 +7,7 @@ use simple_logger::SimpleLogger;
 use structopt::StructOpt;
 
 use crate::builtin_libs::define_standard_libraries;
+use crate::context::Source;
 use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
 use context::{Context, Error};
@@ -181,7 +182,9 @@ fn run_script(context: &mut Context, path: &Path) -> Result<(), Error> {
         .read_to_string(&mut src)
         .unwrap_or_else(|e| panic!("Error reading {:?}: {}", path, e));
 
-    context.eval(src.into()).map(|_| {})
+    context
+        .eval(Source::File(path.into(), src.into()))
+        .map(|_| {})
 }
 
 fn run_repl(mut context: Context) {
@@ -201,7 +204,7 @@ fn run_repl(mut context: Context) {
 
                     rl.add_history_entry(line);
 
-                    match context.eval(src.clone()) {
+                    match context.eval(Source::Memory(src.clone())) {
                         Ok(result) => println!("{}", result),
                         Err(Error::ParseError(e)) if e.is_eof() => {
                             prompt = MULTI_PROMPT;

@@ -13,7 +13,7 @@ mod scoping;
 mod type_predicates;
 
 use crate::builtin_libs::define_standard_libraries;
-use crate::context::{Context, Error};
+use crate::context::{Context, Error, Source};
 use crate::frontend::error::Error as FrontendError;
 use crate::frontend::syntax_forms::Import;
 use crate::library_filesystem::LibraryFileSystem;
@@ -124,7 +124,7 @@ pub trait Eval {
 
 impl Eval for &str {
     fn eval(&self, context: &mut Context) -> Result<Scm, Error> {
-        context.eval((*self).into())
+        context.eval(Source::Memory((*self).into()))
     }
 }
 

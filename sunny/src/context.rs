@@ -7,6 +7,7 @@ use crate::frontend::library::Export;
 use crate::frontend::syntax_forms::Expression;
 use crate::frontend::{base_environment, error, ExpansionContext, SyntaxExpander};
 use crate::library_filesystem::LibraryFileSystem;
+use std::path::PathBuf;
 use sunny_scm::parser::{parse_with_map, Error as ParseError};
 use sunny_scm::{Scm, SharedStr, SourceLocation};
 use sunny_vm::bytecode::{CodePointer, Op};
@@ -16,6 +17,30 @@ use sunny_vm::optimizations::tail_call_optimization;
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{BasicBlock, BlockChain, ErrorKind, Vm};
 use sunny_vm::{Primitive, PrimitiveProc};
+
+#[derive(Debug, Clone)]
+pub enum Source {
+    Memory(SharedStr),
+    File(PathBuf, SharedStr),
+}
+
+impl From<Source> for SharedStr {
+    fn from(s: Source) -> Self {
+        match s {
+            Source::Memory(s) => s,
+            Source::File(_, s) => s,
+        }
+    }
+}
+
+impl From<Source> for Option<PathBuf> {
+    fn from(s: Source) -> Self {
+        match s {
+            Source::Memory(_) => None,
+            Source::File(p, _) => Some(p),
+        }
+    }
+}
 
 pub struct Context {
     env: Env,
@@ -43,7 +68,7 @@ impl Context {
         }
     }
 
-    pub fn eval(&mut self, src: SharedStr) -> Result<Scm, Error> {
+    pub fn eval(&mut self, src: Source) -> Result<Scm, Error> {
         let sexprs = parse_with_map(src.clone(), &self.expansion_context.src_map)
             .map_err(|e| e.in_string(src.clone()))?;
 
@@ -52,6 +77,7 @@ impl Context {
         }
 
         //println!("{:#?}", self.env);
+        self.expansion_context.current_source_file = src.clone().into();
 
         let mut ast_parts = vec![];
         for sx in sexprs {

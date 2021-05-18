@@ -166,6 +166,10 @@ impl Env {
         self.name.as_str()
     }
 
+    pub fn libfs(&self) -> &LibraryFileSystem {
+        &self.library_filesystem
+    }
+
     pub fn set_libfs(&mut self, libfs: LibraryFileSystem) {
         self.library_filesystem = libfs;
     }
