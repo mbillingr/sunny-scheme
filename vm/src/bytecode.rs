@@ -85,6 +85,13 @@ impl Op {
 
         ops
     }
+
+    pub fn is_terminal(&self) -> bool {
+        match self {
+            Op::Return | Op::Halt | Op::TailCall { .. } | Op::TailCallDynamic => true,
+            _ => false,
+        }
+    }
 }
 
 impl std::fmt::Display for Op {
@@ -217,6 +224,30 @@ impl CodeSegment {
 
     pub fn constant_slice(&self) -> &[Scm] {
         &*self.constants
+    }
+
+    pub fn jump_target(&self, pos: usize) -> Op {
+        match &self.code[pos] {
+            Op::Jump { forward } => self.jump_target(pos + 1 + self.extarg(pos, *forward)),
+            Op::RJump { backward } => self.jump_target(pos + 1 - self.extarg(pos, *backward)),
+            other => *other,
+        }
+    }
+
+    pub fn extarg(&self, mut pos: usize, arg: u8) -> usize {
+        let mut arg = arg as usize;
+        let mut multiplier = 1;
+        loop {
+            if pos == 0 {
+                break;
+            }
+            pos -= 1;
+            if let Op::ExtArg(ext) = self.code[pos] {
+                multiplier <<= 8;
+                arg += ext as usize * multiplier;
+            }
+        }
+        arg
     }
 
     pub fn chain(segments: &[Self]) -> Self {

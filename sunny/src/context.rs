@@ -13,7 +13,7 @@ use sunny_scm::{Scm, SharedStr, SourceLocation};
 use sunny_vm::bytecode::{CodePointer, Op};
 use sunny_vm::closure::Closure;
 use sunny_vm::mem::Ref;
-use sunny_vm::optimizations::tail_call_optimization;
+use sunny_vm::optimizations::{simple_jump_optimization, tail_call_optimization};
 use sunny_vm::scm_extension::ScmExt;
 use sunny_vm::{BasicBlock, BlockChain, ErrorKind, Vm};
 use sunny_vm::{Primitive, PrimitiveProc};
@@ -99,6 +99,7 @@ impl Context {
         ir.return_from();
 
         let code = ir.build_segment();
+        let code = simple_jump_optimization(code);
         let code = tail_call_optimization(code);
         println!("{}", code);
 
