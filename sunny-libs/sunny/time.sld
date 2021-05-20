@@ -14,7 +14,7 @@
     (define (report-time t)
       (define (report t unit)
         (if (>= t 1000)
-            (report (/ t 1000) (* unit 1000))
+            (report (/ t 1000.0) (* unit 1000))
             (begin
               (display t)
               (display (time-unit->string unit))

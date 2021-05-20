@@ -308,6 +308,7 @@ impl PartialOrd for Number {
             (Int(a), Int(b)) => PartialOrd::partial_cmp(a, b),
             (Float(a), Float(b)) => PartialOrd::partial_cmp(a, b),
             (BigInt(a), BigInt(b)) => PartialOrd::partial_cmp(a, b),
+            (Rational(a), Rational(b)) => PartialOrd::partial_cmp(a, b),
             _ => {
                 let a = self.upcast(rhs);
                 let b = rhs.upcast(self);
